@@ -1,0 +1,42 @@
+bookstore-backend
+└── src
+    └── main
+        ├── java
+        │   └── com
+        │       └── bookstore
+        │           ├── domain
+        │           │   ├── model
+        │           │   ├── enums
+        │           │   └── exception
+        │           │
+        │           ├── application
+        │           │   ├── port
+        │           │   │   ├── in
+        │           │   │   └── out
+        │           │   ├── command
+        │           │   ├── query
+        │           │   ├── result
+        │           │   └── service
+        │           │
+        │           ├── infrastructure
+        │           │   ├── persistence
+        │           │   │   ├── entity
+        │           │   │   ├── repository
+        │           │   │   ├── adapter
+        │           │   │   └── mapper
+        │           │   └── security
+        │           │
+        │           ├── presentation
+        │           │   ├── controller
+        │           │   ├── request
+        │           │   ├── response
+        │           │   ├── mapper
+        │           │   └── exception
+        │           │
+        │           ├── config
+        │           │
+        │           └── shared
+        │               ├── constant
+        │               └── util
+        │
+        └── resources

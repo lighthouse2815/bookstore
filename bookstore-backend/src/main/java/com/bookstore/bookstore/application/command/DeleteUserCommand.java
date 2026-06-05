@@ -1,0 +1,20 @@
+package com.bookstore.bookstore.application.command;
+
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
+import java.util.UUID;
+
+public record DeleteUserCommand(
+        UUID userId,
+        UUID adminId
+) {
+    public DeleteUserCommand {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        if (adminId == null) {
+            adminId = userId;
+        }
+    }
+}
