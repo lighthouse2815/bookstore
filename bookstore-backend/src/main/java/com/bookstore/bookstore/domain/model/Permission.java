@@ -2,6 +2,7 @@ package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.PermissionCode;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.PermissionRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -33,16 +34,18 @@ public class Permission {
         setDeletedAt(deletedAt);
     }
 
+    public void updatePermission(PermissionCode code){
+        PermissionRule.requireCanUpdate(deletedAt,this.code,code);
+        setCode(code);
+        setCreatedAt(Instant.now());
+    }
+
     private void setCode(PermissionCode code) {
         this.code = Guard.notNull(code, DomainErrorCode.INVALID_PERMISSION_CODE, "code");
     }
 
     private void setDescription(String description) {
-        this.description = Guard.notBlank(
-                description,
-                DomainErrorCode.INVALID_PERMISSION_DESCRIPTION,
-                "description"
-        );
+        this.description = description;
     }
 
     private void setCreatedAt(Instant createdAt) {

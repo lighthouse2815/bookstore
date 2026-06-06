@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
@@ -57,7 +56,7 @@ class JwtServiceTest {
                 false,
                 Set.of(new Role(
                         UUID.randomUUID(),
-                        RoleName.USER,
+                        "USER",
                         "Default user role",
                         Set.of(),
                         now,

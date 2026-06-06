@@ -55,6 +55,8 @@ public enum DomainErrorCode {
     INVALID_ROLE_UPDATED_AT("DOMAIN_ROLE_006", "%s khong duoc nam trong tuong lai"),
     INVALID_ROLE_DELETED_AT("DOMAIN_ROLE_007", "%s khong duoc nam trong tuong lai"),
     INVALID_ROLE_AUDIT_ORDER("DOMAIN_ROLE_008", "%s khong duoc som hon %s"),
+    ROLE_ALREADY_DELETED("DOMAIN_ROLE_009", "role da bi xoa"),
+    ROLE_DATA_NOT_CHANGED("DOMAIN_ROLE_010", "du lieu role phai khac du lieu hien tai"),
 
     INVALID_PERMISSION_ID("DOMAIN_PERMISSION_001", "%s khong duoc null"),
     INVALID_PERMISSION_CODE("DOMAIN_PERMISSION_002", "%s khong duoc null"),
@@ -63,6 +65,8 @@ public enum DomainErrorCode {
     INVALID_PERMISSION_UPDATED_AT("DOMAIN_PERMISSION_005", "%s khong duoc nam trong tuong lai"),
     INVALID_PERMISSION_DELETED_AT("DOMAIN_PERMISSION_006", "%s khong duoc nam trong tuong lai"),
     INVALID_PERMISSION_AUDIT_ORDER("DOMAIN_PERMISSION_007", "%s khong duoc som hon %s"),
+    PERMISSION_ALREADY_DELETED("DOMAIN_PERMISSION_008", "permission da bi xoa"),
+    PERMISSION_CODE_NOT_CHANGED("DOMAIN_PERMISSION_009", "code permission phai khac code hien tai"),
 
     INVALID_REFRESH_TOKEN_ID("DOMAIN_REFRESH_TOKEN_001", "%s khong duoc null"),
     INVALID_REFRESH_TOKEN_USER_ID("DOMAIN_REFRESH_TOKEN_002", "%s khong duoc null"),

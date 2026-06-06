@@ -1,7 +1,6 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.domain.enums.PermissionCode;
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.model.Role;
 import java.util.List;
 import java.util.Optional;
@@ -13,11 +12,11 @@ public interface IRoleRepository {
 
     Optional<Role> findById(UUID roleId);
 
-    Optional<Role> findByName(RoleName roleName);
+    Optional<Role> findByName(String roleName);
 
     boolean existsById(UUID roleId);
 
-    boolean existsByName(RoleName roleName);
+    boolean existsByName(String roleName);
 
     boolean existsByPermissionCode(PermissionCode permissionCode);
 

@@ -11,14 +11,13 @@ import com.bookstore.bookstore.application.command.RegisterCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IProfileService;
-import com.bookstore.bookstore.application.port.in.IRoleService;
 import com.bookstore.bookstore.application.port.in.IUserService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
+import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.application.result.RegisterResult;
 import com.bookstore.bookstore.domain.enums.Gender;
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
@@ -40,6 +39,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
+    private static final String USER_ROLE = "USER";
+
     @Mock
     private IUserService userService;
 
@@ -47,7 +48,7 @@ class AuthServiceTest {
     private IProfileService profileService;
 
     @Mock
-    private IRoleService roleService;
+    private IRoleRepository roleRepository;
 
     @Mock
     private IUserRepository userRepository;
@@ -77,7 +78,7 @@ class AuthServiceTest {
 
         when(userService.create(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(profileService.create(any(Profile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(roleService.getByName(RoleName.USER)).thenReturn(defaultRole());
+        when(roleRepository.findByName(USER_ROLE)).thenReturn(Optional.of(defaultRole()));
         when(passwordEncoder.encode("  secret  ")).thenReturn("hashed-secret");
 
         RegisterResult result = authService.register(command);
@@ -102,7 +103,7 @@ class AuthServiceTest {
 
         assertEquals(user.getId(), result.userId());
         assertEquals(UserStatus.ACTIVE, result.status());
-        assertTrue(result.roles().contains(RoleName.USER));
+        assertTrue(result.roles().contains(USER_ROLE));
         assertEquals("jwt-token", result.accessToken());
     }
 
@@ -179,7 +180,7 @@ class AuthServiceTest {
         Instant now = Instant.EPOCH;
         return new Role(
                 UUID.randomUUID(),
-                RoleName.USER,
+                USER_ROLE,
                 "user role",
                 Set.of(),
                 now,
@@ -200,7 +201,7 @@ class AuthServiceTest {
                 locked,
                 Set.of(new Role(
                         UUID.randomUUID(),
-                        RoleName.USER,
+                        USER_ROLE,
                         "Default user role",
                         Set.of(),
                         now,

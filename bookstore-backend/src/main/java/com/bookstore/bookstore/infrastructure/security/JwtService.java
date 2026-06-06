@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.security;
 
 import com.bookstore.bookstore.application.port.out.IJwtService;
+import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -29,7 +30,7 @@ public class JwtService implements IJwtService {
 
         List<String> roles = user.getRoles()
                 .stream()
-                .map(role -> role.getName().name())
+                .map(Role::getName)
                 .toList();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()

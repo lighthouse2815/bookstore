@@ -1,7 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.RoleRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -13,7 +13,7 @@ import lombok.Getter;
 public class Role {
 
     private UUID id;
-    private RoleName name;
+    private String name;
     private String description;
     private Set<Permission> permissions = new LinkedHashSet<>();
     private Instant createdAt;
@@ -22,7 +22,7 @@ public class Role {
 
     public Role(
             UUID id,
-            RoleName name,
+            String name,
             String description,
             Set<Permission> permissions,
             Instant createdAt,
@@ -38,8 +38,32 @@ public class Role {
         setDeletedAt(deletedAt);
     }
 
-    private void setName(RoleName name) {
-        this.name = Guard.notNull(name, DomainErrorCode.INVALID_ROLE_NAME, "name");
+    public void updateRole(String name, String description, Set<Permission> permissions) {
+        RoleRule.requireCanUpdate(
+                deletedAt,
+                this.name,
+                this.description,
+                this.permissions,
+                name,
+                description,
+                permissions
+        );
+
+        setName(name);
+        setDescription(description);
+        setPermissions(permissions);
+        setUpdatedAt(Instant.now());
+    }
+
+    public void softDelete() {
+        RoleRule.requireCanSoftDelete(deletedAt);
+        Instant now = Instant.now();
+        setUpdatedAt(now);
+        setDeletedAt(now);
+    }
+
+    private void setName(String name) {
+        this.name = Guard.notBlank(name, DomainErrorCode.INVALID_ROLE_NAME, "name");
     }
 
     private void setDescription(String description) {

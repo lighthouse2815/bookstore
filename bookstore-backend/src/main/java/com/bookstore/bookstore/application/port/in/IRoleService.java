@@ -1,25 +1,18 @@
 package com.bookstore.bookstore.application.port.in;
 
-import com.bookstore.bookstore.domain.enums.PermissionCode;
-import com.bookstore.bookstore.domain.enums.RoleName;
+import com.bookstore.bookstore.application.command.CreateRoleCommand;
+import com.bookstore.bookstore.application.command.DeleteRoleCommand;
+import com.bookstore.bookstore.application.command.UpdateRoleCommand;
 import com.bookstore.bookstore.domain.model.Role;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 public interface IRoleService {
 
     List<Role> getAll();
 
-    Role getByName(RoleName roleName);
+    Role create(CreateRoleCommand command);
 
-    Set<PermissionCode> getPermissionCodes(RoleName roleName);
+    Role update(UpdateRoleCommand command);
 
-    boolean hasPermission(RoleName roleName, PermissionCode permissionCode);
-
-    Role create(Role role);
-
-    Role update(Role role);
-
-    void delete(UUID roleId);
+    void delete(DeleteRoleCommand command);
 }

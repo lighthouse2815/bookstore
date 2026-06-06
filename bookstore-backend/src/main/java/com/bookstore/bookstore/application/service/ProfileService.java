@@ -7,21 +7,20 @@ import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.model.Profile;
+
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ProfileService implements IProfileService {
 
     private final IProfileRepository profileRepository;
     private final IUserRepository userRepository;
-
-    public ProfileService(IProfileRepository profileRepository, IUserRepository userRepository) {
-        this.profileRepository = profileRepository;
-        this.userRepository = userRepository;
-    }
 
     @Override
     public List<Profile> getAll() {

@@ -4,28 +4,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.bookstore.bookstore.application.command.CreateRoleCommand;
+import com.bookstore.bookstore.application.command.DeleteRoleCommand;
+import com.bookstore.bookstore.application.command.UpdateRoleCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.domain.enums.PermissionCode;
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.model.Permission;
 import com.bookstore.bookstore.domain.model.Role;
-import java.time.Instant;
+import com.bookstore.bookstore.infrastructure.persistence.adapter.InMemoryPermissionRepositoryAdapter;
+import com.bookstore.bookstore.infrastructure.persistence.adapter.InMemoryRoleRepositoryAdapter;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class RoleServiceTest {
 
-    private PermissionService permissionService;
+    private static final String USER_ROLE = "USER";
+
+    private InMemoryPermissionRepositoryAdapter permissionRepository;
+    private InMemoryRoleRepositoryAdapter roleRepository;
     private RoleService roleService;
 
     @BeforeEach
     void setUp() {
-        permissionService = new PermissionService();
-        roleService = new RoleService(permissionService);
+        permissionRepository = new InMemoryPermissionRepositoryAdapter();
+        roleRepository = new InMemoryRoleRepositoryAdapter(permissionRepository);
+        roleService = new RoleService(roleRepository, permissionRepository);
     }
 
     @Test
@@ -34,24 +40,23 @@ class RoleServiceTest {
     }
 
     @Test
-    void getByName_returnsSeededRole() {
-        Role role = roleService.getByName(RoleName.USER);
+    void repository_containsSeededRole() {
+        Role role = roleRepository.findByName(USER_ROLE).orElseThrow();
 
-        assertEquals(RoleName.USER, role.getName());
-        assertTrue(roleService.hasPermission(RoleName.USER, PermissionCode.BOOK_VIEW));
+        assertEquals(USER_ROLE, role.getName());
+        assertTrue(role.getPermissions().stream()
+                .anyMatch(permission -> permission.getCode() == PermissionCode.BOOK_VIEW));
     }
 
     @Test
     void create_rejectsDuplicateName() {
-        Role current = roleService.getByName(RoleName.USER);
-        Role duplicate = new Role(
-                UUID.randomUUID(),
+        Role current = roleRepository.findByName(USER_ROLE).orElseThrow();
+        CreateRoleCommand duplicate = new CreateRoleCommand(
                 current.getName(),
                 "duplicate",
-                current.getPermissions(),
-                Instant.EPOCH,
-                Instant.EPOCH,
-                null
+                current.getPermissions().stream()
+                        .map(Permission::getCode)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new))
         );
 
         ApplicationException exception = assertThrows(
@@ -64,33 +69,32 @@ class RoleServiceTest {
 
     @Test
     void update_replacesDescription() {
-        Role current = roleService.getByName(RoleName.USER);
-        Set<Permission> permissions = new LinkedHashSet<>(current.getPermissions());
-        Role updated = new Role(
+        Role current = roleRepository.findByName(USER_ROLE).orElseThrow();
+        UpdateRoleCommand updated = new UpdateRoleCommand(
                 current.getId(),
                 current.getName(),
                 "updated description",
-                permissions,
-                current.getCreatedAt(),
-                current.getUpdatedAt(),
-                current.getDeletedAt()
+                current.getPermissions().stream()
+                        .map(Permission::getCode)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new))
         );
 
         Role saved = roleService.update(updated);
 
         assertEquals("updated description", saved.getDescription());
-        assertEquals("updated description", roleService.getByName(RoleName.USER).getDescription());
+        assertEquals("updated description", roleRepository.findByName(USER_ROLE).orElseThrow().getDescription());
     }
 
     @Test
     void delete_removesRole() {
-        Role current = roleService.getByName(RoleName.USER);
+        Role current = roleRepository.findByName(USER_ROLE).orElseThrow();
 
-        roleService.delete(current.getId());
+        roleService.delete(new DeleteRoleCommand(current.getId()));
 
         ApplicationException exception = assertThrows(
                 ApplicationException.class,
-                () -> roleService.getByName(RoleName.USER)
+                () -> roleRepository.findByName(USER_ROLE)
+                        .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND))
         );
 
         assertEquals(ApplicationErrorCode.ROLE_NOT_FOUND, exception.getErrorCode());

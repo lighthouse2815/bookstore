@@ -1,6 +1,5 @@
 package com.bookstore.bookstore.domain.model;
 
-import com.bookstore.bookstore.domain.enums.RoleName;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.UserRule;
@@ -89,13 +88,13 @@ public class User {
     }
 
 
-    public boolean hasRole(RoleName roleName) {
+    public boolean hasRole(String roleName) {
         if (roleName == null || roles == null) {
             return false;
         }
 
         return roles.stream()
-                .anyMatch(role -> role.getName() == roleName);
+                .anyMatch(role -> roleName.equals(role.getName()));
     }
 
 

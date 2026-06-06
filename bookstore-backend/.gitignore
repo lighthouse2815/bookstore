@@ -4,6 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Test sources
+**/src/test/
+
 ### STS ###
 .apt_generated
 .classpath
@@ -36,3 +39,6 @@ build/
 .env
 .env.*
 !.env.example
+
+# Test sources
+src/test/
