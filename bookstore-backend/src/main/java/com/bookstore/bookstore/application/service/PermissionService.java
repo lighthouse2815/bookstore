@@ -19,16 +19,41 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PermissionService implements IPermissionService {
 
-    public final IPermissionRepository permissionRepository;
+    private final IPermissionRepository permissionRepository;
 
     @Override
     public List<Permission> getAll() {
-        return permissionRepository.findAll();
+        return permissionRepository.findAllActive();
+    }
+
+    @Override
+    public List<Permission> getAllIncludingDeleted() {
+        return permissionRepository.findAllIncludingDeleted();
+    }
+
+    @Override
+    public Permission getById(UUID permissionId) {
+        if (permissionId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "permissionId");
+        }
+
+        return permissionRepository.findByIdActive(permissionId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PERMISSION_NOT_FOUND));
+    }
+
+    @Override
+    public Permission getByIdIncludingDeleted(UUID permissionId) {
+        if (permissionId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "permissionId");
+        }
+
+        return permissionRepository.findByIdIncludingDeleted(permissionId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PERMISSION_NOT_FOUND));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(UpdatePermissionCommand command) {
+    public Permission update(UpdatePermissionCommand command) {
         if (command == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "permission");
         }
@@ -36,17 +61,15 @@ public class PermissionService implements IPermissionService {
         UUID permissionId = command.permissionId();
         PermissionCode code = command.code();
 
-        Permission currentPermission = permissionRepository.findById(permissionId)
+        Permission currentPermission = permissionRepository.findByIdActive(permissionId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PERMISSION_NOT_FOUND));
 
-        if (permissionRepository.existsByCode(code)) {
+        if (!currentPermission.getCode().equals(code) && permissionRepository.existsByCodeIncludingDeleted(code)) {
             throw new ApplicationException(ApplicationErrorCode.PERMISSION_CODE_ALREADY_EXISTS);
         }
 
         currentPermission.updatePermission(code);
 
-        permissionRepository.save(currentPermission);
+        return permissionRepository.save(currentPermission);
     }
-
-   
 }

@@ -78,7 +78,7 @@ class AuthServiceTest {
 
         when(userService.create(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(profileService.create(any(Profile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(roleRepository.findByName(USER_ROLE)).thenReturn(Optional.of(defaultRole()));
+        when(roleRepository.findByNameActive(USER_ROLE)).thenReturn(Optional.of(defaultRole()));
         when(passwordEncoder.encode("  secret  ")).thenReturn("hashed-secret");
 
         RegisterResult result = authService.register(command);
@@ -95,7 +95,7 @@ class AuthServiceTest {
     void login_doesNotTrimPassword() {
         String password = "  secret  ";
         User user = activeUserWithPassword(password);
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(true);
         when(jwtService.generateAccessToken(user)).thenReturn("jwt-token");
 
@@ -109,7 +109,7 @@ class AuthServiceTest {
 
     @Test
     void login_rejectsMissingUser() {
-        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+        when(userRepository.findByUsernameActive("missing")).thenReturn(Optional.empty());
 
         ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
                 ApplicationException.class,
@@ -122,7 +122,7 @@ class AuthServiceTest {
     @Test
     void login_rejectsInactiveUser() {
         User user = userWithPassword(UserStatus.INACTIVE, false, null, "secret");
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
 
         DomainException exception = org.junit.jupiter.api.Assertions.assertThrows(
                 DomainException.class,
@@ -135,7 +135,7 @@ class AuthServiceTest {
     @Test
     void login_rejectsLockedUser() {
         User user = userWithPassword(UserStatus.ACTIVE, true, null, "secret");
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
 
         DomainException exception = org.junit.jupiter.api.Assertions.assertThrows(
                 DomainException.class,
@@ -147,21 +147,20 @@ class AuthServiceTest {
 
     @Test
     void login_rejectsDeletedUser() {
-        User user = userWithPassword(UserStatus.ACTIVE, false, Instant.EPOCH, "secret");
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.empty());
 
-        DomainException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DomainException.class,
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
                 () -> authService.login(new LoginCommand("username", "secret"))
         );
 
-        assertEquals(DomainErrorCode.DELETED_USER_CANNOT_LOGIN, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_USER_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test
     void login_rejectsInvalidPassword() {
         User user = userWithPassword(UserStatus.ACTIVE, false, null, "correct-password");
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-password", user.getPasswordHash())).thenReturn(false);
 
         ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(

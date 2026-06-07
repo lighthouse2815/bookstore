@@ -33,7 +33,12 @@ public class RoleService implements IRoleService {
 
     @Override
     public List<Role> getAll() {
-        return roleRepository.findAll();
+        return roleRepository.findAllActive();
+    }
+
+    @Override
+    public List<Role> getAllIncludingDeleted() {
+        return roleRepository.findAllIncludingDeleted();
     }
 
     @Override
@@ -46,7 +51,7 @@ public class RoleService implements IRoleService {
         String roleName = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
 
-        if (roleRepository.existsByName(roleName)) {
+        if (roleRepository.existsByNameIncludingDeleted(roleName)) {
             throw new ApplicationException(ApplicationErrorCode.ROLE_NAME_ALREADY_EXISTS);
         }
 
@@ -72,14 +77,14 @@ public class RoleService implements IRoleService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        Role currentRole = roleRepository.findById(command.roleId())
+        Role currentRole = roleRepository.findByIdActive(command.roleId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
 
         String roleName = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
         Set<Permission> permissions = toPermissions(command.permissionCodes());
 
-        if (!currentRole.getName().equals(roleName) && roleRepository.existsByName(roleName)) {
+        if (!currentRole.getName().equals(roleName) && roleRepository.existsByNameIncludingDeleted(roleName)) {
             throw new ApplicationException(ApplicationErrorCode.ROLE_NAME_ALREADY_EXISTS);
         }
 
@@ -94,7 +99,7 @@ public class RoleService implements IRoleService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        Role currentRole = roleRepository.findById(command.roleId())
+        Role currentRole = roleRepository.findByIdActive(command.roleId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
 
         currentRole.softDelete();
@@ -107,7 +112,7 @@ public class RoleService implements IRoleService {
         }
 
         return permissionCodes.stream()
-                .map(permissionCode -> permissionRepository.findByCode(permissionCode)
+                .map(permissionCode -> permissionRepository.findByCodeActive(permissionCode)
                         .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PERMISSION_NOT_FOUND)))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }

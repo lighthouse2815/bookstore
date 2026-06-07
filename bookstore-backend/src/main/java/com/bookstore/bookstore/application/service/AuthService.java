@@ -42,6 +42,7 @@ public class AuthService implements IAuthService {
     private final IPasswordEncoder passwordEncoder;
     private final IJwtService jwtService;
 
+    // TODO : THEM CHUC NANG TAO MOI TAI KHOAN KHI DA CO TAI KHOAN KHOA, CHECK TRONG BANG DELETE_USER
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RegisterResult register(RegisterCommand command) {
@@ -50,7 +51,7 @@ public class AuthService implements IAuthService {
         }
 
         Instant now = Instant.now();
-        Role defaultRole = roleRepository.findByName(USER_ROLE)
+        Role defaultRole = roleRepository.findByNameActive(USER_ROLE)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
         User user = new User(
                 UUID.randomUUID(),
@@ -95,7 +96,7 @@ public class AuthService implements IAuthService {
         String username = StringUtils.trimToNull(command.username());
         String password = command.password();
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameActive(username)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_USER_NOT_FOUND));
 
         user.requireCanLogin();

@@ -7,19 +7,25 @@ import java.util.UUID;
 
 public interface IUserRepository {
 
-    List<User> findAll();
+    List<User> findAllActive();
 
-    Optional<User> findById(UUID userId);
+    List<User> findAllIncludingDeleted();
 
-    Optional<User> findByUsername(String username);
+    Optional<User> findByIdActive(UUID userId);
 
-    boolean existsById(UUID userId);
+    Optional<User> findByIdIncludingDeleted(UUID userId);
 
-    boolean existsByUsername(String username);
+    Optional<User> findByUsernameActive(String username);
 
-    boolean existsByPhoneNumber(String phoneNumber);
+    Optional<User> findByUsernameIncludingDeleted(String username);
 
-    boolean existsByEmail(String email);
+    boolean existsByIdIncludingDeleted(UUID userId);
+
+    boolean existsByUsernameIncludingDeleted(String username);
+
+    boolean existsByPhoneNumberIncludingDeleted(String phoneNumber);
+
+    boolean existsByEmailIncludingDeleted(String email);
 
     void deleteById(UUID userId);
 

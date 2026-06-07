@@ -74,17 +74,5 @@ public class UserRule {
         if (deletedAt != null) {
             throw new DomainException(DomainErrorCode.DELETED_USER_CANNOT_UPDATE_ACCOUNT_INFO);
         }
-
-        if (phoneNumber.equals(newPhoneNumber)){
-            throw new DomainException(DomainErrorCode.USER_PHONE_ALREADY_EXISTS);
-        }
-
-        if (email.equals(newEmail)){
-            throw new DomainException(DomainErrorCode.USER_EMAIL_ALREADY_EXISTS);
-        }
-
-        if (username.equals(newUsername)){
-            throw new DomainException(DomainErrorCode.USER_USERNAME_ALREADY_EXISTS);
-        }
     }
 }

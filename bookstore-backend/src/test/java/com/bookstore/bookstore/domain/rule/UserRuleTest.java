@@ -87,8 +87,8 @@ class UserRuleTest {
     }
 
     @Test
-    void requireCanUpdateAccountInfo_rejectsDuplicatedPhoneNumber() {
-        DomainException exception = assertThrows(DomainException.class, () ->
+    void requireCanUpdateAccountInfo_allowsUnchangedPhoneNumber() {
+        assertDoesNotThrow(() ->
                 UserRule.requireCanUpdateAccountInfo(
                         UserStatus.ACTIVE,
                         false,
@@ -101,13 +101,11 @@ class UserRuleTest {
                         "0123456789"
                 )
         );
-
-        assertEquals(DomainErrorCode.USER_PHONE_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
-    void requireCanUpdateAccountInfo_rejectsDuplicatedEmail() {
-        DomainException exception = assertThrows(DomainException.class, () ->
+    void requireCanUpdateAccountInfo_allowsUnchangedEmail() {
+        assertDoesNotThrow(() ->
                 UserRule.requireCanUpdateAccountInfo(
                         UserStatus.ACTIVE,
                         false,
@@ -120,13 +118,11 @@ class UserRuleTest {
                         "0987654321"
                 )
         );
-
-        assertEquals(DomainErrorCode.USER_EMAIL_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
-    void requireCanUpdateAccountInfo_rejectsDuplicatedUsername() {
-        DomainException exception = assertThrows(DomainException.class, () ->
+    void requireCanUpdateAccountInfo_allowsUnchangedUsername() {
+        assertDoesNotThrow(() ->
                 UserRule.requireCanUpdateAccountInfo(
                         UserStatus.ACTIVE,
                         false,
@@ -139,8 +135,6 @@ class UserRuleTest {
                         "0987654321"
                 )
         );
-
-        assertEquals(DomainErrorCode.USER_USERNAME_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test

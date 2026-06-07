@@ -9,10 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(TestController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = {
+        "app.jwt.secret=01234567890123456789012345678901",
+        "app.jwt.expiration-minutes=60"
+})
 class SecurityConfigTest {
 
     @Autowired

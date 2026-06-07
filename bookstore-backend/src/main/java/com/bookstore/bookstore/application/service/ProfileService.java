@@ -24,9 +24,15 @@ public class ProfileService implements IProfileService {
 
     @Override
     public List<Profile> getAll() {
-        return profileRepository.findAll();
+        return profileRepository.findAllActive();
     }
 
+    @Override
+    public List<Profile> getAllIncludingDeleted() {
+        return profileRepository.findAllIncludingDeleted();
+    }
+
+    // TODO : chuc nang tao acc lai khi da xoa + khoi phuc
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Profile create(Profile profile) {
@@ -34,15 +40,35 @@ public class ProfileService implements IProfileService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "profile");
         }
 
-        if (!userRepository.existsById(profile.getUserId())) {
+        if (!userRepository.existsByIdIncludingDeleted(profile.getUserId())) {
             throw new ApplicationException(ApplicationErrorCode.PROFILE_USER_NOT_FOUND);
         }
 
-        if (profileRepository.existsByUserId(profile.getUserId())) {
+        if (profileRepository.existsByUserIdIncludingDeleted(profile.getUserId())) {
             throw new ApplicationException(ApplicationErrorCode.PROFILE_USER_ALREADY_HAS_PROFILE);
         }
 
         return profileRepository.save(profile);
+    }
+
+    @Override
+    public Profile getByUserId(UUID userId) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        return profileRepository.findByUserIdActive(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
+    }
+
+    @Override
+    public Profile getByIdIncludingDeleted(UUID profileId) {
+        if (profileId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "profileId");
+        }
+
+        return profileRepository.findByIdIncludingDeleted(profileId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
     }
 
     @Override
@@ -53,11 +79,11 @@ public class ProfileService implements IProfileService {
         }
 
         UUID userId = command.userId();
-        if (!userRepository.existsById(userId)) {
+        if (userRepository.findByIdActive(userId).isEmpty()) {
             throw new ApplicationException(ApplicationErrorCode.PROFILE_USER_NOT_FOUND);
         }
 
-        Profile currentProfile = profileRepository.findByUserId(userId)
+        Profile currentProfile = profileRepository.findByUserIdActive(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
 
         currentProfile.updateProfileInfo(
@@ -77,7 +103,7 @@ public class ProfileService implements IProfileService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "profileId");
         }
 
-        Profile currentProfile = profileRepository.findById(profileId)
+        Profile currentProfile = profileRepository.findByIdActive(profileId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
 
         currentProfile.softDelete();

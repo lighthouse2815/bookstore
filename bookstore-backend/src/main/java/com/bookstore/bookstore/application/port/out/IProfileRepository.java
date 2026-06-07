@@ -7,15 +7,21 @@ import java.util.UUID;
 
 public interface IProfileRepository {
 
-    List<Profile> findAll();
+    List<Profile> findAllActive();
 
-    Optional<Profile> findById(UUID profileId);
+    List<Profile> findAllIncludingDeleted();
 
-    Optional<Profile> findByUserId(UUID userId);
+    Optional<Profile> findByIdActive(UUID profileId);
 
-    boolean existsById(UUID profileId);
+    Optional<Profile> findByIdIncludingDeleted(UUID profileId);
 
-    boolean existsByUserId(UUID userId);
+    Optional<Profile> findByUserIdActive(UUID userId);
+
+    Optional<Profile> findByUserIdIncludingDeleted(UUID userId);
+
+    boolean existsByIdIncludingDeleted(UUID profileId);
+
+    boolean existsByUserIdIncludingDeleted(UUID userId);
 
     void deleteById(UUID profileId);
 

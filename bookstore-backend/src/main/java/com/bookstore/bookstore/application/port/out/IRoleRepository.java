@@ -8,17 +8,21 @@ import java.util.UUID;
 
 public interface IRoleRepository {
 
-    List<Role> findAll();
+    List<Role> findAllActive();
 
-    Optional<Role> findById(UUID roleId);
+    List<Role> findAllIncludingDeleted();
 
-    Optional<Role> findByName(String roleName);
+    Optional<Role> findByIdActive(UUID roleId);
 
-    boolean existsById(UUID roleId);
+    Optional<Role> findByIdIncludingDeleted(UUID roleId);
 
-    boolean existsByName(String roleName);
+    Optional<Role> findByNameActive(String roleName);
 
-    boolean existsByPermissionCode(PermissionCode permissionCode);
+    boolean existsByIdIncludingDeleted(UUID roleId);
+
+    boolean existsByNameIncludingDeleted(String roleName);
+
+    boolean existsByPermissionCodeIncludingDeleted(PermissionCode permissionCode);
 
     Role save(Role role);
 

@@ -37,7 +37,7 @@ public class Permission {
     public void updatePermission(PermissionCode code){
         PermissionRule.requireCanUpdate(deletedAt,this.code,code);
         setCode(code);
-        setCreatedAt(Instant.now());
+        setUpdatedAt(Instant.now());
     }
 
     private void setCode(PermissionCode code) {

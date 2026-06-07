@@ -9,7 +9,13 @@ public interface IProfileService {
 
     List<Profile> getAll();
 
+    List<Profile> getAllIncludingDeleted();
+
     Profile create(Profile profile);
+
+    Profile getByUserId(UUID userId);
+
+    Profile getByIdIncludingDeleted(UUID profileId);
 
     Profile update(UpdateProfileCommand command);
 

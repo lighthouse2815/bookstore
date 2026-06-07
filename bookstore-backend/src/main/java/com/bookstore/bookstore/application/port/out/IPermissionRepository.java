@@ -8,15 +8,19 @@ import java.util.UUID;
 
 public interface IPermissionRepository {
 
-    List<Permission> findAll();
+    List<Permission> findAllActive();
 
-    Optional<Permission> findById(UUID permissionId);
+    List<Permission> findAllIncludingDeleted();
 
-    Optional<Permission> findByCode(PermissionCode permissionCode);
+    Optional<Permission> findByIdActive(UUID permissionId);
 
-    boolean existsById(UUID permissionId);
+    Optional<Permission> findByIdIncludingDeleted(UUID permissionId);
 
-    boolean existsByCode(PermissionCode permissionCode);
+    Optional<Permission> findByCodeActive(PermissionCode permissionCode);
+
+    boolean existsByIdIncludingDeleted(UUID permissionId);
+
+    boolean existsByCodeIncludingDeleted(PermissionCode permissionCode);
 
     Permission save(Permission permission);
 

@@ -10,6 +10,8 @@ public interface IRoleService {
 
     List<Role> getAll();
 
+    List<Role> getAllIncludingDeleted();
+
     Role create(CreateRoleCommand command);
 
     Role update(UpdateRoleCommand command);

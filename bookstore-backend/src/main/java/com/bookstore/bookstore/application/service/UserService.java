@@ -30,9 +30,16 @@ public class UserService implements IUserService {
 
     @Override
     public List<User> getAll() {
-        return userRepository.findAll();
+        return userRepository.findAllActive();
     }
 
+    @Override
+    public List<User> getAllIncludingDeleted() {
+        return userRepository.findAllIncludingDeleted();
+    }
+
+
+    // TODO khoi phuc acc
     @Override
     @Transactional(rollbackFor = Exception.class)
     public User create(User user) {
@@ -40,19 +47,39 @@ public class UserService implements IUserService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "user");
         }
 
-        if (userRepository.existsByUsername(user.getUsername())) {
+        if (userRepository.existsByUsernameIncludingDeleted(user.getUsername())) {
             throw new ApplicationException(ApplicationErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumberIncludingDeleted(user.getPhoneNumber())) {
             throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByEmail(user.getEmail())) {
+        if (userRepository.existsByEmailIncludingDeleted(user.getEmail())) {
             throw new ApplicationException(ApplicationErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
 
         return userRepository.save(user);
+    }
+
+    @Override
+    public User getById(UUID userId) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        return userRepository.findByIdActive(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
+    }
+
+    @Override
+    public User getByIdIncludingDeleted(UUID userId) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        return userRepository.findByIdIncludingDeleted(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
     }
 
     @Override
@@ -63,22 +90,25 @@ public class UserService implements IUserService {
         }
 
         UUID userId = command.userId();
-        User currentUser = userRepository.findById(userId)
+        User currentUser = userRepository.findByIdActive(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
         String username = StringUtils.trimToNull(command.username());
         String phoneNumber = StringUtils.trimToNull(command.phoneNumber());
         String email = StringUtils.trimToNull(command.email());
 
-        if (userRepository.existsByUsername(username)) {
+        if (!currentUser.getUsername().equals(username)
+                && userRepository.existsByUsernameIncludingDeleted(username)) {
             throw new ApplicationException(ApplicationErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+        if ( !currentUser.getPhoneNumber().equals(phoneNumber)
+                && userRepository.existsByPhoneNumberIncludingDeleted(phoneNumber)) {
             throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByEmail(email)) {
+        if  !currentUser.getEmail().equals(email)
+                && userRepository.existsByEmailIncludingDeleted(email)) {
             throw new ApplicationException(ApplicationErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
 
@@ -98,7 +128,7 @@ public class UserService implements IUserService {
 
         // Admin xoa user khac, con user co the tu xoa chinh minh.
         if (!adminId.equals(userId)) {
-            User admin = userRepository.findById(adminId)
+            User admin = userRepository.findByIdActive(adminId)
                     .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
             if (!admin.hasRole(ADMIN_ROLE)){
@@ -106,14 +136,14 @@ public class UserService implements IUserService {
             }
         }
 
-        User currentUser = userRepository.findById(userId)
+        User currentUser = userRepository.findByIdActive(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
         currentUser.softDelete();
         userRepository.save(currentUser);
 
         // xoa profile
-        profileRepository.findByUserId(userId)
+        profileRepository.findByUserIdActive(userId)
                 .ifPresent(profile -> profileService.delete(profile.getId()));
     }
 }

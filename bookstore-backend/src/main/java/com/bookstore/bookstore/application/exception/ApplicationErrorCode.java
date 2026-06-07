@@ -19,6 +19,17 @@ public enum ApplicationErrorCode {
     ROLE_NOT_FOUND("APPLICATION_ROLE_002", "khong tim thay role"),
     ROLE_NAME_ALREADY_EXISTS("APPLICATION_ROLE_003", "role da ton tai"),
 
+    CATEGORY_NOT_FOUND("APPLICATION_CATEGORY_001", "khong tim thay category"),
+    CATEGORY_NAME_ALREADY_EXISTS("APPLICATION_CATEGORY_002", "category da ton tai"),
+
+    AUTHOR_NOT_FOUND("APPLICATION_AUTHOR_001", "khong tim thay author"),
+    AUTHOR_NAME_ALREADY_EXISTS("APPLICATION_AUTHOR_002", "author da ton tai"),
+
+    PUBLISHER_NOT_FOUND("APPLICATION_PUBLISHER_001", "khong tim thay publisher"),
+    PUBLISHER_NAME_ALREADY_EXISTS("APPLICATION_PUBLISHER_002", "publisher da ton tai"),
+
+    BOOK_NOT_FOUND("APPLICATION_BOOK_001", "khong tim thay book"),
+
     PERMISSION_ALREADY_EXISTS("APPLICATION_PERMISSION_001", "permission da ton tai"),
     PERMISSION_NOT_FOUND("APPLICATION_PERMISSION_002", "khong tim thay permission"),
     PERMISSION_CODE_ALREADY_EXISTS("APPLICATION_PERMISSION_003", "permission da ton tai"),
