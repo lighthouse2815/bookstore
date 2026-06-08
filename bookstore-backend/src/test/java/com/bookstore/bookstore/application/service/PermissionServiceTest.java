@@ -11,6 +11,8 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.out.IPermissionRepository;
 import com.bookstore.bookstore.domain.enums.PermissionCode;
+import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.Permission;
 import java.time.Instant;
 import java.util.List;
@@ -55,26 +57,27 @@ class PermissionServiceTest {
     @Test
     void update_returnsUpdatedPermission() {
         Permission current = permission(PermissionCode.BOOK_VIEW, "book view");
-        PermissionCode nextCode = PermissionCode.BOOK_CREATE;
-        UpdatePermissionCommand command = new UpdatePermissionCommand(current.getId(), nextCode, null);
+        String nextDescription = "book view updated";
+        UpdatePermissionCommand command = new UpdatePermissionCommand(current.getId(), current.getCode(), nextDescription);
 
         when(permissionRepository.findByIdActive(current.getId())).thenReturn(Optional.of(current));
-        when(permissionRepository.existsByCodeIncludingDeleted(nextCode)).thenReturn(false);
         when(permissionRepository.save(any(Permission.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Permission saved = permissionService.update(command);
 
         ArgumentCaptor<Permission> captor = ArgumentCaptor.forClass(Permission.class);
         verify(permissionRepository).save(captor.capture());
-        assertEquals(nextCode, captor.getValue().getCode());
-        assertEquals(nextCode, saved.getCode());
+        assertEquals(current.getCode(), captor.getValue().getCode());
+        assertEquals(nextDescription, captor.getValue().getDescription());
+        assertEquals(current.getCode(), saved.getCode());
+        assertEquals(nextDescription, saved.getDescription());
     }
 
     @Test
     void update_rejectsDuplicateCode() {
         Permission current = permission(PermissionCode.BOOK_VIEW, "book view");
         PermissionCode nextCode = PermissionCode.BOOK_CREATE;
-        UpdatePermissionCommand command = new UpdatePermissionCommand(current.getId(), nextCode, null);
+        UpdatePermissionCommand command = new UpdatePermissionCommand(current.getId(), nextCode, "book view");
 
         when(permissionRepository.findByIdActive(current.getId())).thenReturn(Optional.of(current));
         when(permissionRepository.existsByCodeIncludingDeleted(nextCode)).thenReturn(true);
@@ -85,6 +88,25 @@ class PermissionServiceTest {
         );
 
         assertEquals(ApplicationErrorCode.PERMISSION_CODE_ALREADY_EXISTS, exception.getErrorCode());
+    }
+
+    @Test
+    void update_rejectsNoChange() {
+        Permission current = permission(PermissionCode.BOOK_VIEW, "book view");
+        UpdatePermissionCommand command = new UpdatePermissionCommand(
+                current.getId(),
+                current.getCode(),
+                current.getDescription()
+        );
+
+        when(permissionRepository.findByIdActive(current.getId())).thenReturn(Optional.of(current));
+
+        DomainException exception = assertThrows(
+                DomainException.class,
+                () -> permissionService.update(command)
+        );
+
+        assertEquals(DomainErrorCode.PERMISSION_DATA_NOT_CHANGED, exception.getErrorCode());
     }
 
     private static Permission permission(PermissionCode code, String description) {

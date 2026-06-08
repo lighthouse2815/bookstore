@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record UpdatePermissionRequest(
         @NotNull(message = "code khong duoc null")
-        PermissionCode code
+        PermissionCode code,
+
+        String description
 ) {
 }

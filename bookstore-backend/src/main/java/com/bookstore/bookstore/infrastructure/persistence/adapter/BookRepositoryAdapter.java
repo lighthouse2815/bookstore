@@ -5,6 +5,7 @@ import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.BookPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +43,13 @@ public class BookRepositoryAdapter implements IBookRepository {
     public Optional<Book> findByIdIncludingDeleted(UUID bookId) {
         return bookJpaRepository.findByIdIncludingDeleted(bookId)
                 .map(bookPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds) {
+        return bookJpaRepository.findAllById(bookIds).stream()
+                .map(bookPersistenceMapper::toDomain)
+                .toList();
     }
 
     @Override

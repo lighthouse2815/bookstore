@@ -56,6 +56,24 @@ public final class BookRule {
         }
     }
 
+    public static void requirePositiveStockDecreaseQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new DomainException(DomainErrorCode.INVALID_BOOK_STOCK_DECREASE_QUANTITY, "quantity");
+        }
+    }
+
+    public static void requirePositiveStockIncreaseQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new DomainException(DomainErrorCode.INVALID_BOOK_STOCK_INCREASE_QUANTITY, "quantity");
+        }
+    }
+
+    public static void requireEnoughStock(int currentStockQuantity, int quantity) {
+        if (quantity > currentStockQuantity) {
+            throw new DomainException(DomainErrorCode.BOOK_STOCK_NOT_ENOUGH);
+        }
+    }
+
     private static void requireNonNegativePrice(BigDecimal price) {
         if (price.compareTo(BigDecimal.ZERO) < 0) {
             throw new DomainException(DomainErrorCode.INVALID_BOOK_PRICE);

@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
+import com.bookstore.bookstore.application.port.out.IRefreshTokenRepository;
 import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.application.result.RegisterResult;
@@ -22,6 +23,7 @@ import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.Profile;
+import com.bookstore.bookstore.domain.model.RefreshToken;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import java.time.Instant;
@@ -58,6 +60,9 @@ class AuthServiceTest {
 
     @Mock
     private IJwtService jwtService;
+
+    @Mock
+    private IRefreshTokenRepository refreshTokenRepository;
 
     @InjectMocks
     private AuthService authService;
@@ -98,6 +103,8 @@ class AuthServiceTest {
         when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(true);
         when(jwtService.generateAccessToken(user)).thenReturn("jwt-token");
+        when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class))).thenReturn(Instant.now().plusSeconds(300));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = authService.login(new LoginCommand("username", password));
 
@@ -105,6 +112,7 @@ class AuthServiceTest {
         assertEquals(UserStatus.ACTIVE, result.status());
         assertTrue(result.roles().contains(USER_ROLE));
         assertEquals("jwt-token", result.accessToken());
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
     @Test

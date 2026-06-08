@@ -50,6 +50,22 @@ public final class Guard {
         return normalized;
     }
 
+    public static String phoneNumberOrNull(String value, DomainErrorCode errorCode, String fieldName) {
+        return value == null ? null : phoneNumber(value, errorCode, fieldName);
+    }
+
+    public static String email(String value, DomainErrorCode errorCode, String fieldName) {
+        String normalized = notBlank(value, errorCode, fieldName);
+        if (!normalized.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new DomainException(errorCode, fieldName);
+        }
+        return normalized;
+    }
+
+    public static String emailOrNull(String value, DomainErrorCode errorCode, String fieldName) {
+        return value == null ? null : email(value, errorCode, fieldName);
+    }
+
     public static <T> Collection<T> noNullElements(Collection<T> value, DomainErrorCode errorCode, String fieldName) {
         Collection<T> normalized = notNull(value, errorCode, fieldName);
         for (T element : normalized) {

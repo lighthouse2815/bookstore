@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.domain.model.Book;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,8 @@ public interface IBookRepository {
     Optional<Book> findByIdActive(UUID bookId);
 
     Optional<Book> findByIdIncludingDeleted(UUID bookId);
+
+    List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds);
 
     List<Book> searchByKeywordActive(String keyword);
 

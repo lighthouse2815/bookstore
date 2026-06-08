@@ -107,7 +107,7 @@ public class UserService implements IUserService {
             throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
 
-        if  !currentUser.getEmail().equals(email)
+        if (!currentUser.getEmail().equals(email)
                 && userRepository.existsByEmailIncludingDeleted(email)) {
             throw new ApplicationException(ApplicationErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }

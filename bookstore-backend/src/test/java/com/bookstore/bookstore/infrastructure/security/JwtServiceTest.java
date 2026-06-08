@@ -30,7 +30,7 @@ class JwtServiceTest {
         SecretKey secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         JwtEncoder encoder = new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
         JwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).build();
-        JwtService jwtService = new JwtService(encoder, new JwtProperties(secret, 60));
+        JwtService jwtService = new JwtService(encoder, new JwtProperties(secret, 60, 30));
         User user = user();
 
         String token = jwtService.generateAccessToken(user);

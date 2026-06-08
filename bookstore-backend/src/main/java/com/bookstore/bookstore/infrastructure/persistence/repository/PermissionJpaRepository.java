@@ -35,6 +35,13 @@ public interface PermissionJpaRepository extends JpaRepository<PermissionJpaEnti
     @Query("""
             select p
             from PermissionJpaEntity p
+            where p.id = :id
+            """)
+    Optional<PermissionJpaEntity> findByIdIncludingDeleted(@Param("id") UUID id);
+
+    @Query("""
+            select p
+            from PermissionJpaEntity p
             where p.code = :code
             """)
     Optional<PermissionJpaEntity> findByCodeIncludingDeleted(@Param("code") PermissionCode code);

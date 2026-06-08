@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.port.in.IPermissionService;
 import com.bookstore.bookstore.application.port.out.IPermissionRepository;
 import com.bookstore.bookstore.domain.enums.PermissionCode;
 import com.bookstore.bookstore.domain.model.Permission;
+import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,12 +64,14 @@ public class PermissionService implements IPermissionService {
 
         Permission currentPermission = permissionRepository.findByIdActive(permissionId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PERMISSION_NOT_FOUND));
+        String description = StringUtils.trimToNull(command.description());
+        
 
         if (!currentPermission.getCode().equals(code) && permissionRepository.existsByCodeIncludingDeleted(code)) {
             throw new ApplicationException(ApplicationErrorCode.PERMISSION_CODE_ALREADY_EXISTS);
         }
 
-        currentPermission.updatePermission(code);
+        currentPermission.updatePermission(code, description);
 
         return permissionRepository.save(currentPermission);
     }

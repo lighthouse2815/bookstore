@@ -99,6 +99,19 @@ public class Book {
         setDeletedAt(now);
     }
 
+    public void decreaseStock(int quantity) {
+        BookRule.requirePositiveStockDecreaseQuantity(quantity);
+        BookRule.requireEnoughStock(stockQuantity, quantity);
+        setStockQuantity(stockQuantity - quantity);
+        setUpdatedAt(Instant.now());
+    }
+
+    public void increaseStock(int quantity) {
+        BookRule.requirePositiveStockIncreaseQuantity(quantity);
+        setStockQuantity(stockQuantity + quantity);
+        setUpdatedAt(Instant.now());
+    }
+
     private void setTitle(String title) {
         this.title = Guard.notBlank(title, DomainErrorCode.INVALID_BOOK_TITLE, "title");
     }

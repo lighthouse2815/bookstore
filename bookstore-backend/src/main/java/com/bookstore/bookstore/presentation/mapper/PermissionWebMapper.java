@@ -14,7 +14,7 @@ public class PermissionWebMapper {
         return new UpdatePermissionCommand(
                 permissionId,
                 request.code(),
-                null
+                request.description()
         );
     }
 

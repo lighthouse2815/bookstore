@@ -8,6 +8,7 @@ public record LoginResponse(
         UUID userId,
         UserStatus status,
         Set<String> roles,
-        String accessToken
+        String accessToken,
+        String refreshToken
 ) {
 }

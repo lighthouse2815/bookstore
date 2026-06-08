@@ -44,4 +44,9 @@ public class JwtService implements IJwtService {
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
+
+    @Override
+    public Instant calculateRefreshTokenExpiresAt(Instant issuedAt) {
+        return issuedAt.plus(jwtProperties.refreshExpirationDays(), ChronoUnit.DAYS);
+    }
 }

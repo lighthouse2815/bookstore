@@ -8,7 +8,8 @@ public record LoginResult(
         UUID userId,
         UserStatus status,
         Set<String> roles,
-        String accessToken
+        String accessToken,
+        String refreshToken
 ) {
     public LoginResult {
         roles = roles == null ? Set.of() : Set.copyOf(roles);

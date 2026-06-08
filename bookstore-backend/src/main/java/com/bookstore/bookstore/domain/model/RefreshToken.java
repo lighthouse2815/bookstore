@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.RefreshTokenRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -32,6 +33,14 @@ public class RefreshToken {
         setExpiresAt(expiresAt);
     }
 
+    public boolean isExpiredAt(Instant instant) {
+        return !expiresAt.isAfter(Guard.notNull(instant, DomainErrorCode.INVALID_REFRESH_TOKEN_EXPIRES_AT, "instant"));
+    }
+
+    public void revoke() {
+        this.revoked = true;
+    }
+
     private void setUserId(UUID userId) {
         this.userId = Guard.notNull(userId, DomainErrorCode.INVALID_REFRESH_TOKEN_USER_ID, "userId");
     }
@@ -41,18 +50,12 @@ public class RefreshToken {
     }
 
     private void setExpiresAt(Instant expiresAt) {
-        Instant validExpiresAt = Guard.inFuture(
+        Instant validExpiresAt = Guard.notNull(
                 expiresAt,
                 DomainErrorCode.INVALID_REFRESH_TOKEN_EXPIRES_AT,
                 "expiresAt"
         );
-        Guard.after(
-                validExpiresAt,
-                this.createdAt,
-                DomainErrorCode.INVALID_REFRESH_TOKEN_AUDIT_ORDER,
-                "expiresAt",
-                "createdAt"
-        );
+        RefreshTokenRule.requireExpiresAfterCreatedAt(validExpiresAt, this.createdAt);
         this.expiresAt = validExpiresAt;
     }
 
@@ -66,13 +69,7 @@ public class RefreshToken {
                 DomainErrorCode.INVALID_REFRESH_TOKEN_CREATED_AT,
                 "createdAt"
         );
-        Guard.after(
-                this.expiresAt,
-                validCreatedAt,
-                DomainErrorCode.INVALID_REFRESH_TOKEN_AUDIT_ORDER,
-                "expiresAt",
-                "createdAt"
-        );
+        RefreshTokenRule.requireExpiresAfterCreatedAt(this.expiresAt, validCreatedAt);
         this.createdAt = validCreatedAt;
     }
 }

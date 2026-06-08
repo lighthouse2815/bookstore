@@ -3,6 +3,8 @@ package com.bookstore.bookstore.presentation.controller;
 import com.bookstore.bookstore.application.port.in.IAuthService;
 import com.bookstore.bookstore.presentation.mapper.AuthWebMapper;
 import com.bookstore.bookstore.presentation.request.LoginRequest;
+import com.bookstore.bookstore.presentation.request.LogoutRequest;
+import com.bookstore.bookstore.presentation.request.RefreshTokenRequest;
 import com.bookstore.bookstore.presentation.request.RegisterRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.LoginResponse;
@@ -35,5 +37,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         var result = authService.login(authWebMapper.toLoginCommand(request));
         return ResponseEntity.ok(ApiResponse.success(authWebMapper.toLoginResponse(result)));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        var result = authService.refresh(authWebMapper.toRefreshCommand(request));
+        return ResponseEntity.ok(ApiResponse.success(authWebMapper.toLoginResponse(result)));
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(authWebMapper.toLogoutCommand(request));
+        return ApiResponse.success("Logged out", null);
     }
 }

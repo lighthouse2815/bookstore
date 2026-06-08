@@ -34,9 +34,10 @@ public class Permission {
         setDeletedAt(deletedAt);
     }
 
-    public void updatePermission(PermissionCode code){
-        PermissionRule.requireCanUpdate(deletedAt,this.code,code);
+    public void updatePermission(PermissionCode code, String description){
+        PermissionRule.requireCanUpdate(deletedAt, this.code, this.description, code, description);
         setCode(code);
+        setDescription(description);
         setUpdatedAt(Instant.now());
     }
 
