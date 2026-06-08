@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="vi" class="bg-background">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      ;(() => {
+        const storageKey = 'bookstore-theme'
+
+        try {
+          const storedTheme = window.localStorage.getItem(storageKey)
+          const theme = storedTheme === 'dark' ? 'dark' : 'light'
+
+          document.documentElement.classList.toggle('dark', theme === 'dark')
+        } catch {
+          document.documentElement.classList.remove('dark')
+        }
+      })()
+    </script>
+    <title>Sách Vui - Nhà sách trực tuyến cho người trẻ</title>
+    <meta
+      name="description"
+      content="Khám phá hàng ngàn đầu sách hay với giá tốt. Tiểu thuyết, kỹ năng sống, khoa học và nhiều hơn nữa tại Sách Vui."
+    />
+    <meta name="theme-color" content="#e8623a" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/index-DZZa0jnI.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-lOOhOSuL.css">
+  </head>
+  <body class="font-sans antialiased">
+    <div id="root"></div>
+  </body>
+</html>
