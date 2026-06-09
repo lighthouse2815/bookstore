@@ -19,14 +19,14 @@ import { useTheme } from '@/contexts/theme-context'
 import { cn } from '@/utils'
 
 export function Header() {
-  const { items } = useCart()
+  const { totalQuantity } = useCart()
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { t } = useLanguage()
   const brand = t('common.brand')
   const brandPrefix = brand.endsWith('Vui') ? brand.slice(0, -3) : brand
   const location = useLocation()
-  const totalItems = items.length
+  const totalItems = totalQuantity
   const [open, setOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)

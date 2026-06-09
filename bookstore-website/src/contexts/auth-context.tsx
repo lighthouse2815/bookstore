@@ -1,4 +1,3 @@
-import axios from 'axios'
 import {
   createContext,
   useContext,
@@ -14,13 +13,15 @@ import {
   register as registerRequest,
 } from '@/services/auth-service'
 import { useLanguage } from '@/contexts/language-context'
-import type { ApiResponse } from '@/types/api'
+import { getCurrentProfile } from '@/services/profile-service'
 import type {
   LoginRequest,
   RegisterRequest,
   User,
   UserMeResponse,
 } from '@/types/auth'
+import type { ProfileResponse } from '@/types/profile'
+import { getErrorMessage } from '@/utils'
 
 type AuthContextType = {
   user: User | null
@@ -29,6 +30,7 @@ type AuthContextType = {
   login: (username: string, password: string) => Promise<void>
   register: (payload: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
+  refreshUser: () => Promise<User>
 }
 
 const ACCESS_TOKEN_KEY = 'accessToken'
@@ -41,20 +43,27 @@ function buildAvatar(username: string) {
   return username.trim().charAt(0).toUpperCase() || 'U'
 }
 
-function mapUser(profile: UserMeResponse): User {
+function mapUser(
+  account: UserMeResponse,
+  profile?: ProfileResponse | null,
+): User {
+  const fullName = [profile?.lastName, profile?.firstName]
+    .filter((value) => Boolean(value && value.trim() !== ''))
+    .join(' ')
+
   return {
-    id: profile.userId,
-    username: profile.username,
-    email: profile.email,
-    phoneNumber: profile.phoneNumber,
-    status: profile.status,
-    locked: profile.locked,
-    roles: profile.roles,
-    role: profile.roles[0] ?? 'USER',
-    name: profile.username,
-    avatar: buildAvatar(profile.username),
-    createdAt: profile.createdAt,
-    updatedAt: profile.updatedAt,
+    id: account.userId,
+    username: account.username,
+    email: account.email,
+    phoneNumber: account.phoneNumber,
+    status: account.status,
+    locked: account.locked,
+    roles: account.roles,
+    role: account.roles[0] ?? 'USER',
+    name: fullName || account.username,
+    avatar: buildAvatar(profile?.firstName || account.username),
+    createdAt: account.createdAt,
+    updatedAt: account.updatedAt,
   }
 }
 
@@ -88,18 +97,6 @@ function clearSession() {
   localStorage.removeItem(AUTH_USER_KEY)
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
-    return error.response?.data?.message ?? error.message ?? fallback
-  }
-
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { t } = useLanguage()
   const [user, setUser] = useState<User | null>(() => getStoredUser())
@@ -110,8 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function syncCurrentUser() {
-    const profile = await getCurrentUser()
-    const nextUser = mapUser(profile)
+    const [account, profileResult] = await Promise.all([
+      getCurrentUser(),
+      getCurrentProfile().catch(() => null),
+    ])
+    const nextUser = mapUser(account, profileResult)
     setUser(nextUser)
     persistUser(nextUser)
     return nextUser
@@ -205,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser: syncCurrentUser,
       }}
     >
       {children}

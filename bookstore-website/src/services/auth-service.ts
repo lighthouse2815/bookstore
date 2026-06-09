@@ -7,6 +7,7 @@ import type {
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
+  UpdateUserRequest,
   UserMeResponse,
 } from '@/types/auth'
 import { unwrapResponse } from '@/utils'
@@ -42,5 +43,12 @@ export async function logout(data: LogoutRequest): Promise<void> {
 
 export async function getCurrentUser(): Promise<UserMeResponse> {
   const response = await api.get<ApiResponse<UserMeResponse>>('/users/me')
+  return unwrapResponse(response)
+}
+
+export async function updateCurrentUser(
+  data: UpdateUserRequest,
+): Promise<UserMeResponse> {
+  const response = await api.put<ApiResponse<UserMeResponse>>('/users/me', data)
   return unwrapResponse(response)
 }

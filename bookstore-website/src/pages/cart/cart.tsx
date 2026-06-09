@@ -7,9 +7,10 @@ import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
 
 export default function CartPage() {
-  const { items, removeItem, updateQty } = useCart()
+  const { items, removeItem, updateQty, total, totalQuantity, isLoading } =
+    useCart()
   const { t, formatCurrency, formatNumber } = useLanguage()
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0)
+  const subtotal = total
   const shipping = subtotal >= 200000 ? 0 : 30000
   const finalTotal = subtotal + shipping
 
@@ -22,11 +23,17 @@ export default function CartPage() {
             {t('cart.title')}
           </h1>
           <p className="text-muted-foreground">
-            {t('cart.itemCount', { count: formatNumber(items.length) })}
+            {t('cart.itemCount', { count: formatNumber(totalQuantity) })}
           </p>
         </div>
 
-        {items.length === 0 ? (
+        {isLoading ? (
+          <div className="py-12 text-center">
+            <p className="text-lg text-muted-foreground">
+              {t('common.loading')}
+            </p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="py-12 text-center">
             <ShoppingCart className="mx-auto mb-4 size-12 text-muted-foreground" />
             <p className="mb-4 text-lg text-muted-foreground">
@@ -56,9 +63,6 @@ export default function CartPage() {
                           {item.title}
                         </h3>
                       </Link>
-                      <p className="text-sm text-muted-foreground">
-                        {item.author}
-                      </p>
                       <p className="mt-2 font-heading text-lg font-bold text-primary">
                         {formatCurrency(item.price)}
                       </p>
@@ -66,9 +70,9 @@ export default function CartPage() {
                     <div className="flex flex-col items-end justify-between">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() =>
-                            updateQty(item.id, Math.max(1, item.qty - 1))
-                          }
+                          onClick={() => {
+                            void updateQty(item.id, Math.max(1, item.qty - 1))
+                          }}
                           className="rounded border px-2 py-1 hover:bg-muted"
                           aria-label="-"
                         >
@@ -76,7 +80,9 @@ export default function CartPage() {
                         </button>
                         <span className="w-8 text-center">{item.qty}</span>
                         <button
-                          onClick={() => updateQty(item.id, item.qty + 1)}
+                          onClick={() => {
+                            void updateQty(item.id, item.qty + 1)
+                          }}
                           className="rounded border px-2 py-1 hover:bg-muted"
                           aria-label="+"
                         >
@@ -84,7 +90,9 @@ export default function CartPage() {
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => {
+                          void removeItem(item.id)
+                        }}
                         className="mt-2 text-destructive hover:text-destructive/80"
                         aria-label={t('common.actions')}
                       >

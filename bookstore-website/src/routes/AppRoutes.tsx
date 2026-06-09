@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import HomePage from '@/pages/home/home'
 import BooksPage from '@/pages/book/books'
@@ -7,13 +7,18 @@ import CartPage from '@/pages/cart/cart'
 import CheckoutPage from '@/pages/cart/checkout'
 import NotFoundPage from '@/pages/home/not-found'
 import OrderConfirmationPage from '@/pages/order/order-confirmation'
+import MyOrdersPage from '@/pages/order/my-orders'
+import OrderDetailPage from '@/pages/order/order-detail'
 import LoginPage from '@/pages/auth/login'
 import RegisterPage from '@/pages/auth/register'
 import ProfilePage from '@/pages/auth/profile'
-import AdminDashboard from '@/pages/admin/dashboard'
-import AdminBooksPage from '@/pages/admin/books'
-import AdminOrdersPage from '@/pages/admin/orders'
+import { useLanguage } from '@/contexts/language-context'
 import { ProtectedRoute } from './protected-route'
+
+const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
+const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
+const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminReferencesPage = lazy(() => import('@/pages/admin/references'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -23,6 +28,20 @@ function ScrollToTop() {
   }, [pathname])
 
   return null
+}
+
+function RouteLoading() {
+  const { t } = useLanguage()
+
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center px-4 py-12">
+      <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+    </div>
+  )
+}
+
+function LazyAdminPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<RouteLoading />}>{children}</Suspense>
 }
 
 function AppRouteContent() {
@@ -53,6 +72,22 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/order-confirmation"
           element={
             <ProtectedRoute>
@@ -72,7 +107,9 @@ function AppRouteContent() {
           path="/admin"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <AdminDashboard />
+              <LazyAdminPage>
+                <AdminDashboard />
+              </LazyAdminPage>
             </ProtectedRoute>
           }
         />
@@ -80,7 +117,9 @@ function AppRouteContent() {
           path="/admin/books"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <AdminBooksPage />
+              <LazyAdminPage>
+                <AdminBooksPage />
+              </LazyAdminPage>
             </ProtectedRoute>
           }
         />
@@ -88,7 +127,19 @@ function AppRouteContent() {
           path="/admin/orders"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <AdminOrdersPage />
+              <LazyAdminPage>
+                <AdminOrdersPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/references"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminReferencesPage />
+              </LazyAdminPage>
             </ProtectedRoute>
           }
         />

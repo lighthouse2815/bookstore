@@ -1,3 +1,8 @@
+import type {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from '@/types/order'
 import type { Gender, UserRole } from '@/types/auth'
 
 type TranslateFunction = (
@@ -26,11 +31,30 @@ const categoryKeys: Record<string, string> = {
 }
 
 const orderStatusKeys: Record<string, string> = {
+  PENDING: 'orderStatus.PENDING',
+  CONFIRMED: 'orderStatus.CONFIRMED',
+  SHIPPING: 'orderStatus.SHIPPING',
+  DELIVERED: 'orderStatus.DELIVERED',
+  CANCELLED: 'orderStatus.CANCELLED',
   pending: 'orderStatus.pending',
   processing: 'orderStatus.processing',
   shipped: 'orderStatus.shipped',
   delivered: 'orderStatus.delivered',
   cancelled: 'orderStatus.cancelled',
+}
+
+const paymentMethodKeys: Record<PaymentMethod, string> = {
+  COD: 'paymentMethods.COD',
+  BANK_TRANSFER: 'paymentMethods.BANK_TRANSFER',
+  VNPAY: 'paymentMethods.VNPAY',
+  MOMO: 'paymentMethods.MOMO',
+}
+
+const paymentStatusKeys: Record<PaymentStatus, string> = {
+  UNPAID: 'paymentStatus.UNPAID',
+  PAID: 'paymentStatus.PAID',
+  FAILED: 'paymentStatus.FAILED',
+  REFUNDED: 'paymentStatus.REFUNDED',
 }
 
 const roleKeys: Record<UserRole, string> = {
@@ -58,6 +82,20 @@ export function getCategoryLabel(category: string, t: TranslateFunction) {
 export function getOrderStatusLabel(status: string, t: TranslateFunction) {
   const key = orderStatusKeys[status]
   return key ? t(key) : status
+}
+
+export function getPaymentMethodLabel(
+  paymentMethod: PaymentMethod,
+  t: TranslateFunction,
+) {
+  return t(paymentMethodKeys[paymentMethod])
+}
+
+export function getPaymentStatusLabel(
+  paymentStatus: PaymentStatus,
+  t: TranslateFunction,
+) {
+  return t(paymentStatusKeys[paymentStatus])
 }
 
 export function getUserRoleLabel(role: UserRole, t: TranslateFunction) {

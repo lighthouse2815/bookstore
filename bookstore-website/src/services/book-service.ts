@@ -4,18 +4,14 @@ import type {
   AuthorResponse,
   Book,
   BookCatalog,
+  BookReferenceData,
   BookResponse,
   CategoryResponse,
   PublisherResponse,
   SearchBooksRequest,
+  UpsertBookRequest,
 } from '@/types/book'
 import { unwrapResponse } from '@/utils'
-
-type BookReferenceData = {
-  categories: CategoryResponse[]
-  authors: AuthorResponse[]
-  publishers: PublisherResponse[]
-}
 
 export async function getBookCatalog(
   request: SearchBooksRequest = {},
@@ -42,6 +38,32 @@ export async function getBookById(id: string): Promise<Book> {
   const referenceMaps = buildBookReferenceMaps(referenceData)
 
   return mapBookResponseToBook(bookResponse, referenceMaps)
+}
+
+export async function getBookReferences(): Promise<BookReferenceData> {
+  return getBookReferenceData()
+}
+
+export async function createBook(
+  data: UpsertBookRequest,
+): Promise<BookResponse> {
+  const response = await api.post<ApiResponse<BookResponse>>('/admin/books', data)
+  return unwrapResponse(response)
+}
+
+export async function updateBook(
+  id: string,
+  data: UpsertBookRequest,
+): Promise<BookResponse> {
+  const response = await api.put<ApiResponse<BookResponse>>(
+    `/admin/books/${id}`,
+    data,
+  )
+  return unwrapResponse(response)
+}
+
+export async function deleteBook(id: string): Promise<void> {
+  await api.delete<ApiResponse<null>>(`/admin/books/${id}`)
 }
 
 async function getBookResponses(

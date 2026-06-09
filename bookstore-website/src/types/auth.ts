@@ -19,6 +19,12 @@ export type LogoutRequest = {
   refreshToken: string
 }
 
+export type UpdateUserRequest = {
+  username: string
+  phoneNumber: string
+  email: string
+}
+
 export type RegisterRequest = {
   username: string
   password: string

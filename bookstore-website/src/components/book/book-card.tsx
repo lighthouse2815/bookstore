@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingCart, Star } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/contexts/auth-context'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
 import type { Book } from '@/types/book'
@@ -8,12 +9,29 @@ import { getCategoryLabel } from '@/utils/i18n'
 
 export function BookCard({ book }: { book: Book }) {
   const { addItem } = useCart()
+  const { isAuthenticated } = useAuth()
   const { t, formatCurrency } = useLanguage()
+  const navigate = useNavigate()
   const hasRating = typeof book.rating === 'number' && book.rating > 0
 
   const discount = book.oldPrice
     ? Math.round((1 - book.price / book.oldPrice) * 100)
     : 0
+
+  async function handleQuickAddToCart() {
+    if (!isAuthenticated) {
+      toast.error(t('cart.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    try {
+      await addItem(book.id)
+      toast.success(t('book.card.addedToCart', { title: book.title }))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('cart.updateError'))
+    }
+  }
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -75,8 +93,7 @@ export function BookCard({ book }: { book: Book }) {
           <button
             type="button"
             onClick={() => {
-              addItem(book)
-              toast.success(t('book.card.addedToCart', { title: book.title }))
+              void handleQuickAddToCart()
             }}
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
             aria-label={t('book.card.addToCartAria', { title: book.title })}

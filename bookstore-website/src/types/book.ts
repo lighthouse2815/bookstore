@@ -3,6 +3,32 @@ export type SearchBooksRequest = {
   keyword?: string
 }
 
+export type UpsertBookRequest = {
+  title: string
+  description?: string | null
+  price: number
+  stockQuantity: number
+  imageUrl?: string | null
+  categoryId: string
+  authorId: string
+  publisherId: string
+}
+
+export type UpsertCategoryRequest = {
+  name: string
+  description?: string | null
+}
+
+export type UpsertAuthorRequest = {
+  name: string
+  biography?: string | null
+}
+
+export type UpsertPublisherRequest = {
+  name: string
+  description?: string | null
+}
+
 // Response types
 export type BookResponse = {
   id: string
@@ -67,4 +93,10 @@ export type Book = {
 export type BookCatalog = {
   books: Book[]
   categories: string[]
+}
+
+export type BookReferenceData = {
+  categories: CategoryResponse[]
+  authors: AuthorResponse[]
+  publishers: PublisherResponse[]
 }

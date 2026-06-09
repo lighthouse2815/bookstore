@@ -1,5 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, BookOpen, LogOut, ShoppingCart } from 'lucide-react'
+import {
+  BarChart3,
+  BookOpen,
+  LogOut,
+  ShoppingCart,
+  Tags,
+} from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { useAuth } from '@/contexts/auth-context'
@@ -25,6 +31,11 @@ export function AdminSidebar() {
       label: t('admin.sidebar.orders'),
       href: '/admin/orders',
       icon: ShoppingCart,
+    },
+    {
+      label: t('admin.sidebar.references'),
+      href: '/admin/references',
+      icon: Tags,
     },
   ]
 

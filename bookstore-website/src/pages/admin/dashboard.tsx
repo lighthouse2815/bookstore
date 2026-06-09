@@ -1,73 +1,142 @@
+import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
   ShoppingCart,
   TrendingUp,
   Users,
 } from 'lucide-react'
+import { Badge } from '@/components/common/badge'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { useLanguage } from '@/contexts/language-context'
+import { getBookCatalog } from '@/services/book-service'
+import { getAdminOrders } from '@/services/order-service'
+import type { Book } from '@/types/book'
+import type { OrderResponse, OrderStatus } from '@/types/order'
+import { getErrorMessage } from '@/utils'
 import { getOrderStatusLabel } from '@/utils/i18n'
 
-const RECENT_ORDERS = [
-  {
-    id: 'ORD-001',
-    customer: 'Nguyễn Văn A',
-    total: 450000,
-    status: 'delivered',
-    date: '2024-06-05',
-  },
-  {
-    id: 'ORD-002',
-    customer: 'Trần Thị B',
-    total: 280000,
-    status: 'shipped',
-    date: '2024-06-04',
-  },
-  {
-    id: 'ORD-003',
-    customer: 'Phạm Văn C',
-    total: 165000,
-    status: 'processing',
-    date: '2024-06-03',
-  },
-]
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  shipped: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
+const statusVariants: Record<
+  OrderStatus,
+  'default' | 'secondary' | 'outline' | 'destructive'
+> = {
+  PENDING: 'secondary',
+  CONFIRMED: 'default',
+  SHIPPING: 'outline',
+  DELIVERED: 'default',
+  CANCELLED: 'destructive',
 }
 
 export default function AdminDashboard() {
-  const { t, formatCurrency, formatDate } = useLanguage()
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
+  const [books, setBooks] = useState<Book[]>([])
+  const [orders, setOrders] = useState<OrderResponse[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const stats = [
-    {
-      label: t('admin.dashboard.stats.totalBooks'),
-      value: '128',
-      icon: BookOpen,
-      color: 'bg-blue-100 text-blue-600',
-    },
-    {
-      label: t('admin.dashboard.stats.ordersToday'),
-      value: '12',
-      icon: ShoppingCart,
-      color: 'bg-green-100 text-green-600',
-    },
-    {
-      label: t('admin.dashboard.stats.customers'),
-      value: '256',
-      icon: Users,
-      color: 'bg-purple-100 text-purple-600',
-    },
-    {
-      label: t('admin.dashboard.stats.revenueMonth'),
-      value: '28.5M',
-      icon: TrendingUp,
-      color: 'bg-orange-100 text-orange-600',
-    },
-  ]
+  useEffect(() => {
+    let isCancelled = false
+
+    async function loadDashboardData() {
+      try {
+        const [catalog, orderResponses] = await Promise.all([
+          getBookCatalog(),
+          getAdminOrders(),
+        ])
+
+        if (isCancelled) {
+          return
+        }
+
+        setBooks(catalog.books)
+        setOrders(orderResponses)
+        setError(null)
+      } catch (currentError) {
+        if (!isCancelled) {
+          setError(getErrorMessage(currentError, t('checkout.error')))
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadDashboardData()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [t])
+
+  const stats = useMemo(() => {
+    const now = new Date()
+    const todayKey = now.toDateString()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+
+    const ordersToday = orders.filter(
+      (order) => new Date(order.createdAt).toDateString() === todayKey,
+    ).length
+
+    const activeCustomers = new Set(
+      orders
+        .map((order) => order.receiverPhone.trim())
+        .filter((phoneNumber) => phoneNumber !== ''),
+    ).size
+
+    const revenueMonth = orders
+      .filter((order) => {
+        const createdAt = new Date(order.createdAt)
+        return (
+          createdAt.getMonth() === currentMonth &&
+          createdAt.getFullYear() === currentYear &&
+          order.status !== 'CANCELLED'
+        )
+      })
+      .reduce((sum, order) => sum + order.finalAmount, 0)
+
+    return [
+      {
+        label: t('admin.dashboard.stats.totalBooks'),
+        value: formatNumber(books.length),
+        icon: BookOpen,
+        color: 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300',
+      },
+      {
+        label: t('admin.dashboard.stats.ordersToday'),
+        value: formatNumber(ordersToday),
+        icon: ShoppingCart,
+        color:
+          'bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-300',
+      },
+      {
+        label: t('admin.dashboard.stats.customers'),
+        value: formatNumber(activeCustomers),
+        icon: Users,
+        color:
+          'bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300',
+      },
+      {
+        label: t('admin.dashboard.stats.revenueMonth'),
+        value: formatCurrency(revenueMonth),
+        icon: TrendingUp,
+        color:
+          'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-300',
+      },
+    ]
+  }, [books.length, formatCurrency, formatNumber, orders, t])
+
+  const recentOrders = useMemo(
+    () =>
+      [...orders]
+        .sort(
+          (firstOrder, secondOrder) =>
+            new Date(secondOrder.createdAt).getTime() -
+            new Date(firstOrder.createdAt).getTime(),
+        )
+        .slice(0, 5),
+    [orders],
+  )
 
   return (
     <AdminLayout>
@@ -87,13 +156,13 @@ export default function AdminDashboard() {
                 key={stat.label}
                 className="rounded-lg border border-border bg-card p-6"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
                       {stat.label}
                     </p>
                     <p className="mt-2 text-3xl font-bold text-foreground">
-                      {stat.value}
+                      {isLoading ? '...' : stat.value}
                     </p>
                   </div>
                   <div className={`rounded-lg p-3 ${stat.color}`}>
@@ -111,54 +180,68 @@ export default function AdminDashboard() {
           </h2>
 
           <div className="mt-6 rounded-lg border border-border bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                      {t('admin.dashboard.columns.orderId')}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                      {t('admin.dashboard.columns.customer')}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                      {t('admin.dashboard.columns.total')}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                      {t('admin.dashboard.columns.status')}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                      {t('admin.dashboard.columns.date')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {RECENT_ORDERS.map((order) => (
-                    <tr key={order.id} className="border-b border-border">
-                      <td className="px-6 py-4 text-sm font-medium text-foreground">
-                        {order.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-foreground">
-                        {order.customer}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-foreground">
-                        {formatCurrency(order.total)}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[order.status]}`}
-                        >
-                          {getOrderStatusLabel(order.status, t)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {formatDate(order.date)}
-                      </td>
+            {isLoading ? (
+              <div className="px-6 py-8 text-center">
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+              </div>
+            ) : error ? (
+              <div className="px-6 py-8 text-center">
+                <p className="font-semibold text-foreground">{error}</p>
+              </div>
+            ) : recentOrders.length === 0 ? (
+              <div className="px-6 py-8 text-center">
+                <p className="text-muted-foreground">
+                  {t('admin.dashboard.emptyOrders')}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                        {t('admin.dashboard.columns.orderId')}
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                        {t('admin.dashboard.columns.customer')}
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                        {t('admin.dashboard.columns.total')}
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                        {t('admin.dashboard.columns.status')}
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                        {t('admin.dashboard.columns.date')}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((order) => (
+                      <tr key={order.orderId} className="border-b border-border">
+                        <td className="px-6 py-4 text-sm font-medium text-foreground">
+                          {order.orderId}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-foreground">
+                          {order.receiverName}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-foreground">
+                          {formatCurrency(order.finalAmount)}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <Badge variant={statusVariants[order.status]}>
+                            {getOrderStatusLabel(order.status, t)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-muted-foreground">
+                          {formatDate(order.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
