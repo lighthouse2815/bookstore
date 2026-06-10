@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
   BarChart3,
+  Percent,
   Building2,
   BookOpen,
   Key,
@@ -66,6 +67,11 @@ export function AdminSidebar() {
       label: t('admin.sidebar.permissions'),
       href: '/admin/permissions',
       icon: Key,
+    },
+    {
+      label: t('admin.sidebar.promotions'),
+      href: '/admin/promotions',
+      icon: Percent,
     },
   ]
 

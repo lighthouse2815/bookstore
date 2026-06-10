@@ -2,6 +2,7 @@ import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   AdminPermissionResponse,
+  AdminPromotionResponse,
   AdminRoleResponse,
   AdminUserResponse,
 } from '@/types/admin-access'
@@ -20,6 +21,13 @@ export async function getAdminRoles(): Promise<AdminRoleResponse[]> {
 export async function getAdminPermissions(): Promise<AdminPermissionResponse[]> {
   const response = await api.get<ApiResponse<AdminPermissionResponse[]>>(
     '/admin/permissions',
+  )
+  return unwrapResponse(response)
+}
+
+export async function getAdminPromotions(): Promise<AdminPromotionResponse[]> {
+  const response = await api.get<ApiResponse<AdminPromotionResponse[]>>(
+    '/admin/promotions',
   )
   return unwrapResponse(response)
 }

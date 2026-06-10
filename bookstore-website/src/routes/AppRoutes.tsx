@@ -28,6 +28,7 @@ const AdminPublishersPage = lazy(() => import('@/pages/admin/publishers'))
 const AdminUsersPage = lazy(() => import('@/pages/admin/users'))
 const AdminRolesPage = lazy(() => import('@/pages/admin/roles'))
 const AdminPermissionsPage = lazy(() => import('@/pages/admin/permissions'))
+const AdminPromotionsPage = lazy(() => import('@/pages/admin/promotions'))
 const AdminReferencesPage = lazy(() => import('@/pages/admin/references'))
 
 function ScrollToTop() {
@@ -203,6 +204,16 @@ function AppRouteContent() {
             <ProtectedRoute requiredRole="ADMIN">
               <LazyAdminPage>
                 <AdminPermissionsPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/promotions"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminPromotionsPage />
               </LazyAdminPage>
             </ProtectedRoute>
           }

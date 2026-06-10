@@ -28,3 +28,19 @@ export type AdminPermissionResponse = {
   createdAt: string
   updatedAt: string
 }
+
+export type AdminPromotionResponse = {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  discountType: string
+  discountValue: number
+  active: boolean
+  startAt: string | null
+  endAt: string | null
+  usageLimit: number | null
+  usedCount: number
+  createdAt: string
+  updatedAt: string
+}
