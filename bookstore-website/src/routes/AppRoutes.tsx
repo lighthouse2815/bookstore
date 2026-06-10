@@ -6,6 +6,10 @@ import BookDetailPage from '@/pages/book/book-detail'
 import CartPage from '@/pages/cart/cart'
 import CheckoutPage from '@/pages/cart/checkout'
 import NotFoundPage from '@/pages/home/not-found'
+import ShippingPolicyPage from '@/pages/support/shipping-policy'
+import ReturnsRefundsPage from '@/pages/support/returns-refunds'
+import FaqPage from '@/pages/support/faq'
+import ContactPage from '@/pages/support/contact'
 import OrderConfirmationPage from '@/pages/order/order-confirmation'
 import MyOrdersPage from '@/pages/order/my-orders'
 import OrderDetailPage from '@/pages/order/order-detail'
@@ -18,6 +22,12 @@ import { ProtectedRoute } from './protected-route'
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminCategoriesPage = lazy(() => import('@/pages/admin/categories'))
+const AdminAuthorsPage = lazy(() => import('@/pages/admin/authors'))
+const AdminPublishersPage = lazy(() => import('@/pages/admin/publishers'))
+const AdminUsersPage = lazy(() => import('@/pages/admin/users'))
+const AdminRolesPage = lazy(() => import('@/pages/admin/roles'))
+const AdminPermissionsPage = lazy(() => import('@/pages/admin/permissions'))
 const AdminReferencesPage = lazy(() => import('@/pages/admin/references'))
 
 function ScrollToTop() {
@@ -54,6 +64,10 @@ function AppRouteContent() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/books" element={<BooksPage />} />
         <Route path="/books/:id" element={<BookDetailPage />} />
+        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+        <Route path="/returns-refunds" element={<ReturnsRefundsPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         <Route
           path="/cart"
@@ -129,6 +143,66 @@ function AppRouteContent() {
             <ProtectedRoute requiredRole="ADMIN">
               <LazyAdminPage>
                 <AdminOrdersPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminCategoriesPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/authors"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminAuthorsPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/publishers"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminPublishersPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminUsersPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/roles"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminRolesPage />
+              </LazyAdminPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/permissions"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyAdminPage>
+                <AdminPermissionsPage />
               </LazyAdminPage>
             </ProtectedRoute>
           }

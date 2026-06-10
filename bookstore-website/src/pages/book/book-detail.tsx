@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookDetail } from '@/hooks/use-book-detail'
 import NotFoundPage from '@/pages/home/not-found'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 export default function BookDetailPage() {
@@ -106,7 +107,7 @@ export default function BookDetailPage() {
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-muted shadow-lg">
               <img
-                src={book.cover || '/placeholder.svg'}
+                src={getBookCoverUrl(book.cover)}
                 alt={t('book.card.coverAlt', { title: book.title })}
                 className="absolute inset-0 size-full object-cover"
               />

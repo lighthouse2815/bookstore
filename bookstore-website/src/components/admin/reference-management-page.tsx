@@ -1,0 +1,850 @@
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import {
+  AlertTriangle,
+  Building2,
+  CalendarDays,
+  Edit2,
+  Eye,
+  PenTool,
+  Plus,
+  RefreshCw,
+  Search,
+  Tags,
+  Trash2,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { Badge } from '@/components/common/badge'
+import { Button } from '@/components/common/button'
+import { Input } from '@/components/common/input'
+import { Label } from '@/components/common/label'
+import { Textarea } from '@/components/common/textarea'
+import { AdminLayout } from '@/components/layout/admin-layout'
+import { useLanguage } from '@/contexts/language-context'
+import { getBookReferences } from '@/services/book-service'
+import {
+  createAuthor,
+  createCategory,
+  createPublisher,
+  deleteAuthor,
+  deleteCategory,
+  deletePublisher,
+  updateAuthor,
+  updateCategory,
+  updatePublisher,
+} from '@/services/reference-service'
+import type {
+  AuthorResponse,
+  BookReferenceData,
+  CategoryResponse,
+  PublisherResponse,
+} from '@/types/book'
+import { cn, getErrorMessage } from '@/utils'
+
+export type ReferenceSectionKey = 'categories' | 'authors' | 'publishers'
+
+type ReferenceItem = CategoryResponse | AuthorResponse | PublisherResponse
+type ReferenceDialogMode = 'create' | 'view' | 'edit' | 'delete'
+
+type ReferenceFormState = {
+  id: string | null
+  name: string
+  description: string
+}
+
+type SectionVisual = {
+  icon: LucideIcon
+  badgeClassName: string
+  tileClassName: string
+  tileIconClassName: string
+}
+
+const initialFormState: ReferenceFormState = {
+  id: null,
+  name: '',
+  description: '',
+}
+
+const sectionLabelKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.section',
+  authors: 'admin.referencePages.authors.section',
+  publishers: 'admin.referencePages.publishers.section',
+}
+
+const addLabelKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.add',
+  authors: 'admin.referencePages.authors.add',
+  publishers: 'admin.referencePages.publishers.add',
+}
+
+const emptyLabelKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.empty',
+  authors: 'admin.referencePages.authors.empty',
+  publishers: 'admin.referencePages.publishers.empty',
+}
+
+const countLabelKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.countLabel',
+  authors: 'admin.referencePages.authors.countLabel',
+  publishers: 'admin.referencePages.publishers.countLabel',
+}
+
+const searchPlaceholderKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.searchPlaceholder',
+  authors: 'admin.referencePages.authors.searchPlaceholder',
+  publishers: 'admin.referencePages.publishers.searchPlaceholder',
+}
+
+const detailTitleKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.detailTitle',
+  authors: 'admin.referencePages.authors.detailTitle',
+  publishers: 'admin.referencePages.publishers.detailTitle',
+}
+
+const editTitleKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.editTitle',
+  authors: 'admin.referencePages.authors.editTitle',
+  publishers: 'admin.referencePages.publishers.editTitle',
+}
+
+const emptyDescriptionKeys: Record<ReferenceSectionKey, string> = {
+  categories: 'admin.referencePages.categories.emptyDescription',
+  authors: 'admin.referencePages.authors.emptyDescription',
+  publishers: 'admin.referencePages.publishers.emptyDescription',
+}
+
+const sectionVisuals: Record<ReferenceSectionKey, SectionVisual> = {
+  categories: {
+    icon: Tags,
+    badgeClassName:
+      'border-primary/20 bg-primary/12 text-primary dark:border-primary/30',
+    tileClassName:
+      'border-primary/20 bg-linear-to-br from-primary/20 via-primary/10 to-transparent',
+    tileIconClassName: 'text-primary',
+  },
+  authors: {
+    icon: PenTool,
+    badgeClassName:
+      'border-sky-400/20 bg-sky-400/10 text-sky-300 dark:border-sky-400/30',
+    tileClassName:
+      'border-sky-400/20 bg-linear-to-br from-sky-400/20 via-sky-400/10 to-transparent',
+    tileIconClassName: 'text-sky-300',
+  },
+  publishers: {
+    icon: Building2,
+    badgeClassName:
+      'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 dark:border-emerald-400/30',
+    tileClassName:
+      'border-emerald-400/20 bg-linear-to-br from-emerald-400/20 via-emerald-400/10 to-transparent',
+    tileIconClassName: 'text-emerald-300',
+  },
+}
+
+export function AdminReferenceManagementPage({
+  sectionKey,
+}: {
+  sectionKey: ReferenceSectionKey
+}) {
+  const { t, formatDate, formatNumber } = useLanguage()
+  const [items, setItems] = useState<ReferenceItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState<ReferenceFormState>(initialFormState)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [dialogMode, setDialogMode] = useState<ReferenceDialogMode | null>(null)
+  const [selectedItem, setSelectedItem] = useState<ReferenceItem | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    void loadItems()
+  }, [sectionKey])
+
+  useEffect(() => {
+    if (!dialogMode) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !(dialogMode === 'delete' && isDeleting)) {
+        closeDialog()
+      }
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [dialogMode, isDeleting])
+
+  const filteredItems = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase()
+
+    if (keyword === '') {
+      return items
+    }
+
+    return items.filter((item) =>
+      [item.name, getReferenceDescription(sectionKey, item)]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
+    )
+  }, [items, searchTerm, sectionKey])
+
+  const sectionLabel = t(sectionLabelKeys[sectionKey])
+  const descriptionLabel =
+    sectionKey === 'authors'
+      ? t('admin.references.biography')
+      : t('common.description')
+  const visual = sectionVisuals[sectionKey]
+  const ItemIcon = visual.icon
+  const isDialogLocked = dialogMode === 'delete' && isDeleting
+
+  async function loadItems() {
+    setIsLoading(true)
+
+    try {
+      const response = await getBookReferences()
+      setItems(getSectionItems(sectionKey, response))
+      setError(null)
+    } catch (currentError) {
+      setError(getErrorMessage(currentError, t('checkout.error')))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  function handleCreate() {
+    setSelectedItem(null)
+    setForm(initialFormState)
+    setDialogMode('create')
+  }
+
+  function handleView(item: ReferenceItem) {
+    setSelectedItem(item)
+    setDialogMode('view')
+  }
+
+  function handleEdit(item: ReferenceItem) {
+    setSelectedItem(item)
+    setForm({
+      id: item.id,
+      name: item.name,
+      description: getReferenceDescription(sectionKey, item),
+    })
+    setDialogMode('edit')
+  }
+
+  function handleEditFromDetail() {
+    if (!selectedItem) {
+      return
+    }
+
+    handleEdit(selectedItem)
+  }
+
+  function closeDialog() {
+    setDialogMode(null)
+    setSelectedItem(null)
+    setForm(initialFormState)
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    setIsSubmitting(true)
+
+    try {
+      switch (sectionKey) {
+        case 'categories':
+          if (form.id) {
+            await updateCategory(form.id, {
+              name: form.name.trim(),
+              description: form.description.trim() || null,
+            })
+          } else {
+            await createCategory({
+              name: form.name.trim(),
+              description: form.description.trim() || null,
+            })
+          }
+          break
+        case 'authors':
+          if (form.id) {
+            await updateAuthor(form.id, {
+              name: form.name.trim(),
+              biography: form.description.trim() || null,
+            })
+          } else {
+            await createAuthor({
+              name: form.name.trim(),
+              biography: form.description.trim() || null,
+            })
+          }
+          break
+        case 'publishers':
+          if (form.id) {
+            await updatePublisher(form.id, {
+              name: form.name.trim(),
+              description: form.description.trim() || null,
+            })
+          } else {
+            await createPublisher({
+              name: form.name.trim(),
+              description: form.description.trim() || null,
+            })
+          }
+          break
+      }
+
+      toast.success(t('admin.references.saveSuccess'))
+      await loadItems()
+      closeDialog()
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError, t('checkout.error')))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  function handleDelete(item: ReferenceItem) {
+    setSelectedItem(item)
+    setDialogMode('delete')
+  }
+
+  async function confirmDelete() {
+    if (!selectedItem) {
+      return
+    }
+
+    setIsDeleting(true)
+
+    try {
+      switch (sectionKey) {
+        case 'categories':
+          await deleteCategory(selectedItem.id)
+          break
+        case 'authors':
+          await deleteAuthor(selectedItem.id)
+          break
+        case 'publishers':
+          await deletePublisher(selectedItem.id)
+          break
+      }
+
+      toast.success(t('admin.references.deleteSuccess'))
+      await loadItems()
+      closeDialog()
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError, t('checkout.error')))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const dialogMarkup = dialogMode ? (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <button
+        type="button"
+        aria-label={t('common.close')}
+        className="absolute inset-0 bg-background/80 backdrop-blur-md"
+        onClick={isDialogLocked ? undefined : closeDialog}
+        disabled={isDialogLocked}
+      />
+
+      <div className="relative z-10 w-full max-w-2xl rounded-[32px] border border-border/70 bg-card/95 p-6 shadow-[0_40px_120px_rgba(2,6,23,0.55)] backdrop-blur xl:p-7">
+        <button
+          type="button"
+          onClick={isDialogLocked ? undefined : closeDialog}
+          disabled={isDialogLocked}
+          className="absolute right-5 top-5 inline-flex size-10 items-center justify-center rounded-full border border-border/70 bg-background/50 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {dialogMode === 'view' && selectedItem ? (
+          <ReferenceDetailDialogContent
+            item={selectedItem}
+            sectionKey={sectionKey}
+            sectionLabel={sectionLabel}
+            descriptionLabel={descriptionLabel}
+            formatDate={formatDate}
+            onClose={closeDialog}
+            onEdit={handleEditFromDetail}
+            t={t}
+          />
+        ) : dialogMode === 'delete' && selectedItem ? (
+          <ReferenceDeleteDialogContent
+            item={selectedItem}
+            sectionKey={sectionKey}
+            sectionLabel={sectionLabel}
+            isDeleting={isDeleting}
+            onClose={closeDialog}
+            onConfirm={confirmDelete}
+            t={t}
+          />
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="pr-12">
+              <div className="flex items-center gap-4">
+                <div
+                  className={cn(
+                    'flex size-16 items-center justify-center rounded-[20px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+                    visual.tileClassName,
+                  )}
+                >
+                  <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-primary">
+                    {sectionLabel}
+                  </p>
+                  <h2 className="mt-1 font-heading text-2xl font-bold text-foreground">
+                    {dialogMode === 'create'
+                      ? t(addLabelKeys[sectionKey])
+                      : t(editTitleKeys[sectionKey])}
+                  </h2>
+                </div>
+              </div>
+              {dialogMode === 'create' ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {t(`admin.referencePages.${sectionKey}.description`)}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <Label htmlFor={`${sectionKey}-name`}>{t('common.name')}</Label>
+                <Input
+                  id={`${sectionKey}-name`}
+                  value={form.name}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value
+
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      name: value,
+                    }))
+                  }}
+                  className="mt-2 h-12 rounded-2xl bg-background/60"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`${sectionKey}-description`}>
+                  {descriptionLabel}
+                </Label>
+                <Textarea
+                  id={`${sectionKey}-description`}
+                  value={form.description}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value
+
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      description: value,
+                    }))
+                  }}
+                  className="mt-2 min-h-32 rounded-2xl bg-background/60"
+                  rows={5}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeDialog}
+                className="rounded-2xl"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-2xl"
+              >
+                {isSubmitting ? t('common.processing') : t('common.save')}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <>
+      <AdminLayout>
+        <div className="relative overflow-hidden rounded-[32px] border border-border/60 bg-card/90 p-6 shadow-[0_28px_90px_rgba(2,6,23,0.35)] backdrop-blur xl:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_32%)]" />
+
+          <div className="relative">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
+                    {t(`admin.referencePages.${sectionKey}.title`)}
+                  </h1>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'rounded-2xl px-4 py-1.5 text-sm font-semibold',
+                      visual.badgeClassName,
+                    )}
+                  >
+                    {t(countLabelKeys[sectionKey], {
+                      count: formatNumber(items.length),
+                    })}
+                  </Badge>
+                </div>
+                <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+                  {t(`admin.referencePages.${sectionKey}.description`)}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleCreate}
+                className="h-14 rounded-2xl px-6 text-base shadow-[0_18px_40px_rgba(99,102,241,0.35)]"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                {t(addLabelKeys[sectionKey])}
+              </Button>
+            </div>
+
+            <div className="mt-8 max-w-xl">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                  placeholder={t(searchPlaceholderKeys[sectionKey])}
+                  className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                />
+              </div>
+            </div>
+
+            {error && !isLoading && (
+              <div className="mt-8 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <section className="mt-8 rounded-[28px] border border-border/60 bg-background/20 p-5 backdrop-blur">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center border-b border-border/60 px-4 pb-4 text-sm font-semibold text-muted-foreground">
+                <p>{sectionLabel}</p>
+                <p>{t('common.actions')}</p>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {isLoading ? (
+                  <div className="rounded-[24px] border border-border/50 bg-background/40 px-6 py-10 text-center text-muted-foreground">
+                    {t('common.loading')}
+                  </div>
+                ) : filteredItems.length === 0 ? (
+                  <div className="rounded-[24px] border border-dashed border-border/60 bg-background/35 px-6 py-10 text-center">
+                    <p className="text-base font-medium text-foreground">
+                      {t(emptyLabelKeys[sectionKey])}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {t(emptyDescriptionKeys[sectionKey])}
+                    </p>
+                  </div>
+                ) : (
+                  filteredItems.map((item) => {
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:flex-row xl:items-center xl:justify-between"
+                      >
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div
+                            className={cn(
+                              'flex size-18 shrink-0 items-center justify-center rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+                              visual.tileClassName,
+                            )}
+                          >
+                            <ItemIcon
+                              className={cn('h-8 w-8', visual.tileIconClassName)}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-2xl font-semibold text-foreground">
+                              {item.name}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 xl:justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleView(item)}
+                            className="min-w-[110px] justify-center rounded-2xl bg-background/60"
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            {t('common.view')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleEdit(item)}
+                            className="min-w-[110px] justify-center rounded-2xl bg-background/60"
+                          >
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            {t('common.edit')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => handleDelete(item)}
+                            className="min-w-[110px] justify-center rounded-2xl"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {t('common.delete')}
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </AdminLayout>
+      {dialogMarkup && typeof document !== 'undefined'
+        ? createPortal(dialogMarkup, document.body)
+        : null}
+    </>
+  )
+}
+
+type ReferenceDetailDialogContentProps = {
+  item: ReferenceItem
+  sectionKey: ReferenceSectionKey
+  sectionLabel: string
+  descriptionLabel: string
+  formatDate: (value: string | number | Date) => string
+  onClose: () => void
+  onEdit: () => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}
+
+function ReferenceDetailDialogContent({
+  item,
+  sectionKey,
+  sectionLabel,
+  descriptionLabel,
+  formatDate,
+  onClose,
+  onEdit,
+  t,
+}: ReferenceDetailDialogContentProps) {
+  const visual = sectionVisuals[sectionKey]
+  const ItemIcon = visual.icon
+  const description = getReferenceDescription(sectionKey, item)
+
+  return (
+    <div className="space-y-6">
+      <div className="px-12">
+        <h2 className="text-center font-heading text-2xl font-bold text-foreground">
+          {t(detailTitleKeys[sectionKey])}
+        </h2>
+
+        <div className="mt-5 flex items-center gap-4">
+          <div
+            className={cn(
+              'flex size-18 items-center justify-center rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+              visual.tileClassName,
+            )}
+          >
+            <ItemIcon className={cn('h-8 w-8', visual.tileIconClassName)} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-primary">{sectionLabel}</p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">
+              {item.name}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DetailMetaCard
+          icon={CalendarDays}
+          label={t('common.createdAt')}
+          value={formatDate(item.createdAt)}
+        />
+        <DetailMetaCard
+          icon={RefreshCw}
+          label={t('common.updatedAt')}
+          value={formatDate(item.updatedAt)}
+        />
+      </div>
+
+      <div className="rounded-[24px] border border-border/60 bg-background/55 p-5">
+        <p className="text-sm font-semibold text-foreground">{descriptionLabel}</p>
+        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
+          {description || t(emptyDescriptionKeys[sectionKey])}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <Button type="button" variant="outline" onClick={onClose} className="rounded-2xl">
+          {t('common.close')}
+        </Button>
+        <Button type="button" onClick={onEdit} className="rounded-2xl">
+          <Edit2 className="mr-2 h-4 w-4" />
+          {t('common.edit')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+type ReferenceDeleteDialogContentProps = {
+  item: ReferenceItem
+  sectionKey: ReferenceSectionKey
+  sectionLabel: string
+  isDeleting: boolean
+  onClose: () => void
+  onConfirm: () => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}
+
+function ReferenceDeleteDialogContent({
+  item,
+  sectionKey,
+  sectionLabel,
+  isDeleting,
+  onClose,
+  onConfirm,
+  t,
+}: ReferenceDeleteDialogContentProps) {
+  const visual = sectionVisuals[sectionKey]
+  const ItemIcon = visual.icon
+
+  return (
+    <div className="space-y-6">
+      <div className="px-12 text-center">
+        <div className="mx-auto flex size-18 items-center justify-center rounded-[22px] border border-destructive/30 bg-destructive/10 text-destructive shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+        <h2 className="mt-5 font-heading text-2xl font-bold text-foreground">
+          {t('admin.references.deleteTitle')}
+        </h2>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          {t('admin.references.confirmDelete', { name: item.name })}
+        </p>
+      </div>
+
+      <div
+        className={cn(
+          'flex items-center gap-4 rounded-[24px] border border-border/60 bg-background/55 p-5',
+          visual.tileClassName,
+        )}
+      >
+        <div className="flex size-16 shrink-0 items-center justify-center rounded-[20px] border border-border/60 bg-background/70">
+          <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-primary">{sectionLabel}</p>
+          <p className="mt-1 truncate text-xl font-semibold text-foreground">
+            {item.name}
+          </p>
+        </div>
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        {t('admin.references.deleteDescription')}
+      </p>
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isDeleting}
+          className="rounded-2xl"
+        >
+          {t('common.cancel')}
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={onConfirm}
+          disabled={isDeleting}
+          className="rounded-2xl"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {isDeleting ? t('common.processing') : t('common.delete')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function DetailMetaCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/60 bg-background/55 p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex size-11 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-muted-foreground">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function getSectionItems(
+  sectionKey: ReferenceSectionKey,
+  referenceData: BookReferenceData,
+): ReferenceItem[] {
+  switch (sectionKey) {
+    case 'categories':
+      return referenceData.categories
+    case 'authors':
+      return referenceData.authors
+    case 'publishers':
+      return referenceData.publishers
+  }
+}
+
+function getReferenceDescription(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+) {
+  if (sectionKey === 'authors') {
+    return ('biography' in item ? item.biography : null) ?? ''
+  }
+
+  return ('description' in item ? item.description : null) ?? ''
+}

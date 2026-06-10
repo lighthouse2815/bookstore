@@ -11,6 +11,7 @@ import type {
   SearchBooksRequest,
   UpsertBookRequest,
 } from '@/types/book'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { unwrapResponse } from '@/utils'
 
 export async function getBookCatalog(
@@ -168,17 +169,15 @@ function getCategoryNames(categories: CategoryResponse[]) {
 }
 
 function resolveBookImageUrl(imageUrl: string | null) {
-  if (!imageUrl) {
-    return null
-  }
+  const normalizedImageUrl = imageUrl?.trim() ?? ''
 
   if (
-    imageUrl.startsWith('http://') ||
-    imageUrl.startsWith('https://') ||
-    imageUrl.startsWith('/')
+    normalizedImageUrl.startsWith('http://') ||
+    normalizedImageUrl.startsWith('https://') ||
+    normalizedImageUrl.startsWith('/')
   ) {
-    return imageUrl
+    return normalizedImageUrl
   }
 
-  return imageUrl
+  return getBookCoverUrl(normalizedImageUrl)
 }

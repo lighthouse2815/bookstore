@@ -11,6 +11,7 @@ import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalog } from '@/hooks/use-book-catalog'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 export default function HomePage() {
@@ -144,7 +145,7 @@ export default function HomePage() {
                     >
                       <div className="relative aspect-[3/4]">
                         <img
-                          src={hero.cover || '/placeholder.svg'}
+                          src={getBookCoverUrl(hero.cover)}
                           alt={hero.title}
                           className="absolute inset-0 size-full object-cover"
                         />
@@ -158,7 +159,7 @@ export default function HomePage() {
                       >
                         <div className="relative aspect-[3/4]">
                           <img
-                            src={book.cover || '/placeholder.svg'}
+                            src={getBookCoverUrl(book.cover)}
                             alt={book.title}
                             className="absolute inset-0 size-full object-cover"
                           />

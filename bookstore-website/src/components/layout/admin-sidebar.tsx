@@ -1,10 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
   BarChart3,
+  Building2,
   BookOpen,
+  Key,
   LogOut,
   ShoppingCart,
+  Shield,
   Tags,
+  User,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
@@ -33,9 +38,34 @@ export function AdminSidebar() {
       icon: ShoppingCart,
     },
     {
-      label: t('admin.sidebar.references'),
-      href: '/admin/references',
+      label: t('admin.sidebar.categories'),
+      href: '/admin/categories',
       icon: Tags,
+    },
+    {
+      label: t('admin.sidebar.authors'),
+      href: '/admin/authors',
+      icon: User,
+    },
+    {
+      label: t('admin.sidebar.publishers'),
+      href: '/admin/publishers',
+      icon: Building2,
+    },
+    {
+      label: t('admin.sidebar.users'),
+      href: '/admin/users',
+      icon: Users,
+    },
+    {
+      label: t('admin.sidebar.roles'),
+      href: '/admin/roles',
+      icon: Shield,
+    },
+    {
+      label: t('admin.sidebar.permissions'),
+      href: '/admin/permissions',
+      icon: Key,
     },
   ]
 
@@ -58,7 +88,7 @@ export function AdminSidebar() {
         <LanguageSwitcher />
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.href

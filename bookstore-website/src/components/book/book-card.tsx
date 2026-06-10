@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
 import type { Book } from '@/types/book'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 export function BookCard({ book }: { book: Book }) {
@@ -40,7 +41,7 @@ export function BookCard({ book }: { book: Book }) {
         className="relative block aspect-[3/4] overflow-hidden bg-muted"
       >
         <img
-          src={book.cover || '/placeholder.svg'}
+          src={getBookCoverUrl(book.cover)}
           alt={t('book.card.coverAlt', { title: book.title })}
           className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
         />

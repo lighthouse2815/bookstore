@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
+import { getBookCoverUrl } from '@/utils/book-cover'
 
 export default function CartPage() {
   const { items, removeItem, updateQty, total, totalQuantity, isLoading } =
@@ -53,7 +54,7 @@ export default function CartPage() {
                     className="flex gap-4 rounded-lg border border-border bg-card p-4"
                   >
                     <img
-                      src={item.cover || '/placeholder.svg'}
+                      src={getBookCoverUrl(item.cover)}
                       alt={item.title}
                       className="size-24 rounded object-cover"
                     />

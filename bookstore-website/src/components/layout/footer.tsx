@@ -74,24 +74,24 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#" className="hover:text-primary">
+                <Link to="/shipping-policy" className="hover:text-primary">
                   {t('footer.links.shippingPolicy')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary">
+                <Link to="/returns-refunds" className="hover:text-primary">
                   {t('footer.links.returns')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary">
+                <Link to="/faq" className="hover:text-primary">
                   {t('footer.links.faq')}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary">
+                <Link to="/contact" className="hover:text-primary">
                   {t('footer.links.contact')}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

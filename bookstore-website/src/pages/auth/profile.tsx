@@ -210,12 +210,14 @@ export default function ProfilePage() {
                   <Input
                     id="username"
                     value={accountForm.username}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+
                       setAccountForm((currentForm) => ({
                         ...currentForm,
-                        username: event.currentTarget.value,
+                        username: value,
                       }))
-                    }
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -225,12 +227,14 @@ export default function ProfilePage() {
                     id="accountEmail"
                     type="email"
                     value={accountForm.email}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+
                       setAccountForm((currentForm) => ({
                         ...currentForm,
-                        email: event.currentTarget.value,
+                        email: value,
                       }))
-                    }
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -239,12 +243,14 @@ export default function ProfilePage() {
                   <Input
                     id="accountPhone"
                     value={accountForm.phoneNumber}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+
                       setAccountForm((currentForm) => ({
                         ...currentForm,
-                        phoneNumber: event.currentTarget.value,
+                        phoneNumber: value,
                       }))
-                    }
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -274,12 +280,14 @@ export default function ProfilePage() {
                     <Input
                       id="lastName"
                       value={profileForm.lastName}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const value = event.currentTarget.value
+
                         setProfileForm((currentForm) => ({
                           ...currentForm,
-                          lastName: event.currentTarget.value,
+                          lastName: value,
                         }))
-                      }
+                      }}
                       className="mt-2"
                     />
                   </div>
@@ -288,12 +296,14 @@ export default function ProfilePage() {
                     <Input
                       id="firstName"
                       value={profileForm.firstName}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const value = event.currentTarget.value
+
                         setProfileForm((currentForm) => ({
                           ...currentForm,
-                          firstName: event.currentTarget.value,
+                          firstName: value,
                         }))
-                      }
+                      }}
                       className="mt-2"
                     />
                   </div>
@@ -303,12 +313,14 @@ export default function ProfilePage() {
                   <Input
                     id="avatarUrl"
                     value={profileForm.avatarUrl}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+
                       setProfileForm((currentForm) => ({
                         ...currentForm,
-                        avatarUrl: event.currentTarget.value,
+                        avatarUrl: value,
                       }))
-                    }
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -318,12 +330,14 @@ export default function ProfilePage() {
                     <select
                       id="gender"
                       value={profileForm.gender}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const value = event.currentTarget.value as ProfileResponse['gender']
+
                         setProfileForm((currentForm) => ({
                           ...currentForm,
-                          gender: event.currentTarget.value as ProfileResponse['gender'],
+                          gender: value,
                         }))
-                      }
+                      }}
                       className="mt-2 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                     >
                       {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
@@ -341,12 +355,14 @@ export default function ProfilePage() {
                       id="dateOfBirth"
                       type="date"
                       value={profileForm.dateOfBirth}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const value = event.currentTarget.value
+
                         setProfileForm((currentForm) => ({
                           ...currentForm,
-                          dateOfBirth: event.currentTarget.value,
+                          dateOfBirth: value,
                         }))
-                      }
+                      }}
                       className="mt-2"
                     />
                   </div>
