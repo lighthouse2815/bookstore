@@ -7,6 +7,7 @@ import com.bookstore.bookstore.presentation.response.StockMovementResponse;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ public class StockMovementController {
     private final IStockMovementService stockMovementService;
     private final StockMovementWebMapper stockMovementWebMapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/stock-movements")
     public ApiResponse<List<StockMovementResponse>> getAll() {
         return ApiResponse.success(stockMovementService.getAll().stream()
@@ -25,6 +27,7 @@ public class StockMovementController {
                 .toList());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/books/{bookId}/stock-movements")
     public ApiResponse<List<StockMovementResponse>> getByBookId(@PathVariable UUID bookId) {
         return ApiResponse.success(stockMovementService.getByBookId(bookId).stream()

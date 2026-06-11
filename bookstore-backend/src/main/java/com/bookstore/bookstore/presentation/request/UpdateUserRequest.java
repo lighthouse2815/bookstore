@@ -8,7 +8,6 @@ public record UpdateUserRequest(
         @NotBlank(message = "username khong duoc de trong")
         String username,
 
-        @NotBlank(message = "phoneNumber khong duoc de trong")
         @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber khong hop le")
         String phoneNumber,
 

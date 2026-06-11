@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.command.RegisterCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAuthService;
+import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
@@ -28,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -46,6 +46,7 @@ public class AuthService implements IAuthService {
 
     private final IUserService userService;
     private final IProfileService profileService;
+    private final IOtpService otpService;
     private final IRoleRepository roleRepository;
     private final IUserRepository userRepository;
     private final IPasswordEncoder passwordEncoder;
@@ -61,14 +62,15 @@ public class AuthService implements IAuthService {
         }
 
         Instant now = Instant.now();
+        String email = StringUtils.trimToNull(command.email());
         Role defaultRole = roleRepository.findByNameActive(USER_ROLE)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
         User user = new User(
                 UUID.randomUUID(),
-                command.username(),
+                email,
                 passwordEncoder.encode(command.password()),
-                command.phoneNumber(),
-                command.email(),
+                null,
+                email,
                 UserStatus.INACTIVE,
                 false,
                 Set.of(defaultRole),
@@ -82,17 +84,18 @@ public class AuthService implements IAuthService {
         Profile profile = new Profile(
                     UUID.randomUUID(),
                     savedUser.getId(),
-                    command.lastName(),
-                    command.firstName(),
-                    command.avatarUrl(),
-                    command.gender(),
-                    command.dateOfBirth(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     now,
                     now,
                     null
         );
 
         profileService.create(profile);
+        otpService.sendRegistrationOtp(savedUser);
 
         return new RegisterResult(savedUser.getUsername(), savedUser.getCreatedAt());
     }

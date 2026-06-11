@@ -19,6 +19,8 @@ public interface IUserRepository {
 
     Optional<User> findByUsernameIncludingDeleted(String username);
 
+    Optional<User> findByEmailIncludingDeleted(String email);
+
     boolean existsByIdIncludingDeleted(UUID userId);
 
     boolean existsByUsernameIncludingDeleted(String username);

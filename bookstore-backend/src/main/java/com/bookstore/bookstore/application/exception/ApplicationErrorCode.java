@@ -10,12 +10,20 @@ public enum ApplicationErrorCode {
     AUTH_INVALID_REFRESH_TOKEN("APPLICATION_AUTH_007", "refresh token khong hop le"),
     AUTH_REFRESH_TOKEN_EXPIRED("APPLICATION_AUTH_008", "refresh token da het han"),
 
+    OTP_INVALID("APPLICATION_OTP_001", "otp khong hop le"),
+    OTP_EXPIRED("APPLICATION_OTP_002", "otp da het han"),
+    OTP_EMAIL_NOT_CONFIGURED("APPLICATION_OTP_003", "cau hinh gui email chua day du"),
+    OTP_EMAIL_SEND_FAILED("APPLICATION_OTP_004", "gui otp that bai"),
+
     USER_ALREADY_EXISTS("APPLICATION_USER_001", "user da ton tai"),
     USER_NOT_FOUND("APPLICATION_USER_002", "khong tim thay user"),
     USER_USERNAME_ALREADY_EXISTS("APPLICATION_USER_003", "username da ton tai"),
     USER_PHONE_ALREADY_EXISTS("APPLICATION_USER_004", "phoneNumber da ton tai"),
     USER_EMAIL_ALREADY_EXISTS("APPLICATION_USER_005", "email da ton tai"),
     USER_NOT_ADMIN("APPLICATION_USER_006", "khong co quyen xoa user nay"),
+    USER_ROLE_NOT_ALLOWED("APPLICATION_USER_007", "role chi duoc la STAFF hoac ADMIN"),
+    STAFF_NOT_FOUND("APPLICATION_USER_008", "khong tim thay nhan vien"),
+    USER_SELF_MANAGEMENT_NOT_ALLOWED("APPLICATION_USER_009", "khong the thao tac tai khoan cua chinh minh"),
 
     ROLE_ALREADY_EXISTS("APPLICATION_ROLE_001", "role da ton tai"),
     ROLE_NOT_FOUND("APPLICATION_ROLE_002", "khong tim thay role"),

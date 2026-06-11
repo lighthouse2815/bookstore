@@ -170,10 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function register(payload: RegisterRequest) {
     try {
       await registerRequest(payload)
-      await applyLoginSession({
-        username: payload.username,
-        password: payload.password,
-      })
     } catch (error) {
       throw new Error(getErrorMessage(error, t('auth.register.errorFallback')))
     }

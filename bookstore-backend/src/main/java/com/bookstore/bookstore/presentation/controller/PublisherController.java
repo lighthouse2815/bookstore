@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ public class PublisherController {
         return ApiResponse.success(publisherWebMapper.toPublisherResponse(publisherService.getById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/publishers")
     public ResponseEntity<ApiResponse<PublisherResponse>> create(@Valid @RequestBody CreatePublisherRequest request) {
         var result = publisherService.create(publisherWebMapper.toCreateCommand(request));
@@ -46,6 +48,7 @@ public class PublisherController {
                 .body(ApiResponse.success(publisherWebMapper.toPublisherResponse(result)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/publishers/{id}")
     public ApiResponse<PublisherResponse> update(
             @PathVariable UUID id,
@@ -55,6 +58,7 @@ public class PublisherController {
         return ApiResponse.success(publisherWebMapper.toPublisherResponse(result));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/publishers/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         publisherService.delete(publisherWebMapper.toDeleteCommand(id));

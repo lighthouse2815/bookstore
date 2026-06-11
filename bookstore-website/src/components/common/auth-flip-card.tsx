@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import styled from 'styled-components'
 
 type AuthFlipCardProps = {
@@ -10,6 +10,8 @@ type AuthFlipCardProps = {
   frontSwitchAction: string
   backSwitchText: string
   backSwitchAction: string
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
 }
 
 export function AuthFlipCard({
@@ -21,13 +23,32 @@ export function AuthFlipCard({
   frontSwitchAction,
   backSwitchText,
   backSwitchAction,
+  checked,
+  onCheckedChange,
 }: AuthFlipCardProps) {
   const toggleId = useId().replace(/:/g, '')
+  const [internalChecked, setInternalChecked] = useState(false)
+  const isControlled = checked !== undefined
+  const isChecked = isControlled ? checked : internalChecked
+
+  function handleCheckedChange(nextChecked: boolean) {
+    if (!isControlled) {
+      setInternalChecked(nextChecked)
+    }
+
+    onCheckedChange?.(nextChecked)
+  }
 
   return (
     <StyledWrapper>
       <div className="container">
-        <input type="checkbox" id={toggleId} className="toggle" />
+        <input
+          type="checkbox"
+          id={toggleId}
+          className="toggle"
+          checked={isChecked}
+          onChange={(event) => handleCheckedChange(event.target.checked)}
+        />
         <div className="form">
           <div className="form_front">
             <div className="form_details">{frontTitle}</div>
@@ -56,12 +77,72 @@ export function AuthFlipCard({
 }
 
 const StyledWrapper = styled.div`
+  --auth-shell:
+    radial-gradient(circle at top, rgba(99, 102, 241, 0.14), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.98));
+  --auth-surface:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 247, 255, 0.96));
+  --auth-surface-border: rgba(71, 85, 105, 0.14);
+  --auth-surface-shadow:
+    0 30px 90px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --auth-title: var(--foreground);
+  --auth-text: var(--muted-foreground);
+  --auth-accent: var(--primary);
+  --auth-input-bg: rgba(255, 255, 255, 0.82);
+  --auth-input-border: rgba(99, 102, 241, 0.18);
+  --auth-input-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 10px 24px rgba(99, 102, 241, 0.08);
+  --auth-input-shadow-focus:
+    0 0 0 4px rgba(99, 102, 241, 0.14),
+    0 16px 32px rgba(99, 102, 241, 0.12);
+  --auth-btn-bg:
+    linear-gradient(135deg, rgba(79, 70, 229, 0.98), rgba(37, 99, 235, 0.95));
+  --auth-btn-shadow:
+    0 18px 40px rgba(79, 70, 229, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --auth-btn-shadow-hover:
+    0 22px 44px rgba(79, 70, 229, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  .dark & {
+    --auth-shell:
+      radial-gradient(circle at top, rgba(129, 140, 248, 0.2), transparent 42%),
+      radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.14), transparent 34%),
+      linear-gradient(180deg, rgba(20, 24, 39, 0.95), rgba(10, 14, 24, 0.98));
+    --auth-surface:
+      linear-gradient(180deg, rgba(24, 28, 45, 0.95), rgba(16, 20, 34, 0.96));
+    --auth-surface-border: rgba(148, 163, 184, 0.18);
+    --auth-surface-shadow:
+      0 36px 100px rgba(2, 6, 23, 0.52),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --auth-title: rgba(248, 250, 252, 0.98);
+    --auth-text: rgba(203, 213, 225, 0.8);
+    --auth-input-bg: rgba(15, 23, 42, 0.72);
+    --auth-input-border: rgba(129, 140, 248, 0.18);
+    --auth-input-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 14px 34px rgba(2, 6, 23, 0.34);
+    --auth-input-shadow-focus:
+      0 0 0 4px rgba(129, 140, 248, 0.16),
+      0 18px 36px rgba(15, 23, 42, 0.34);
+    --auth-btn-shadow:
+      0 18px 44px rgba(79, 70, 229, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --auth-btn-shadow-hover:
+      0 22px 48px rgba(79, 70, 229, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
   .container {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 590px;
+    min-height: 560px;
+    padding: 12px 0;
   }
 
   .toggle {
@@ -70,13 +151,17 @@ const StyledWrapper = styled.div`
 
   .form {
     position: relative;
-    width: min(100%, 430px);
-    min-height: 560px;
+    width: min(100%, 460px);
+    min-height: 530px;
     display: flex;
     justify-content: center;
     align-items: center;
     transform-style: preserve-3d;
     transition: all 1s ease;
+    border-radius: 28px;
+    background: var(--auth-shell);
+    padding: 10px;
+    box-shadow: 0 18px 70px rgba(15, 23, 42, 0.12);
   }
 
   .toggle:checked + .form {
@@ -89,16 +174,15 @@ const StyledWrapper = styled.div`
     inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 18px;
     backface-visibility: hidden;
-    padding: 42px 32px;
-    border-radius: 15px;
-    background-color: #212121;
-    box-shadow:
-      inset 2px 2px 10px rgba(0, 0, 0, 1),
-      inset -1px -1px 5px rgba(255, 255, 255, 0.28);
+    padding: 34px 30px 26px;
+    border-radius: 22px;
+    background: var(--auth-surface);
+    border: 1px solid var(--auth-surface-border);
+    box-shadow: var(--auth-surface-shadow);
   }
 
   .form .form_back {
@@ -106,92 +190,78 @@ const StyledWrapper = styled.div`
   }
 
   .form_details {
-    font-size: 25px;
-    font-weight: 600;
-    padding-bottom: 10px;
-    color: white;
+    font-size: 1.65rem;
+    line-height: 1.15;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--auth-title);
+    text-align: center;
   }
 
   .face_content {
-    width: 245px;
+    width: 100%;
+    max-width: 310px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .face_content--wide {
-    width: 100%;
-    max-width: 360px;
-  }
-
-  .field_grid {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
     gap: 14px;
-  }
-
-  .field_full {
-    grid-column: 1 / -1;
   }
 
   .input {
     width: 100%;
-    min-height: 45px;
-    color: #fff;
+    min-height: 48px;
+    color: var(--auth-title);
     outline: none;
-    transition: 0.35s;
-    padding: 0 7px;
-    background-color: #212121;
-    border-radius: 6px;
-    border: 2px solid #212121;
-    box-shadow:
-      6px 6px 10px rgba(0, 0, 0, 1),
-      1px 1px 10px rgba(255, 255, 255, 0.6);
+    transition:
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      background-color 0.25s ease;
+    padding: 0 14px;
+    background: var(--auth-input-bg);
+    border-radius: 14px;
+    border: 1px solid var(--auth-input-border);
+    box-shadow: var(--auth-input-shadow);
+    appearance: none;
   }
 
   .input::placeholder {
-    color: #999;
+    color: var(--auth-text);
   }
 
   .input:focus::placeholder {
     transition: 0.3s;
-    opacity: 0;
+    opacity: 0.6;
   }
 
   .input:focus {
-    transform: scale(1.05);
-    box-shadow:
-      6px 6px 10px rgba(0, 0, 0, 1),
-      1px 1px 10px rgba(255, 255, 255, 0.6),
-      inset 2px 2px 10px rgba(0, 0, 0, 1),
-      inset -1px -1px 5px rgba(255, 255, 255, 0.6);
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: var(--auth-input-shadow-focus);
   }
 
   .btn {
-    padding: 10px 35px;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 6px;
+    padding: 12px 18px;
     cursor: pointer;
-    background-color: #212121;
-    border-radius: 6px;
-    border: 2px solid #212121;
-    box-shadow:
-      6px 6px 10px rgba(0, 0, 0, 1),
-      1px 1px 10px rgba(255, 255, 255, 0.6);
-    color: #fff;
+    background: var(--auth-btn-bg);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: var(--auth-btn-shadow);
+    color: rgba(255, 255, 255, 0.98);
     font-size: 15px;
     font-weight: bold;
-    transition: 0.35s;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease;
   }
 
   .btn:hover,
   .btn:focus {
-    transform: scale(1.05);
-    box-shadow:
-      6px 6px 10px rgba(0, 0, 0, 1),
-      1px 1px 10px rgba(255, 255, 255, 0.6),
-      inset 2px 2px 10px rgba(0, 0, 0, 1),
-      inset -1px -1px 5px rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+    box-shadow: var(--auth-btn-shadow-hover);
   }
 
   .btn:disabled {
@@ -201,15 +271,23 @@ const StyledWrapper = styled.div`
 
   .switch {
     margin-top: auto;
+    padding-top: 8px;
     font-size: 13px;
-    color: white;
+    color: var(--auth-text);
     text-align: center;
+    line-height: 1.6;
   }
 
   .signup_tog {
     font-weight: 700;
     cursor: pointer;
     text-decoration: underline;
+    text-decoration-color: rgba(99, 102, 241, 0.35);
+    color: var(--auth-accent);
+  }
+
+  .signup_tog:hover {
+    text-decoration-color: currentColor;
   }
 
   .loading_inline {
@@ -235,21 +313,22 @@ const StyledWrapper = styled.div`
 
   @media (max-width: 480px) {
     .container {
-      min-height: 620px;
+      min-height: 580px;
     }
 
     .form {
-      width: min(100%, 320px);
-      min-height: 600px;
+      width: min(100%, 352px);
+      min-height: 550px;
+      padding: 8px;
     }
 
     .form .form_front,
     .form .form_back {
-      padding: 36px 20px;
+      padding: 28px 18px 22px;
     }
 
     .face_content {
-      width: 240px;
+      max-width: 100%;
     }
 
     .face_content--wide {
@@ -258,6 +337,7 @@ const StyledWrapper = styled.div`
 
     .field_grid {
       grid-template-columns: 1fr;
+      gap: 10px;
     }
 
     .field_full {

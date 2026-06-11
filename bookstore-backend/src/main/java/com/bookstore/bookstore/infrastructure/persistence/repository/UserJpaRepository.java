@@ -67,6 +67,14 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
             """)
     Optional<UserJpaEntity> findByUsernameIncludingDeleted(@Param("username") String username);
 
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @Query("""
+            select u
+            from UserJpaEntity u
+            where u.email = :email
+            """)
+    Optional<UserJpaEntity> findByEmailIncludingDeleted(@Param("email") String email);
+
     @Query("""
             select case when count(u) > 0 then true else false end
             from UserJpaEntity u

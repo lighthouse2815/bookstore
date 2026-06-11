@@ -19,15 +19,8 @@ public class AuthWebMapper {
 
     public RegisterCommand toRegisterCommand(RegisterRequest request) {
         return new RegisterCommand(
-                request.username(),
-                request.password(),
-                request.phoneNumber(),
                 request.email(),
-                request.firstName(),
-                request.lastName(),
-                request.avatarUrl(),
-                request.gender(),
-                request.dateOfBirth()
+                request.password()
         );
     }
 

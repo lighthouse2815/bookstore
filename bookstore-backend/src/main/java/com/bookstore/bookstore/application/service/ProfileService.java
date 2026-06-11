@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.model.Profile;
+import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -86,10 +87,14 @@ public class ProfileService implements IProfileService {
         Profile currentProfile = profileRepository.findByUserIdActive(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
 
+        String lastName = StringUtils.trimToNull(command.lastName());
+        String firstName = StringUtils.trimToNull(command.firstName());
+        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
+
         currentProfile.updateProfileInfo(
-                command.lastName(),
-                command.firstName(),
-                command.avatarUrl(),
+                lastName,
+                firstName,
+                avatarUrl,
                 command.gender(),
                 command.dateOfBirth()
         );

@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ public class CategoryController {
         return ApiResponse.success(categoryWebMapper.toCategoryResponse(categoryService.getById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/categories")
     public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest request) {
         var result = categoryService.create(categoryWebMapper.toCreateCommand(request));
@@ -46,6 +48,7 @@ public class CategoryController {
                 .body(ApiResponse.success(categoryWebMapper.toCategoryResponse(result)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/categories/{id}")
     public ApiResponse<CategoryResponse> update(
             @PathVariable UUID id,
@@ -55,6 +58,7 @@ public class CategoryController {
         return ApiResponse.success(categoryWebMapper.toCategoryResponse(result));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/categories/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         categoryService.delete(categoryWebMapper.toDeleteCommand(id));

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import com.bookstore.bookstore.application.command.LoginCommand;
 import com.bookstore.bookstore.application.command.RegisterCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
@@ -18,7 +20,6 @@ import com.bookstore.bookstore.application.port.out.IRefreshTokenRepository;
 import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.application.result.RegisterResult;
-import com.bookstore.bookstore.domain.enums.Gender;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
@@ -27,7 +28,6 @@ import com.bookstore.bookstore.domain.model.RefreshToken;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -50,6 +50,9 @@ class AuthServiceTest {
     private IProfileService profileService;
 
     @Mock
+    private IOtpService otpService;
+
+    @Mock
     private IRoleRepository roleRepository;
 
     @Mock
@@ -70,15 +73,8 @@ class AuthServiceTest {
     @Test
     void register_doesNotTrimPassword() {
         RegisterCommand command = new RegisterCommand(
-                "username",
-                "  secret  ",
-                "0123456789",
                 "test@gmail.com",
-                "first",
-                "last",
-                null,
-                Gender.MALE,
-                LocalDate.of(2000, 1, 1)
+                "  secret  "
         );
 
         when(userService.create(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -89,11 +85,42 @@ class AuthServiceTest {
         RegisterResult result = authService.register(command);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<Profile> profileCaptor = ArgumentCaptor.forClass(Profile.class);
         verify(userService).create(userCaptor.capture());
+        verify(profileService).create(profileCaptor.capture());
+        verify(otpService).sendRegistrationOtp(any(User.class));
         verify(passwordEncoder).encode("  secret  ");
 
         assertEquals("hashed-secret", userCaptor.getValue().getPasswordHash());
-        assertEquals("username", result.username());
+        assertEquals("test@gmail.com", userCaptor.getValue().getUsername());
+        assertEquals("test@gmail.com", userCaptor.getValue().getEmail());
+        assertNull(userCaptor.getValue().getPhoneNumber());
+        assertNull(profileCaptor.getValue().getFirstName());
+        assertNull(profileCaptor.getValue().getLastName());
+        assertNull(profileCaptor.getValue().getAvatarUrl());
+        assertNull(profileCaptor.getValue().getGender());
+        assertNull(profileCaptor.getValue().getDateOfBirth());
+        assertEquals("test@gmail.com", result.username());
+    }
+
+    @Test
+    void register_setsUsernameFromEmail() {
+        RegisterCommand command = new RegisterCommand(
+                "test@gmail.com",
+                "secret123"
+        );
+
+        when(userService.create(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(profileService.create(any(Profile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByNameActive(USER_ROLE)).thenReturn(Optional.of(defaultRole()));
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-secret");
+
+        authService.register(command);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userService).create(userCaptor.capture());
+        verify(otpService).sendRegistrationOtp(any(User.class));
+        assertEquals("test@gmail.com", userCaptor.getValue().getUsername());
     }
 
     @Test

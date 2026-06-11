@@ -1,23 +1,32 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react'
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
-import HomePage from '@/pages/home/home'
-import BooksPage from '@/pages/book/books'
-import BookDetailPage from '@/pages/book/book-detail'
-import CartPage from '@/pages/cart/cart'
-import CheckoutPage from '@/pages/cart/checkout'
-import NotFoundPage from '@/pages/home/not-found'
-import ShippingPolicyPage from '@/pages/support/shipping-policy'
-import ReturnsRefundsPage from '@/pages/support/returns-refunds'
-import FaqPage from '@/pages/support/faq'
-import ContactPage from '@/pages/support/contact'
-import OrderConfirmationPage from '@/pages/order/order-confirmation'
-import MyOrdersPage from '@/pages/order/my-orders'
-import OrderDetailPage from '@/pages/order/order-detail'
-import LoginPage from '@/pages/auth/login'
-import RegisterPage from '@/pages/auth/register'
-import ProfilePage from '@/pages/auth/profile'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
 import { useLanguage } from '@/contexts/language-context'
 import { ProtectedRoute } from './protected-route'
+
+const HomePage = lazy(() => import('@/pages/home/home'))
+const BooksPage = lazy(() => import('@/pages/book/books'))
+const BookDetailPage = lazy(() => import('@/pages/book/book-detail'))
+const CartPage = lazy(() => import('@/pages/cart/cart'))
+const CheckoutPage = lazy(() => import('@/pages/cart/checkout'))
+const NotFoundPage = lazy(() => import('@/pages/home/not-found'))
+const ShippingPolicyPage = lazy(() => import('@/pages/support/shipping-policy'))
+const ReturnsRefundsPage = lazy(() => import('@/pages/support/returns-refunds'))
+const FaqPage = lazy(() => import('@/pages/support/faq'))
+const ContactPage = lazy(() => import('@/pages/support/contact'))
+const OrderConfirmationPage = lazy(
+  () => import('@/pages/order/order-confirmation'),
+)
+const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
+const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
+const LoginPage = lazy(() => import('@/pages/auth/login'))
+const RegisterPage = lazy(() => import('@/pages/auth/register'))
+const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
@@ -25,11 +34,22 @@ const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
 const AdminCategoriesPage = lazy(() => import('@/pages/admin/categories'))
 const AdminAuthorsPage = lazy(() => import('@/pages/admin/authors'))
 const AdminPublishersPage = lazy(() => import('@/pages/admin/publishers'))
-const AdminUsersPage = lazy(() => import('@/pages/admin/users'))
+const AdminSuppliersPage = lazy(() => import('@/pages/admin/suppliers'))
+const AdminImportReceiptsPage = lazy(
+  () => import('@/pages/admin/import-receipts'),
+)
+const AdminInventoryPage = lazy(() => import('@/pages/admin/inventory'))
+const AdminReviewsPage = lazy(() => import('@/pages/admin/reviews'))
+const AdminNotificationsPage = lazy(
+  () => import('@/pages/admin/notifications'),
+)
+const AdminCustomersPage = lazy(() => import('@/pages/admin/customers'))
+const AdminStaffPage = lazy(() => import('@/pages/admin/staff'))
 const AdminRolesPage = lazy(() => import('@/pages/admin/roles'))
 const AdminPermissionsPage = lazy(() => import('@/pages/admin/permissions'))
 const AdminPromotionsPage = lazy(() => import('@/pages/admin/promotions'))
 const AdminReferencesPage = lazy(() => import('@/pages/admin/references'))
+const AdminSettingsPage = lazy(() => import('@/pages/admin/settings'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -51,7 +71,7 @@ function RouteLoading() {
   )
 }
 
-function LazyAdminPage({ children }: { children: ReactNode }) {
+function LazyPage({ children }: { children: ReactNode }) {
   return <Suspense fallback={<RouteLoading />}>{children}</Suspense>
 }
 
@@ -60,21 +80,86 @@ function AppRouteContent() {
     <>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/books" element={<BooksPage />} />
-        <Route path="/books/:id" element={<BookDetailPage />} />
-        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
-        <Route path="/returns-refunds" element={<ReturnsRefundsPage />} />
-        <Route path="/faq" element={<FaqPage />} />
-        <Route path="/contact" element={<ContactPage />} />
+        <Route
+          path="/"
+          element={
+            <LazyPage>
+              <HomePage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LazyPage>
+              <LoginPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <LazyPage>
+              <RegisterPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/books"
+          element={
+            <LazyPage>
+              <BooksPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/books/:id"
+          element={
+            <LazyPage>
+              <BookDetailPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/shipping-policy"
+          element={
+            <LazyPage>
+              <ShippingPolicyPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/returns-refunds"
+          element={
+            <LazyPage>
+              <ReturnsRefundsPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/faq"
+          element={
+            <LazyPage>
+              <FaqPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <LazyPage>
+              <ContactPage />
+            </LazyPage>
+          }
+        />
 
         <Route
           path="/cart"
           element={
             <ProtectedRoute>
-              <CartPage />
+              <LazyPage>
+                <CartPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -82,7 +167,9 @@ function AppRouteContent() {
           path="/checkout"
           element={
             <ProtectedRoute>
-              <CheckoutPage />
+              <LazyPage>
+                <CheckoutPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -90,7 +177,9 @@ function AppRouteContent() {
           path="/orders"
           element={
             <ProtectedRoute>
-              <MyOrdersPage />
+              <LazyPage>
+                <MyOrdersPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -98,7 +187,9 @@ function AppRouteContent() {
           path="/orders/:id"
           element={
             <ProtectedRoute>
-              <OrderDetailPage />
+              <LazyPage>
+                <OrderDetailPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -106,7 +197,9 @@ function AppRouteContent() {
           path="/order-confirmation"
           element={
             <ProtectedRoute>
-              <OrderConfirmationPage />
+              <LazyPage>
+                <OrderConfirmationPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -114,7 +207,9 @@ function AppRouteContent() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ProfilePage />
+              <LazyPage>
+                <ProfilePage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -122,9 +217,9 @@ function AppRouteContent() {
           path="/admin"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminDashboard />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -132,9 +227,9 @@ function AppRouteContent() {
           path="/admin/books"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminBooksPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -142,9 +237,9 @@ function AppRouteContent() {
           path="/admin/orders"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminOrdersPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -152,9 +247,9 @@ function AppRouteContent() {
           path="/admin/categories"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminCategoriesPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -162,9 +257,9 @@ function AppRouteContent() {
           path="/admin/authors"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminAuthorsPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -172,9 +267,79 @@ function AppRouteContent() {
           path="/admin/publishers"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminPublishersPage />
-              </LazyAdminPage>
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/suppliers"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminSuppliersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/import-receipts"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminImportReceiptsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/inventory"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminInventoryPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reviews"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminReviewsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/notifications"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminNotificationsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/customers"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminCustomersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/staff"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminStaffPage />
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -182,9 +347,7 @@ function AppRouteContent() {
           path="/admin/users"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
-                <AdminUsersPage />
-              </LazyAdminPage>
+              <Navigate to="/admin/customers" replace />
             </ProtectedRoute>
           }
         />
@@ -192,9 +355,9 @@ function AppRouteContent() {
           path="/admin/roles"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminRolesPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -202,9 +365,9 @@ function AppRouteContent() {
           path="/admin/permissions"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminPermissionsPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -212,9 +375,9 @@ function AppRouteContent() {
           path="/admin/promotions"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminPromotionsPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
@@ -222,14 +385,30 @@ function AppRouteContent() {
           path="/admin/references"
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <LazyAdminPage>
+              <LazyPage>
                 <AdminReferencesPage />
-              </LazyAdminPage>
+              </LazyPage>
             </ProtectedRoute>
           }
         />
-
-        <Route path="*" element={<NotFoundPage />} />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminSettingsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <LazyPage>
+              <NotFoundPage />
+            </LazyPage>
+          }
+        />
       </Routes>
     </>
   )
