@@ -6,7 +6,7 @@ public enum DomainErrorCode {
     INVALID_USER_USERNAME("DOMAIN_USER_002", "%s khong duoc de trong"),
     INVALID_USER_PASSWORD_HASH("DOMAIN_USER_003", "%s khong duoc de trong"),
     INVALID_USER_PHONE_NUMBER("DOMAIN_USER_004", "%s phai co dung 10 chu so va bat dau bang 0"),
-    INVALID_USER_EMAIL("DOMAIN_USER_005", "%s phai ket thuc bang @gmail.com"),
+    INVALID_USER_EMAIL("DOMAIN_USER_005", "%s khong dung dinh dang email"),
     INVALID_USER_STATUS("DOMAIN_USER_006", "%s khong duoc null"),
     INVALID_USER_ROLES("DOMAIN_USER_007", "%s khong duoc chua phan tu null"),
     INVALID_USER_CREATED_AT("DOMAIN_USER_008", "%s khong duoc nam trong tuong lai"),
@@ -32,6 +32,15 @@ public enum DomainErrorCode {
     USER_LOCK_STATUS_NOT_CHANGED("DOMAIN_USER_028", "trang thai khoa tai khoan phai khac hien tai"),
     USER_MANAGED_INFO_NOT_CHANGED("DOMAIN_USER_029", "thong tin user phai khac du lieu hien tai"),
 
+    INVALID_USER_AUTH_IDENTITY_ID("DOMAIN_USER_AUTH_IDENTITY_001", "%s khong duoc null"),
+    INVALID_USER_AUTH_IDENTITY_USER_ID("DOMAIN_USER_AUTH_IDENTITY_002", "%s khong duoc null"),
+    INVALID_USER_AUTH_IDENTITY_PROVIDER("DOMAIN_USER_AUTH_IDENTITY_003", "%s khong duoc null"),
+    INVALID_USER_AUTH_IDENTITY_PROVIDER_SUBJECT("DOMAIN_USER_AUTH_IDENTITY_004", "%s khong duoc de trong"),
+    INVALID_USER_AUTH_IDENTITY_PROVIDER_EMAIL("DOMAIN_USER_AUTH_IDENTITY_005", "%s khong dung dinh dang email"),
+    INVALID_USER_AUTH_IDENTITY_CREATED_AT("DOMAIN_USER_AUTH_IDENTITY_006", "%s khong duoc nam trong tuong lai"),
+    INVALID_USER_AUTH_IDENTITY_UPDATED_AT("DOMAIN_USER_AUTH_IDENTITY_007", "%s khong duoc nam trong tuong lai"),
+    INVALID_USER_AUTH_IDENTITY_AUDIT_ORDER("DOMAIN_USER_AUTH_IDENTITY_008", "%s khong duoc som hon %s"),
+
     INVALID_USER_OTP_ID("DOMAIN_USER_OTP_001", "%s khong duoc null"),
     INVALID_USER_OTP_USER_ID("DOMAIN_USER_OTP_002", "%s khong duoc null"),
     INVALID_USER_OTP_HASH("DOMAIN_USER_OTP_003", "%s khong duoc de trong"),
@@ -41,6 +50,7 @@ public enum DomainErrorCode {
     INVALID_USER_OTP_VERIFIED_AT("DOMAIN_USER_OTP_007", "%s khong duoc nam trong tuong lai"),
     INVALID_USER_OTP_INVALIDATED_AT("DOMAIN_USER_OTP_008", "%s khong duoc nam trong tuong lai"),
     INVALID_USER_OTP_AUDIT_ORDER("DOMAIN_USER_OTP_009", "%s khong duoc som hon %s"),
+    INVALID_USER_OTP_PURPOSE("DOMAIN_USER_OTP_010", "%s khong duoc null"),
 
     INVALID_PROFILE_ID("DOMAIN_PROFILE_001", "%s khong duoc null"),
     INVALID_PROFILE_USER_ID("DOMAIN_PROFILE_002", "%s khong duoc null"),
@@ -267,6 +277,14 @@ public enum DomainErrorCode {
     INVALID_REFRESH_TOKEN_EXPIRES_AT("DOMAIN_REFRESH_TOKEN_004", "%s phai nam trong tuong lai"),
     INVALID_REFRESH_TOKEN_CREATED_AT("DOMAIN_REFRESH_TOKEN_005", "%s khong duoc nam trong tuong lai"),
     INVALID_REFRESH_TOKEN_AUDIT_ORDER("DOMAIN_REFRESH_TOKEN_006", "%s phai sau %s"),
+
+    INVALID_PASSWORD_RESET_TOKEN_ID("DOMAIN_PASSWORD_RESET_TOKEN_001", "%s khong duoc null"),
+    INVALID_PASSWORD_RESET_TOKEN_USER_ID("DOMAIN_PASSWORD_RESET_TOKEN_002", "%s khong duoc null"),
+    INVALID_PASSWORD_RESET_TOKEN_HASH("DOMAIN_PASSWORD_RESET_TOKEN_003", "%s khong duoc de trong"),
+    INVALID_PASSWORD_RESET_TOKEN_EXPIRES_AT("DOMAIN_PASSWORD_RESET_TOKEN_004", "%s khong duoc null"),
+    INVALID_PASSWORD_RESET_TOKEN_USED_AT("DOMAIN_PASSWORD_RESET_TOKEN_005", "%s khong duoc nam trong tuong lai"),
+    INVALID_PASSWORD_RESET_TOKEN_CREATED_AT("DOMAIN_PASSWORD_RESET_TOKEN_006", "%s khong duoc nam trong tuong lai"),
+    INVALID_PASSWORD_RESET_TOKEN_AUDIT_ORDER("DOMAIN_PASSWORD_RESET_TOKEN_007", "%s khong duoc som hon %s"),
 
     INVALID_REVIEW_ID("DOMAIN_REVIEW_001", "%s khong duoc null"),
     INVALID_REVIEW_USER_ID("DOMAIN_REVIEW_002", "%s khong duoc null"),

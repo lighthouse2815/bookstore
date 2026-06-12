@@ -6,7 +6,6 @@ import java.util.List;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, GoogleAuthProperties.class})
 public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINT = {

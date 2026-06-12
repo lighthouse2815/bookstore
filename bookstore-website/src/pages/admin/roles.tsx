@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
@@ -13,277 +12,55 @@ import {
   X,
   Edit2,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import { Textarea } from '@/components/common/textarea'
-import { AdminLayout } from '@/components/layout/admin-layout'
-import { useLanguage } from '@/contexts/language-context'
 import {
-  createAdminRole,
-  deleteAdminRole,
-  getAdminPermissions,
-  getAdminRoles,
-  updateAdminRole,
-} from '@/services/admin-access-service'
+  useAdminRolesPage,
+  type RoleFormState,
+} from '@/hooks/use-admin-roles-page'
+import { AdminLayout } from '@/components/layout/admin-layout'
 import type {
   AdminPermissionResponse,
-  AdminRoleMutationRequest,
   AdminRoleResponse,
 } from '@/types/admin-access'
 import type { UserRole } from '@/types/auth'
-import { cn, getErrorMessage } from '@/utils'
+import { cn } from '@/utils'
 import { getUserRoleLabel } from '@/utils/i18n'
 
-type RoleDialogMode = 'create' | 'view' | 'edit' | 'delete'
-
-type RoleFormState = {
-  name: string
-  description: string
-  permissionCodes: string[]
-}
-
 const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'USER']
-const roleVariants: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
-  ADMIN: 'default',
-  STAFF: 'secondary',
-  USER: 'outline',
-}
-
-const initialFormState: RoleFormState = {
-  name: '',
-  description: '',
-  permissionCodes: [],
-}
 
 export default function AdminRolesPage() {
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
-  const [roles, setRoles] = useState<AdminRoleResponse[]>([])
-  const [permissions, setPermissions] = useState<AdminPermissionResponse[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [dialogMode, setDialogMode] = useState<RoleDialogMode | null>(null)
-  const [selectedRole, setSelectedRole] = useState<AdminRoleResponse | null>(null)
-  const [form, setForm] = useState<RoleFormState>(initialFormState)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const filteredRoles = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    if (keyword === '') {
-      return roles
-    }
-
-    return roles.filter((role) =>
-      [role.name, role.description ?? '', ...role.permissionCodes]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    )
-  }, [roles, searchTerm])
-
-  const labels = useMemo(
-    () => ({
-      addRole: isVietnamese ? 'Thêm vai trò' : 'Add role',
-      detailTitle: isVietnamese ? 'Chi tiết vai trò' : 'Role details',
-      editTitle: isVietnamese ? 'Sửa vai trò' : 'Edit role',
-      deleteTitle: isVietnamese ? 'Xác nhận xóa vai trò' : 'Confirm role deletion',
-      deleteDescription: isVietnamese
-        ? 'Hành động này sẽ xóa vai trò khỏi hệ thống và không thể hoàn tác.'
-        : 'This action removes the role from the system and cannot be undone.',
-      createSuccess: isVietnamese ? 'Đã tạo vai trò' : 'Role created successfully',
-      updateSuccess: isVietnamese
-        ? 'Đã cập nhật vai trò'
-        : 'Role updated successfully',
-      deleteSuccess: isVietnamese ? 'Đã xóa vai trò' : 'Role deleted successfully',
-      loadError: isVietnamese
-        ? 'Không tải được danh sách vai trò'
-        : 'Unable to load the role list',
-      saveError: isVietnamese ? 'Không lưu được vai trò' : 'Unable to save role',
-      deleteError: isVietnamese ? 'Không xóa được vai trò' : 'Unable to delete role',
-      permissionList: isVietnamese ? 'Danh sách quyền' : 'Permission list',
-      noPermissions: isVietnamese ? 'Chưa có quyền nào' : 'No permissions assigned',
-      descriptionEmpty: t('admin.rolesPage.noDescription'),
-      showingCount: isVietnamese
-        ? 'Hiển thị {count} trên {total} vai trò'
-        : 'Showing {count} of {total} roles',
-      roleName: isVietnamese ? 'Tên vai trò' : 'Role name',
-      choosePermissions: isVietnamese ? 'Chọn quyền' : 'Choose permissions',
-      roleDescription: isVietnamese ? 'Mô tả' : 'Description',
-      searchPlaceholder: t('admin.rolesPage.searchPlaceholder'),
-      empty: t('admin.rolesPage.empty'),
-    }),
-    [isVietnamese, t],
-  )
-
-  useEffect(() => {
-    void loadRoleData()
-  }, [])
-
-  useEffect(() => {
-    if (!dialogMode) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !(dialogMode === 'delete' && isDeleting)) {
-        closeDialog()
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [dialogMode, isDeleting])
-
-  async function loadRoleData() {
-    setIsLoading(true)
-
-    try {
-      const [roleResponse, permissionResponse] = await Promise.all([
-        getAdminRoles(),
-        getAdminPermissions(),
-      ])
-
-      setRoles(roleResponse)
-      setPermissions(permissionResponse)
-      setError(null)
-    } catch (currentError) {
-      setError(getErrorMessage(currentError, labels.loadError))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function resetDialog() {
-    setDialogMode(null)
-    setSelectedRole(null)
-    setForm(initialFormState)
-  }
-
-  function closeDialog() {
-    if (isSubmitting || isDeleting) {
-      return
-    }
-
-    resetDialog()
-  }
-
-  function openCreateDialog() {
-    setSelectedRole(null)
-    setForm(initialFormState)
-    setDialogMode('create')
-  }
-
-  function openViewDialog(role: AdminRoleResponse) {
-    setSelectedRole(role)
-    setDialogMode('view')
-  }
-
-  function openEditDialog(role: AdminRoleResponse) {
-    setSelectedRole(role)
-    setForm({
-      name: role.name,
-      description: role.description ?? '',
-      permissionCodes: [...role.permissionCodes],
-    })
-    setDialogMode('edit')
-  }
-
-  function openEditFromView() {
-    if (!selectedRole) {
-      return
-    }
-
-    openEditDialog(selectedRole)
-  }
-
-  function openDeleteDialog(role: AdminRoleResponse) {
-    setSelectedRole(role)
-    setDialogMode('delete')
-  }
-
-  function handleFormChange(
-    field: keyof RoleFormState,
-    value: string | string[],
-  ) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }))
-  }
-
-  function togglePermission(permissionCode: string) {
-    setForm((currentForm) => {
-      const nextCodes = currentForm.permissionCodes.includes(permissionCode)
-        ? currentForm.permissionCodes.filter((code) => code !== permissionCode)
-        : [...currentForm.permissionCodes, permissionCode]
-
-      return {
-        ...currentForm,
-        permissionCodes: nextCodes,
-      }
-    })
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    setIsSubmitting(true)
-
-    try {
-      const payload: AdminRoleMutationRequest = {
-        name: form.name.trim(),
-        description: form.description.trim(),
-        permissionCodes: form.permissionCodes,
-      }
-
-      if (dialogMode === 'edit' && selectedRole) {
-        await updateAdminRole(selectedRole.id, payload)
-        toast.success(labels.updateSuccess)
-      } else {
-        await createAdminRole(payload)
-        toast.success(labels.createSuccess)
-      }
-
-      await loadRoleData()
-      resetDialog()
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.saveError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  async function handleDeleteConfirm() {
-    if (!selectedRole) {
-      return
-    }
-
-    setIsDeleting(true)
-
-    try {
-      await deleteAdminRole(selectedRole.id)
-      await loadRoleData()
-      resetDialog()
-      toast.success(labels.deleteSuccess)
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.deleteError))
-    } finally {
-      setIsDeleting(false)
-    }
-  }
+  const {
+    t,
+    formatDate,
+    formatNumber,
+    roles,
+    permissions,
+    searchTerm,
+    isLoading,
+    error,
+    dialogMode,
+    selectedRole,
+    form,
+    isSubmitting,
+    isDeleting,
+    filteredRoles,
+    labels,
+    handleSearchTermChange,
+    closeDialog,
+    openCreateDialog,
+    openViewDialog,
+    openEditDialog,
+    openEditFromView,
+    openDeleteDialog,
+    handleFormChange,
+    togglePermission,
+    handleSubmit,
+    handleDeleteConfirm,
+  } = useAdminRolesPage()
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[160] flex items-center justify-center px-4 py-6">
@@ -307,7 +84,7 @@ export default function AdminRolesPage() {
           />
         ) : null}
 
-        {(dialogMode === 'create' || dialogMode === 'edit') ? (
+        {dialogMode === 'create' || dialogMode === 'edit' ? (
           <RoleFormDialog
             canClose={!isSubmitting}
             form={form}
@@ -381,7 +158,7 @@ export default function AdminRolesPage() {
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                    onChange={handleSearchTermChange}
                     placeholder={labels.searchPlaceholder}
                     className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                   />
@@ -842,12 +619,6 @@ function DetailCard({
       <p className="mt-3 text-base font-semibold text-foreground">{value}</p>
     </div>
   )
-}
-
-function getRoleVariant(roleName: string) {
-  return knownRoles.includes(roleName as UserRole)
-    ? roleVariants[roleName as UserRole]
-    : 'outline'
 }
 
 function getRoleLabel(

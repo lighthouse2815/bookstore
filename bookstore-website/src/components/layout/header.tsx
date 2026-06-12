@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   BookOpen,
   LayoutDashboard,
@@ -12,53 +11,29 @@ import {
 } from 'lucide-react'
 import { ThemeSwitch } from '@/components/common/theme-switch'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
-import { useAuth } from '@/contexts/auth-context'
-import { useCart } from '@/contexts/cart-context'
-import { useLanguage } from '@/contexts/language-context'
-import { useTheme } from '@/contexts/theme-context'
+import { useHeaderState } from '@/hooks/use-header-state'
 import { cn } from '@/utils'
 
 export function Header() {
-  const { totalQuantity } = useCart()
-  const { user, logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
-  const { t } = useLanguage()
-  const brand = t('common.brand')
-  const brandPrefix = brand.endsWith('Vui') ? brand.slice(0, -3) : brand
-  const location = useLocation()
-  const totalItems = totalQuantity
-  const [open, setOpen] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
-  const profileRef = useRef<HTMLDivElement>(null)
-
-  const navLinks = [
-    { to: '/', label: t('header.nav.home') },
-    { to: '/books', label: t('header.nav.books') },
-    {
-      to: '/books?category=__life-skills__',
-      label: t('header.nav.lifeSkills'),
-    },
-    {
-      to: '/books?category=__novel__',
-      label: t('header.nav.novel'),
-    },
-  ]
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
-        setProfileOpen(false)
-      }
-    }
-
-    if (profileOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [profileOpen])
+  const {
+    user,
+    theme,
+    t,
+    brandPrefix,
+    brandSuffix,
+    totalItems,
+    navLinks,
+    open,
+    profileOpen,
+    profileRef,
+    toggleTheme,
+    isActiveLink,
+    toggleMenu,
+    closeMenu,
+    toggleProfileMenu,
+    closeProfileMenu,
+    handleLogout,
+  } = useHeaderState()
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
@@ -69,7 +44,7 @@ export function Header() {
           </span>
           <span className="font-heading text-xl font-bold tracking-tight">
             {brandPrefix}
-            {brand.endsWith('Vui') && <span className="text-primary">Vui</span>}
+            {brandSuffix && <span className="text-primary">{brandSuffix}</span>}
           </span>
         </Link>
 
@@ -80,8 +55,7 @@ export function Header() {
               to={link.to}
               className={cn(
                 'rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                location.pathname + location.search === link.to &&
-                  'text-foreground',
+                isActiveLink(link.to) && 'text-foreground',
               )}
             >
               {link.label}
@@ -144,7 +118,7 @@ export function Header() {
           ) : (
             <div className="relative" ref={profileRef}>
               <button
-                onClick={() => setProfileOpen((current) => !current)}
+                onClick={toggleProfileMenu}
                 className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
                 aria-label={t('header.profileMenu')}
               >
@@ -164,7 +138,7 @@ export function Header() {
                   <nav className="flex flex-col">
                     <Link
                       to="/profile"
-                      onClick={() => setProfileOpen(false)}
+                      onClick={closeProfileMenu}
                       className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
                     >
                       <User className="h-4 w-4" />
@@ -173,7 +147,7 @@ export function Header() {
                     {user.role === 'ADMIN' && (
                       <Link
                         to="/admin"
-                        onClick={() => setProfileOpen(false)}
+                        onClick={closeProfileMenu}
                         className="flex items-center gap-2 px-4 py-3 text-sm text-primary transition-colors hover:bg-muted"
                       >
                         <LayoutDashboard className="h-4 w-4" />
@@ -182,8 +156,7 @@ export function Header() {
                     )}
                     <button
                       onClick={() => {
-                        void logout()
-                        setProfileOpen(false)
+                        void handleLogout()
                       }}
                       className="flex items-center gap-2 border-t border-border px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
                     >
@@ -198,7 +171,7 @@ export function Header() {
 
           <button
             type="button"
-            onClick={() => setOpen((current) => !current)}
+            onClick={toggleMenu}
             className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted md:hidden"
             aria-label="Menu"
           >
@@ -215,7 +188,7 @@ export function Header() {
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
                 className="rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 {link.label}
@@ -224,7 +197,7 @@ export function Header() {
             {!user && (
               <Link
                 to="/login"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
                 className="mt-2 rounded-lg bg-primary px-3 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
               >
                 {t('header.login')}

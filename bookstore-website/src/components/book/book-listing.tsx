@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { BookCard } from '@/components/book/book-card'
 import {
@@ -9,65 +7,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/select'
-import { useLanguage } from '@/contexts/language-context'
-import { useBookCatalog } from '@/hooks/use-book-catalog'
+import { useBookListing } from '@/hooks/use-book-listing'
 import { cn } from '@/utils'
 import { getCategoryLabel } from '@/utils/i18n'
 
-type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'rating'
-const ALL_CATEGORIES = '__all__'
-const CATEGORY_PRESETS = {
-  '__life-skills__': 'categories.lifeSkills',
-  '__novel__': 'categories.novel',
-} as const
-
 export function BookListing() {
-  const [searchParams] = useSearchParams()
-  const requestedCategory = searchParams.get('category') ?? ALL_CATEGORIES
-  const { t, formatNumber } = useLanguage()
-  const { books, categories, isLoading, error } = useBookCatalog()
-
-  const [category, setCategory] = useState(requestedCategory)
-  const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<SortKey>('popular')
-
-  useEffect(() => {
-    setCategory(
-      resolveRequestedCategory(requestedCategory, categories, t),
-    )
-  }, [categories, requestedCategory, t])
-
-  const filtered = useMemo(() => {
-    let result = books.filter((book) => {
-      const matchCategory = category === ALL_CATEGORIES || book.category === category
-      const matchQuery =
-        query.trim() === '' ||
-        book.title.toLowerCase().includes(query.toLowerCase()) ||
-        book.author.toLowerCase().includes(query.toLowerCase())
-
-      return matchCategory && matchQuery
-    })
-
-    result = [...result].sort((firstBook, secondBook) => {
-      switch (sort) {
-        case 'price-asc':
-          return firstBook.price - secondBook.price
-        case 'price-desc':
-          return secondBook.price - firstBook.price
-        case 'rating':
-          return (secondBook.rating ?? 0) - (firstBook.rating ?? 0)
-        default:
-          return (
-            new Date(secondBook.updatedAt).getTime() -
-            new Date(firstBook.updatedAt).getTime()
-          )
-      }
-    })
-
-    return result
-  }, [books, category, query, sort])
-
-  const categoryOptions = [ALL_CATEGORIES, ...categories]
+  const {
+    t,
+    formatNumber,
+    isLoading,
+    error,
+    filteredBooks,
+    category,
+    query,
+    sort,
+    allCategoriesValue,
+    categoryOptions,
+    handleQueryChange,
+    handleCategorySelect,
+    handleSortChange,
+  } = useBookListing()
 
   return (
     <div>
@@ -77,7 +36,7 @@ export function BookListing() {
         </h1>
         <p className="mt-1 text-muted-foreground">
           {t('book.listing.resultCount', {
-            count: formatNumber(filtered.length),
+            count: formatNumber(filteredBooks.length),
           })}
         </p>
       </div>
@@ -89,7 +48,7 @@ export function BookListing() {
             <input
               type="text"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={handleQueryChange}
               placeholder={t('book.listing.searchPlaceholder')}
               className="h-11 w-full rounded-full border border-border bg-background pl-10 pr-4 text-sm outline-none focus:border-primary"
             />
@@ -105,7 +64,7 @@ export function BookListing() {
                 <button
                   key={nextCategory}
                   type="button"
-                  onClick={() => setCategory(nextCategory)}
+                  onClick={() => handleCategorySelect(nextCategory)}
                   className={cn(
                     'rounded-full px-4 py-2 text-sm font-medium transition-colors lg:w-full lg:text-left',
                     category === nextCategory
@@ -113,7 +72,7 @@ export function BookListing() {
                       : 'bg-muted text-foreground hover:bg-muted/70',
                   )}
                 >
-                  {nextCategory === ALL_CATEGORIES
+                  {nextCategory === allCategoriesValue
                     ? t('categories.all')
                     : getCategoryLabel(nextCategory, t)}
                 </button>
@@ -124,7 +83,7 @@ export function BookListing() {
 
         <div>
           <div className="mb-4 flex items-center justify-end">
-            <Select value={sort} onValueChange={(value) => setSort(value as SortKey)}>
+            <Select value={sort} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[220px] rounded-full">
                 <SelectValue placeholder={t('book.listing.sortPlaceholder')} />
               </SelectTrigger>
@@ -160,9 +119,9 @@ export function BookListing() {
                 {error || t('book.listing.errorDescription')}
               </p>
             </div>
-          ) : filtered.length > 0 ? (
+          ) : filteredBooks.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((book) => (
+              {filteredBooks.map((book) => (
                 <BookCard key={book.id} book={book} />
               ))}
             </div>
@@ -180,27 +139,4 @@ export function BookListing() {
       </div>
     </div>
   )
-}
-
-function resolveRequestedCategory(
-  requestedCategory: string,
-  categories: string[],
-  t: (key: string, params?: Record<string, number | string>) => string,
-) {
-  if (requestedCategory === ALL_CATEGORIES) {
-    return ALL_CATEGORIES
-  }
-
-  const presetKey =
-    CATEGORY_PRESETS[requestedCategory as keyof typeof CATEGORY_PRESETS]
-
-  if (presetKey) {
-    return (
-      categories.find(
-        (category) => getCategoryLabel(category, t) === t(presetKey),
-      ) ?? ALL_CATEGORIES
-    )
-  }
-
-  return categories.includes(requestedCategory) ? requestedCategory : ALL_CATEGORIES
 }

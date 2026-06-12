@@ -54,7 +54,11 @@ api.interceptors.response.use(
       originalRequest._retry ||
       error.response?.status !== 401 ||
       requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/google') ||
       requestUrl.includes('/auth/register') ||
+      requestUrl.includes('/auth/forgot-password/') ||
+      requestUrl.includes('/otp/request') ||
+      requestUrl.includes('/otp/verify') ||
       requestUrl.includes('/auth/refresh')
     ) {
       return Promise.reject(error)

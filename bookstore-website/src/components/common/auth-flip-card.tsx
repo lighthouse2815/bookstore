@@ -1,5 +1,6 @@
-import { useId, useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import styled from 'styled-components'
+import { useAuthFlipCard } from '@/hooks/use-auth-flip-card'
 
 type AuthFlipCardProps = {
   frontTitle: string
@@ -26,18 +27,10 @@ export function AuthFlipCard({
   checked,
   onCheckedChange,
 }: AuthFlipCardProps) {
-  const toggleId = useId().replace(/:/g, '')
-  const [internalChecked, setInternalChecked] = useState(false)
-  const isControlled = checked !== undefined
-  const isChecked = isControlled ? checked : internalChecked
-
-  function handleCheckedChange(nextChecked: boolean) {
-    if (!isControlled) {
-      setInternalChecked(nextChecked)
-    }
-
-    onCheckedChange?.(nextChecked)
-  }
+  const { toggleId, isChecked, handleCheckedChange } = useAuthFlipCard(
+    checked,
+    onCheckedChange,
+  )
 
   return (
     <StyledWrapper>

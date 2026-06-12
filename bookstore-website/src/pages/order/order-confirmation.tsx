@@ -1,58 +1,18 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { CheckCircle } from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
-import { getMyOrder } from '@/services/order-service'
-import type { OrderResponse } from '@/types/order'
-import { getErrorMessage } from '@/utils'
+import { useOrderConfirmationPage } from '@/hooks/use-order-confirmation-page'
 import {
   getPaymentMethodLabel,
   getPaymentStatusLabel,
 } from '@/utils/i18n'
 
 export default function OrderConfirmationPage() {
-  const [searchParams] = useSearchParams()
-  const orderId = searchParams.get('orderId')
   const { t, formatCurrency } = useLanguage()
-  const [order, setOrder] = useState<OrderResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!orderId) {
-      return
-    }
-
-    const currentOrderId = orderId
-    let isCancelled = false
-
-    async function loadOrder() {
-      try {
-        const data = await getMyOrder(currentOrderId)
-
-        if (isCancelled) {
-          return
-        }
-
-        setOrder(data)
-        setError(null)
-      } catch (currentError) {
-        if (isCancelled) {
-          return
-        }
-
-        setError(getErrorMessage(currentError, t('checkout.error')))
-      }
-    }
-
-    void loadOrder()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [orderId, t])
+  const { order, error } = useOrderConfirmationPage()
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

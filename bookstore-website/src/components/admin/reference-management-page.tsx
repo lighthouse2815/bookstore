@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
@@ -15,56 +14,25 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import { Textarea } from '@/components/common/textarea'
-import { AdminLayout } from '@/components/layout/admin-layout'
-import { useLanguage } from '@/contexts/language-context'
-import { getBookReferences } from '@/services/book-service'
 import {
-  createAuthor,
-  createCategory,
-  createPublisher,
-  deleteAuthor,
-  deleteCategory,
-  deletePublisher,
-  updateAuthor,
-  updateCategory,
-  updatePublisher,
-} from '@/services/reference-service'
-import type {
-  AuthorResponse,
-  BookReferenceData,
-  CategoryResponse,
-  PublisherResponse,
-} from '@/types/book'
-import { cn, getErrorMessage } from '@/utils'
-
-export type ReferenceSectionKey = 'categories' | 'authors' | 'publishers'
-
-type ReferenceItem = CategoryResponse | AuthorResponse | PublisherResponse
-type ReferenceDialogMode = 'create' | 'view' | 'edit' | 'delete'
-
-type ReferenceFormState = {
-  id: string | null
-  name: string
-  description: string
-}
+  getReferenceDescription,
+  useAdminReferenceManagementPage,
+  type ReferenceItem,
+  type ReferenceSectionKey,
+} from '@/hooks/use-admin-reference-management-page'
+import { AdminLayout } from '@/components/layout/admin-layout'
+import { cn } from '@/utils'
 
 type SectionVisual = {
   icon: LucideIcon
   badgeClassName: string
   tileClassName: string
   tileIconClassName: string
-}
-
-const initialFormState: ReferenceFormState = {
-  id: null,
-  name: '',
-  description: '',
 }
 
 const sectionLabelKeys: Record<ReferenceSectionKey, string> = {
@@ -147,57 +115,32 @@ export function AdminReferenceManagementPage({
 }: {
   sectionKey: ReferenceSectionKey
 }) {
-  const { t, formatDate, formatNumber } = useLanguage()
-  const [items, setItems] = useState<ReferenceItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState<ReferenceFormState>(initialFormState)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [dialogMode, setDialogMode] = useState<ReferenceDialogMode | null>(null)
-  const [selectedItem, setSelectedItem] = useState<ReferenceItem | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  useEffect(() => {
-    void loadItems()
-  }, [sectionKey])
-
-  useEffect(() => {
-    if (!dialogMode) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !(dialogMode === 'delete' && isDeleting)) {
-        closeDialog()
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [dialogMode, isDeleting])
-
-  const filteredItems = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    if (keyword === '') {
-      return items
-    }
-
-    return items.filter((item) =>
-      [item.name, getReferenceDescription(sectionKey, item)]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    )
-  }, [items, searchTerm, sectionKey])
+  const {
+    t,
+    formatDate,
+    formatNumber,
+    items,
+    isLoading,
+    error,
+    form,
+    searchTerm,
+    dialogMode,
+    selectedItem,
+    isSubmitting,
+    isDeleting,
+    filteredItems,
+    isDialogLocked,
+    handleSearchTermChange,
+    handleFormChange,
+    closeDialog,
+    openCreateDialog,
+    openViewDialog,
+    openEditDialog,
+    openEditFromDetail,
+    openDeleteDialog,
+    handleSubmit,
+    handleDeleteConfirm,
+  } = useAdminReferenceManagementPage(sectionKey)
 
   const sectionLabel = t(sectionLabelKeys[sectionKey])
   const descriptionLabel =
@@ -206,149 +149,6 @@ export function AdminReferenceManagementPage({
       : t('common.description')
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
-  const isDialogLocked = dialogMode === 'delete' && isDeleting
-
-  async function loadItems() {
-    setIsLoading(true)
-
-    try {
-      const response = await getBookReferences()
-      setItems(getSectionItems(sectionKey, response))
-      setError(null)
-    } catch (currentError) {
-      setError(getErrorMessage(currentError, t('checkout.error')))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function handleCreate() {
-    setSelectedItem(null)
-    setForm(initialFormState)
-    setDialogMode('create')
-  }
-
-  function handleView(item: ReferenceItem) {
-    setSelectedItem(item)
-    setDialogMode('view')
-  }
-
-  function handleEdit(item: ReferenceItem) {
-    setSelectedItem(item)
-    setForm({
-      id: item.id,
-      name: item.name,
-      description: getReferenceDescription(sectionKey, item),
-    })
-    setDialogMode('edit')
-  }
-
-  function handleEditFromDetail() {
-    if (!selectedItem) {
-      return
-    }
-
-    handleEdit(selectedItem)
-  }
-
-  function closeDialog() {
-    setDialogMode(null)
-    setSelectedItem(null)
-    setForm(initialFormState)
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    setIsSubmitting(true)
-
-    try {
-      switch (sectionKey) {
-        case 'categories':
-          if (form.id) {
-            await updateCategory(form.id, {
-              name: form.name.trim(),
-              description: form.description.trim() || null,
-            })
-          } else {
-            await createCategory({
-              name: form.name.trim(),
-              description: form.description.trim() || null,
-            })
-          }
-          break
-        case 'authors':
-          if (form.id) {
-            await updateAuthor(form.id, {
-              name: form.name.trim(),
-              biography: form.description.trim() || null,
-            })
-          } else {
-            await createAuthor({
-              name: form.name.trim(),
-              biography: form.description.trim() || null,
-            })
-          }
-          break
-        case 'publishers':
-          if (form.id) {
-            await updatePublisher(form.id, {
-              name: form.name.trim(),
-              description: form.description.trim() || null,
-            })
-          } else {
-            await createPublisher({
-              name: form.name.trim(),
-              description: form.description.trim() || null,
-            })
-          }
-          break
-      }
-
-      toast.success(t('admin.references.saveSuccess'))
-      await loadItems()
-      closeDialog()
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, t('checkout.error')))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  function handleDelete(item: ReferenceItem) {
-    setSelectedItem(item)
-    setDialogMode('delete')
-  }
-
-  async function confirmDelete() {
-    if (!selectedItem) {
-      return
-    }
-
-    setIsDeleting(true)
-
-    try {
-      switch (sectionKey) {
-        case 'categories':
-          await deleteCategory(selectedItem.id)
-          break
-        case 'authors':
-          await deleteAuthor(selectedItem.id)
-          break
-        case 'publishers':
-          await deletePublisher(selectedItem.id)
-          break
-      }
-
-      toast.success(t('admin.references.deleteSuccess'))
-      await loadItems()
-      closeDialog()
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, t('checkout.error')))
-    } finally {
-      setIsDeleting(false)
-    }
-  }
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -378,7 +178,7 @@ export function AdminReferenceManagementPage({
             descriptionLabel={descriptionLabel}
             formatDate={formatDate}
             onClose={closeDialog}
-            onEdit={handleEditFromDetail}
+            onEdit={openEditFromDetail}
             t={t}
           />
         ) : dialogMode === 'delete' && selectedItem ? (
@@ -388,7 +188,7 @@ export function AdminReferenceManagementPage({
             sectionLabel={sectionLabel}
             isDeleting={isDeleting}
             onClose={closeDialog}
-            onConfirm={confirmDelete}
+            onConfirm={handleDeleteConfirm}
             t={t}
           />
         ) : (
@@ -427,14 +227,9 @@ export function AdminReferenceManagementPage({
                 <Input
                   id={`${sectionKey}-name`}
                   value={form.name}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value
-
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      name: value,
-                    }))
-                  }}
+                  onChange={(event) =>
+                    handleFormChange('name', event.currentTarget.value)
+                  }
                   className="mt-2 h-12 rounded-2xl bg-background/60"
                   required
                 />
@@ -447,14 +242,9 @@ export function AdminReferenceManagementPage({
                 <Textarea
                   id={`${sectionKey}-description`}
                   value={form.description}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value
-
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      description: value,
-                    }))
-                  }}
+                  onChange={(event) =>
+                    handleFormChange('description', event.currentTarget.value)
+                  }
                   className="mt-2 min-h-32 rounded-2xl bg-background/60"
                   rows={5}
                 />
@@ -516,7 +306,7 @@ export function AdminReferenceManagementPage({
 
               <Button
                 size="lg"
-                onClick={handleCreate}
+                onClick={openCreateDialog}
                 className="h-14 rounded-2xl px-6 text-base shadow-[0_18px_40px_rgba(99,102,241,0.35)]"
               >
                 <Plus className="mr-2 h-5 w-5" />
@@ -529,7 +319,7 @@ export function AdminReferenceManagementPage({
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                  onChange={handleSearchTermChange}
                   placeholder={t(searchPlaceholderKeys[sectionKey])}
                   className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 />
@@ -592,7 +382,7 @@ export function AdminReferenceManagementPage({
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => handleView(item)}
+                            onClick={() => openViewDialog(item)}
                             className="min-w-[110px] justify-center rounded-2xl bg-background/60"
                           >
                             <Eye className="mr-2 h-4 w-4" />
@@ -601,7 +391,7 @@ export function AdminReferenceManagementPage({
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => handleEdit(item)}
+                            onClick={() => openEditDialog(item)}
                             className="min-w-[110px] justify-center rounded-2xl bg-background/60"
                           >
                             <Edit2 className="mr-2 h-4 w-4" />
@@ -610,7 +400,7 @@ export function AdminReferenceManagementPage({
                           <Button
                             type="button"
                             variant="destructive"
-                            onClick={() => handleDelete(item)}
+                            onClick={() => openDeleteDialog(item)}
                             className="min-w-[110px] justify-center rounded-2xl"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -822,29 +612,4 @@ function DetailMetaCard({
       </div>
     </div>
   )
-}
-
-function getSectionItems(
-  sectionKey: ReferenceSectionKey,
-  referenceData: BookReferenceData,
-): ReferenceItem[] {
-  switch (sectionKey) {
-    case 'categories':
-      return referenceData.categories
-    case 'authors':
-      return referenceData.authors
-    case 'publishers':
-      return referenceData.publishers
-  }
-}
-
-function getReferenceDescription(
-  sectionKey: ReferenceSectionKey,
-  item: ReferenceItem,
-) {
-  if (sectionKey === 'authors') {
-    return ('biography' in item ? item.biography : null) ?? ''
-  }
-
-  return ('description' in item ? item.description : null) ?? ''
 }

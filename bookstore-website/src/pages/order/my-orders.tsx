@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
-import { getMyOrders } from '@/services/order-service'
+import { useMyOrdersPage } from '@/hooks/use-my-orders-page'
 import type { OrderResponse, OrderStatus } from '@/types/order'
-import { getErrorMessage } from '@/utils'
 import { getOrderStatusLabel } from '@/utils/i18n'
 
 const STATUS_VARIANTS: Record<
@@ -23,42 +21,7 @@ const STATUS_VARIANTS: Record<
 
 export default function MyOrdersPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
-  const [orders, setOrders] = useState<OrderResponse[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let isCancelled = false
-
-    async function loadOrders() {
-      try {
-        const data = await getMyOrders()
-
-        if (isCancelled) {
-          return
-        }
-
-        setOrders(data)
-        setError(null)
-      } catch (currentError) {
-        if (isCancelled) {
-          return
-        }
-
-        setError(getErrorMessage(currentError, t('checkout.error')))
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadOrders()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [t])
+  const { orders, isLoading, error } = useMyOrdersPage()
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

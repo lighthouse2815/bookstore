@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
 import {
   CalendarDays,
   LogOut,
@@ -8,7 +7,6 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
@@ -16,178 +14,34 @@ import { Label } from '@/components/common/label'
 import { ThemeSwitch } from '@/components/common/theme-switch'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
-import { useAuth } from '@/contexts/auth-context'
-import { useLanguage } from '@/contexts/language-context'
-import { useTheme } from '@/contexts/theme-context'
-import { updateCurrentUser } from '@/services/auth-service'
 import {
-  getCurrentProfile,
-  updateCurrentProfile,
-} from '@/services/profile-service'
+  adminSettingsGenderOptions,
+  useAdminSettingsPage,
+} from '@/hooks/use-admin-settings-page'
 import type { ProfileResponse } from '@/types/profile'
-import { getErrorMessage } from '@/utils'
 import { getGenderLabel, getUserRoleLabel } from '@/utils/i18n'
 
-type AccountFormState = {
-  username: string
-  email: string
-  phoneNumber: string
-}
-
-type ProfileFormState = {
-  lastName: string
-  firstName: string
-  avatarUrl: string
-  gender: ProfileResponse['gender']
-  dateOfBirth: string
-}
-
 export default function AdminSettingsPage() {
-  const { user, logout, refreshUser } = useAuth()
-  const { language, t, formatDate } = useLanguage()
-  const { theme, toggleTheme } = useTheme()
-  const isVietnamese = language === 'vi'
-  const [profile, setProfile] = useState<ProfileResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSavingAccount, setIsSavingAccount] = useState(false)
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [accountForm, setAccountForm] = useState<AccountFormState>({
-    username: user?.username ?? '',
-    email: user?.email ?? '',
-    phoneNumber: user?.phoneNumber ?? '',
-  })
-  const [profileForm, setProfileForm] = useState<ProfileFormState>({
-    lastName: '',
-    firstName: '',
-    avatarUrl: '',
-    gender: 'OTHER',
-    dateOfBirth: '',
-  })
-
-  const labels = useMemo(
-    () => ({
-      title: isVietnamese ? 'Cai dat tai khoan quan tri' : 'Admin account settings',
-      description: isVietnamese
-        ? 'Xem thong tin tai khoan, cap nhat profile va tuy chinh khong gian lam viec quan tri.'
-        : 'Review account details, update your profile, and adjust your admin workspace preferences.',
-      overview: isVietnamese ? 'Tong quan tai khoan' : 'Account overview',
-      preferences: isVietnamese ? 'Tuy chon giao dien' : 'Workspace preferences',
-      role: isVietnamese ? 'Vai tro' : 'Role',
-      status: isVietnamese ? 'Trang thai' : 'Status',
-      active: isVietnamese ? 'Dang hoat dong' : 'Active',
-      inactive: isVietnamese ? 'Khong hoat dong' : 'Inactive',
-      accountCreated: isVietnamese ? 'Ngay tao tai khoan' : 'Account created',
-      accountUpdated: isVietnamese ? 'Cap nhat gan nhat' : 'Last updated',
-      theme: isVietnamese ? 'Che do sang toi' : 'Light and dark mode',
-      themeDescription: isVietnamese
-        ? 'Chuyen giao dien admin ma khong can roi khoi bang dieu khien.'
-        : 'Switch the admin interface theme without leaving the dashboard.',
-      language: isVietnamese ? 'Ngon ngu hien thi' : 'Display language',
-      languageDescription: isVietnamese
-        ? 'Ap dung ngay cho toan bo giao dien quan tri.'
-        : 'Applies immediately across the admin interface.',
-      accountSaved: isVietnamese
-        ? 'Da cap nhat thong tin tai khoan'
-        : 'Account information updated',
-      profileSaved: isVietnamese ? 'Da cap nhat profile' : 'Profile updated',
-      profileLoadError: isVietnamese
-        ? 'Khong tai duoc thong tin profile'
-        : 'Unable to load profile information',
-      logout: t('auth.profile.logout'),
-    }),
-    [isVietnamese, t],
-  )
-
-  useEffect(() => {
-    if (!user) {
-      return
-    }
-
-    setAccountForm({
-      username: user.username,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-    })
-  }, [user])
-
-  useEffect(() => {
-    let isCancelled = false
-
-    async function loadProfile() {
-      try {
-        const response = await getCurrentProfile()
-
-        if (isCancelled) {
-          return
-        }
-
-        setProfile(response)
-        setProfileForm({
-          lastName: response.lastName,
-          firstName: response.firstName,
-          avatarUrl: response.avatarUrl ?? '',
-          gender: response.gender,
-          dateOfBirth: response.dateOfBirth,
-        })
-      } catch (error) {
-        if (!isCancelled) {
-          toast.error(getErrorMessage(error, labels.profileLoadError))
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadProfile()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [labels.profileLoadError])
-
-  async function handleSaveAccount(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsSavingAccount(true)
-
-    try {
-      await updateCurrentUser({
-        username: accountForm.username.trim(),
-        email: accountForm.email.trim(),
-        phoneNumber: accountForm.phoneNumber.trim(),
-      })
-      await refreshUser()
-      toast.success(labels.accountSaved)
-    } catch (error) {
-      toast.error(getErrorMessage(error, t('checkout.error')))
-    } finally {
-      setIsSavingAccount(false)
-    }
-  }
-
-  async function handleSaveProfile(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsSavingProfile(true)
-
-    try {
-      const response = await updateCurrentProfile({
-        lastName: profileForm.lastName.trim(),
-        firstName: profileForm.firstName.trim(),
-        avatarUrl: profileForm.avatarUrl.trim() || null,
-        gender: profileForm.gender,
-        dateOfBirth: profileForm.dateOfBirth,
-      })
-
-      setProfile(response)
-      await refreshUser()
-      toast.success(labels.profileSaved)
-    } catch (error) {
-      toast.error(getErrorMessage(error, t('checkout.error')))
-    } finally {
-      setIsSavingProfile(false)
-    }
-  }
+  const {
+    user,
+    profile,
+    theme,
+    t,
+    formatDate,
+    labels,
+    isLoading,
+    isSavingAccount,
+    isSavingProfile,
+    accountForm,
+    profileForm,
+    toggleTheme,
+    handleAccountChange,
+    handleProfileChange,
+    handleProfileGenderChange,
+    handleLogout,
+    handleSaveAccount,
+    handleSaveProfile,
+  } = useAdminSettingsPage()
 
   return (
     <AdminLayout>
@@ -218,7 +72,7 @@ export default function AdminSettingsPage() {
               variant="outline"
               size="lg"
               onClick={() => {
-                void logout()
+                void handleLogout()
               }}
               className="h-14 rounded-2xl px-6 text-base"
             >
@@ -361,10 +215,7 @@ export default function AdminSettingsPage() {
                   <Input
                     value={accountForm.username}
                     onChange={(event) =>
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        username: event.currentTarget.value,
-                      }))
+                      handleAccountChange('username', event.currentTarget.value)
                     }
                     className="mt-2 h-11 rounded-2xl"
                     required
@@ -376,10 +227,7 @@ export default function AdminSettingsPage() {
                     type="email"
                     value={accountForm.email}
                     onChange={(event) =>
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        email: event.currentTarget.value,
-                      }))
+                      handleAccountChange('email', event.currentTarget.value)
                     }
                     className="mt-2 h-11 rounded-2xl"
                     required
@@ -390,10 +238,10 @@ export default function AdminSettingsPage() {
                   <Input
                     value={accountForm.phoneNumber}
                     onChange={(event) =>
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        phoneNumber: event.currentTarget.value,
-                      }))
+                      handleAccountChange(
+                        'phoneNumber',
+                        event.currentTarget.value,
+                      )
                     }
                     className="mt-2 h-11 rounded-2xl"
                     required
@@ -424,10 +272,7 @@ export default function AdminSettingsPage() {
                     <Input
                       value={profileForm.lastName}
                       onChange={(event) =>
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          lastName: event.currentTarget.value,
-                        }))
+                        handleProfileChange('lastName', event.currentTarget.value)
                       }
                       className="mt-2 h-11 rounded-2xl"
                       required
@@ -438,10 +283,10 @@ export default function AdminSettingsPage() {
                     <Input
                       value={profileForm.firstName}
                       onChange={(event) =>
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          firstName: event.currentTarget.value,
-                        }))
+                        handleProfileChange(
+                          'firstName',
+                          event.currentTarget.value,
+                        )
                       }
                       className="mt-2 h-11 rounded-2xl"
                       required
@@ -453,10 +298,7 @@ export default function AdminSettingsPage() {
                   <Input
                     value={profileForm.avatarUrl}
                     onChange={(event) =>
-                      setProfileForm((currentForm) => ({
-                        ...currentForm,
-                        avatarUrl: event.currentTarget.value,
-                      }))
+                      handleProfileChange('avatarUrl', event.currentTarget.value)
                     }
                     className="mt-2 h-11 rounded-2xl"
                   />
@@ -467,14 +309,13 @@ export default function AdminSettingsPage() {
                     <select
                       value={profileForm.gender}
                       onChange={(event) =>
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          gender: event.currentTarget.value as ProfileResponse['gender'],
-                        }))
+                        handleProfileGenderChange(
+                          event.currentTarget.value as ProfileResponse['gender'],
+                        )
                       }
                       className="mt-2 h-11 w-full rounded-2xl border border-input bg-background px-3 text-sm"
                     >
-                      {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
+                      {adminSettingsGenderOptions.map((gender) => (
                         <option key={gender} value={gender}>
                           {getGenderLabel(gender, t)}
                         </option>
@@ -487,10 +328,10 @@ export default function AdminSettingsPage() {
                       type="date"
                       value={profileForm.dateOfBirth}
                       onChange={(event) =>
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          dateOfBirth: event.currentTarget.value,
-                        }))
+                        handleProfileChange(
+                          'dateOfBirth',
+                          event.currentTarget.value,
+                        )
                       }
                       className="mt-2 h-11 rounded-2xl"
                       required

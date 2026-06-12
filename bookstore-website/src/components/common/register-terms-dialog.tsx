@@ -1,60 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { useLanguage } from '@/contexts/language-context'
-import { getRegisterTermsCopy } from '@/utils/register-terms'
+import { useRegisterTermsDialog } from '@/hooks/use-register-terms-dialog'
 
 type RegisterTermsDialogProps = {
   open: boolean
   onClose: () => void
 }
 
-const CLOSE_UNLOCK_OFFSET = 24
-
 export function RegisterTermsDialog({
   open,
   onClose,
 }: RegisterTermsDialogProps) {
-  const { language, t } = useLanguage()
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const [hasReachedBottom, setHasReachedBottom] = useState(false)
-  const termsCopy = getRegisterTermsCopy(language)
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    setHasReachedBottom(false)
-
-    requestAnimationFrame(() => {
-      if (!scrollRef.current) {
-        return
-      }
-
-      scrollRef.current.scrollTop = 0
-      updateScrollState(scrollRef.current)
-    })
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open])
-
-  function updateScrollState(element: HTMLDivElement) {
-    const reachedBottom =
-      element.scrollTop + element.clientHeight >=
-      element.scrollHeight - CLOSE_UNLOCK_OFFSET
-
-    if (reachedBottom) {
-      setHasReachedBottom(true)
-    }
-  }
-
-  function handleScroll(event: React.UIEvent<HTMLDivElement>) {
-    updateScrollState(event.currentTarget)
-  }
+  const { t, scrollRef, hasReachedBottom, termsCopy, handleScroll } =
+    useRegisterTermsDialog(open)
 
   if (!open) {
     return null

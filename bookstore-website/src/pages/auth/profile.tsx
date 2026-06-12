@@ -1,24 +1,15 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { LogOut, Mail, Package } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
-import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
-import { updateCurrentUser } from '@/services/auth-service'
-import { getMyOrders } from '@/services/order-service'
-import {
-  getCurrentProfile,
-  updateCurrentProfile,
-} from '@/services/profile-service'
+import { useProfilePage } from '@/hooks/use-profile-page'
 import type { OrderResponse, OrderStatus } from '@/types/order'
 import type { ProfileResponse } from '@/types/profile'
-import { getErrorMessage } from '@/utils'
 import { getGenderLabel, getOrderStatusLabel, getUserRoleLabel } from '@/utils/i18n'
 
 const STATUS_VARIANTS: Record<
@@ -33,121 +24,23 @@ const STATUS_VARIANTS: Record<
 }
 
 export default function ProfilePage() {
-  const { user, logout, refreshUser } = useAuth()
   const { t, formatCurrency, formatDate } = useLanguage()
-  const navigate = useNavigate()
-  const [orders, setOrders] = useState<OrderResponse[]>([])
-  const [profile, setProfile] = useState<ProfileResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSavingAccount, setIsSavingAccount] = useState(false)
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [accountForm, setAccountForm] = useState({
-    username: user?.username ?? '',
-    email: user?.email ?? '',
-    phoneNumber: user?.phoneNumber ?? '',
-  })
-  const [profileForm, setProfileForm] = useState({
-    lastName: '',
-    firstName: '',
-    avatarUrl: '',
-    gender: 'OTHER' as ProfileResponse['gender'],
-    dateOfBirth: '',
-  })
-
-  useEffect(() => {
-    if (!user) {
-      return
-    }
-
-    setAccountForm({
-      username: user.username,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-    })
-  }, [user])
-
-  useEffect(() => {
-    let isCancelled = false
-
-    async function loadProfileData() {
-      try {
-        const [profileResponse, ordersResponse] = await Promise.all([
-          getCurrentProfile(),
-          getMyOrders(),
-        ])
-
-        if (isCancelled) {
-          return
-        }
-
-        setProfile(profileResponse)
-        setProfileForm({
-          lastName: profileResponse.lastName,
-          firstName: profileResponse.firstName,
-          avatarUrl: profileResponse.avatarUrl ?? '',
-          gender: profileResponse.gender,
-          dateOfBirth: profileResponse.dateOfBirth,
-        })
-        setOrders(ordersResponse)
-      } catch (error) {
-        if (!isCancelled) {
-          toast.error(getErrorMessage(error, t('checkout.error')))
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadProfileData()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [t])
-
-  async function handleLogout() {
-    await logout()
-    navigate('/')
-  }
-
-  async function handleSaveAccount(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsSavingAccount(true)
-
-    try {
-      await updateCurrentUser(accountForm)
-      await refreshUser()
-      toast.success(t('auth.profile.accountUpdated'))
-    } catch (error) {
-      toast.error(getErrorMessage(error, t('checkout.error')))
-    } finally {
-      setIsSavingAccount(false)
-    }
-  }
-
-  async function handleSaveProfile(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsSavingProfile(true)
-
-    try {
-      const response = await updateCurrentProfile({
-        lastName: profileForm.lastName,
-        firstName: profileForm.firstName,
-        avatarUrl: profileForm.avatarUrl || null,
-        gender: profileForm.gender,
-        dateOfBirth: profileForm.dateOfBirth,
-      })
-      setProfile(response)
-      await refreshUser()
-      toast.success(t('auth.profile.profileUpdated'))
-    } catch (error) {
-      toast.error(getErrorMessage(error, t('checkout.error')))
-    } finally {
-      setIsSavingProfile(false)
-    }
-  }
+  const {
+    user,
+    orders,
+    profile,
+    isLoading,
+    isSavingAccount,
+    isSavingProfile,
+    accountForm,
+    profileForm,
+    handleAccountChange,
+    handleProfileInputChange,
+    handleProfileGenderChange,
+    handleLogout,
+    handleSaveAccount,
+    handleSaveProfile,
+  } = useProfilePage()
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -210,14 +103,9 @@ export default function ProfilePage() {
                   <Input
                     id="username"
                     value={accountForm.username}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value
-
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        username: value,
-                      }))
-                    }}
+                    onChange={(event) =>
+                      handleAccountChange('username', event.currentTarget.value)
+                    }
                     className="mt-2"
                   />
                 </div>
@@ -227,14 +115,9 @@ export default function ProfilePage() {
                     id="accountEmail"
                     type="email"
                     value={accountForm.email}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value
-
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        email: value,
-                      }))
-                    }}
+                    onChange={(event) =>
+                      handleAccountChange('email', event.currentTarget.value)
+                    }
                     className="mt-2"
                   />
                 </div>
@@ -243,14 +126,12 @@ export default function ProfilePage() {
                   <Input
                     id="accountPhone"
                     value={accountForm.phoneNumber}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value
-
-                      setAccountForm((currentForm) => ({
-                        ...currentForm,
-                        phoneNumber: value,
-                      }))
-                    }}
+                    onChange={(event) =>
+                      handleAccountChange(
+                        'phoneNumber',
+                        event.currentTarget.value,
+                      )
+                    }
                     className="mt-2"
                   />
                 </div>
@@ -280,14 +161,12 @@ export default function ProfilePage() {
                     <Input
                       id="lastName"
                       value={profileForm.lastName}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value
-
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          lastName: value,
-                        }))
-                      }}
+                      onChange={(event) =>
+                        handleProfileInputChange(
+                          'lastName',
+                          event.currentTarget.value,
+                        )
+                      }
                       className="mt-2"
                     />
                   </div>
@@ -296,14 +175,12 @@ export default function ProfilePage() {
                     <Input
                       id="firstName"
                       value={profileForm.firstName}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value
-
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          firstName: value,
-                        }))
-                      }}
+                      onChange={(event) =>
+                        handleProfileInputChange(
+                          'firstName',
+                          event.currentTarget.value,
+                        )
+                      }
                       className="mt-2"
                     />
                   </div>
@@ -313,14 +190,12 @@ export default function ProfilePage() {
                   <Input
                     id="avatarUrl"
                     value={profileForm.avatarUrl}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value
-
-                      setProfileForm((currentForm) => ({
-                        ...currentForm,
-                        avatarUrl: value,
-                      }))
-                    }}
+                    onChange={(event) =>
+                      handleProfileInputChange(
+                        'avatarUrl',
+                        event.currentTarget.value,
+                      )
+                    }
                     className="mt-2"
                   />
                 </div>
@@ -330,14 +205,11 @@ export default function ProfilePage() {
                     <select
                       id="gender"
                       value={profileForm.gender}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value as ProfileResponse['gender']
-
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          gender: value,
-                        }))
-                      }}
+                      onChange={(event) =>
+                        handleProfileGenderChange(
+                          event.currentTarget.value as ProfileResponse['gender'],
+                        )
+                      }
                       className="mt-2 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                     >
                       {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
@@ -355,14 +227,12 @@ export default function ProfilePage() {
                       id="dateOfBirth"
                       type="date"
                       value={profileForm.dateOfBirth}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value
-
-                        setProfileForm((currentForm) => ({
-                          ...currentForm,
-                          dateOfBirth: value,
-                        }))
-                      }}
+                      onChange={(event) =>
+                        handleProfileInputChange(
+                          'dateOfBirth',
+                          event.currentTarget.value,
+                        )
+                      }
                       className="mt-2"
                     />
                   </div>

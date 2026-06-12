@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CalendarDays,
@@ -11,253 +10,43 @@ import {
   Truck,
   X,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
-import { Textarea } from '@/components/common/textarea'
+import { useAdminImportReceiptsPage } from '@/hooks/use-admin-import-receipts-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
-import { useLanguage } from '@/contexts/language-context'
-import {
-  createAdminImportReceipt,
-  getAdminImportReceipts,
-  getAdminSuppliers,
-} from '@/services/admin-access-service'
-import { getBookCatalog } from '@/services/book-service'
-import type {
-  AdminCreateImportReceiptRequest,
-  AdminImportReceiptResponse,
-  AdminSupplierResponse,
-} from '@/types/admin-access'
-import type { Book } from '@/types/book'
-import { getErrorMessage } from '@/utils'
-
-type DialogMode = 'create' | 'view'
-
-type ReceiptItemForm = {
-  bookId: string
-  quantity: string
-  unitCost: string
-}
-
-type ReceiptFormState = {
-  supplierId: string
-  note: string
-  items: ReceiptItemForm[]
-}
-
-const initialFormState: ReceiptFormState = {
-  supplierId: '',
-  note: '',
-  items: [{ bookId: '', quantity: '1', unitCost: '0' }],
-}
+import type { AdminImportReceiptResponse } from '@/types/admin-access'
 
 export default function AdminImportReceiptsPage() {
-  const { language, t, formatCurrency, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
-  const [receipts, setReceipts] = useState<AdminImportReceiptResponse[]>([])
-  const [suppliers, setSuppliers] = useState<AdminSupplierResponse[]>([])
-  const [books, setBooks] = useState<Book[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [dialogMode, setDialogMode] = useState<DialogMode | null>(null)
-  const [selectedReceipt, setSelectedReceipt] =
-    useState<AdminImportReceiptResponse | null>(null)
-  const [form, setForm] = useState<ReceiptFormState>(initialFormState)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const labels = useMemo(
-    () => ({
-      title: isVietnamese ? 'Quản lý nhập kho' : 'Import receipts',
-      description: isVietnamese
-        ? 'Tạo và theo dõi các phiếu nhập sách vào kho.'
-        : 'Create and review book inventory import receipts.',
-      total: isVietnamese ? '{count} phiếu nhập' : '{count} receipts',
-      add: isVietnamese ? 'Tạo phiếu nhập' : 'Create receipt',
-      search: isVietnamese
-        ? 'Tìm theo nhà cung cấp, mã phiếu hoặc tên sách...'
-        : 'Search by supplier, receipt id, or book title...',
-      empty: isVietnamese ? 'Chưa có phiếu nhập nào' : 'No import receipts found',
-      receipt: isVietnamese ? 'Phiếu nhập' : 'Receipt',
-      supplier: isVietnamese ? 'Nhà cung cấp' : 'Supplier',
-      totalAmount: isVietnamese ? 'Tổng tiền' : 'Total',
-      items: isVietnamese ? 'Số dòng' : 'Items',
-      createdAt: isVietnamese ? 'Ngày nhập' : 'Created',
-      detailTitle: isVietnamese ? 'Chi tiết phiếu nhập' : 'Receipt details',
-      note: isVietnamese ? 'Ghi chú' : 'Note',
-      noNote: isVietnamese ? 'Không có ghi chú' : 'No note',
-      loadError: isVietnamese
-        ? 'Không tải được danh sách phiếu nhập'
-        : 'Unable to load import receipts',
-      saveError: isVietnamese ? 'Không tạo được phiếu nhập' : 'Unable to create receipt',
-      saveSuccess: isVietnamese ? 'Đã tạo phiếu nhập' : 'Import receipt created',
-      book: isVietnamese ? 'Sách' : 'Book',
-      quantity: isVietnamese ? 'Số lượng' : 'Quantity',
-      unitCost: isVietnamese ? 'Giá nhập' : 'Unit cost',
-      addLine: isVietnamese ? 'Thêm dòng sách' : 'Add book line',
-      removeLine: isVietnamese ? 'Xóa dòng' : 'Remove line',
-      chooseSupplier: isVietnamese ? 'Chọn nhà cung cấp' : 'Choose supplier',
-      chooseBook: isVietnamese ? 'Chọn sách' : 'Choose book',
-    }),
-    [isVietnamese],
-  )
-
-  const supplierMap = useMemo(
-    () => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])),
-    [suppliers],
-  )
-
-  const filteredReceipts = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    if (keyword === '') {
-      return receipts
-    }
-
-    return receipts.filter((receipt) =>
-      [
-        receipt.id,
-        supplierMap.get(receipt.supplierId) ?? '',
-        ...receipt.items.map((item) => item.bookTitle),
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    )
-  }, [receipts, searchTerm, supplierMap])
-
-  useEffect(() => {
-    void loadData()
-  }, [])
-
-  useEffect(() => {
-    if (!dialogMode) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !isSubmitting) {
-        closeDialog()
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [dialogMode, isSubmitting])
-
-  async function loadData() {
-    setIsLoading(true)
-
-    try {
-      const [receiptResponse, supplierResponse, bookResponse] = await Promise.all([
-        getAdminImportReceipts(),
-        getAdminSuppliers(),
-        getBookCatalog(),
-      ])
-
-      setReceipts(receiptResponse)
-      setSuppliers(supplierResponse)
-      setBooks(bookResponse.books)
-      setError(null)
-    } catch (currentError) {
-      setError(getErrorMessage(currentError, labels.loadError))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function closeDialog() {
-    if (isSubmitting) {
-      return
-    }
-
-    setDialogMode(null)
-    setSelectedReceipt(null)
-    setForm(initialFormState)
-  }
-
-  function openCreateDialog() {
-    setSelectedReceipt(null)
-    setForm({
-      ...initialFormState,
-      supplierId: suppliers[0]?.id ?? '',
-      items: [
-        {
-          bookId: books[0]?.id ?? '',
-          quantity: '1',
-          unitCost: '0',
-        },
-      ],
-    })
-    setDialogMode('create')
-  }
-
-  function openViewDialog(receipt: AdminImportReceiptResponse) {
-    setSelectedReceipt(receipt)
-    setDialogMode('view')
-  }
-
-  function updateItem(index: number, patch: Partial<ReceiptItemForm>) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      items: currentForm.items.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, ...patch } : item,
-      ),
-    }))
-  }
-
-  function addItem() {
-    setForm((currentForm) => ({
-      ...currentForm,
-      items: [
-        ...currentForm.items,
-        { bookId: books[0]?.id ?? '', quantity: '1', unitCost: '0' },
-      ],
-    }))
-  }
-
-  function removeItem(index: number) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      items: currentForm.items.filter((_, itemIndex) => itemIndex !== index),
-    }))
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const payload: AdminCreateImportReceiptRequest = {
-      supplierId: form.supplierId,
-      note: form.note.trim(),
-      items: form.items.map((item) => ({
-        bookId: item.bookId,
-        quantity: Number(item.quantity),
-        unitCost: Number(item.unitCost),
-      })),
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      await createAdminImportReceipt(payload)
-      toast.success(labels.saveSuccess)
-      await loadData()
-      closeDialog()
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.saveError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const {
+    t,
+    formatCurrency,
+    formatDate,
+    formatNumber,
+    labels,
+    receipts,
+    suppliers,
+    books,
+    searchTerm,
+    isLoading,
+    error,
+    dialogMode,
+    selectedReceipt,
+    form,
+    isSubmitting,
+    supplierMap,
+    filteredReceipts,
+    handleSearchTermChange,
+    closeDialog,
+    openCreateDialog,
+    openViewDialog,
+    handleFormChange,
+    updateItem,
+    addItem,
+    removeItem,
+    handleSubmit,
+  } = useAdminImportReceiptsPage()
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[160] flex items-center justify-center px-4 py-6">
@@ -282,10 +71,7 @@ export default function AdminImportReceiptsPage() {
                   <select
                     value={form.supplierId}
                     onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        supplierId: event.currentTarget.value,
-                      }))
+                      handleFormChange('supplierId', event.currentTarget.value)
                     }
                     className="h-11 w-full rounded-2xl border border-input bg-background px-3 text-sm"
                     required
@@ -306,10 +92,7 @@ export default function AdminImportReceiptsPage() {
                   <Input
                     value={form.note}
                     onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        note: event.currentTarget.value,
-                      }))
+                      handleFormChange('note', event.currentTarget.value)
                     }
                     className="h-11 rounded-2xl"
                   />
@@ -418,7 +201,9 @@ export default function AdminImportReceiptsPage() {
               formatDate={formatDate}
               labels={labels}
               receipt={selectedReceipt}
-              supplierName={supplierMap.get(selectedReceipt.supplierId) ?? selectedReceipt.supplierId}
+              supplierName={
+                supplierMap.get(selectedReceipt.supplierId) ?? selectedReceipt.supplierId
+              }
             />
           </DialogShell>
         ) : null}
@@ -469,7 +254,7 @@ export default function AdminImportReceiptsPage() {
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                  onChange={handleSearchTermChange}
                   placeholder={labels.search}
                   className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base"
                 />

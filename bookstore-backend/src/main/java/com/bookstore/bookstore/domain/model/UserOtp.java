@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.enums.OtpPurpose;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
@@ -11,6 +12,7 @@ public class UserOtp {
 
     private UUID id;
     private UUID userId;
+    private OtpPurpose purpose;
     private String otpHash;
     private Instant expiresAt;
     private Instant verifiedAt;
@@ -21,6 +23,7 @@ public class UserOtp {
     public UserOtp(
             UUID id,
             UUID userId,
+            OtpPurpose purpose,
             String otpHash,
             Instant expiresAt,
             Instant verifiedAt,
@@ -30,6 +33,7 @@ public class UserOtp {
     ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_USER_OTP_ID, "id");
         setUserId(userId);
+        setPurpose(purpose);
         setOtpHash(otpHash);
         setVerifiedAt(verifiedAt);
         setInvalidatedAt(invalidatedAt);
@@ -63,6 +67,10 @@ public class UserOtp {
 
     private void setOtpHash(String otpHash) {
         this.otpHash = Guard.notBlank(otpHash, DomainErrorCode.INVALID_USER_OTP_HASH, "otpHash");
+    }
+
+    private void setPurpose(OtpPurpose purpose) {
+        this.purpose = Guard.notNull(purpose, DomainErrorCode.INVALID_USER_OTP_PURPOSE, "purpose");
     }
 
     private void setExpiresAt(Instant expiresAt) {

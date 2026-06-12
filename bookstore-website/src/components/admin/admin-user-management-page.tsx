@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
@@ -19,7 +19,6 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
@@ -31,26 +30,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/select'
-import { AdminLayout } from '@/components/layout/admin-layout'
-import { useAuth } from '@/contexts/auth-context'
-import { useLanguage } from '@/contexts/language-context'
 import {
-  createAdminUser,
-  deleteAdminUser,
-  lockAdminUser,
-  unlockAdminUser,
-  updateAdminStaffUser,
-} from '@/services/admin-access-service'
-import type {
-  AdminCreateUserRequest,
-  AdminUserResponse,
-  ManagedAdminUserRole,
-} from '@/types/admin-access'
-import type { Gender, UserRole, UserStatus } from '@/types/auth'
-import { cn, getErrorMessage } from '@/utils'
+  useAdminUserManagementPage,
+  type AdminUserManagementLabels,
+  type AdminUserManagementMode,
+} from '@/hooks/use-admin-user-management-page'
+import { AdminLayout } from '@/components/layout/admin-layout'
+import type { AdminUserResponse } from '@/types/admin-access'
+import type { UserRole, UserStatus } from '@/types/auth'
+import { cn } from '@/utils'
 import { getGenderLabel, getUserRoleLabel } from '@/utils/i18n'
-
-type AdminUserManagementMode = 'customer' | 'staff'
 
 type AdminUserManagementPageProps = {
   countIcon: LucideIcon
@@ -62,53 +51,6 @@ type AdminUserManagementPageProps = {
   searchPlaceholder: string
   title: string
   totalUsersLabel: (countLabel: string) => string
-}
-
-type UserDialogMode = 'create' | 'view' | 'edit' | 'delete' | 'lock'
-
-type CreateStaffFormState = {
-  username: string
-  password: string
-  phoneNumber: string
-  email: string
-  firstName: string
-  lastName: string
-  avatarUrl: string
-  gender: Gender
-  dateOfBirth: string
-  roleName: ManagedAdminUserRole
-}
-
-type EditStaffFormState = {
-  email: string
-  phoneNumber: string
-  roleName: ManagedAdminUserRole
-}
-
-type AdminUserManagementLabels = {
-  actions: string
-  addEmployee: string
-  createError: string
-  createSuccess: string
-  deleteDescription: string
-  deleteError: string
-  deleteSuccess: string
-  deleteTitle: string
-  details: string
-  editError: string
-  editLockedHint: string
-  editTitle: string
-  lockColumn: string
-  lockError: string
-  lockTitle: string
-  lockDescription: string
-  lockSuccess: string
-  noDate: string
-  role: string
-  showingCount: string
-  status: string
-  viewInfo: string
-  selfManageBlocked: string
 }
 
 const statusVariants: Record<
@@ -124,25 +66,6 @@ const tableGridClassName =
 
 const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'USER']
 
-const initialCreateFormState: CreateStaffFormState = {
-  username: '',
-  password: '',
-  phoneNumber: '',
-  email: '',
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  gender: 'OTHER',
-  dateOfBirth: '',
-  roleName: 'STAFF',
-}
-
-const initialEditFormState: EditStaffFormState = {
-  email: '',
-  phoneNumber: '',
-  roleName: 'STAFF',
-}
-
 export function AdminUserManagementPage({
   countIcon: CountIcon,
   description,
@@ -154,368 +77,49 @@ export function AdminUserManagementPage({
   title,
   totalUsersLabel,
 }: AdminUserManagementPageProps) {
-  const { user } = useAuth()
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
-  const canCreate = mode === 'staff'
-  const canEdit = mode === 'staff'
-  const [users, setUsers] = useState<AdminUserResponse[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [dialogMode, setDialogMode] = useState<UserDialogMode | null>(null)
-  const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null)
-  const [createForm, setCreateForm] = useState<CreateStaffFormState>(
-    initialCreateFormState,
-  )
-  const [editForm, setEditForm] = useState<EditStaffFormState>(
-    initialEditFormState,
-  )
-
-  const filteredUsers = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    if (keyword === '') {
-      return users
-    }
-
-    return users.filter((currentUser) =>
-      [currentUser.username, currentUser.status, ...currentUser.roles]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    )
-  }, [searchTerm, users])
-
-  const labels = useMemo(
-    () => ({
-      actions: isVietnamese ? 'Thao tác' : 'Actions',
-      addEmployee: isVietnamese ? 'Thêm nhân viên' : 'Add employee',
-      createError: isVietnamese
-        ? 'Không tạo được nhân viên'
-        : 'Unable to create employee',
-      createSuccess: isVietnamese
-        ? 'Đã tạo nhân viên'
-        : 'Employee created successfully',
-      deleteDescription: isVietnamese
-        ? 'Hành động này sẽ xóa tài khoản khỏi hệ thống quản trị và không thể hoàn tác.'
-        : 'This action removes the account from the admin system and cannot be undone.',
-      deleteError: isVietnamese
-        ? 'Không xóa được tài khoản'
-        : 'Unable to delete account',
-      deleteSuccess: isVietnamese
-        ? 'Đã xóa tài khoản'
-        : 'Account deleted successfully',
-      deleteTitle: isVietnamese ? 'Xác nhận xóa tài khoản' : 'Confirm account deletion',
-      details: isVietnamese
-        ? mode === 'staff'
-          ? 'Chi tiết nhân viên'
-          : 'Chi tiết khách hàng'
-        : mode === 'staff'
-          ? 'Employee details'
-          : 'Customer details',
-      editError: isVietnamese
-        ? 'Không cập nhật được nhân viên'
-        : 'Unable to update employee',
-      editLockedHint: isVietnamese
-        ? 'API hiện tại chưa hỗ trợ sửa tài khoản admin thuần.'
-        : 'The current API does not support editing admin-only accounts.',
-      editTitle: isVietnamese ? 'Sửa nhân viên' : 'Edit employee',
-      lockColumn: isVietnamese ? 'Khóa' : 'Lock',
-      lockError: isVietnamese
-        ? 'Không cập nhật được trạng thái khóa'
-        : 'Unable to update lock status',
-      lockTitle: isVietnamese
-        ? selectedUser?.locked
-          ? 'Mở khóa tài khoản'
-          : 'Khóa tài khoản'
-        : selectedUser?.locked
-          ? 'Unlock account'
-          : 'Lock account',
-      lockDescription: isVietnamese
-        ? selectedUser?.locked
-          ? 'Tài khoản này sẽ được mở lại để có thể đăng nhập và sử dụng hệ thống.'
-          : 'Tài khoản này sẽ bị khóa và không thể đăng nhập cho đến khi được mở lại.'
-        : selectedUser?.locked
-          ? 'This account will be unlocked so it can sign in and use the system again.'
-          : 'This account will be locked and cannot sign in until it is unlocked again.',
-      lockSuccess: isVietnamese
-        ? selectedUser?.locked
-          ? 'Đã mở khóa tài khoản'
-          : 'Đã khóa tài khoản'
-        : selectedUser?.locked
-          ? 'Account unlocked successfully'
-          : 'Account locked successfully',
-      noDate: isVietnamese ? 'Chưa có' : 'Not available',
-      role: isVietnamese ? 'Vai trò' : 'Role',
-      showingCount: isVietnamese
-        ? 'Hiển thị {count} trên {total} tài khoản'
-        : 'Showing {count} of {total} accounts',
-      status: isVietnamese ? 'Trạng thái' : 'Status',
-      viewInfo: isVietnamese ? 'Xem thông tin' : 'View details',
-      selfManageBlocked: isVietnamese
-        ? 'Không thể tự khóa hoặc xóa chính tài khoản đang đăng nhập.'
-        : 'You cannot lock or delete the currently signed-in account.',
-    }),
-    [isVietnamese, mode, selectedUser],
-  )
-
-  const genderOptions: Gender[] = ['MALE', 'FEMALE', 'OTHER']
-  const roleOptions: ManagedAdminUserRole[] = ['STAFF', 'ADMIN']
-
-  useEffect(() => {
-    void loadUsers()
-  }, [fetchUsers])
-
-  useEffect(() => {
-    if (!dialogMode) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !isSubmitting) {
-        closeDialog()
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [dialogMode, isSubmitting])
-
-  async function loadUsers() {
-    setIsLoading(true)
-
-    try {
-      const response = await fetchUsers()
-      setUsers(response)
-      setError(null)
-    } catch (currentError) {
-      setError(getErrorMessage(currentError, loadErrorLabel))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function resetDialog() {
-    setDialogMode(null)
-    setSelectedUser(null)
-    setCreateForm(initialCreateFormState)
-    setEditForm(initialEditFormState)
-  }
-
-  function closeDialog() {
-    if (isSubmitting) {
-      return
-    }
-
-    resetDialog()
-  }
-
-  function openCreateDialog() {
-    setCreateForm(initialCreateFormState)
-    setDialogMode('create')
-  }
-
-  function openViewDialog(currentUser: AdminUserResponse) {
-    setSelectedUser(currentUser)
-    setDialogMode('view')
-  }
-
-  function openEditDialog(currentUser: AdminUserResponse) {
-    if (!canEditUser(currentUser)) {
-      return
-    }
-
-    setSelectedUser(currentUser)
-    setEditForm({
-      email: currentUser.email,
-      phoneNumber: currentUser.phoneNumber,
-      roleName: getManagedRole(currentUser),
-    })
-    setDialogMode('edit')
-  }
-
-  function openDeleteDialog(currentUser: AdminUserResponse) {
-    setSelectedUser(currentUser)
-    setDialogMode('delete')
-  }
-
-  function openLockDialog(currentUser: AdminUserResponse) {
-    setSelectedUser(currentUser)
-    setDialogMode('lock')
-  }
-
-  function openEditFromView() {
-    if (!selectedUser) {
-      return
-    }
-
-    openEditDialog(selectedUser)
-  }
-
-  function handleAttemptEdit(currentUser: AdminUserResponse) {
-    if (!canEditUser(currentUser)) {
-      toast.error(labels.editLockedHint)
-      return
-    }
-
-    openEditDialog(currentUser)
-  }
-
-  function handleAttemptLock(currentUser: AdminUserResponse) {
-    if (isSelfManagedUser(currentUser, user?.id)) {
-      toast.error(labels.selfManageBlocked)
-      return
-    }
-
-    openLockDialog(currentUser)
-  }
-
-  function handleAttemptDelete(currentUser: AdminUserResponse) {
-    if (isSelfManagedUser(currentUser, user?.id)) {
-      toast.error(labels.selfManageBlocked)
-      return
-    }
-
-    openDeleteDialog(currentUser)
-  }
-
-  function handleCreateFormChange(
-    field: keyof CreateStaffFormState,
-    value: string,
-  ) {
-    setCreateForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }))
-  }
-
-  function handleEditFormChange(
-    field: keyof EditStaffFormState,
-    value: string,
-  ) {
-    setEditForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }))
-  }
-
-  async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    setIsSubmitting(true)
-
-    try {
-      const payload: AdminCreateUserRequest = {
-        username: createForm.username.trim(),
-        password: createForm.password,
-        phoneNumber: createForm.phoneNumber.trim(),
-        email: createForm.email.trim(),
-        firstName: createForm.firstName.trim(),
-        lastName: createForm.lastName.trim(),
-        avatarUrl: toNullableString(createForm.avatarUrl),
-        gender: createForm.gender,
-        dateOfBirth: createForm.dateOfBirth,
-        roleName: createForm.roleName,
-      }
-
-      await createAdminUser(payload)
-      await loadUsers()
-      resetDialog()
-      toast.success(labels.createSuccess)
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.createError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  async function handleEditSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (!selectedUser) {
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      await updateAdminStaffUser(selectedUser.userId, {
-        email: editForm.email.trim(),
-        phoneNumber: editForm.phoneNumber.trim(),
-        roleNames: [editForm.roleName],
-      })
-
-      await loadUsers()
-      resetDialog()
-      toast.success(isVietnamese ? 'Đã cập nhật nhân viên' : 'Employee updated successfully')
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.editError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  async function handleDeleteConfirm() {
-    if (!selectedUser) {
-      return
-    }
-
-    if (isSelfManagedUser(selectedUser, user?.id)) {
-      toast.error(labels.selfManageBlocked)
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      await deleteAdminUser(selectedUser.userId)
-      await loadUsers()
-      resetDialog()
-      toast.success(labels.deleteSuccess)
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.deleteError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  async function handleLockConfirm() {
-    if (!selectedUser) {
-      return
-    }
-
-    if (isSelfManagedUser(selectedUser, user?.id)) {
-      toast.error(labels.selfManageBlocked)
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      if (selectedUser.locked) {
-        await unlockAdminUser(selectedUser.userId)
-      } else {
-        await lockAdminUser(selectedUser.userId)
-      }
-
-      await loadUsers()
-      resetDialog()
-      toast.success(labels.lockSuccess)
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, labels.lockError))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const {
+    t,
+    formatDate,
+    formatNumber,
+    isVietnamese,
+    canCreate,
+    canEdit,
+    users,
+    filteredUsers,
+    searchTerm,
+    isLoading,
+    error,
+    isSubmitting,
+    dialogMode,
+    selectedUser,
+    createForm,
+    editForm,
+    labels,
+    genderOptions,
+    roleOptions,
+    createDialogDescription,
+    editDialogDescription,
+    handleSearchTermChange,
+    closeDialog,
+    openCreateDialog,
+    openViewDialog,
+    openEditFromView,
+    handleAttemptEdit,
+    handleAttemptLock,
+    handleAttemptDelete,
+    handleCreateFormChange,
+    handleEditFormChange,
+    handleCreateSubmit,
+    handleEditSubmit,
+    handleDeleteConfirm,
+    handleLockConfirm,
+    canEditUser,
+    isSelfManagedUser,
+  } = useAdminUserManagementPage({
+    fetchUsers,
+    loadErrorLabel,
+    mode,
+  })
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[160] flex items-center justify-center px-4 py-6">
@@ -542,11 +146,7 @@ export function AdminUserManagementPage({
         {dialogMode === 'create' && canCreate ? (
           <UserDialogShell
             title={labels.addEmployee}
-            description={
-              isVietnamese
-                ? 'Tạo tài khoản nhân viên hoặc admin trực tiếp từ khu vực quản trị.'
-                : 'Create a staff or admin account directly from the admin area.'
-            }
+            description={createDialogDescription}
             onClose={closeDialog}
           >
             <form className="space-y-5" onSubmit={handleCreateSubmit}>
@@ -738,13 +338,7 @@ export function AdminUserManagementPage({
         {dialogMode === 'edit' && selectedUser ? (
           <UserDialogShell
             title={labels.editTitle}
-            description={
-              canEditUser(selectedUser)
-                ? isVietnamese
-                  ? 'Chỉnh sửa thông tin backend hiện cho phép với tài khoản nhân viên.'
-                  : 'Edit the fields currently supported by the backend for staff accounts.'
-                : labels.editLockedHint
-            }
+            description={editDialogDescription}
             onClose={closeDialog}
           >
             <form className="space-y-5" onSubmit={handleEditSubmit}>
@@ -840,17 +434,14 @@ export function AdminUserManagementPage({
 
         {(dialogMode === 'delete' || dialogMode === 'lock') && selectedUser ? (
           <ConfirmDialogContent
+            cancelLabel={labels.cancel}
             description={
               dialogMode === 'delete'
                 ? labels.deleteDescription
                 : labels.lockDescription
             }
             confirmLabel={
-              dialogMode === 'delete'
-                ? t('common.delete')
-                : selectedUser.locked
-                  ? labels.lockTitle
-                  : labels.lockTitle
+              dialogMode === 'delete' ? t('common.delete') : labels.lockTitle
             }
             destructive={dialogMode === 'delete' || !selectedUser.locked}
             isSubmitting={isSubmitting}
@@ -858,9 +449,7 @@ export function AdminUserManagementPage({
             onConfirm={
               dialogMode === 'delete' ? handleDeleteConfirm : handleLockConfirm
             }
-            title={
-              dialogMode === 'delete' ? labels.deleteTitle : labels.lockTitle
-            }
+            title={dialogMode === 'delete' ? labels.deleteTitle : labels.lockTitle}
             userLabel={selectedUser.username}
           />
         ) : null}
@@ -912,7 +501,7 @@ export function AdminUserManagementPage({
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                    onChange={handleSearchTermChange}
                     placeholder={searchPlaceholder}
                     className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                   />
@@ -968,10 +557,7 @@ export function AdminUserManagementPage({
                   <div className="space-y-4">
                     {filteredUsers.map((currentUser) => {
                       const currentUserCanEdit = canEditUser(currentUser)
-                      const selfManagedUser = isSelfManagedUser(
-                        currentUser,
-                        user?.id,
-                      )
+                      const selfManagedUser = isSelfManagedUser(currentUser)
 
                       return (
                         <article
@@ -1297,6 +883,7 @@ function UserDetailDialogContent({
 }
 
 type ConfirmDialogContentProps = {
+  cancelLabel: string
   confirmLabel: string
   description: string
   destructive: boolean
@@ -1308,6 +895,7 @@ type ConfirmDialogContentProps = {
 }
 
 function ConfirmDialogContent({
+  cancelLabel,
   confirmLabel,
   description,
   destructive,
@@ -1338,7 +926,7 @@ function ConfirmDialogContent({
           className="rounded-2xl"
           disabled={isSubmitting}
         >
-          Hủy
+          {cancelLabel}
         </Button>
         <Button
           type="button"
@@ -1388,21 +976,6 @@ function DetailCard({ icon: Icon, label, value }: DetailCardProps) {
   )
 }
 
-function canEditUser(currentUser: AdminUserResponse) {
-  return currentUser.roles.includes('STAFF')
-}
-
-function getManagedRole(currentUser: AdminUserResponse): ManagedAdminUserRole {
-  return currentUser.roles.includes('ADMIN') ? 'ADMIN' : 'STAFF'
-}
-
-function isSelfManagedUser(
-  currentUser: AdminUserResponse,
-  currentUserId?: string,
-) {
-  return currentUserId !== undefined && currentUser.userId === currentUserId
-}
-
 function getRoleLabel(
   role: string,
   t: (key: string, params?: Record<string, number | string>) => string,
@@ -1419,11 +992,6 @@ function getStatusLabel(
   return status === 'ACTIVE'
     ? t('admin.usersPage.active')
     : t('admin.usersPage.inactive')
-}
-
-function toNullableString(value: string) {
-  const trimmedValue = value.trim()
-  return trimmedValue === '' ? null : trimmedValue
 }
 
 function interpolateLabel(

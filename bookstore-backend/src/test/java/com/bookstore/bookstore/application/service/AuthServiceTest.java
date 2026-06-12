@@ -4,22 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.bookstore.bookstore.application.command.GoogleLoginCommand;
 import com.bookstore.bookstore.application.command.LoginCommand;
 import com.bookstore.bookstore.application.command.RegisterCommand;
+import com.bookstore.bookstore.application.command.RequestPasswordResetOtpCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.exception.GoogleIdTokenVerificationException;
 import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.application.port.out.IGoogleIdTokenVerifier;
 import com.bookstore.bookstore.application.port.out.IJwtService;
+import com.bookstore.bookstore.application.port.out.IPasswordResetTokenRepository;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
 import com.bookstore.bookstore.application.port.out.IRefreshTokenRepository;
 import com.bookstore.bookstore.application.port.out.IRoleRepository;
+import com.bookstore.bookstore.application.port.out.IUserAuthIdentityRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.port.out.VerifiedGoogleIdToken;
 import com.bookstore.bookstore.application.result.RegisterResult;
+import com.bookstore.bookstore.domain.enums.AuthProvider;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
@@ -27,6 +36,7 @@ import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.domain.model.RefreshToken;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
+import com.bookstore.bookstore.domain.model.UserAuthIdentity;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
@@ -59,6 +69,12 @@ class AuthServiceTest {
     private IUserRepository userRepository;
 
     @Mock
+    private IUserAuthIdentityRepository userAuthIdentityRepository;
+
+    @Mock
+    private IPasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Mock
     private IPasswordEncoder passwordEncoder;
 
     @Mock
@@ -66,6 +82,9 @@ class AuthServiceTest {
 
     @Mock
     private IRefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private IGoogleIdTokenVerifier googleIdTokenVerifier;
 
     @InjectMocks
     private AuthService authService;
@@ -206,8 +225,129 @@ class AuthServiceTest {
         assertEquals(ApplicationErrorCode.AUTH_INVALID_PASSWORD, exception.getErrorCode());
     }
 
+    @Test
+    void login_rejectsAccountWithoutPassword() {
+        User user = userWithoutPassword(UserStatus.ACTIVE, false, null);
+        when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.login(new LoginCommand("username", "secret"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_PASSWORD_LOGIN_NOT_AVAILABLE, exception.getErrorCode());
+    }
+
+    @Test
+    void loginWithGoogle_createsNewUserProfileAndIdentityForFirstLogin() {
+        VerifiedGoogleIdToken googleToken = verifiedGoogleIdToken();
+        when(googleIdTokenVerifier.verify("google-token")).thenReturn(googleToken);
+        when(userAuthIdentityRepository.findByProviderAndProviderSubject(AuthProvider.GOOGLE, googleToken.subject()))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmailIncludingDeleted(googleToken.email())).thenReturn(Optional.empty());
+        when(userRepository.existsByUsernameIncludingDeleted(googleToken.email())).thenReturn(false);
+        when(userAuthIdentityRepository.findByUserIdAndProvider(any(UUID.class), any(AuthProvider.class)))
+                .thenReturn(Optional.empty());
+        when(userService.create(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(profileService.create(any(Profile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userAuthIdentityRepository.save(any(UserAuthIdentity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByNameActive(USER_ROLE)).thenReturn(Optional.of(defaultRole()));
+        stubTokenIssuance();
+
+        var result = authService.loginWithGoogle(new GoogleLoginCommand("google-token"));
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<Profile> profileCaptor = ArgumentCaptor.forClass(Profile.class);
+        ArgumentCaptor<UserAuthIdentity> identityCaptor = ArgumentCaptor.forClass(UserAuthIdentity.class);
+
+        verify(userService).create(userCaptor.capture());
+        verify(profileService).create(profileCaptor.capture());
+        verify(userAuthIdentityRepository).save(identityCaptor.capture());
+        assertEquals(UserStatus.ACTIVE, result.status());
+        assertEquals("jwt-token", result.accessToken());
+        assertNull(userCaptor.getValue().getPasswordHash());
+        assertEquals("test@gmail.com", userCaptor.getValue().getEmail());
+        assertEquals("First", profileCaptor.getValue().getFirstName());
+        assertEquals("Last", profileCaptor.getValue().getLastName());
+        assertEquals("https://avatar.example.com/user.png", profileCaptor.getValue().getAvatarUrl());
+        assertEquals(AuthProvider.GOOGLE, identityCaptor.getValue().getProvider());
+        assertEquals("google-subject-123", identityCaptor.getValue().getProviderSubject());
+    }
+
+    @Test
+    void loginWithGoogle_linksAndActivatesExistingInactiveUser() {
+        VerifiedGoogleIdToken googleToken = verifiedGoogleIdToken();
+        User existingUser = userWithPassword(UserStatus.INACTIVE, false, null, "secret");
+        when(googleIdTokenVerifier.verify("google-token")).thenReturn(googleToken);
+        when(userAuthIdentityRepository.findByProviderAndProviderSubject(AuthProvider.GOOGLE, googleToken.subject()))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmailIncludingDeleted(googleToken.email())).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userAuthIdentityRepository.findByUserIdAndProvider(existingUser.getId(), AuthProvider.GOOGLE))
+                .thenReturn(Optional.empty());
+        when(userAuthIdentityRepository.save(any(UserAuthIdentity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        stubTokenIssuance();
+
+        var result = authService.loginWithGoogle(new GoogleLoginCommand("google-token"));
+
+        assertEquals(UserStatus.ACTIVE, result.status());
+        verify(userRepository).save(any(User.class));
+        verify(userService, never()).create(any(User.class));
+        verify(profileService, never()).create(any(Profile.class));
+    }
+
+    @Test
+    void loginWithGoogle_rejectsInvalidIdToken() {
+        when(googleIdTokenVerifier.verify("bad-token"))
+                .thenThrow(new GoogleIdTokenVerificationException("invalid"));
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.loginWithGoogle(new GoogleLoginCommand("bad-token"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_GOOGLE_INVALID_ID_TOKEN, exception.getErrorCode());
+    }
+
+    @Test
+    void requestPasswordResetOtp_sendsOtpForEligibleUser() {
+        User user = activeUserWithPassword("secret");
+        when(userRepository.findByEmailIncludingDeleted("test@gmail.com")).thenReturn(Optional.of(user));
+
+        authService.requestPasswordResetOtp(new RequestPasswordResetOtpCommand("test@gmail.com"));
+
+        verify(otpService).sendPasswordResetOtp(user);
+    }
+
+    @Test
+    void requestPasswordResetOtp_ignoresIneligibleUser() {
+        User user = userWithPassword(UserStatus.INACTIVE, false, null, "secret");
+        when(userRepository.findByEmailIncludingDeleted("test@gmail.com")).thenReturn(Optional.of(user));
+
+        authService.requestPasswordResetOtp(new RequestPasswordResetOtpCommand("test@gmail.com"));
+
+        verify(otpService, never()).sendPasswordResetOtp(any(User.class));
+    }
+
     private static User activeUserWithPassword(String password) {
         return userWithPassword(UserStatus.ACTIVE, false, null, password);
+    }
+
+    private void stubTokenIssuance() {
+        when(jwtService.generateAccessToken(any(User.class))).thenReturn("jwt-token");
+        when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class))).thenReturn(Instant.now().plusSeconds(300));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    private static VerifiedGoogleIdToken verifiedGoogleIdToken() {
+        return new VerifiedGoogleIdToken(
+                "google-subject-123",
+                "test@gmail.com",
+                true,
+                "First",
+                "Last",
+                "https://avatar.example.com/user.png"
+        );
     }
 
     private static Role defaultRole() {
@@ -220,6 +360,31 @@ class AuthServiceTest {
                 now,
                 now,
                 null
+        );
+    }
+
+    private static User userWithoutPassword(UserStatus status, boolean locked, Instant deletedAt) {
+        Instant now = deletedAt == null ? Instant.now() : deletedAt.minusSeconds(1);
+        return new User(
+                UUID.randomUUID(),
+                "username",
+                null,
+                "0123456789",
+                "test@gmail.com",
+                status,
+                locked,
+                Set.of(new Role(
+                        UUID.randomUUID(),
+                        USER_ROLE,
+                        "Default user role",
+                        Set.of(),
+                        now,
+                        now,
+                        null
+                )),
+                now,
+                now,
+                deletedAt
         );
     }
 

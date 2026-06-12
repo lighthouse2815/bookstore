@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
+import com.bookstore.bookstore.domain.enums.OtpPurpose;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -15,7 +18,7 @@ import lombok.Setter;
 @Table(
         name = "user_otps",
         indexes = {
-                @Index(name = "idx_user_otps_user_created_at", columnList = "user_id,created_at")
+                @Index(name = "idx_user_otps_user_purpose_created_at", columnList = "user_id,purpose,created_at")
         }
 )
 @Getter
@@ -29,6 +32,10 @@ public class UserOtpJpaEntity {
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private OtpPurpose purpose;
 
     @Column(name = "otp_hash", nullable = false, length = 100)
     private String otpHash;

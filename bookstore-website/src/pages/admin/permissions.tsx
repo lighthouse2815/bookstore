@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CalendarDays,
@@ -11,103 +10,26 @@ import {
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
+import { useAdminPermissionsPage } from '@/hooks/use-admin-permissions-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
-import { useLanguage } from '@/contexts/language-context'
-import { getAdminPermissions } from '@/services/admin-access-service'
 import type { AdminPermissionResponse } from '@/types/admin-access'
-import { getErrorMessage } from '@/utils'
 
 export default function AdminPermissionsPage() {
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
-  const [permissions, setPermissions] = useState<AdminPermissionResponse[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedPermission, setSelectedPermission] =
-    useState<AdminPermissionResponse | null>(null)
-
-  const labels = useMemo(
-    () => ({
-      detailTitle: isVietnamese ? 'Chi tiet quyen' : 'Permission details',
-      permissionCode: isVietnamese ? 'Ma quyen' : 'Permission code',
-      permissionDescription: isVietnamese ? 'Mo ta' : 'Description',
-      showingCount: isVietnamese
-        ? 'Hien thi {count} tren {total} quyen'
-        : 'Showing {count} of {total} permissions',
-    }),
-    [isVietnamese],
-  )
-
-  useEffect(() => {
-    let isCancelled = false
-
-    async function loadPermissions() {
-      try {
-        const response = await getAdminPermissions()
-
-        if (isCancelled) {
-          return
-        }
-
-        setPermissions(response)
-        setError(null)
-      } catch (currentError) {
-        if (!isCancelled) {
-          setError(
-            getErrorMessage(currentError, t('admin.permissionsPage.loadError')),
-          )
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadPermissions()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [t])
-
-  useEffect(() => {
-    if (!selectedPermission) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setSelectedPermission(null)
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [selectedPermission])
-
-  const filteredPermissions = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    if (keyword === '') {
-      return permissions
-    }
-
-    return permissions.filter((permission) =>
-      [permission.code, permission.description ?? '']
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    )
-  }, [permissions, searchTerm])
+  const {
+    t,
+    formatDate,
+    formatNumber,
+    labels,
+    permissions,
+    searchTerm,
+    isLoading,
+    error,
+    selectedPermission,
+    filteredPermissions,
+    handleSearchTermChange,
+    openPermissionDetail,
+    closePermissionDetail,
+  } = useAdminPermissionsPage()
 
   const dialogMarkup = selectedPermission ? (
     <div className="fixed inset-0 z-[160] flex items-center justify-center px-4 py-6">
@@ -115,13 +37,10 @@ export default function AdminPermissionsPage() {
         type="button"
         aria-label={t('common.close')}
         className="absolute inset-0 bg-background/72 backdrop-blur-sm"
-        onClick={() => setSelectedPermission(null)}
+        onClick={closePermissionDetail}
       />
       <div className="relative z-10 w-full max-w-3xl">
-        <DialogShell
-          title={labels.detailTitle}
-          onClose={() => setSelectedPermission(null)}
-        >
+        <DialogShell title={labels.detailTitle} onClose={closePermissionDetail}>
           <div className="space-y-6">
             <div className="rounded-[24px] border border-border/60 bg-background/55 p-5">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -169,7 +88,7 @@ export default function AdminPermissionsPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setSelectedPermission(null)}
+                onClick={closePermissionDetail}
                 className="rounded-2xl"
               >
                 {t('common.close')}
@@ -216,7 +135,7 @@ export default function AdminPermissionsPage() {
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.currentTarget.value)}
+                    onChange={handleSearchTermChange}
                     placeholder={t('admin.permissionsPage.searchPlaceholder')}
                     className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                   />
@@ -280,7 +199,7 @@ export default function AdminPermissionsPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setSelectedPermission(permission)}
+                            onClick={() => openPermissionDetail(permission)}
                             className="min-w-[96px] justify-center rounded-2xl bg-background/60"
                           >
                             <Eye className="mr-2 h-4 w-4" />

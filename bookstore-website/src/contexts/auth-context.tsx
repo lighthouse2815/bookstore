@@ -8,27 +8,53 @@ import {
 import {
   getCurrentUser,
   login as loginRequest,
+  loginWithGoogle as loginWithGoogleRequest,
   logout as logoutRequest,
   refreshAccessToken,
+  requestPasswordResetOtp as requestPasswordResetOtpRequest,
+  requestRegistrationOtp as requestRegistrationOtpRequest,
+  resetPassword as resetPasswordRequest,
   register as registerRequest,
+  verifyPasswordResetOtp as verifyPasswordResetOtpRequest,
+  verifyRegistrationOtp as verifyRegistrationOtpRequest,
 } from '@/services/auth-service'
 import { useLanguage } from '@/contexts/language-context'
 import { getCurrentProfile } from '@/services/profile-service'
 import type {
   LoginRequest,
+  LoginResponse,
+  PasswordResetTokenResponse,
   RegisterRequest,
+  RequestPasswordResetOtpRequest,
+  RequestRegistrationOtpRequest,
+  ResetPasswordRequest,
   User,
   UserMeResponse,
+  VerifyOtpRequest,
 } from '@/types/auth'
 import type { ProfileResponse } from '@/types/profile'
 import { getErrorMessage } from '@/utils'
+import {
+  createLoginRestrictionMessage,
+  getLoginRestrictionCopy,
+} from '@/utils/login-restrictions'
 
 type AuthContextType = {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (username: string, password: string) => Promise<void>
+  loginWithGoogle: (idToken: string) => Promise<void>
   register: (payload: RegisterRequest) => Promise<void>
+  requestRegistrationOtp: (payload: RequestRegistrationOtpRequest) => Promise<void>
+  verifyRegistrationOtp: (payload: VerifyOtpRequest) => Promise<void>
+  requestPasswordResetOtp: (
+    payload: RequestPasswordResetOtpRequest,
+  ) => Promise<void>
+  verifyPasswordResetOtp: (
+    payload: VerifyOtpRequest,
+  ) => Promise<PasswordResetTokenResponse>
+  resetPassword: (payload: ResetPasswordRequest) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<User>
 }
@@ -98,7 +124,7 @@ function clearSession() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [user, setUser] = useState<User | null>(() => getStoredUser())
   const [isLoading, setIsLoading] = useState(true)
 
@@ -117,10 +143,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return nextUser
   }
 
+  async function applySession(session: LoginResponse) {
+    persistTokens(session.accessToken, session.refreshToken)
+    const nextUser = await syncCurrentUser()
+
+    if (nextUser.locked) {
+      const copy = getLoginRestrictionCopy('locked', language)
+      clearSession()
+      setUser(null)
+      throw new Error(createLoginRestrictionMessage('locked', copy.description))
+    }
+
+    if (nextUser.status !== 'ACTIVE') {
+      const copy = getLoginRestrictionCopy('inactive', language)
+      clearSession()
+      setUser(null)
+      throw new Error(createLoginRestrictionMessage('inactive', copy.description))
+    }
+  }
+
   async function applyLoginSession(credentials: LoginRequest) {
     const session = await loginRequest(credentials)
-    persistTokens(session.accessToken, session.refreshToken)
-    await syncCurrentUser()
+    await applySession(session)
   }
 
   async function hydrateAuth() {
@@ -167,11 +211,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function loginWithGoogle(idToken: string) {
+    try {
+      const session = await loginWithGoogleRequest({ idToken })
+      await applySession(session)
+    } catch (error) {
+      throw new Error(getErrorMessage(error, t('auth.login.errorFallback')))
+    }
+  }
+
   async function register(payload: RegisterRequest) {
     try {
       await registerRequest(payload)
     } catch (error) {
       throw new Error(getErrorMessage(error, t('auth.register.errorFallback')))
+    }
+  }
+
+  async function requestRegistrationOtp(
+    payload: RequestRegistrationOtpRequest,
+  ) {
+    try {
+      await requestRegistrationOtpRequest(payload)
+    } catch (error) {
+      throw new Error(
+        getErrorMessage(error, getRegistrationOtpRequestFallback(language)),
+      )
+    }
+  }
+
+  async function verifyRegistrationOtp(payload: VerifyOtpRequest) {
+    try {
+      await verifyRegistrationOtpRequest(payload)
+    } catch (error) {
+      throw new Error(
+        getErrorMessage(error, t('auth.register.verifyErrorFallback')),
+      )
+    }
+  }
+
+  async function requestPasswordResetOtp(
+    payload: RequestPasswordResetOtpRequest,
+  ) {
+    try {
+      await requestPasswordResetOtpRequest(payload)
+    } catch (error) {
+      throw new Error(
+        getErrorMessage(error, t('auth.forgotPassword.requestErrorFallback')),
+      )
+    }
+  }
+
+  async function verifyPasswordResetOtp(payload: VerifyOtpRequest) {
+    try {
+      return await verifyPasswordResetOtpRequest(payload)
+    } catch (error) {
+      throw new Error(
+        getErrorMessage(error, t('auth.forgotPassword.verifyErrorFallback')),
+      )
+    }
+  }
+
+  async function resetPassword(payload: ResetPasswordRequest) {
+    try {
+      await resetPasswordRequest(payload)
+    } catch (error) {
+      throw new Error(
+        getErrorMessage(error, t('auth.forgotPassword.resetErrorFallback')),
+      )
     }
   }
 
@@ -199,7 +306,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithGoogle,
         register,
+        requestRegistrationOtp,
+        verifyRegistrationOtp,
+        requestPasswordResetOtp,
+        verifyPasswordResetOtp,
+        resetPassword,
         logout,
         refreshUser: syncCurrentUser,
       }}
@@ -217,4 +330,10 @@ export function useAuth() {
   }
 
   return context
+}
+
+function getRegistrationOtpRequestFallback(language: 'vi' | 'en') {
+  return language === 'vi'
+    ? 'Không thể gửi lại mã OTP kích hoạt'
+    : 'Unable to send a new activation OTP'
 }

@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
 import { Eye, Search } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
@@ -8,12 +6,10 @@ import { Label } from '@/components/common/label'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { useLanguage } from '@/contexts/language-context'
 import {
-  getAdminOrder,
-  getAdminOrders,
-  updateAdminOrderStatus,
-} from '@/services/order-service'
-import type { OrderResponse, OrderStatus } from '@/types/order'
-import { getErrorMessage } from '@/utils'
+  adminOrderStatusOptions,
+  useAdminOrdersPage,
+} from '@/hooks/use-admin-orders-page'
+import type { OrderStatus } from '@/types/order'
 import {
   getOrderStatusLabel,
   getPaymentMethodLabel,
@@ -31,122 +27,27 @@ const statusVariants: Record<
   CANCELLED: 'destructive',
 }
 
-const orderStatusOptions: OrderStatus[] = [
-  'PENDING',
-  'CONFIRMED',
-  'SHIPPING',
-  'DELIVERED',
-  'CANCELLED',
-]
-
 export default function AdminOrdersPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
-  const [orders, setOrders] = useState<OrderResponse[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | OrderStatus>('ALL')
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>('PENDING')
-  const [isLoading, setIsLoading] = useState(true)
-  const [isDetailLoading, setIsDetailLoading] = useState(false)
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const filteredOrders = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-
-    return orders.filter((order) => {
-      const matchesKeyword =
-        keyword === '' ||
-        [
-          order.orderId,
-          order.receiverName,
-          order.receiverPhone,
-          order.receiverAddress,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(keyword)
-
-      const matchesStatus =
-        statusFilter === 'ALL' || order.status === statusFilter
-
-      return matchesKeyword && matchesStatus
-    })
-  }, [orders, searchTerm, statusFilter])
-
-  useEffect(() => {
-    void loadOrders()
-  }, [])
-
-  async function loadOrders() {
-    setIsLoading(true)
-
-    try {
-      const response = await getAdminOrders()
-      setOrders(
-        [...response].sort(
-          (firstOrder, secondOrder) =>
-            new Date(secondOrder.createdAt).getTime() -
-            new Date(firstOrder.createdAt).getTime(),
-        ),
-      )
-      setError(null)
-    } catch (currentError) {
-      setError(getErrorMessage(currentError, t('checkout.error')))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  async function handleViewOrder(orderId: string) {
-    if (selectedOrderId === orderId) {
-      setSelectedOrderId(null)
-      setSelectedOrder(null)
-      return
-    }
-
-    setSelectedOrderId(orderId)
-    setIsDetailLoading(true)
-
-    try {
-      const detail = await getAdminOrder(orderId)
-      setSelectedOrder(detail)
-      setSelectedStatus(detail.status)
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, t('checkout.error')))
-      setSelectedOrderId(null)
-      setSelectedOrder(null)
-    } finally {
-      setIsDetailLoading(false)
-    }
-  }
-
-  async function handleUpdateStatus() {
-    if (!selectedOrder) {
-      return
-    }
-
-    setIsUpdating(true)
-
-    try {
-      const updatedOrder = await updateAdminOrderStatus(selectedOrder.orderId, {
-        status: selectedStatus,
-      })
-
-      toast.success(t('admin.orders.updateSuccess'))
-      setSelectedOrder(updatedOrder)
-      setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order.orderId === updatedOrder.orderId ? updatedOrder : order,
-        ),
-      )
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, t('checkout.error')))
-    } finally {
-      setIsUpdating(false)
-    }
-  }
+  const {
+    orders,
+    filteredOrders,
+    searchTerm,
+    statusFilter,
+    selectedOrderId,
+    selectedOrder,
+    selectedStatus,
+    isLoading,
+    isDetailLoading,
+    isUpdating,
+    error,
+    handleSearchTermChange,
+    handleStatusFilterChange,
+    handleSelectedStatusChange,
+    handleCloseDetail,
+    handleViewOrder,
+    handleUpdateStatus,
+  } = useAdminOrdersPage()
 
   return (
     <AdminLayout>
@@ -168,7 +69,7 @@ export default function AdminOrdersPage() {
             <Input
               placeholder={t('admin.orders.searchPlaceholder')}
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.currentTarget.value)}
+              onChange={handleSearchTermChange}
               className="pl-10"
             />
           </div>
@@ -178,13 +79,11 @@ export default function AdminOrdersPage() {
             <select
               id="orderStatusFilter"
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.currentTarget.value as 'ALL' | OrderStatus)
-              }
+              onChange={handleStatusFilterChange}
               className="mt-2 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
             >
               <option value="ALL">{t('admin.orders.allStatuses')}</option>
-              {orderStatusOptions.map((status) => (
+              {adminOrderStatusOptions.map((status) => (
                 <option key={status} value={status}>
                   {getOrderStatusLabel(status, t)}
                 </option>
@@ -307,10 +206,7 @@ export default function AdminOrdersPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        setSelectedOrderId(null)
-                        setSelectedOrder(null)
-                      }}
+                      onClick={handleCloseDetail}
                     >
                       {t('common.close')}
                     </Button>
@@ -376,14 +272,10 @@ export default function AdminOrdersPage() {
                         <select
                           id="adminOrderStatus"
                           value={selectedStatus}
-                          onChange={(event) =>
-                            setSelectedStatus(
-                              event.currentTarget.value as OrderStatus,
-                            )
-                          }
+                          onChange={handleSelectedStatusChange}
                           className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                         >
-                          {orderStatusOptions.map((status) => (
+                          {adminOrderStatusOptions.map((status) => (
                             <option key={status} value={status}>
                               {getOrderStatusLabel(status, t)}
                             </option>

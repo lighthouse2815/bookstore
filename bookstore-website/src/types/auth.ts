@@ -11,6 +11,10 @@ export type LoginRequest = {
   password: string
 }
 
+export type GoogleLoginRequest = {
+  idToken: string
+}
+
 export type RefreshTokenRequest = {
   refreshToken: string
 }
@@ -30,6 +34,24 @@ export type RegisterRequest = {
   password: string
 }
 
+export type VerifyOtpRequest = {
+  email: string
+  otpCode: string
+}
+
+export type RequestRegistrationOtpRequest = {
+  email: string
+}
+
+export type RequestPasswordResetOtpRequest = {
+  email: string
+}
+
+export type ResetPasswordRequest = {
+  resetToken: string
+  newPassword: string
+}
+
 // Response types
 export type LoginResponse = {
   userId: string
@@ -42,6 +64,11 @@ export type LoginResponse = {
 export type RegisterResponse = {
   username: string
   createdAt: string
+}
+
+export type PasswordResetTokenResponse = {
+  resetToken: string
+  expiresAt: string
 }
 
 export type UserMeResponse = {

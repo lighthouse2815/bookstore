@@ -25,6 +25,7 @@ const OrderConfirmationPage = lazy(
 const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
 const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
 const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
@@ -101,6 +102,14 @@ function AppRouteContent() {
           element={
             <LazyPage>
               <RegisterPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <LazyPage>
+              <ForgotPasswordPage />
             </LazyPage>
           }
         />
