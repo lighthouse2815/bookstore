@@ -42,3 +42,6 @@ build/
 
 # Test sources
 src/test/
+
+.codex-logs/
+*.log

@@ -1,5 +1,6 @@
-import { useId, useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import styled from 'styled-components'
+import { useAuthFlipCard } from '@/hooks/use-auth-flip-card'
 
 type AuthFlipCardProps = {
   frontTitle: string
@@ -26,18 +27,10 @@ export function AuthFlipCard({
   checked,
   onCheckedChange,
 }: AuthFlipCardProps) {
-  const toggleId = useId().replace(/:/g, '')
-  const [internalChecked, setInternalChecked] = useState(false)
-  const isControlled = checked !== undefined
-  const isChecked = isControlled ? checked : internalChecked
-
-  function handleCheckedChange(nextChecked: boolean) {
-    if (!isControlled) {
-      setInternalChecked(nextChecked)
-    }
-
-    onCheckedChange?.(nextChecked)
-  }
+  const { toggleId, isChecked, handleCheckedChange } = useAuthFlipCard(
+    checked,
+    onCheckedChange,
+  )
 
   return (
     <StyledWrapper>
@@ -141,7 +134,7 @@ const StyledWrapper = styled.div`
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 560px;
+    min-height: 660px;
     padding: 12px 0;
   }
 
@@ -152,7 +145,7 @@ const StyledWrapper = styled.div`
   .form {
     position: relative;
     width: min(100%, 460px);
-    min-height: 530px;
+    min-height: 630px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -271,7 +264,7 @@ const StyledWrapper = styled.div`
 
   .switch {
     margin-top: auto;
-    padding-top: 8px;
+    padding-top: 14px;
     font-size: 13px;
     color: var(--auth-text);
     text-align: center;
@@ -313,12 +306,12 @@ const StyledWrapper = styled.div`
 
   @media (max-width: 480px) {
     .container {
-      min-height: 580px;
+      min-height: 700px;
     }
 
     .form {
       width: min(100%, 352px);
-      min-height: 550px;
+      min-height: 670px;
       padding: 8px;
     }
 

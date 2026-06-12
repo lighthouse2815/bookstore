@@ -4,6 +4,7 @@ import com.bookstore.bookstore.infrastructure.persistence.entity.RefreshTokenJpa
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,4 +16,13 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenJpa
             where rt.token = :token
             """)
     Optional<RefreshTokenJpaEntity> findByToken(@Param("token") String token);
+
+    @Modifying
+    @Query("""
+            update RefreshTokenJpaEntity rt
+            set rt.revoked = true
+            where rt.userId = :userId
+              and rt.revoked = false
+            """)
+    void revokeAllByUserId(@Param("userId") UUID userId);
 }

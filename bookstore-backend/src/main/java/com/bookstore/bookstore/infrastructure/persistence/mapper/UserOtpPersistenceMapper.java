@@ -15,6 +15,7 @@ public class UserOtpPersistenceMapper {
         return new UserOtp(
                 entity.getId(),
                 entity.getUserId(),
+                entity.getPurpose(),
                 entity.getOtpHash(),
                 entity.getExpiresAt(),
                 entity.getVerifiedAt(),
@@ -27,6 +28,7 @@ public class UserOtpPersistenceMapper {
     public void copyToEntity(UserOtp userOtp, UserOtpJpaEntity entity) {
         entity.setId(userOtp.getId());
         entity.setUserId(userOtp.getUserId());
+        entity.setPurpose(userOtp.getPurpose());
         entity.setOtpHash(userOtp.getOtpHash());
         entity.setExpiresAt(userOtp.getExpiresAt());
         entity.setVerifiedAt(userOtp.getVerifiedAt());

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { BookOpen, Globe, Mail, MessageCircle } from 'lucide-react'
 import { useLanguage } from '@/contexts/language-context'
+import { useBrandWordmark } from '@/hooks/use-brand-wordmark'
 
 export function Footer() {
   const { t } = useLanguage()
-  const brand = t('common.brand')
-  const brandPrefix = brand.endsWith('Vui') ? brand.slice(0, -3) : brand
+  const { brandPrefix, brandSuffix } = useBrandWordmark()
 
   return (
     <footer className="border-t border-border bg-muted/40">
@@ -18,9 +18,7 @@ export function Footer() {
               </span>
               <span className="font-heading text-xl font-bold tracking-tight">
                 {brandPrefix}
-                {brand.endsWith('Vui') && (
-                  <span className="text-primary">Vui</span>
-                )}
+                {brandSuffix && <span className="text-primary">{brandSuffix}</span>}
               </span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">

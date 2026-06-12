@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
+import com.bookstore.bookstore.domain.enums.OtpPurpose;
 import com.bookstore.bookstore.application.port.out.IUserOtpRepository;
 import com.bookstore.bookstore.domain.model.UserOtp;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserOtpJpaEntity;
@@ -19,16 +20,49 @@ public class UserOtpRepositoryAdapter implements IUserOtpRepository {
     private final UserOtpPersistenceMapper userOtpPersistenceMapper;
 
     @Override
-    public Optional<UserOtp> findLatestPendingByUserId(UUID userId) {
-        return userOtpJpaRepository.findFirstByUserIdAndVerifiedAtIsNullAndInvalidatedAtIsNullOrderByCreatedAtDesc(
-                        userId
+    public Optional<UserOtp> findLatestByUserIdAndPurpose(UUID userId, OtpPurpose purpose) {
+        return userOtpJpaRepository.findFirstByUserIdAndPurposeOrderByCreatedAtDesc(userId, purpose)
+                .map(userOtpPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<UserOtp> findLatestPendingByUserIdAndPurpose(UUID userId, OtpPurpose purpose) {
+        return userOtpJpaRepository
+                .findFirstByUserIdAndPurposeAndVerifiedAtIsNullAndInvalidatedAtIsNullOrderByCreatedAtDesc(
+                        userId,
+                        purpose
                 )
                 .map(userOtpPersistenceMapper::toDomain);
     }
 
     @Override
-    public void invalidatePendingByUserId(UUID userId, Instant invalidatedAt) {
-        userOtpJpaRepository.invalidatePendingByUserId(userId, invalidatedAt);
+    public Optional<UserOtp> findOldestByUserIdAndPurposeCreatedAfter(UUID userId, OtpPurpose purpose, Instant createdAfter) {
+        return userOtpJpaRepository
+                .findFirstByUserIdAndPurposeAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(
+                        userId,
+                        purpose,
+                        createdAfter
+                )
+                .map(userOtpPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public long countByUserIdAndPurposeCreatedAfter(UUID userId, OtpPurpose purpose, Instant createdAfter) {
+        return userOtpJpaRepository.countByUserIdAndPurposeAndCreatedAtGreaterThanEqual(
+                userId,
+                purpose,
+                createdAfter
+        );
+    }
+
+    @Override
+    public void invalidatePendingByUserIdAndPurpose(UUID userId, OtpPurpose purpose, Instant invalidatedAt) {
+        userOtpJpaRepository.invalidatePendingByUserIdAndPurpose(userId, purpose, invalidatedAt);
+    }
+
+    @Override
+    public void invalidateActiveByUserIdAndPurpose(UUID userId, OtpPurpose purpose, Instant invalidatedAt) {
+        userOtpJpaRepository.invalidateActiveByUserIdAndPurpose(userId, purpose, invalidatedAt);
     }
 
     @Override

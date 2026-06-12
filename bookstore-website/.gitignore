@@ -17,3 +17,10 @@ dist/
 package-lock.json
 .next/
 .DS_Store
+
+
+.idea/
+.env
+node_modules/
+dist/
+*.log

@@ -6,7 +6,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Locale;
 
 public final class Guard {
 
@@ -32,14 +31,6 @@ public final class Guard {
 
     public static String notBlankOrNull(String value, DomainErrorCode errorCode, String fieldName) {
         return value == null ? null : notBlank(value, errorCode, fieldName);
-    }
-
-    public static String gmailEmail(String value, DomainErrorCode errorCode, String fieldName) {
-        String normalized = notBlank(value, errorCode, fieldName);
-        if (!normalized.toLowerCase(Locale.ROOT).endsWith("@gmail.com")) {
-            throw new DomainException(errorCode, fieldName);
-        }
-        return normalized;
     }
 
     public static String phoneNumber(String value, DomainErrorCode errorCode, String fieldName) {

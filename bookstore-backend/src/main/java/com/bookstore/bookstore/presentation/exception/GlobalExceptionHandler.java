@@ -2,11 +2,14 @@ package com.bookstore.bookstore.presentation.exception;
 
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.exception.OtpRateLimitException;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import java.util.Map;
 import java.util.Objects;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OtpRateLimitException.class)
+    public ResponseEntity<ApiResponse<Map<String, Long>>> handleOtpRateLimitException(OtpRateLimitException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.getRetryAfterSeconds()))
+                .body(ApiResponse.error(
+                        exception.getMessage(),
+                        Map.of("retryAfterSeconds", exception.getRetryAfterSeconds())
+                ));
+    }
 
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<ApiResponse<Void>> handleApplicationException(ApplicationException exception) {
@@ -103,9 +116,13 @@ public class GlobalExceptionHandler {
 
     private HttpStatus mapApplicationStatus(ApplicationErrorCode errorCode) {
         return switch (errorCode) {
-            case INVALID_ARGUMENT, INVALID_AUTH_PASSWORD, USER_ROLE_NOT_ALLOWED, OTP_INVALID, OTP_EXPIRED ->
+            case INVALID_ARGUMENT, INVALID_AUTH_PASSWORD, USER_ROLE_NOT_ALLOWED, OTP_INVALID, OTP_EXPIRED,
+                 OTP_NOT_VERIFIED ->
                     HttpStatus.BAD_REQUEST;
-            case AUTH_USER_NOT_FOUND, AUTH_INVALID_PASSWORD, AUTH_INVALID_REFRESH_TOKEN, AUTH_REFRESH_TOKEN_EXPIRED ->
+            case OTP_RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
+            case AUTH_USER_NOT_FOUND, AUTH_INVALID_PASSWORD, AUTH_INVALID_REFRESH_TOKEN, AUTH_REFRESH_TOKEN_EXPIRED,
+                 AUTH_INVALID_PASSWORD_RESET_TOKEN, AUTH_PASSWORD_RESET_TOKEN_EXPIRED,
+                 AUTH_PASSWORD_LOGIN_NOT_AVAILABLE, AUTH_GOOGLE_INVALID_ID_TOKEN, AUTH_GOOGLE_EMAIL_NOT_VERIFIED ->
                     HttpStatus.UNAUTHORIZED;
             case USER_NOT_FOUND, STAFF_NOT_FOUND, ROLE_NOT_FOUND, CATEGORY_NOT_FOUND, AUTHOR_NOT_FOUND, PUBLISHER_NOT_FOUND,
                  SUPPLIER_NOT_FOUND,
@@ -119,6 +136,7 @@ public class GlobalExceptionHandler {
             case OTP_EMAIL_SEND_FAILED -> HttpStatus.BAD_GATEWAY;
             case CART_EMPTY -> HttpStatus.CONFLICT;
             case USER_ALREADY_EXISTS, USER_USERNAME_ALREADY_EXISTS, USER_PHONE_ALREADY_EXISTS, USER_EMAIL_ALREADY_EXISTS,
+                 AUTH_GOOGLE_ACCOUNT_ALREADY_LINKED,
                  ROLE_ALREADY_EXISTS, ROLE_NAME_ALREADY_EXISTS,
                  CATEGORY_NAME_ALREADY_EXISTS,
                  AUTHOR_NAME_ALREADY_EXISTS,

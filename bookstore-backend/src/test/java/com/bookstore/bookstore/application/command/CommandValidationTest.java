@@ -98,6 +98,15 @@ class CommandValidationTest {
     }
 
     @Test
+    void googleLoginCommand_rejectsNullIdToken() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new GoogleLoginCommand(null)
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+    }
+
+    @Test
     void verifyOtpCommand_rejectsNullEmail() {
         ApplicationException exception = assertThrows(ApplicationException.class, () ->
                 new VerifyOtpCommand(null, "123456")
@@ -113,5 +122,32 @@ class CommandValidationTest {
         );
 
         assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+    }
+
+    @Test
+    void requestPasswordResetOtpCommand_rejectsNullEmail() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new RequestPasswordResetOtpCommand(null)
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+    }
+
+    @Test
+    void resetPasswordCommand_rejectsNullResetToken() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new ResetPasswordCommand(null, "new-password")
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+    }
+
+    @Test
+    void resetPasswordCommand_rejectsNullNewPassword() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new ResetPasswordCommand("reset-token", null)
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_AUTH_PASSWORD, exception.getErrorCode());
     }
 }

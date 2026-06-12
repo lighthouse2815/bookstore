@@ -23,14 +23,35 @@ public class ResendEmailSenderAdapter implements IEmailSender {
     public void sendOtpEmail(String recipientEmail, String otpCode, long expirationMinutes) {
         validateConfiguration();
 
-        SendEmailRequest request = new SendEmailRequest(
-                formatFrom(),
-                List.of(recipientEmail),
+        SendEmailRequest request = buildEmailRequest(
+                recipientEmail,
+                otpCode,
+                expirationMinutes,
                 "Ma OTP xac thuc tai khoan Bookstore",
-                buildTextBody(otpCode, expirationMinutes),
-                buildHtmlBody(otpCode, expirationMinutes)
+                "Xac thuc tai khoan Bookstore",
+                "Su dung ma OTP ben duoi de kich hoat tai khoan cua ban:"
         );
 
+        send(request);
+    }
+
+    @Override
+    public void sendPasswordResetOtpEmail(String recipientEmail, String otpCode, long expirationMinutes) {
+        validateConfiguration();
+
+        SendEmailRequest request = buildEmailRequest(
+                recipientEmail,
+                otpCode,
+                expirationMinutes,
+                "Ma OTP dat lai mat khau Bookstore",
+                "Dat lai mat khau Bookstore",
+                "Su dung ma OTP ben duoi de dat lai mat khau cua ban:"
+        );
+
+        send(request);
+    }
+
+    private void send(SendEmailRequest request) {
         try {
             resendRestClient.post()
                     .uri("/emails")
@@ -42,6 +63,23 @@ public class ResendEmailSenderAdapter implements IEmailSender {
         } catch (RestClientException exception) {
             throw new ApplicationException(ApplicationErrorCode.OTP_EMAIL_SEND_FAILED);
         }
+    }
+
+    private SendEmailRequest buildEmailRequest(
+            String recipientEmail,
+            String otpCode,
+            long expirationMinutes,
+            String subject,
+            String heading,
+            String description
+    ) {
+        return new SendEmailRequest(
+                formatFrom(),
+                List.of(recipientEmail),
+                subject,
+                buildTextBody(otpCode, expirationMinutes, description),
+                buildHtmlBody(otpCode, expirationMinutes, heading, description)
+        );
     }
 
     private void validateConfiguration() {
@@ -60,25 +98,28 @@ public class ResendEmailSenderAdapter implements IEmailSender {
         return fromName + " <" + resendProperties.fromEmail() + ">";
     }
 
-    private String buildTextBody(String otpCode, long expirationMinutes) {
-        return "Ma OTP cua ban la " + otpCode
+    private String buildTextBody(String otpCode, long expirationMinutes, String description) {
+        return description
+                + System.lineSeparator()
+                + "Ma OTP cua ban la "
+                + otpCode
                 + ". Ma co hieu luc trong "
                 + expirationMinutes
                 + " phut.";
     }
 
-    private String buildHtmlBody(String otpCode, long expirationMinutes) {
+    private String buildHtmlBody(String otpCode, long expirationMinutes, String heading, String description) {
         return """
                 <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
-                  <h2 style="margin-bottom:12px">Xac thuc tai khoan Bookstore</h2>
-                  <p>Su dung ma OTP ben duoi de kich hoat tai khoan cua ban:</p>
+                  <h2 style="margin-bottom:12px">%s</h2>
+                  <p>%s</p>
                   <div style="display:inline-block;padding:12px 20px;margin:12px 0;background:#111827;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:4px">
                     %s
                   </div>
                   <p>Ma co hieu luc trong %d phut.</p>
                   <p>Neu ban khong thuc hien yeu cau nay, vui long bo qua email.</p>
                 </div>
-                """.formatted(otpCode, expirationMinutes);
+                """.formatted(heading, description, otpCode, expirationMinutes);
     }
 
     private record SendEmailRequest(

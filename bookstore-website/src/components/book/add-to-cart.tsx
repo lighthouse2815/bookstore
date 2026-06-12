@@ -1,48 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Minus, Plus, ShoppingCart, Zap } from 'lucide-react'
-import { toast } from 'sonner'
-import { useAuth } from '@/contexts/auth-context'
-import { useCart } from '@/contexts/cart-context'
-import { useLanguage } from '@/contexts/language-context'
+import { useAddToCart } from '@/hooks/use-add-to-cart'
 import type { Book } from '@/types/book'
 
 export function AddToCart({ book }: { book: Book }) {
-  const { addItem } = useCart()
-  const { isAuthenticated } = useAuth()
-  const { t } = useLanguage()
-  const navigate = useNavigate()
-  const [qty, setQty] = useState(1)
-
-  async function handleAddToCart() {
-    if (!isAuthenticated) {
-      toast.error(t('cart.loginRequired'))
-      navigate('/login')
-      return
-    }
-
-    try {
-      await addItem(book.id, qty)
-      toast.success(t('book.addToCart.addedQtyToCart', { count: qty }))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('cart.updateError'))
-    }
-  }
-
-  async function handleBuyNow() {
-    if (!isAuthenticated) {
-      toast.error(t('cart.loginRequired'))
-      navigate('/login')
-      return
-    }
-
-    try {
-      await addItem(book.id, qty)
-      navigate('/checkout')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('cart.updateError'))
-    }
-  }
+  const { t, qty, decrementQty, incrementQty, handleAddToCart, handleBuyNow } =
+    useAddToCart(book)
 
   return (
     <div className="space-y-4">
@@ -53,7 +15,7 @@ export function AddToCart({ book }: { book: Book }) {
         <div className="flex items-center rounded-full border border-border">
           <button
             type="button"
-            onClick={() => setQty((currentQty) => Math.max(1, currentQty - 1))}
+            onClick={decrementQty}
             className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
             aria-label={t('book.addToCart.decrease')}
           >
@@ -62,7 +24,7 @@ export function AddToCart({ book }: { book: Book }) {
           <span className="w-10 text-center font-semibold">{qty}</span>
           <button
             type="button"
-            onClick={() => setQty((currentQty) => currentQty + 1)}
+            onClick={incrementQty}
             className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
             aria-label={t('book.addToCart.increase')}
           >

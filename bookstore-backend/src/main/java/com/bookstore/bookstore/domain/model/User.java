@@ -115,7 +115,14 @@ public class User {
         UserRule.requireCanLogin(status, locked, deletedAt);
     }
 
+    public void updatePasswordHash(String passwordHash) {
+        setPasswordHash(passwordHash);
+        setUpdatedAt(Instant.now());
+    }
 
+    public boolean hasPassword() {
+        return passwordHash != null;
+    }
     public boolean hasRole(String roleName) {
         if (roleName == null || roles == null) {
             return false;
@@ -131,7 +138,7 @@ public class User {
     }
 
     private void setPasswordHash(String passwordHash) {
-        this.passwordHash = Guard.notBlank(passwordHash, DomainErrorCode.INVALID_USER_PASSWORD_HASH, "passwordHash");
+        this.passwordHash = Guard.notBlankOrNull(passwordHash, DomainErrorCode.INVALID_USER_PASSWORD_HASH, "passwordHash");
     }
 
     private void setPhoneNumber(String phoneNumber) {
@@ -139,7 +146,7 @@ public class User {
     }
 
     private void setEmail(String email) {
-        this.email = Guard.gmailEmail(email, DomainErrorCode.INVALID_USER_EMAIL, "email");
+        this.email = Guard.email(email, DomainErrorCode.INVALID_USER_EMAIL, "email");
     }
 
     private void setStatus(UserStatus status) {

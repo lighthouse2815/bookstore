@@ -2,12 +2,17 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IAuthService;
 import com.bookstore.bookstore.presentation.mapper.AuthWebMapper;
+import com.bookstore.bookstore.presentation.request.GoogleLoginRequest;
 import com.bookstore.bookstore.presentation.request.LoginRequest;
 import com.bookstore.bookstore.presentation.request.LogoutRequest;
 import com.bookstore.bookstore.presentation.request.RefreshTokenRequest;
 import com.bookstore.bookstore.presentation.request.RegisterRequest;
+import com.bookstore.bookstore.presentation.request.RequestPasswordResetOtpRequest;
+import com.bookstore.bookstore.presentation.request.ResetPasswordRequest;
+import com.bookstore.bookstore.presentation.request.VerifyOtpRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.LoginResponse;
+import com.bookstore.bookstore.presentation.response.PasswordResetTokenResponse;
 import com.bookstore.bookstore.presentation.response.RegisterResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +44,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(authWebMapper.toLoginResponse(result)));
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        var result = authService.loginWithGoogle(authWebMapper.toGoogleLoginCommand(request));
+        return ResponseEntity.ok(ApiResponse.success(authWebMapper.toLoginResponse(result)));
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         var result = authService.refresh(authWebMapper.toRefreshCommand(request));
@@ -49,5 +60,26 @@ public class AuthController {
     public ApiResponse<Void> logout(@Valid @RequestBody LogoutRequest request) {
         authService.logout(authWebMapper.toLogoutCommand(request));
         return ApiResponse.success("Logged out", null);
+    }
+
+    @PostMapping("/forgot-password/request-otp")
+    public ApiResponse<Void> requestPasswordResetOtp(@Valid @RequestBody RequestPasswordResetOtpRequest request) {
+        authService.requestPasswordResetOtp(authWebMapper.toRequestPasswordResetOtpCommand(request));
+        return ApiResponse.success("Neu email ton tai, OTP da duoc gui", null);
+    }
+
+    @PostMapping("/forgot-password/verify-otp")
+    public ApiResponse<PasswordResetTokenResponse> verifyPasswordResetOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        var result = authService.verifyPasswordResetOtp(authWebMapper.toVerifyOtpCommand(request));
+        return ApiResponse.success(
+                "Xac thuc OTP thanh cong",
+                authWebMapper.toPasswordResetTokenResponse(result)
+        );
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(authWebMapper.toResetPasswordCommand(request));
+        return ApiResponse.success("Dat lai mat khau thanh cong", null);
     }
 }
