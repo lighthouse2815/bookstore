@@ -134,7 +134,7 @@ const StyledWrapper = styled.div`
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 560px;
+    min-height: 660px;
     padding: 12px 0;
   }
 
@@ -145,7 +145,7 @@ const StyledWrapper = styled.div`
   .form {
     position: relative;
     width: min(100%, 460px);
-    min-height: 530px;
+    min-height: 630px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -264,7 +264,7 @@ const StyledWrapper = styled.div`
 
   .switch {
     margin-top: auto;
-    padding-top: 8px;
+    padding-top: 14px;
     font-size: 13px;
     color: var(--auth-text);
     text-align: center;
@@ -306,12 +306,12 @@ const StyledWrapper = styled.div`
 
   @media (max-width: 480px) {
     .container {
-      min-height: 580px;
+      min-height: 700px;
     }
 
     .form {
       width: min(100%, 352px);
-      min-height: 550px;
+      min-height: 670px;
       padding: 8px;
     }
 

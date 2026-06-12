@@ -22,6 +22,7 @@ export default function LoginPage() {
     isRegisterFace,
     handleRegisterFaceChange,
     handleActivationSubmit,
+    handleLoginWithGoogle,
     handleGoogleRegister,
     handleLoginSubmit,
     handleRegisterSubmit,
@@ -237,7 +238,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     className="btn"
-                    disabled={loginForm.isLoading}
+                    disabled={loginForm.isLoading || loginForm.isGoogleLoading}
                   >
                     {loginForm.isLoading ? (
                       <span className="loading_inline">
@@ -248,6 +249,19 @@ export default function LoginPage() {
                       t('auth.login.submit')
                     )}
                   </button>
+
+                  <div className="my-1 flex items-center gap-3 text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--auth-text)]/70">
+                    <span className="h-px flex-1 bg-white/12" />
+                    <span>{t('common.or')}</span>
+                    <span className="h-px flex-1 bg-white/12" />
+                  </div>
+
+                  <GoogleAuthButton
+                    locale={language}
+                    text="signin_with"
+                    isLoading={loginForm.isGoogleLoading}
+                    onCredential={handleLoginWithGoogle}
+                  />
                 </form>
               }
               backContent={

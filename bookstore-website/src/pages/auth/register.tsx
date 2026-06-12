@@ -159,6 +159,13 @@ export default function RegisterPage() {
                         )}
                       </button>
                     </form>
+
+                    <p className="auth_switch">
+                      {t('auth.register.haveAccount')}{' '}
+                      <Link to="/login" className="auth_switch_link">
+                        {t('auth.register.loginNow')}
+                      </Link>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -352,21 +359,18 @@ export default function RegisterPage() {
                         onCredential={handleGoogleRegister}
                       />
                     </form>
+
+                    <p className="auth_switch">
+                      {t('auth.register.haveAccount')}{' '}
+                      <Link to="/login" className="auth_switch_link">
+                        {t('auth.register.loginNow')}
+                      </Link>
+                    </p>
                   </div>
                 </div>
               </div>
             )}
           </StyledRegisterFlowCard>
-
-          <p className="text-center text-sm text-muted-foreground">
-            {t('auth.register.haveAccount')}{' '}
-            <Link
-              to="/login"
-              className="font-semibold text-primary hover:underline"
-            >
-              {t('auth.register.loginNow')}
-            </Link>
-          </p>
         </div>
       </main>
       <Footer />
@@ -727,6 +731,25 @@ const StyledRegisterFlowCard = styled.div`
     border: 2px solid currentColor;
     border-top-color: transparent;
     animation: spin 0.8s linear infinite;
+  }
+
+  .auth_switch {
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--auth-text);
+  }
+
+  .auth_switch_link {
+    font-weight: 700;
+    color: var(--auth-accent);
+    text-decoration: underline;
+    text-decoration-color: rgba(99, 102, 241, 0.35);
+    text-underline-offset: 4px;
+  }
+
+  .auth_switch_link:hover {
+    text-decoration-color: currentColor;
   }
 
   @keyframes spin {

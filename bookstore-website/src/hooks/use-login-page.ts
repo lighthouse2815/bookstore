@@ -59,6 +59,7 @@ export function useLoginPage() {
     isRegisterFace,
     handleRegisterFaceChange,
     handleActivationSubmit,
+    handleLoginWithGoogle: loginForm.submitWithGoogle,
     handleGoogleRegister: registerEntry.handleGoogleRegister,
     handleLoginSubmit,
     handleRegisterSubmit: registerEntry.handleRegisterSubmit,

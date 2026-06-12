@@ -14,6 +14,21 @@ type LoginFormState = {
   password: string
 }
 
+type PendingPasswordActivationCredentials = {
+  provider: 'password'
+  password: string
+  username: string
+}
+
+type PendingGoogleActivationCredentials = {
+  provider: 'google'
+  idToken: string
+}
+
+type PendingActivationCredentials =
+  | PendingPasswordActivationCredentials
+  | PendingGoogleActivationCredentials
+
 type LoginRestrictionState =
   | { kind: 'locked' }
   | { kind: 'inactive'; email: string }
@@ -39,10 +54,16 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function useLoginForm() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { login, requestRegistrationOtp, verifyRegistrationOtp } = useAuth()
+  const {
+    login,
+    loginWithGoogle,
+    requestRegistrationOtp,
+    verifyRegistrationOtp,
+  } = useAuth()
   const { language, t } = useLanguage()
   const [formData, setFormData] = useState(initialFormData)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [prefilledUsername, setPrefilledUsername] = useState('')
   const [loginRestriction, setLoginRestriction] =
     useState<LoginRestrictionState | null>(null)
@@ -51,7 +72,7 @@ export function useLoginForm() {
     useState(false)
   const [isActivationLoading, setIsActivationLoading] = useState(false)
   const [pendingActivationCredentials, setPendingActivationCredentials] =
-    useState<LoginFormState | null>(null)
+    useState<PendingActivationCredentials | null>(null)
 
   const restrictionCopy = loginRestriction
     ? getLoginRestrictionCopy(loginRestriction.kind, language)
@@ -101,29 +122,30 @@ export function useLoginForm() {
     resetActivationState()
   }
 
-  function openInactiveState(credentials: LoginFormState) {
-    const email = credentials.username.trim()
+  function openInactiveState(
+    email: string,
+    credentials: PendingActivationCredentials,
+  ) {
+    const normalizedEmail = email.trim()
 
-    if (!EMAIL_PATTERN.test(email)) {
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
       toast.error(flowCopy.inactiveEmailRequiredMessage)
       return true
     }
 
     setLoginRestriction({
       kind: 'inactive',
-      email,
+      email: normalizedEmail,
     })
     setActivationOtpCode('')
-    setPendingActivationCredentials({
-      username: email,
-      password: credentials.password,
-    })
+    setPendingActivationCredentials(credentials)
     return true
   }
 
   function handleLoginFailure(
     errorMessage: string,
-    credentials: LoginFormState,
+    credentials: PendingActivationCredentials,
+    email: string,
   ) {
     const restriction = parseLoginRestrictionMessage(errorMessage)
 
@@ -136,7 +158,7 @@ export function useLoginForm() {
       return true
     }
 
-    return openInactiveState(credentials)
+    return openInactiveState(email, credentials)
   }
 
   async function submit() {
@@ -151,11 +173,52 @@ export function useLoginForm() {
       const errorMessage =
         error instanceof Error ? error.message : t('auth.login.errorFallback')
 
-      if (!handleLoginFailure(errorMessage, formData)) {
+      if (
+        !handleLoginFailure(
+          errorMessage,
+          {
+            provider: 'password',
+            username: formData.username,
+            password: formData.password,
+          },
+          formData.username,
+        )
+      ) {
         toast.error(errorMessage)
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function submitWithGoogle(idToken: string) {
+    clearLoginRestriction()
+    setIsGoogleLoading(true)
+
+    const email = getGoogleEmailFromIdToken(idToken)
+
+    try {
+      await loginWithGoogle(idToken)
+      toast.success(t('auth.login.success'))
+      navigate('/')
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t('auth.login.errorFallback')
+
+      if (
+        !handleLoginFailure(
+          errorMessage,
+          {
+            provider: 'google',
+            idToken,
+          },
+          email,
+        )
+      ) {
+        toast.error(errorMessage)
+      }
+    } finally {
+      setIsGoogleLoading(false)
     }
   }
 
@@ -208,7 +271,12 @@ export function useLoginForm() {
       setActivationOtpCode('')
       setPendingActivationCredentials(null)
 
-      await login(credentials.username, credentials.password)
+      if (credentials.provider === 'password') {
+        await login(credentials.username, credentials.password)
+      } else {
+        await loginWithGoogle(credentials.idToken)
+      }
+
       toast.success(t('auth.login.success'))
       navigate('/')
     } catch (error) {
@@ -217,7 +285,9 @@ export function useLoginForm() {
           ? error.message
           : t('auth.register.verifyErrorFallback')
 
-      if (!handleLoginFailure(errorMessage, credentials)) {
+      const email = loginRestriction.email
+
+      if (!handleLoginFailure(errorMessage, credentials, email)) {
         toast.error(errorMessage)
       }
     } finally {
@@ -236,6 +306,7 @@ export function useLoginForm() {
     isActivationLoading,
     isActivationRequestLoading,
     isInactiveRestriction: loginRestriction?.kind === 'inactive',
+    isGoogleLoading,
     isLoading,
     isLockedRestriction: loginRestriction?.kind === 'locked',
     prefilledUsername,
@@ -245,7 +316,26 @@ export function useLoginForm() {
     handleChange,
     requestActivationOtp,
     submit,
+    submitWithGoogle,
     submitActivationOtp,
+  }
+}
+
+function getGoogleEmailFromIdToken(idToken: string) {
+  try {
+    const [, payload = ''] = idToken.split('.')
+
+    if (!payload) {
+      return ''
+    }
+
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const decodedPayload = window.atob(normalizedPayload)
+    const parsedPayload = JSON.parse(decodedPayload) as { email?: string }
+
+    return parsedPayload.email?.trim() ?? ''
+  } catch {
+    return ''
   }
 }
 

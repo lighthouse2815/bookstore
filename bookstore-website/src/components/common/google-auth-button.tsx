@@ -122,8 +122,8 @@ export function GoogleAuthButton({
         )}
       >
         {locale === 'vi'
-          ? 'Thieu cau hinh VITE_GOOGLE_CLIENT_ID de bat dang ky Google.'
-          : 'Set VITE_GOOGLE_CLIENT_ID to enable Google sign-up.'}
+          ? 'Thieu cau hinh VITE_GOOGLE_CLIENT_ID de bat dang nhap Google.'
+          : 'Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.'}
       </div>
     )
   }
