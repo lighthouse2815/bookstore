@@ -1,19 +1,32 @@
 package com.bookstore.bookstore.application.service;
 
+import com.bookstore.bookstore.application.command.CreateUserCommand;
 import com.bookstore.bookstore.application.command.DeleteUserCommand;
+import com.bookstore.bookstore.application.command.UpdateStaffUserCommand;
+import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
+import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.domain.enums.UserStatus;
+import com.bookstore.bookstore.domain.model.Profile;
+import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import com.bookstore.bookstore.shared.util.StringUtils;
 
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,14 +36,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService implements IUserService {
 
     private static final String ADMIN_ROLE = "ADMIN";
+    private static final String STAFF_ROLE = "STAFF";
+    private static final String USER_ROLE = "USER";
 
     private final IUserRepository userRepository;
     private final IProfileRepository profileRepository;
     private final IProfileService profileService;
+    private final IRoleRepository roleRepository;
+    private final IPasswordEncoder passwordEncoder;
 
     @Override
     public List<User> getAll() {
         return userRepository.findAllActive();
+    }
+
+    @Override
+    public List<User> getCustomers() {
+        return getActiveUsersByRole(USER_ROLE);
+    }
+
+    @Override
+    public List<User> getStaffs() {
+        return getActiveUsersByRole(STAFF_ROLE);
+    }
+
+    @Override
+    public List<User> getAdmins() {
+        return getActiveUsersByRole(ADMIN_ROLE);
     }
 
     @Override
@@ -51,15 +83,62 @@ public class UserService implements IUserService {
             throw new ApplicationException(ApplicationErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByPhoneNumberIncludingDeleted(user.getPhoneNumber())) {
-            throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
+        String phoneNumber = user.getPhoneNumber();
+        if (phoneNumber != null) {
+            if( userRepository.existsByPhoneNumberIncludingDeleted(phoneNumber)) {
+                throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
+            }
         }
+             
 
         if (userRepository.existsByEmailIncludingDeleted(user.getEmail())) {
             throw new ApplicationException(ApplicationErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
 
         return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public User createByAdmin(CreateUserCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+
+        Instant now = Instant.now();
+        String roleName = normalizeManagedRole(command.roleName());
+        Role role = roleRepository.findByNameActive(roleName)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
+
+        User user = new User(
+                UUID.randomUUID(),
+                command.username(),
+                passwordEncoder.encode(command.password()),
+                command.phoneNumber(),
+                command.email(),
+                UserStatus.ACTIVE,
+                false,
+                Set.of(role),
+                now,
+                now,
+                null
+        );
+
+        User savedUser = create(user);
+        profileService.create(new Profile(
+                UUID.randomUUID(),
+                savedUser.getId(),
+                command.lastName(),
+                command.firstName(),
+                command.avatarUrl(),
+                command.gender(),
+                command.dateOfBirth(),
+                now,
+                now,
+                null
+        ));
+
+        return savedUser;
     }
 
     @Override
@@ -102,7 +181,8 @@ public class UserService implements IUserService {
             throw new ApplicationException(ApplicationErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
 
-        if ( !currentUser.getPhoneNumber().equals(phoneNumber)
+        if (!Objects.equals(currentUser.getPhoneNumber(), phoneNumber)
+                && phoneNumber != null
                 && userRepository.existsByPhoneNumberIncludingDeleted(phoneNumber)) {
             throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
@@ -114,6 +194,72 @@ public class UserService implements IUserService {
 
         currentUser.updateAccountInfo(username, email, phoneNumber);
         return userRepository.save(currentUser);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public User updateStaffByAdmin(UpdateStaffUserCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+
+        UUID userId = command.userId();
+        User currentUser = userRepository.findByIdIncludingDeleted(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND));
+
+        if (!currentUser.hasRole(STAFF_ROLE)) {
+            throw new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND);
+        }
+
+        String phoneNumber = StringUtils.trimToNull(command.phoneNumber());
+        String email = StringUtils.trimToNull(command.email());
+        Set<Role> roles = resolveManagedRoles(command.roleNames());
+
+        if (!Objects.equals(currentUser.getPhoneNumber(), phoneNumber)
+                && phoneNumber != null
+                && userRepository.existsByPhoneNumberIncludingDeleted(phoneNumber)) {
+            throw new ApplicationException(ApplicationErrorCode.USER_PHONE_ALREADY_EXISTS);
+        }
+
+        if (!currentUser.getEmail().equals(email)
+                && userRepository.existsByEmailIncludingDeleted(email)) {
+            throw new ApplicationException(ApplicationErrorCode.USER_EMAIL_ALREADY_EXISTS);
+        }
+
+        currentUser.updateManagedInfo(email, phoneNumber, roles);
+        return userRepository.save(currentUser);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public User updateLockByAdmin(UpdateUserLockCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+
+        if (command.userId().equals(command.adminId())) {
+            throw new ApplicationException(ApplicationErrorCode.USER_SELF_MANAGEMENT_NOT_ALLOWED);
+        }
+
+        User currentUser = userRepository.findByIdIncludingDeleted(command.userId())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
+
+        currentUser.updateLockStatus(command.locked());
+        return userRepository.save(currentUser);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteByAdmin(DeleteUserCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+
+        if (command.userId().equals(command.adminId())) {
+            throw new ApplicationException(ApplicationErrorCode.USER_SELF_MANAGEMENT_NOT_ALLOWED);
+        }
+
+        delete(command);
     }
 
     @Override
@@ -136,7 +282,7 @@ public class UserService implements IUserService {
             }
         }
 
-        User currentUser = userRepository.findByIdActive(userId)
+        User currentUser = userRepository.findByIdIncludingDeleted(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND));
 
         currentUser.softDelete();
@@ -145,5 +291,41 @@ public class UserService implements IUserService {
         // xoa profile
         profileRepository.findByUserIdActive(userId)
                 .ifPresent(profile -> profileService.delete(profile.getId()));
+    }
+
+    private List<User> getActiveUsersByRole(String roleName) {
+        return userRepository.findAllActive().stream()
+                .filter(user -> user.hasRole(roleName))
+                .toList();
+    }
+
+    private String normalizeManagedRole(String roleName) {
+        String normalizedRoleName = StringUtils.trimToNull(roleName);
+        if (normalizedRoleName == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "roleName");
+        }
+
+        String upperRoleName = normalizedRoleName.toUpperCase(Locale.ROOT);
+        if (!STAFF_ROLE.equals(upperRoleName) && !ADMIN_ROLE.equals(upperRoleName)) {
+            throw new ApplicationException(ApplicationErrorCode.USER_ROLE_NOT_ALLOWED);
+        }
+
+        return upperRoleName;
+    }
+
+    private Set<Role> resolveManagedRoles(Set<String> roleNames) {
+        if (roleNames == null || roleNames.isEmpty()) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "roleNames");
+        }
+
+        Set<Role> roles = new LinkedHashSet<>();
+        for (String roleName : roleNames) {
+            String normalizedRoleName = normalizeManagedRole(roleName);
+            Role role = roleRepository.findByNameActive(normalizedRoleName)
+                    .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ROLE_NOT_FOUND));
+            roles.add(role);
+        }
+
+        return roles;
     }
 }

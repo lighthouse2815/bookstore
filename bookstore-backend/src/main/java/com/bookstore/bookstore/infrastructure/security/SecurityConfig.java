@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/test", "/api/auth/**").permitAll()
+                        .requestMatchers("/api/test", "/api/auth/**", "/api/otp/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/books/**",
                                 "/api/categories/**",

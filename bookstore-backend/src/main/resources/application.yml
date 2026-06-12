@@ -28,3 +28,10 @@ app:
     refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:30}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  otp:
+    expiration-minutes: ${OTP_EXPIRATION_MINUTES:10}
+  resend:
+    base-url: ${RESEND_BASE_URL:https://api.resend.com}
+    api-key: ${RESEND_API_KEY:}
+    from-email: ${RESEND_FROM_EMAIL:}
+    from-name: ${RESEND_FROM_NAME:Bookstore}

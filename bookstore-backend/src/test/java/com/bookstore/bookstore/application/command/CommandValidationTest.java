@@ -61,15 +61,8 @@ class CommandValidationTest {
     void registerCommand_rejectsNullPassword() {
         ApplicationException exception = assertThrows(ApplicationException.class, () ->
                 new RegisterCommand(
-                        "username",
-                        null,
-                        "0123456789",
                         "test@gmail.com",
-                        "first",
-                        "last",
-                        null,
-                        Gender.MALE,
-                        LocalDate.now()
+                        null
                 )
         );
 
@@ -80,15 +73,8 @@ class CommandValidationTest {
     void registerCommand_allowsWhitespacePassword() {
         assertDoesNotThrow(() ->
                 new RegisterCommand(
-                        "username",
-                        "   ",
-                        "0123456789",
                         "test@gmail.com",
-                        "first",
-                        "last",
-                        null,
-                        Gender.MALE,
-                        LocalDate.now()
+                        "   "
                 )
         );
     }
@@ -109,5 +95,23 @@ class CommandValidationTest {
         );
 
         assertEquals(ApplicationErrorCode.INVALID_AUTH_PASSWORD, exception.getErrorCode());
+    }
+
+    @Test
+    void verifyOtpCommand_rejectsNullEmail() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new VerifyOtpCommand(null, "123456")
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+    }
+
+    @Test
+    void verifyOtpCommand_rejectsNullOtpCode() {
+        ApplicationException exception = assertThrows(ApplicationException.class, () ->
+                new VerifyOtpCommand("test@gmail.com", null)
+        );
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
     }
 }

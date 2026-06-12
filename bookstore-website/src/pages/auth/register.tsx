@@ -12,46 +12,44 @@ import { toast } from 'sonner'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { RegisterTermsDialog } from '@/components/common/register-terms-dialog'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
-import type { Gender, RegisterRequest } from '@/types/auth'
-import { getGenderLabel } from '@/utils/i18n'
+import type { RegisterRequest } from '@/types/auth'
+import { getRegisterTermsCopy } from '@/utils/register-terms'
 
 type RegisterFormState = RegisterRequest & {
   confirmPassword: string
 }
 
 const initialFormData: RegisterFormState = {
-  username: '',
+  email: '',
   password: '',
   confirmPassword: '',
-  phoneNumber: '',
-  email: '',
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  gender: 'MALE',
-  dateOfBirth: '',
 }
 
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { register } = useAuth()
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState(initialFormData)
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
+  const [hasReadTermsDialog, setHasReadTermsDialog] = useState(false)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
+  const [shouldAcceptTermsOnClose, setShouldAcceptTermsOnClose] =
+    useState(false)
 
   const brand = t('common.brand')
   const brandPrefix = brand.endsWith('Vui') ? brand.slice(0, -3) : brand
+  const termsCopy = getRegisterTermsCopy(language)
 
-  function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) {
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
     setFormData((previousValue) => ({ ...previousValue, [name]: value }))
 
@@ -91,22 +89,23 @@ export default function RegisterPage() {
       return
     }
 
+    if (!hasAcceptedTerms) {
+      toast.error(termsCopy.requiredMessage)
+      return
+    }
+
     setIsLoading(true)
 
     try {
+      const email = formData.email.trim()
+
       await register({
-        username: formData.username,
+        email,
         password: formData.password,
-        phoneNumber: formData.phoneNumber,
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        avatarUrl: formData.avatarUrl || null,
-        gender: formData.gender as Gender,
-        dateOfBirth: formData.dateOfBirth,
       })
       toast.success(t('auth.register.success'))
-      navigate('/')
+      setHasAcceptedTerms(false)
+      navigate(`/login?username=${encodeURIComponent(email)}`)
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -118,11 +117,50 @@ export default function RegisterPage() {
     }
   }
 
+  function openTermsDialog(acceptTermsOnClose: boolean) {
+    setShouldAcceptTermsOnClose(acceptTermsOnClose)
+    setIsTermsOpen(true)
+  }
+
+  function handleTermsCheckboxChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    if (event.currentTarget.checked) {
+      if (hasReadTermsDialog) {
+        setHasAcceptedTerms(true)
+        return
+      }
+
+      setHasAcceptedTerms(false)
+      openTermsDialog(true)
+      return
+    }
+
+    setShouldAcceptTermsOnClose(false)
+    setHasAcceptedTerms(false)
+  }
+
+  function handleTermsLinkClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    openTermsDialog(false)
+  }
+
+  function handleTermsDialogClose() {
+    setIsTermsOpen(false)
+    setHasReadTermsDialog(true)
+    setShouldAcceptTermsOnClose(false)
+
+    if (shouldAcceptTermsOnClose) {
+      setHasAcceptedTerms(true)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-3xl">
+        <div className="w-full max-w-xl">
           <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
 
           <div className="mb-8 flex flex-col items-center">
@@ -142,68 +180,8 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-5 rounded-2xl border border-border bg-card p-6 md:grid-cols-2">
+            <div className="space-y-5 rounded-2xl border border-border bg-card p-6">
               <div className="space-y-2">
-                <Label htmlFor="username" className="font-semibold">
-                  {t('auth.login.username')}
-                </Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber" className="font-semibold">
-                  {t('auth.register.phoneNumber')}
-                </Label>
-                <Input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="font-semibold">
-                  {t('auth.register.firstName')}
-                </Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="font-semibold">
-                  {t('auth.register.lastName')}
-                </Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="email" className="font-semibold">
                   {t('common.email')}
                 </Label>
@@ -213,55 +191,8 @@ export default function RegisterPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  autoComplete="email"
                   required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gender" className="font-semibold">
-                  {t('auth.register.gender')}
-                </Label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="h-11 w-full rounded-lg border border-primary/30 bg-background px-3 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
-                >
-                  {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
-                    <option key={gender} value={gender}>
-                      {getGenderLabel(gender, t)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dateOfBirth" className="font-semibold">
-                  {t('auth.register.dateOfBirth')}
-                </Label>
-                <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                  className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="avatarUrl" className="font-semibold">
-                  {t('auth.register.avatarUrl')}
-                </Label>
-                <Input
-                  id="avatarUrl"
-                  name="avatarUrl"
-                  type="url"
-                  value={formData.avatarUrl ?? ''}
-                  onChange={handleChange}
                   className="h-11 rounded-lg border-primary/30 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -278,6 +209,7 @@ export default function RegisterPage() {
                     placeholder={t('auth.register.passwordPlaceholder')}
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete="new-password"
                     required
                     className="h-11 rounded-lg border-primary/30 pr-12 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
                   />
@@ -330,6 +262,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    autoComplete="new-password"
                     required
                     className="h-11 rounded-lg border-primary/30 pr-12 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
                   />
@@ -369,6 +302,27 @@ export default function RegisterPage() {
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className="mt-2 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+                <label className="flex items-start gap-3 text-sm leading-6 text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={hasAcceptedTerms}
+                    onChange={handleTermsCheckboxChange}
+                    className="mt-1 h-4 w-4 rounded border-border accent-primary"
+                  />
+                  <span>
+                    {termsCopy.agreementLabel}{' '}
+                    <button
+                      type="button"
+                      onClick={handleTermsLinkClick}
+                      className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:decoration-primary"
+                    >
+                      {termsCopy.linkLabel}
+                    </button>
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -411,6 +365,10 @@ export default function RegisterPage() {
         </div>
       </main>
       <Footer />
+      <RegisterTermsDialog
+        open={isTermsOpen}
+        onClose={handleTermsDialogClose}
+      />
     </div>
   )
 }

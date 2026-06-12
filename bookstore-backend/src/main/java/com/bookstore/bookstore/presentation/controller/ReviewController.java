@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,6 +70,7 @@ public class ReviewController {
         return ApiResponse.success("Deleted", null);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/reviews")
     public ApiResponse<List<ReviewResponse>> getAll() {
         return ApiResponse.success(reviewService.getAll().stream()
@@ -76,6 +78,7 @@ public class ReviewController {
                 .toList());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/reviews/{id}")
     public ApiResponse<Void> adminDelete(@PathVariable UUID id) {
         reviewService.adminDelete(id);

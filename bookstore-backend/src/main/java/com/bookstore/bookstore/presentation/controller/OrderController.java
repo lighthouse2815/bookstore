@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,6 +57,7 @@ public class OrderController {
         return ApiResponse.success(orderWebMapper.toResponse(orderService.getMyOrder(userId, id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/orders")
     public ApiResponse<List<OrderResponse>> getAll() {
         return ApiResponse.success(orderService.getAll().stream()
@@ -63,11 +65,13 @@ public class OrderController {
                 .toList());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/orders/{id}")
     public ApiResponse<OrderResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(orderWebMapper.toResponse(orderService.getById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/orders/{id}/status")
     public ApiResponse<OrderResponse> updateStatus(
             @PathVariable UUID id,

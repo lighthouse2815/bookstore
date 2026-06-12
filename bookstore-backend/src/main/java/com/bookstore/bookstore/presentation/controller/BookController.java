@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,6 +48,7 @@ public class BookController {
         return ApiResponse.success(bookWebMapper.toBookResponse(bookService.getById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/books")
     public ResponseEntity<ApiResponse<BookResponse>> create(@Valid @RequestBody CreateBookRequest request) {
         var result = bookService.create(bookWebMapper.toCreateCommand(request));
@@ -54,6 +56,7 @@ public class BookController {
                 .body(ApiResponse.success(bookWebMapper.toBookResponse(result)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/books/{id}")
     public ApiResponse<BookResponse> update(
             @PathVariable UUID id,
@@ -63,6 +66,7 @@ public class BookController {
         return ApiResponse.success(bookWebMapper.toBookResponse(result));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/books/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         bookService.delete(bookWebMapper.toDeleteCommand(id));

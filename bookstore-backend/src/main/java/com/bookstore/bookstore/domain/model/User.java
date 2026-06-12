@@ -54,6 +54,7 @@ public class User {
     public void activate() {
         UserRule.requireCanActivate(status, locked, deletedAt);
         setStatus(UserStatus.ACTIVE);
+        setUpdatedAt(Instant.now());
     }
 
     public void updateAccountInfo(String username, String email, String phoneNumber) {
@@ -72,6 +73,33 @@ public class User {
         setUsername(username);
         setEmail(email);
         setPhoneNumber(phoneNumber);
+        setUpdatedAt(Instant.now());
+    }
+
+    public void updateManagedInfo(
+            String email,
+            String phoneNumber,
+            Set<Role> roles
+    ) {
+        UserRule.requireCanUpdateManagedInfo(
+                deletedAt,
+                this.email,
+                this.phoneNumber,
+                this.roles,
+                email,
+                phoneNumber,
+                roles
+        );
+        setEmail(email);
+        setPhoneNumber(phoneNumber);
+        setRoles(roles);
+        setUpdatedAt(Instant.now());
+    }
+
+    public void updateLockStatus(boolean locked) {
+        UserRule.requireCanUpdateLockStatus(deletedAt);
+        UserRule.requireLockStatusChanged(this.locked, locked);
+        setLocked(locked);
         setUpdatedAt(Instant.now());
     }
 
@@ -107,7 +135,7 @@ public class User {
     }
 
     private void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = Guard.phoneNumber(phoneNumber, DomainErrorCode.INVALID_USER_PHONE_NUMBER, "phoneNumber");
+        this.phoneNumber = Guard.phoneNumberOrNull(phoneNumber, DomainErrorCode.INVALID_USER_PHONE_NUMBER, "phoneNumber");
     }
 
     private void setEmail(String email) {

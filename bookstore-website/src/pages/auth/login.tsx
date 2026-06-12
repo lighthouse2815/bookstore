@@ -1,51 +1,69 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BookOpen, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { AuthFlipCard } from '@/components/common/auth-flip-card'
+import { RegisterTermsDialog } from '@/components/common/register-terms-dialog'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
-import type { Gender, RegisterRequest } from '@/types/auth'
-import { getGenderLabel } from '@/utils/i18n'
+import type { RegisterRequest } from '@/types/auth'
+import { getRegisterTermsCopy } from '@/utils/register-terms'
+
+const initialRegisterFormData: RegisterRequest & { confirmPassword: string } = {
+  email: '',
+  password: '',
+  confirmPassword: '',
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, register } = useAuth()
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [isLoginLoading, setIsLoginLoading] = useState(false)
   const [isRegisterLoading, setIsRegisterLoading] = useState(false)
+  const [isRegisterFace, setIsRegisterFace] = useState(false)
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
+  const [hasReadTermsDialog, setHasReadTermsDialog] = useState(false)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
+  const [shouldAcceptTermsOnClose, setShouldAcceptTermsOnClose] =
+    useState(false)
   const [loginFormData, setLoginFormData] = useState({
     username: '',
     password: '',
   })
   const [registerFormData, setRegisterFormData] = useState<
     RegisterRequest & { confirmPassword: string }
-  >({
-    username: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
-    email: '',
-    firstName: '',
-    lastName: '',
-    avatarUrl: '',
-    gender: 'MALE',
-    dateOfBirth: '',
-  })
+  >(initialRegisterFormData)
 
   const brand = t('common.brand')
   const brandPrefix = brand.endsWith('Vui') ? brand.slice(0, -3) : brand
+  const termsCopy = getRegisterTermsCopy(language)
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const username = searchParams.get('username')?.trim()
+
+    if (!username) {
+      return
+    }
+
+    setLoginFormData((currentFormData) => ({
+      ...currentFormData,
+      username,
+      password: '',
+    }))
+    setIsRegisterFace(false)
+  }, [location.search])
 
   function handleLoginChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
     setLoginFormData((previousValue) => ({ ...previousValue, [name]: value }))
   }
 
-  function handleRegisterChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) {
+  function handleRegisterChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
     setRegisterFormData((previousValue) => ({
       ...previousValue,
@@ -83,22 +101,29 @@ export default function LoginPage() {
       return
     }
 
+    if (!hasAcceptedTerms) {
+      toast.error(termsCopy.requiredMessage)
+      return
+    }
+
     setIsRegisterLoading(true)
 
     try {
+      const email = registerFormData.email.trim()
+
       await register({
-        username: registerFormData.username,
+        email,
         password: registerFormData.password,
-        phoneNumber: registerFormData.phoneNumber,
-        email: registerFormData.email,
-        firstName: registerFormData.firstName,
-        lastName: registerFormData.lastName,
-        avatarUrl: registerFormData.avatarUrl || null,
-        gender: registerFormData.gender as Gender,
-        dateOfBirth: registerFormData.dateOfBirth,
       })
       toast.success(t('auth.register.success'))
-      navigate('/')
+      setLoginFormData({
+        username: email,
+        password: '',
+      })
+      setRegisterFormData(initialRegisterFormData)
+      setHasAcceptedTerms(false)
+      setIsRegisterFace(false)
+      navigate(`/login?username=${encodeURIComponent(email)}`, { replace: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -110,11 +135,50 @@ export default function LoginPage() {
     }
   }
 
+  function openTermsDialog(acceptTermsOnClose: boolean) {
+    setShouldAcceptTermsOnClose(acceptTermsOnClose)
+    setIsTermsOpen(true)
+  }
+
+  function handleTermsCheckboxChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    if (event.currentTarget.checked) {
+      if (hasReadTermsDialog) {
+        setHasAcceptedTerms(true)
+        return
+      }
+
+      setHasAcceptedTerms(false)
+      openTermsDialog(true)
+      return
+    }
+
+    setShouldAcceptTermsOnClose(false)
+    setHasAcceptedTerms(false)
+  }
+
+  function handleTermsLinkClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    openTermsDialog(false)
+  }
+
+  function handleTermsDialogClose() {
+    setIsTermsOpen(false)
+    setHasReadTermsDialog(true)
+    setShouldAcceptTermsOnClose(false)
+
+    if (shouldAcceptTermsOnClose) {
+      setHasAcceptedTerms(true)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-lg">
           <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
 
           <div className="mb-8 flex flex-col items-center">
@@ -134,6 +198,8 @@ export default function LoginPage() {
           </div>
 
           <AuthFlipCard
+            checked={isRegisterFace}
+            onCheckedChange={setIsRegisterFace}
             frontTitle={t('auth.login.cardTitle')}
             backTitle={t('auth.register.title')}
             frontContent={
@@ -172,101 +238,55 @@ export default function LoginPage() {
               </form>
             }
             backContent={
-              <form
-                onSubmit={handleRegisterSubmit}
-                className="face_content face_content--wide"
-              >
-                <div className="field_grid">
+              <form onSubmit={handleRegisterSubmit} className="face_content">
+                <input
+                  name="email"
+                  placeholder={t('common.email')}
+                  className="input"
+                  type="email"
+                  value={registerFormData.email}
+                  onChange={handleRegisterChange}
+                  autoComplete="email"
+                  required
+                />
+                <input
+                  name="password"
+                  placeholder={t('auth.register.password')}
+                  className="input"
+                  type="password"
+                  value={registerFormData.password}
+                  onChange={handleRegisterChange}
+                  autoComplete="new-password"
+                  required
+                />
+                <input
+                  name="confirmPassword"
+                  placeholder={t('auth.register.confirmPassword')}
+                  className="input"
+                  type="password"
+                  value={registerFormData.confirmPassword}
+                  onChange={handleRegisterChange}
+                  autoComplete="new-password"
+                  required
+                />
+                <label className="flex items-start gap-3 rounded-2xl border border-white/12 bg-white/8 px-3 py-3 text-left text-sm leading-6 text-[color:var(--auth-text)]">
                   <input
-                    name="firstName"
-                    placeholder={t('auth.register.firstName')}
-                    className="input"
-                    type="text"
-                    value={registerFormData.firstName}
-                    onChange={handleRegisterChange}
-                    required
+                    type="checkbox"
+                    checked={hasAcceptedTerms}
+                    onChange={handleTermsCheckboxChange}
+                    className="mt-1 h-4 w-4 rounded accent-primary"
                   />
-                  <input
-                    name="lastName"
-                    placeholder={t('auth.register.lastName')}
-                    className="input"
-                    type="text"
-                    value={registerFormData.lastName}
-                    onChange={handleRegisterChange}
-                    required
-                  />
-                  <input
-                    name="username"
-                    placeholder={t('auth.login.username')}
-                    className="input"
-                    type="text"
-                    value={registerFormData.username}
-                    onChange={handleRegisterChange}
-                    autoComplete="username"
-                    required
-                  />
-                  <input
-                    name="phoneNumber"
-                    placeholder={t('auth.register.phoneNumber')}
-                    className="input"
-                    type="tel"
-                    value={registerFormData.phoneNumber}
-                    onChange={handleRegisterChange}
-                    required
-                  />
-                  <input
-                    name="email"
-                    placeholder={t('common.email')}
-                    className="input field_full"
-                    type="email"
-                    value={registerFormData.email}
-                    onChange={handleRegisterChange}
-                    autoComplete="email"
-                    required
-                  />
-                  <select
-                    name="gender"
-                    className="input"
-                    value={registerFormData.gender}
-                    onChange={handleRegisterChange}
-                    required
-                  >
-                    {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
-                      <option key={gender} value={gender}>
-                        {getGenderLabel(gender, t)}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    name="dateOfBirth"
-                    className="input"
-                    type="date"
-                    value={registerFormData.dateOfBirth}
-                    onChange={handleRegisterChange}
-                    required
-                  />
-                  <input
-                    name="password"
-                    placeholder={t('auth.register.password')}
-                    className="input"
-                    type="password"
-                    value={registerFormData.password}
-                    onChange={handleRegisterChange}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <input
-                    name="confirmPassword"
-                    placeholder={t('auth.register.confirmPassword')}
-                    className="input"
-                    type="password"
-                    value={registerFormData.confirmPassword}
-                    onChange={handleRegisterChange}
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-
+                  <span>
+                    {termsCopy.agreementLabel}{' '}
+                    <button
+                      type="button"
+                      onClick={handleTermsLinkClick}
+                      className="font-semibold text-[color:var(--auth-accent)] underline decoration-current/40 underline-offset-4"
+                    >
+                      {termsCopy.linkLabel}
+                    </button>
+                  </span>
+                </label>
                 <button
                   type="submit"
                   className="btn"
@@ -317,6 +337,10 @@ export default function LoginPage() {
         </div>
       </main>
       <Footer />
+      <RegisterTermsDialog
+        open={isTermsOpen}
+        onClose={handleTermsDialogClose}
+      />
     </div>
   )
 }

@@ -63,6 +63,12 @@ public class UserRepositoryAdapter implements IUserRepository {
     }
 
     @Override
+    public Optional<User> findByEmailIncludingDeleted(String email) {
+        return userJpaRepository.findByEmailIncludingDeleted(email)
+                .map(userPersistenceMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByIdIncludingDeleted(UUID userId) {
         return userJpaRepository.existsByIdIncludingDeleted(userId);
     }

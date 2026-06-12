@@ -78,7 +78,7 @@ const initialReferences: BookReferenceData = {
 }
 
 const tableGridClassName =
-  'xl:grid xl:grid-cols-[minmax(0,2.8fr)_1.15fr_1fr_1fr_auto]'
+  'xl:grid xl:grid-cols-[minmax(0,2.8fr)_1.15fr_1fr_1fr_28rem]'
 
 export default function AdminBooksPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
@@ -742,7 +742,7 @@ export default function AdminBooksPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-3 xl:min-h-[192px] xl:items-center xl:justify-center xl:border-l xl:border-border/40 xl:px-6">
+                          <div className="flex flex-wrap gap-3 xl:min-h-[192px] xl:flex-nowrap xl:items-center xl:justify-center xl:border-l xl:border-border/40 xl:px-6">
                             <Button
                               type="button"
                               variant="outline"

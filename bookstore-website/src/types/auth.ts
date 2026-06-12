@@ -26,15 +26,8 @@ export type UpdateUserRequest = {
 }
 
 export type RegisterRequest = {
-  username: string
-  password: string
-  phoneNumber: string
   email: string
-  firstName: string
-  lastName: string
-  avatarUrl?: string | null
-  gender: Gender
-  dateOfBirth: string
+  password: string
 }
 
 // Response types

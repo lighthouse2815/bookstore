@@ -11,6 +11,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -66,6 +67,7 @@ public class NotificationController {
         return ApiResponse.success("Deleted", null);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/notifications")
     public ApiResponse<List<NotificationResponse>> getAll() {
         return ApiResponse.success(notificationService.getAll().stream()
@@ -73,11 +75,13 @@ public class NotificationController {
                 .toList());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/notifications/{id}")
     public ApiResponse<NotificationResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(notificationWebMapper.toResponse(notificationService.getById(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/notifications")
     public ResponseEntity<ApiResponse<NotificationResponse>> create(@Valid @RequestBody CreateNotificationRequest request) {
         NotificationResponse response = notificationWebMapper.toResponse(

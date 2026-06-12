@@ -8,13 +8,17 @@ import com.bookstore.bookstore.presentation.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -71,25 +75,48 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ApiResponse.error("Du lieu khong hop le"));
     }
 
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ApiResponse<Void>> handleNotFoundException(Exception exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("API khong ton tai"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception exception) {
+        if (exception instanceof ErrorResponse errorResponse) {
+            HttpStatusCode statusCode = errorResponse.getStatusCode();
+            HttpStatus status = HttpStatus.resolve(statusCode.value());
+            String message = errorResponse.getBody().getDetail();
+
+            if (status != null) {
+                if (message == null || message.isBlank()) {
+                    message = status.getReasonPhrase();
+                }
+
+                return ResponseEntity.status(status).body(ApiResponse.error(message));
+            }
+        }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Internal server error"));
     }
 
     private HttpStatus mapApplicationStatus(ApplicationErrorCode errorCode) {
         return switch (errorCode) {
-            case INVALID_ARGUMENT, INVALID_AUTH_PASSWORD -> HttpStatus.BAD_REQUEST;
+            case INVALID_ARGUMENT, INVALID_AUTH_PASSWORD, USER_ROLE_NOT_ALLOWED, OTP_INVALID, OTP_EXPIRED ->
+                    HttpStatus.BAD_REQUEST;
             case AUTH_USER_NOT_FOUND, AUTH_INVALID_PASSWORD, AUTH_INVALID_REFRESH_TOKEN, AUTH_REFRESH_TOKEN_EXPIRED ->
                     HttpStatus.UNAUTHORIZED;
-            case USER_NOT_FOUND, ROLE_NOT_FOUND, CATEGORY_NOT_FOUND, AUTHOR_NOT_FOUND, PUBLISHER_NOT_FOUND,
+            case USER_NOT_FOUND, STAFF_NOT_FOUND, ROLE_NOT_FOUND, CATEGORY_NOT_FOUND, AUTHOR_NOT_FOUND, PUBLISHER_NOT_FOUND,
                  SUPPLIER_NOT_FOUND,
                  IMPORT_RECEIPT_NOT_FOUND, COUPON_NOT_FOUND,
                  BOOK_NOT_FOUND, CART_NOT_FOUND, ORDER_NOT_FOUND, USER_ADDRESS_NOT_FOUND, NOTIFICATION_NOT_FOUND,
                  REVIEW_NOT_FOUND,
                  PERMISSION_NOT_FOUND, PROFILE_NOT_FOUND, PROFILE_USER_NOT_FOUND ->
                     HttpStatus.NOT_FOUND;
-            case USER_NOT_ADMIN, REVIEW_BOOK_NOT_PURCHASED -> HttpStatus.FORBIDDEN;
+            case USER_NOT_ADMIN, USER_SELF_MANAGEMENT_NOT_ALLOWED, REVIEW_BOOK_NOT_PURCHASED -> HttpStatus.FORBIDDEN;
+            case OTP_EMAIL_NOT_CONFIGURED -> HttpStatus.INTERNAL_SERVER_ERROR;
+            case OTP_EMAIL_SEND_FAILED -> HttpStatus.BAD_GATEWAY;
             case CART_EMPTY -> HttpStatus.CONFLICT;
             case USER_ALREADY_EXISTS, USER_USERNAME_ALREADY_EXISTS, USER_PHONE_ALREADY_EXISTS, USER_EMAIL_ALREADY_EXISTS,
                  ROLE_ALREADY_EXISTS, ROLE_NAME_ALREADY_EXISTS,

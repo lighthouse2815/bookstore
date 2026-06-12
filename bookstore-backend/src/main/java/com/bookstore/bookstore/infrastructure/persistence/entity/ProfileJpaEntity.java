@@ -32,20 +32,20 @@ public class ProfileJpaEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserJpaEntity user;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", length = 100, nullable = true)
     private String lastName;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "first_name", length = 100, nullable = true)
     private String firstName;
 
-    @Column(name = "avatar_url", length = 500)
+    @Column(name = "avatar_url", length = 500, nullable = true)
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, nullable = true)
     private Gender gender;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", nullable = true)
     private LocalDate dateOfBirth;
 
     @Column(nullable = false)

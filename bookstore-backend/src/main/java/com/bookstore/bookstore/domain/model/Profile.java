@@ -57,11 +57,11 @@ public class Profile {
         ProfileRule.requireCanUpdateProfileInfo(deletedAt);
         Instant now = Instant.now();
 
-        setLastName(lastName);
-        setFirstName(firstName);
+        setRequiredLastName(lastName);
+        setRequiredFirstName(firstName);
         setAvatarUrl(avatarUrl);
-        setGender(gender);
-        setDateOfBirth(dateOfBirth);
+        setRequiredGender(gender);
+        setRequiredDateOfBirth(dateOfBirth);
         setUpdatedAt(now);
     }
 
@@ -77,10 +77,18 @@ public class Profile {
     }
 
     private void setLastName(String lastName) {
+        this.lastName = Guard.notBlankOrNull(lastName, DomainErrorCode.INVALID_PROFILE_LAST_NAME, "lastName");
+    }
+
+    private void setRequiredLastName(String lastName) {
         this.lastName = Guard.notBlank(lastName, DomainErrorCode.INVALID_PROFILE_LAST_NAME, "lastName");
     }
 
     private void setFirstName(String firstName) {
+        this.firstName = Guard.notBlankOrNull(firstName, DomainErrorCode.INVALID_PROFILE_FIRST_NAME, "firstName");
+    }
+
+    private void setRequiredFirstName(String firstName) {
         this.firstName = Guard.notBlank(firstName, DomainErrorCode.INVALID_PROFILE_FIRST_NAME, "firstName");
     }
 
@@ -93,11 +101,23 @@ public class Profile {
     }
 
     private void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    private void setRequiredGender(Gender gender) {
         this.gender = Guard.notNull(gender, DomainErrorCode.INVALID_PROFILE_GENDER, "gender");
     }
 
     private void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = Guard.notInFutureOrNull(
+                dateOfBirth,
+                DomainErrorCode.INVALID_PROFILE_DATE_OF_BIRTH,
+                "dateOfBirth"
+        );
+    }
+
+    private void setRequiredDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = Guard.notInFuture(
                 dateOfBirth,
                 DomainErrorCode.INVALID_PROFILE_DATE_OF_BIRTH,
                 "dateOfBirth"
