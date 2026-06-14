@@ -2,10 +2,12 @@ package com.bookstore.bookstore.application.command;
 
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import java.util.UUID;
 
 public record CreateCategoryCommand(
         String name,
-        String description
+        String description,
+        UUID parentId
 ) {
     public CreateCategoryCommand {
         if (name == null || name.isBlank()) {

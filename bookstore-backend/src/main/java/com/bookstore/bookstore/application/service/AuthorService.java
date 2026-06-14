@@ -61,6 +61,7 @@ public class AuthorService implements IAuthorService {
 
         String name = StringUtils.trimToNull(command.name());
         String biography = StringUtils.trimToNull(command.biography());
+        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
 
         // bay gio khong cho trung ten, sau co the doi them 1 trường nhận biết
         if (authorRepository.existsByNameIncludingDeleted(name)) {
@@ -72,6 +73,9 @@ public class AuthorService implements IAuthorService {
                 UUID.randomUUID(),
                 name,
                 biography,
+                avatarUrl,
+                command.birthYear(),
+                command.deathYear(),
                 now,
                 now,
                 null
@@ -92,12 +96,19 @@ public class AuthorService implements IAuthorService {
 
         String name = StringUtils.trimToNull(command.name());
         String biography = StringUtils.trimToNull(command.biography());
+        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
 
         if (!currentAuthor.getName().equals(name) && authorRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.AUTHOR_NAME_ALREADY_EXISTS);
         }
 
-        currentAuthor.updateAuthor(name, biography);
+        currentAuthor.updateAuthor(
+                name,
+                biography,
+                avatarUrl,
+                command.birthYear(),
+                command.deathYear()
+        );
         return authorRepository.save(currentAuthor);
     }
  

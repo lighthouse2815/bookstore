@@ -14,14 +14,24 @@ public final class AuthorRule {
             Instant deletedAt,
             String currentName,
             String currentBiography,
+            String currentAvatarUrl,
+            Integer currentBirthYear,
+            Integer currentDeathYear,
             String newName,
-            String newBiography
+            String newBiography,
+            String newAvatarUrl,
+            Integer newBirthYear,
+            Integer newDeathYear
     ) {
         if (deletedAt != null) {
             throw new DomainException(DomainErrorCode.AUTHOR_ALREADY_DELETED);
         }
 
-        if (Objects.equals(currentName, newName) && Objects.equals(currentBiography, newBiography)) {
+        if (Objects.equals(currentName, newName)
+                && Objects.equals(currentBiography, newBiography)
+                && Objects.equals(currentAvatarUrl, newAvatarUrl)
+                && Objects.equals(currentBirthYear, newBirthYear)
+                && Objects.equals(currentDeathYear, newDeathYear)) {
             throw new DomainException(DomainErrorCode.AUTHOR_DATA_NOT_CHANGED);
         }
     }

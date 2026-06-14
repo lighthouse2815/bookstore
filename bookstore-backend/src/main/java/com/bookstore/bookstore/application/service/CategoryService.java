@@ -11,6 +11,7 @@ import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,16 +62,20 @@ public class CategoryService implements ICategoryService {
 
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
+        UUID parentId = command.parentId();
 
         if (categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
         }
+
+        requireActiveParentCategory(parentId, null);
 
         Instant now = Instant.now();
         Category category = new Category(
                 UUID.randomUUID(),
                 name,
                 description,
+                parentId,
                 now,
                 now,
                 null
@@ -91,12 +96,14 @@ public class CategoryService implements ICategoryService {
 
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
+        UUID parentId = command.parentId();
 
         if (!currentCategory.getName().equals(name) && categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
         }
 
-        currentCategory.updateCategory(name, description);
+        requireActiveParentCategory(parentId, currentCategory.getId());
+        currentCategory.updateCategory(name, description, parentId);
         return categoryRepository.save(currentCategory);
     }
 
@@ -112,5 +119,16 @@ public class CategoryService implements ICategoryService {
 
         currentCategory.softDelete();
         categoryRepository.save(currentCategory);
+    }
+
+    private void requireActiveParentCategory(UUID parentId, UUID categoryId) {
+        if (parentId == null) {
+            return;
+        }
+        if (Objects.equals(parentId, categoryId)) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "parentId");
+        }
+        categoryRepository.findByIdActive(parentId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
     }
 }

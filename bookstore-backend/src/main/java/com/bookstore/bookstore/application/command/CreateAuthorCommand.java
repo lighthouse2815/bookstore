@@ -5,7 +5,10 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 
 public record CreateAuthorCommand(
         String name,
-        String biography
+        String biography,
+        String avatarUrl,
+        Integer birthYear,
+        Integer deathYear
 ) {
     public CreateAuthorCommand {
         if (name == null || name.isBlank()) {

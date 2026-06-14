@@ -44,6 +44,7 @@ export function GoogleAuthButton({
       return
     }
 
+    const resolvedClientId = clientId
     let isMounted = true
 
     async function initializeGoogleButton() {
@@ -78,7 +79,7 @@ export function GoogleAuthButton({
 
             void onCredentialRef.current(credential)
           },
-          client_id: clientId,
+          client_id: resolvedClientId,
         })
 
         googleId.renderButton(container, {

@@ -14,6 +14,7 @@ export type PaymentStatus = 'UNPAID' | 'PAID' | 'FAILED' | 'REFUNDED'
 export type CheckoutRequest = {
   addressId: string
   couponCode?: string | null
+  bookIds?: string[] | null
 }
 
 export type UpdateOrderStatusRequest = {

@@ -1,14 +1,15 @@
 package com.bookstore.bookstore.application.port.in;
 
-import com.bookstore.bookstore.application.command.CheckoutCommand;
+import com.bookstore.bookstore.application.command.CreateOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
+import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
 import java.util.List;
 import java.util.UUID;
 
 public interface IOrderService {
 
-    OrderResult checkout(CheckoutCommand command);
+    CreateOrderResult checkout(CreateOrderCommand command);
 
     List<OrderResult> getMyOrders(UUID userId);
 

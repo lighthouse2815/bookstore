@@ -40,3 +40,7 @@ app:
     api-key: ${RESEND_API_KEY:}
     from-email: ${RESEND_FROM_EMAIL:}
     from-name: ${RESEND_FROM_NAME:Bookstore}
+  sepay:
+    merchant-id: ${SEPAY_MERCHANT_ID:}
+    secret-key: ${SEPAY_SECRET_KEY:}
+    webhook-api-key: ${SEPAY_WEBHOOK_API_KEY:}

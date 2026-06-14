@@ -1,8 +1,8 @@
 package com.bookstore.bookstore.domain.enums;
 
 public enum PaymentStatus {
-    UNPAID,
+    PENDING,
     PAID,
     FAILED,
-    REFUNDED
+    CANCELLED
 }

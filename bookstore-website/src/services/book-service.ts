@@ -4,8 +4,20 @@ import type {
   AuthorResponse,
   Book,
   BookCatalog,
+  BookDetail,
+  BookDetailResponse,
+  BookImage,
+  BookImageResponse,
+  BookPageDetail,
+  BookPageDetailResponse,
+  BookPromotion,
+  BookPromotionResponse,
+  BookRatingSummary,
+  BookRatingSummaryResponse,
   BookReferenceData,
   BookResponse,
+  BookReview,
+  BookReviewResponse,
   CategoryResponse,
   PublisherResponse,
   SearchBooksRequest,
@@ -39,6 +51,27 @@ export async function getBookById(id: string): Promise<Book> {
   const referenceMaps = buildBookReferenceMaps(referenceData)
 
   return mapBookResponseToBook(bookResponse, referenceMaps)
+}
+
+export async function getBookPageDetail(id: string): Promise<BookPageDetail> {
+  const [pageDetailResponse, referenceData] = await Promise.all([
+    getBookPageDetailResponseById(id),
+    getBookReferenceData(),
+  ])
+  const referenceMaps = buildBookReferenceMaps(referenceData)
+
+  return mapBookPageDetailResponseToBookPageDetail(
+    pageDetailResponse,
+    referenceMaps,
+  )
+}
+
+export async function getBookReviews(id: string): Promise<BookReview[]> {
+  const response = await api.get<ApiResponse<BookReviewResponse[]>>(
+    `/books/${id}/reviews`,
+  )
+
+  return unwrapResponse(response).map(mapBookReviewResponseToBookReview)
 }
 
 export async function getBookReferences(): Promise<BookReferenceData> {
@@ -85,6 +118,15 @@ async function getBookResponseById(id: string): Promise<BookResponse> {
   return unwrapResponse(response)
 }
 
+async function getBookPageDetailResponseById(
+  id: string,
+): Promise<BookPageDetailResponse> {
+  const response = await api.get<ApiResponse<BookPageDetailResponse>>(
+    `/books/${id}/page-detail`,
+  )
+  return unwrapResponse(response)
+}
+
 async function getCategoryResponses(): Promise<CategoryResponse[]> {
   const response = await api.get<ApiResponse<CategoryResponse[]>>('/categories')
   return unwrapResponse(response)
@@ -121,13 +163,27 @@ function mapBookResponseToBook(
   bookResponse: BookResponse,
   referenceMaps: BookReferenceMaps,
 ): Book {
+  const images = mapBookImageResponses(bookResponse.images ?? [])
+  const primaryImage =
+    images.find((image) => image.primaryImage)?.imageUrl ??
+    images[0]?.imageUrl ??
+    resolveBookImageUrl(bookResponse.imageUrl)
+
   return {
     id: bookResponse.id,
     title: bookResponse.title,
+    isbn: bookResponse.isbn,
     author: referenceMaps.authorMap.get(bookResponse.authorId) ?? '',
     category: referenceMaps.categoryMap.get(bookResponse.categoryId) ?? '',
     price: bookResponse.price,
-    cover: resolveBookImageUrl(bookResponse.imageUrl),
+    oldPrice: undefined,
+    rating: normalizeRatingValue(bookResponse.averageRating) ?? undefined,
+    reviews: bookResponse.reviewCount,
+    soldCount: bookResponse.soldCount,
+    starBreakdown: normalizeStarBreakdown(bookResponse.starBreakdown),
+    cover: primaryImage,
+    images,
+    detail: mapBookDetailResponseToBookDetail(bookResponse.detail),
     description: bookResponse.description,
     stockQuantity: bookResponse.stockQuantity,
     publisher: referenceMaps.publisherMap.get(bookResponse.publisherId) ?? '',
@@ -136,6 +192,158 @@ function mapBookResponseToBook(
     publisherId: bookResponse.publisherId,
     createdAt: bookResponse.createdAt,
     updatedAt: bookResponse.updatedAt,
+  }
+}
+
+function mapBookPageDetailResponseToBookPageDetail(
+  pageDetailResponse: BookPageDetailResponse,
+  referenceMaps: BookReferenceMaps,
+): BookPageDetail {
+  const images = mapBookImageResponses(pageDetailResponse.book.images ?? [])
+  const primaryImage =
+    images.find((image) => image.primaryImage)?.imageUrl ??
+    images[0]?.imageUrl ??
+    getBookCoverUrl()
+  const categoryTrail = pageDetailResponse.categoryTrail ?? []
+  const leafCategory = categoryTrail[categoryTrail.length - 1]
+  const ratingSummary = mapBookRatingSummaryResponseToBookRatingSummary(
+    pageDetailResponse.ratingSummary,
+  )
+
+  return {
+    book: {
+      id: pageDetailResponse.book.id,
+      title: pageDetailResponse.book.title,
+      isbn: pageDetailResponse.book.isbn,
+      author: pageDetailResponse.author.name,
+      category: leafCategory?.name ?? '',
+      price: pageDetailResponse.book.price,
+      oldPrice: pageDetailResponse.book.originalPrice ?? undefined,
+      rating:
+        normalizeRatingValue(pageDetailResponse.book.averageRating) ??
+        ratingSummary.averageRating,
+      reviews: pageDetailResponse.book.reviewCount ?? ratingSummary.reviewCount,
+      soldCount: pageDetailResponse.book.soldCount,
+      starBreakdown: ratingSummary.starBreakdown,
+      cover: primaryImage,
+      images,
+      detail: mapBookDetailResponseToBookDetail(pageDetailResponse.book.detail),
+      description: pageDetailResponse.book.description,
+      stockQuantity: pageDetailResponse.book.stockQuantity,
+      publisher: pageDetailResponse.publisher.name,
+      categoryId: leafCategory?.id ?? '',
+      authorId: pageDetailResponse.author.id,
+      publisherId: pageDetailResponse.publisher.id,
+      createdAt: '',
+      updatedAt: '',
+    },
+    author: {
+      ...pageDetailResponse.author,
+      avatarUrl: pageDetailResponse.author.avatarUrl
+        ? resolveBookImageUrl(pageDetailResponse.author.avatarUrl)
+        : null,
+    },
+    publisher: {
+      id: pageDetailResponse.publisher.id,
+      name: pageDetailResponse.publisher.name,
+    },
+    categoryTrail: categoryTrail.map((category) => ({
+      id: category.id,
+      name: category.name,
+    })),
+    ratingSummary,
+    promotions: pageDetailResponse.promotions.map(
+      mapBookPromotionResponseToBookPromotion,
+    ),
+    relatedBooks: pageDetailResponse.relatedBooks.map((relatedBook) =>
+      mapBookResponseToBook(relatedBook, referenceMaps),
+    ),
+  }
+}
+
+function mapBookImageResponses(imageResponses: BookImageResponse[]): BookImage[] {
+  return imageResponses.map((imageResponse) => ({
+    id: imageResponse.id,
+    bookId: imageResponse.bookId,
+    imageUrl: resolveBookImageUrl(imageResponse.imageUrl),
+    primaryImage: imageResponse.primaryImage,
+    sortOrder: imageResponse.sortOrder,
+    altText: imageResponse.altText,
+    createdAt: imageResponse.createdAt,
+  }))
+}
+
+function mapBookDetailResponseToBookDetail(
+  detailResponse: BookDetailResponse | null,
+): BookDetail | null {
+  if (!detailResponse) {
+    return null
+  }
+
+  return {
+    id: detailResponse.id,
+    bookId: detailResponse.bookId,
+    pageCount: detailResponse.pageCount,
+    publicationYear: detailResponse.publicationYear,
+    language: detailResponse.language,
+    coverType: detailResponse.coverType,
+    dimensions: detailResponse.dimensions,
+    weight: detailResponse.weight,
+    translator: detailResponse.translator,
+    edition: detailResponse.edition,
+  }
+}
+
+function mapBookRatingSummaryResponseToBookRatingSummary(
+  ratingSummaryResponse: BookRatingSummaryResponse,
+): BookRatingSummary {
+  return {
+    averageRating: normalizeRatingValue(ratingSummaryResponse.averageRating) ?? 0,
+    reviewCount: ratingSummaryResponse.reviewCount ?? 0,
+    starBreakdown: normalizeStarBreakdown(ratingSummaryResponse.starBreakdown),
+  }
+}
+
+function mapBookPromotionResponseToBookPromotion(
+  promotionResponse: BookPromotionResponse,
+): BookPromotion {
+  return {
+    id: promotionResponse.id,
+    code: promotionResponse.code,
+    description: promotionResponse.description,
+    discountType: promotionResponse.discountType,
+    discountValue: promotionResponse.discountValue,
+    minOrderAmount: promotionResponse.minOrderAmount,
+    maxDiscountAmount: promotionResponse.maxDiscountAmount,
+    maxUsageCount: promotionResponse.maxUsageCount,
+    usedCount: promotionResponse.usedCount,
+    startsAt: promotionResponse.startsAt,
+    expiresAt: promotionResponse.expiresAt,
+    active: promotionResponse.active,
+    createdAt: promotionResponse.createdAt,
+    updatedAt: promotionResponse.updatedAt,
+  }
+}
+
+function mapBookReviewResponseToBookReview(
+  reviewResponse: BookReviewResponse,
+): BookReview {
+  return {
+    reviewId: reviewResponse.reviewId,
+    userId: reviewResponse.userId,
+    bookId: reviewResponse.bookId,
+    orderItemId: reviewResponse.orderItemId,
+    reviewerName: reviewResponse.reviewerName,
+    reviewerAvatarUrl: reviewResponse.reviewerAvatarUrl
+      ? resolveBookImageUrl(reviewResponse.reviewerAvatarUrl)
+      : null,
+    verifiedPurchase: reviewResponse.verifiedPurchase,
+    reviewImages: (reviewResponse.reviewImages ?? []).map(resolveBookImageUrl),
+    helpfulCount: reviewResponse.helpfulCount,
+    rating: reviewResponse.rating,
+    comment: reviewResponse.comment,
+    createdAt: reviewResponse.createdAt,
+    updatedAt: reviewResponse.updatedAt,
   }
 }
 
@@ -168,7 +376,23 @@ function getCategoryNames(categories: CategoryResponse[]) {
     )
 }
 
-function resolveBookImageUrl(imageUrl: string | null) {
+function normalizeRatingValue(rating: number | null | undefined) {
+  return typeof rating === 'number' ? rating : null
+}
+
+function normalizeStarBreakdown(
+  starBreakdown: Record<number, number> | null | undefined,
+) {
+  const normalizedStarBreakdown: Record<number, number> = {}
+
+  for (const [rating, count] of Object.entries(starBreakdown ?? {})) {
+    normalizedStarBreakdown[Number(rating)] = count
+  }
+
+  return normalizedStarBreakdown
+}
+
+function resolveBookImageUrl(imageUrl?: string | null) {
   const normalizedImageUrl = imageUrl?.trim() ?? ''
 
   if (

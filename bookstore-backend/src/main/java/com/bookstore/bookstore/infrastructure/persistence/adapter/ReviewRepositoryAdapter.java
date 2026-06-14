@@ -5,9 +5,12 @@ import com.bookstore.bookstore.domain.model.Review;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ReviewJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.ReviewPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.ReviewJpaRepository;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +26,19 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
         return reviewJpaRepository.findAllByBookIdActive(bookId).stream()
                 .map(reviewPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<UUID, List<Integer>> findRatingsByBookIds(Collection<UUID> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reviewJpaRepository.findRatingsByBookIds(bookIds).stream()
+                .collect(Collectors.groupingBy(
+                        row -> (UUID) row[0],
+                        Collectors.mapping(row -> (Integer) row[1], Collectors.toList())
+                ));
     }
 
     @Override

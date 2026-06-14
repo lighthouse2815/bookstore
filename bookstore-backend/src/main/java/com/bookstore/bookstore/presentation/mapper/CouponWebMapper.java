@@ -17,6 +17,7 @@ public class CouponWebMapper {
         return new CreateCouponCommand(
                 request.code(),
                 request.description(),
+                request.couponType(),
                 request.discountType(),
                 request.discountValue(),
                 request.minOrderAmount(),
@@ -33,6 +34,7 @@ public class CouponWebMapper {
                 couponId,
                 request.code(),
                 request.description(),
+                request.couponType(),
                 request.discountType(),
                 request.discountValue(),
                 request.minOrderAmount(),
@@ -53,6 +55,7 @@ public class CouponWebMapper {
                 coupon.getId(),
                 coupon.getCode(),
                 coupon.getDescription(),
+                coupon.getCouponType(),
                 coupon.getDiscountType(),
                 coupon.getDiscountValue(),
                 coupon.getMinOrderAmount(),

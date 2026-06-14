@@ -18,14 +18,20 @@ import lombok.Getter;
 public class Order {
 
     private UUID id;
+    private String orderCode;
     private UUID userId;
     private List<OrderItem> items = new ArrayList<>();
+    private BigDecimal productTotal;
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
     private BigDecimal shippingFee;
+    private BigDecimal shippingDiscount;
+    private BigDecimal couponDiscount;
     private BigDecimal finalAmount;
-    private UUID couponId;
-    private String couponCode;
+    private UUID bookCouponId;
+    private String bookCouponCode;
+    private UUID shippingCouponId;
+    private String shippingCouponCode;
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
     private OrderStatus status;
@@ -56,15 +62,117 @@ public class Order {
             Instant updatedAt,
             Instant cancelledAt
     ) {
+        this(
+                id,
+                id == null ? null : id.toString(),
+                userId,
+                items,
+                totalAmount,
+                shippingFee,
+                BigDecimal.ZERO,
+                discountAmount,
+                finalAmount,
+                couponId,
+                couponCode,
+                null,
+                null,
+                paymentMethod,
+                paymentStatus,
+                status,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                createdAt,
+                updatedAt,
+                cancelledAt
+        );
+    }
+
+    public Order(
+            UUID id,
+            String orderCode,
+            UUID userId,
+            List<OrderItem> items,
+            BigDecimal productTotal,
+            BigDecimal shippingFee,
+            BigDecimal shippingDiscount,
+            BigDecimal couponDiscount,
+            BigDecimal totalAmount,
+            UUID couponId,
+            String couponCode,
+            PaymentMethod paymentMethod,
+            PaymentStatus paymentStatus,
+            OrderStatus status,
+            String receiverName,
+            String receiverPhone,
+            String receiverAddress,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant cancelledAt
+    ) {
+        this(
+                id,
+                orderCode,
+                userId,
+                items,
+                productTotal,
+                shippingFee,
+                shippingDiscount,
+                couponDiscount,
+                totalAmount,
+                couponId,
+                couponCode,
+                null,
+                null,
+                paymentMethod,
+                paymentStatus,
+                status,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                createdAt,
+                updatedAt,
+                cancelledAt
+        );
+    }
+
+    public Order(
+            UUID id,
+            String orderCode,
+            UUID userId,
+            List<OrderItem> items,
+            BigDecimal productTotal,
+            BigDecimal shippingFee,
+            BigDecimal shippingDiscount,
+            BigDecimal couponDiscount,
+            BigDecimal totalAmount,
+            UUID bookCouponId,
+            String bookCouponCode,
+            UUID shippingCouponId,
+            String shippingCouponCode,
+            PaymentMethod paymentMethod,
+            PaymentStatus paymentStatus,
+            OrderStatus status,
+            String receiverName,
+            String receiverPhone,
+            String receiverAddress,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant cancelledAt
+    ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_ORDER_ID, "id");
+        setOrderCode(orderCode);
         setUserId(userId);
         setItems(items);
-        setTotalAmount(totalAmount);
-        setDiscountAmount(discountAmount);
+        setProductTotal(productTotal);
         setShippingFee(shippingFee);
-        setFinalAmount(finalAmount);
-        setCouponId(couponId);
-        setCouponCode(couponCode);
+        setShippingDiscount(shippingDiscount);
+        setCouponDiscount(couponDiscount);
+        setTotalAmount(totalAmount);
+        setBookCouponId(bookCouponId);
+        setBookCouponCode(bookCouponCode);
+        setShippingCouponId(shippingCouponId);
+        setShippingCouponCode(shippingCouponCode);
         setPaymentMethod(paymentMethod);
         setPaymentStatus(paymentStatus);
         setStatus(status);
@@ -119,8 +227,29 @@ public class Order {
         setUpdatedAt(Instant.now());
     }
 
+    public void markPaymentPaid(Instant updatedAt) {
+        setPaymentStatus(PaymentStatus.PAID);
+        setUpdatedAt(updatedAt);
+    }
+
+    public UUID getCouponId() {
+        return bookCouponId;
+    }
+
+    public String getCouponCode() {
+        return bookCouponCode;
+    }
+
     private void setUserId(UUID userId) {
         this.userId = Guard.notNull(userId, DomainErrorCode.INVALID_ORDER_USER_ID, "userId");
+    }
+
+    private void setOrderCode(String orderCode) {
+        this.orderCode = Guard.notBlank(
+                orderCode,
+                DomainErrorCode.INVALID_ORDER_ORDER_CODE,
+                "orderCode"
+        );
     }
 
     private void setItems(List<OrderItem> items) {
@@ -131,6 +260,17 @@ public class Order {
         this.items = validItems;
     }
 
+    private void setProductTotal(BigDecimal productTotal) {
+        BigDecimal validProductTotal = Guard.notNull(
+                productTotal,
+                DomainErrorCode.INVALID_ORDER_PRODUCT_TOTAL,
+                "productTotal"
+        );
+        OrderRule.requireNonNegativeProductTotal(validProductTotal);
+        OrderRule.requireMatchingProductTotal(items, validProductTotal);
+        this.productTotal = validProductTotal;
+    }
+
     private void setTotalAmount(BigDecimal totalAmount) {
         BigDecimal validTotalAmount = Guard.notNull(
                 totalAmount,
@@ -138,18 +278,16 @@ public class Order {
                 "totalAmount"
         );
         OrderRule.requireNonNegativeTotalAmount(validTotalAmount);
-        OrderRule.requireMatchingTotalAmount(items, validTotalAmount);
-        this.totalAmount = validTotalAmount;
-    }
-
-    private void setDiscountAmount(BigDecimal discountAmount) {
-        BigDecimal validDiscountAmount = Guard.notNull(
-                discountAmount,
-                DomainErrorCode.INVALID_ORDER_DISCOUNT_AMOUNT,
-                "discountAmount"
+        OrderRule.requireMatchingTotalAmount(
+                productTotal,
+                shippingFee,
+                shippingDiscount,
+                couponDiscount,
+                validTotalAmount
         );
-        OrderRule.requireNonNegativeDiscountAmount(validDiscountAmount);
-        this.discountAmount = validDiscountAmount;
+        this.totalAmount = validTotalAmount;
+        this.discountAmount = couponDiscount.add(shippingDiscount);
+        this.finalAmount = validTotalAmount;
     }
 
     private void setShippingFee(BigDecimal shippingFee) {
@@ -162,26 +300,47 @@ public class Order {
         this.shippingFee = validShippingFee;
     }
 
-    private void setFinalAmount(BigDecimal finalAmount) {
-        BigDecimal validFinalAmount = Guard.notNull(
-                finalAmount,
-                DomainErrorCode.INVALID_ORDER_FINAL_AMOUNT,
-                "finalAmount"
+    private void setShippingDiscount(BigDecimal shippingDiscount) {
+        BigDecimal validShippingDiscount = Guard.notNull(
+                shippingDiscount,
+                DomainErrorCode.INVALID_ORDER_SHIPPING_DISCOUNT,
+                "shippingDiscount"
         );
-        OrderRule.requireNonNegativeFinalAmount(validFinalAmount);
-        OrderRule.requireMatchingFinalAmount(totalAmount, discountAmount, shippingFee, validFinalAmount);
-        this.finalAmount = validFinalAmount;
+        OrderRule.requireNonNegativeShippingDiscount(validShippingDiscount);
+        this.shippingDiscount = validShippingDiscount;
     }
 
-    private void setCouponId(UUID couponId) {
-        this.couponId = couponId;
+    private void setCouponDiscount(BigDecimal couponDiscount) {
+        BigDecimal validCouponDiscount = Guard.notNull(
+                couponDiscount,
+                DomainErrorCode.INVALID_ORDER_COUPON_DISCOUNT,
+                "couponDiscount"
+        );
+        OrderRule.requireNonNegativeCouponDiscount(validCouponDiscount);
+        this.couponDiscount = validCouponDiscount;
     }
 
-    private void setCouponCode(String couponCode) {
-        this.couponCode = Guard.notBlankOrNull(
-                couponCode,
+    private void setBookCouponId(UUID bookCouponId) {
+        this.bookCouponId = bookCouponId;
+    }
+
+    private void setBookCouponCode(String bookCouponCode) {
+        this.bookCouponCode = Guard.notBlankOrNull(
+                bookCouponCode,
                 DomainErrorCode.INVALID_ORDER_COUPON_CODE,
-                "couponCode"
+                "bookCouponCode"
+        );
+    }
+
+    private void setShippingCouponId(UUID shippingCouponId) {
+        this.shippingCouponId = shippingCouponId;
+    }
+
+    private void setShippingCouponCode(String shippingCouponCode) {
+        this.shippingCouponCode = Guard.notBlankOrNull(
+                shippingCouponCode,
+                DomainErrorCode.INVALID_ORDER_COUPON_CODE,
+                "shippingCouponCode"
         );
     }
 

@@ -7,7 +7,8 @@ import java.util.UUID;
 public record UpdateCategoryCommand(
         UUID categoryId,
         String name,
-        String description
+        String description,
+        UUID parentId
 ) {
     public UpdateCategoryCommand {
         if (categoryId == null) {

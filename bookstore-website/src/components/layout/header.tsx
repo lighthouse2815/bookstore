@@ -25,6 +25,7 @@ export function Header() {
     navLinks,
     open,
     profileOpen,
+    searchQuery,
     profileRef,
     toggleTheme,
     isActiveLink,
@@ -33,29 +34,35 @@ export function Header() {
     toggleProfileMenu,
     closeProfileMenu,
     handleLogout,
+    handleSearchQueryChange,
+    submitSearch,
   } = useHeaderState()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <BookOpen className="size-5" />
-          </span>
-          <span className="font-heading text-xl font-bold tracking-tight">
-            {brandPrefix}
-            {brandSuffix && <span className="text-primary">{brandSuffix}</span>}
-          </span>
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">
+      <div className="mx-auto flex min-h-[78px] max-w-[1380px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <Link to="/" className="shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+              <BookOpen className="size-5" />
+            </span>
+            <span className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {brandPrefix}
+              {brandSuffix && <span className="text-primary">{brandSuffix}</span>}
+            </span>
+          </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               className={cn(
-                'rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                isActiveLink(link.to) && 'text-foreground',
+                'rounded-full px-4 py-2 text-sm font-medium transition-colors',
+                isActiveLink(link.to)
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {link.label}
@@ -63,12 +70,39 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="hidden min-w-0 flex-1 justify-end lg:flex">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              submitSearch()
+            }}
+            className="relative w-full max-w-[380px] xl:max-w-[440px]"
+          >
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={handleSearchQueryChange}
+              placeholder={t('book.listing.searchPlaceholder')}
+              className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-14 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+              aria-label={t('header.searchAria')}
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={t('header.searchAria')}
+            >
+              <Search className="size-4" />
+            </button>
+          </form>
+        </div>
+
+        <div className="ml-auto flex items-center gap-1.5">
           <LanguageSwitcher className="hidden sm:inline-flex" />
 
           <Link
             to="/books"
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
             aria-label={t('header.searchAria')}
           >
             <Search className="size-5" />
@@ -103,7 +137,7 @@ export function Header() {
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="hidden rounded-lg px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:inline-block"
+                className="hidden rounded-full px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:inline-flex"
               >
                 {t('header.login')}
               </Link>
@@ -126,7 +160,7 @@ export function Header() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-background shadow-lg">
+                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
                   <div className="border-b border-border px-4 py-3">
                     <p className="text-sm font-semibold text-foreground">
                       {user.name}
@@ -172,7 +206,7 @@ export function Header() {
           <button
             type="button"
             onClick={toggleMenu}
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted md:hidden"
+            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
             aria-label="Menu"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -181,30 +215,53 @@ export function Header() {
       </div>
 
       {open && (
-        <nav className="border-t border-border bg-background md:hidden">
-          <div className="flex flex-col gap-2 px-4 py-3">
-            <LanguageSwitcher />
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {!user && (
-              <Link
-                to="/login"
-                onClick={closeMenu}
-                className="mt-2 rounded-lg bg-primary px-3 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
-              >
-                {t('header.login')}
-              </Link>
-            )}
+        <div className="border-t border-border bg-background lg:hidden">
+          <div className="mx-auto max-w-[1380px] px-4 py-4 sm:px-6">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                submitSearch()
+              }}
+              className="relative mb-4"
+            >
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={handleSearchQueryChange}
+                placeholder={t('book.listing.searchPlaceholder')}
+                className="h-11 w-full rounded-full border border-border bg-card pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
+                aria-label={t('header.searchAria')}
+              />
+            </form>
+
+            <div className="mb-4">
+              <LanguageSwitcher />
+            </div>
+
+            <nav className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMenu}
+                  className="rounded-2xl px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {!user && (
+                <Link
+                  to="/login"
+                  onClick={closeMenu}
+                  className="mt-2 rounded-2xl bg-primary px-3 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+                >
+                  {t('header.login')}
+                </Link>
+              )}
+            </nav>
           </div>
-        </nav>
+        </div>
       )}
     </header>
   )

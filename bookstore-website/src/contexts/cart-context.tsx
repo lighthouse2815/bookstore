@@ -25,6 +25,7 @@ type CartContextType = {
   isLoading: boolean
   addItem: (bookId: string, quantity?: number) => Promise<void>
   removeItem: (id: string) => Promise<void>
+  removeItems: (ids: string[]) => Promise<void>
   updateQty: (id: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
   refreshCart: () => Promise<void>
@@ -113,6 +114,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function removeItems(ids: string[]) {
+    if (!isAuthenticated) {
+      throw new Error(t('cart.loginRequired'))
+    }
+
+    const uniqueIds = Array.from(new Set(ids))
+    if (uniqueIds.length === 0) {
+      return
+    }
+
+    try {
+      await Promise.all(uniqueIds.map((id) => removeCartItem(id)))
+      await refreshCart()
+    } catch (error) {
+      throw new Error(getErrorMessage(error, t('cart.updateError')))
+    }
+  }
+
   async function updateQty(id: string, quantity: number) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
@@ -163,6 +182,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isLoading,
       addItem,
       removeItem,
+      removeItems,
       updateQty,
       clearCart,
       refreshCart,

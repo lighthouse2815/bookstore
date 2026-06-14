@@ -13,6 +13,7 @@ public class Category {
     private UUID id;
     private String name;
     private String description;
+    private UUID parentId;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -21,6 +22,7 @@ public class Category {
             UUID id,
             String name,
             String description,
+            UUID parentId,
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt
@@ -28,15 +30,17 @@ public class Category {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_CATEGORY_ID, "id");
         setName(name);
         setDescription(description);
+        setParentId(parentId);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setDeletedAt(deletedAt);
     }
 
-    public void updateCategory(String name, String description) {
-        CategoryRule.requireCanUpdate(deletedAt, this.name, this.description, name, description);
+    public void updateCategory(String name, String description, UUID parentId) {
+        CategoryRule.requireCanUpdate(deletedAt, this.name, this.description, this.parentId, name, description, parentId);
         setName(name);
         setDescription(description);
+        setParentId(parentId);
         setUpdatedAt(Instant.now());
     }
 
@@ -53,6 +57,16 @@ public class Category {
 
     private void setDescription(String description) {
         this.description = description;
+    }
+
+    private void setParentId(UUID parentId) {
+        if (parentId != null && parentId.equals(id)) {
+            throw new com.bookstore.bookstore.domain.exception.DomainException(
+                    DomainErrorCode.INVALID_CATEGORY_PARENT_ID,
+                    "parentId"
+            );
+        }
+        this.parentId = parentId;
     }
 
     private void setCreatedAt(Instant createdAt) {

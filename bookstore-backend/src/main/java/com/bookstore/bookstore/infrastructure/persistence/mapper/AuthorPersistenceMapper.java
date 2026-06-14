@@ -16,6 +16,9 @@ public class AuthorPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getBiography(),
+                entity.getAvatarUrl(),
+                entity.getBirthYear(),
+                entity.getDeathYear(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
@@ -32,6 +35,9 @@ public class AuthorPersistenceMapper {
         entity.setId(author.getId());
         entity.setName(author.getName());
         entity.setBiography(author.getBiography());
+        entity.setAvatarUrl(author.getAvatarUrl());
+        entity.setBirthYear(author.getBirthYear());
+        entity.setDeathYear(author.getDeathYear());
         entity.setCreatedAt(author.getCreatedAt());
         entity.setUpdatedAt(author.getUpdatedAt());
         entity.setDeletedAt(author.getDeletedAt());

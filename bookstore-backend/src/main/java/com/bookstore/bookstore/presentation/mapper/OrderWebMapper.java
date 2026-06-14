@@ -1,11 +1,13 @@
 package com.bookstore.bookstore.presentation.mapper;
 
-import com.bookstore.bookstore.application.command.CheckoutCommand;
+import com.bookstore.bookstore.application.command.CreateOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
+import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.OrderItemResult;
 import com.bookstore.bookstore.application.result.OrderResult;
-import com.bookstore.bookstore.presentation.request.CheckoutRequest;
+import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
 import com.bookstore.bookstore.presentation.request.UpdateOrderStatusRequest;
+import com.bookstore.bookstore.presentation.response.CreateOrderResponse;
 import com.bookstore.bookstore.presentation.response.OrderItemResponse;
 import com.bookstore.bookstore.presentation.response.OrderResponse;
 import java.util.UUID;
@@ -14,16 +16,31 @@ import org.springframework.stereotype.Component;
 @Component
 public class OrderWebMapper {
 
-    public CheckoutCommand toCheckoutCommand(UUID userId, CheckoutRequest request) {
-        return new CheckoutCommand(
+    public CreateOrderCommand toCreateOrderCommand(UUID userId, CreateOrderRequest request) {
+        return new CreateOrderCommand(
                 userId,
+                request.cartItemIds(),
                 request.addressId(),
-                request.couponCode()
+                request.shippingMethod(),
+                request.paymentMethod(),
+                request.couponCode(),
+                request.note()
         );
     }
 
     public UpdateOrderStatusCommand toUpdateStatusCommand(UUID orderId, UpdateOrderStatusRequest request) {
         return new UpdateOrderStatusCommand(orderId, request.status());
+    }
+
+    public CreateOrderResponse toCreateOrderResponse(CreateOrderResult result) {
+        return new CreateOrderResponse(
+                result.orderId(),
+                result.orderCode(),
+                result.paymentMethod(),
+                result.paymentStatus(),
+                result.totalAmount(),
+                result.transferContent()
+        );
     }
 
     public OrderResponse toResponse(OrderResult result) {
@@ -33,12 +50,19 @@ public class OrderWebMapper {
                 result.items().stream()
                         .map(this::toItemResponse)
                         .toList(),
+                result.productTotal(),
                 result.totalAmount(),
                 result.discountAmount(),
                 result.shippingFee(),
+                result.shippingDiscount(),
+                result.couponDiscount(),
                 result.finalAmount(),
                 result.couponId(),
                 result.couponCode(),
+                result.bookCouponId(),
+                result.bookCouponCode(),
+                result.shippingCouponId(),
+                result.shippingCouponCode(),
                 result.paymentMethod(),
                 result.paymentStatus(),
                 result.status(),

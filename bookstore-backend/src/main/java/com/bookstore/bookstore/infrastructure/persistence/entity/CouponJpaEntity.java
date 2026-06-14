@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
 import com.bookstore.bookstore.domain.enums.CouponDiscountType;
+import com.bookstore.bookstore.domain.enums.CouponType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,6 +31,10 @@ public class CouponJpaEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "coupon_type", nullable = false, length = 32)
+    private CouponType couponType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type", nullable = false, length = 32)

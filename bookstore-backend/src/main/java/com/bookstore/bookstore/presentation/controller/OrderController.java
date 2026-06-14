@@ -2,9 +2,10 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
-import com.bookstore.bookstore.presentation.request.CheckoutRequest;
+import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
 import com.bookstore.bookstore.presentation.request.UpdateOrderStatusRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.CreateOrderResponse;
 import com.bookstore.bookstore.presentation.response.OrderResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,14 +31,14 @@ public class OrderController {
     private final OrderWebMapper orderWebMapper;
 
     @PostMapping("/api/orders/checkout")
-    public ResponseEntity<ApiResponse<OrderResponse>> checkout(
+    public ResponseEntity<ApiResponse<CreateOrderResponse>> checkout(
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody CheckoutRequest request
+            @Valid @RequestBody CreateOrderRequest request
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        var result = orderService.checkout(orderWebMapper.toCheckoutCommand(userId, request));
+        var result = orderService.checkout(orderWebMapper.toCreateOrderCommand(userId, request));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(orderWebMapper.toResponse(result)));
+                .body(ApiResponse.success(orderWebMapper.toCreateOrderResponse(result)));
     }
 
     @GetMapping("/api/orders/my")

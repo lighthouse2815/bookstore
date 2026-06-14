@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.ReviewJpaEntity;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,14 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, UUID
             order by r.createdAt desc
             """)
     List<ReviewJpaEntity> findAllByBookIdActive(@Param("bookId") UUID bookId);
+
+    @Query("""
+            select r.bookId, r.rating
+            from ReviewJpaEntity r
+            where r.deletedAt is null
+              and r.bookId in :bookIds
+            """)
+    List<Object[]> findRatingsByBookIds(@Param("bookIds") Collection<UUID> bookIds);
 
     @Query("""
             select r

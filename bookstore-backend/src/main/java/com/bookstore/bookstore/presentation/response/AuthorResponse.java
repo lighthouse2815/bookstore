@@ -7,6 +7,9 @@ public record AuthorResponse(
         UUID id,
         String name,
         String biography,
+        String avatarUrl,
+        Integer birthYear,
+        Integer deathYear,
         Instant createdAt,
         Instant updatedAt
 ) {

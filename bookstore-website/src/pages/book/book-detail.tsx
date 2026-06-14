@@ -1,11 +1,15 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  Building2,
-  Calendar,
+  BookOpenText,
   ChevronRight,
-  Package,
+  Headphones,
+  ShieldCheck,
   Star,
+  TicketPercent,
   Truck,
+  Undo2,
+  UserRound,
 } from 'lucide-react'
 import { AddToCart } from '@/components/book/add-to-cart'
 import { BookCard } from '@/components/book/book-card'
@@ -14,13 +18,51 @@ import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookDetail } from '@/hooks/use-book-detail'
 import NotFoundPage from '@/pages/home/not-found'
+import type {
+  AuthorResponse,
+  Book,
+  BookPromotion,
+  BookRatingSummary,
+} from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
+type TranslateFunction = (
+  key: string,
+  params?: Record<string, number | string>,
+) => string
+
+type GalleryImage = {
+  id: string
+  src: string
+  alt: string
+}
+
+type DetailItem = {
+  label: string
+  value: string
+}
+
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { t, formatCurrency, formatNumber, formatDate } = useLanguage()
-  const { book, suggestions, isLoading, error, notFound } = useBookDetail(id)
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
+  const {
+    book,
+    suggestions,
+    author,
+    categoryTrail,
+    promotions,
+    ratingSummary,
+    reviews,
+    isLoading,
+    error,
+    notFound,
+  } = useBookDetail(id)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  useEffect(() => {
+    setSelectedImageIndex(0)
+  }, [id])
 
   if (isLoading) {
     return (
@@ -61,37 +103,80 @@ export default function BookDetailPage() {
     return <NotFoundPage />
   }
 
-  const hasRating = typeof book.rating === 'number' && book.rating > 0
-
-  const discount = book.oldPrice
-    ? Math.round((1 - book.price / book.oldPrice) * 100)
+  const detailFallback = t('book.detail.detailsFallback')
+  const discount =
+    typeof book.oldPrice === 'number' && book.oldPrice > book.price
+      ? Math.round((1 - book.price / book.oldPrice) * 100)
+      : 0
+  const galleryImages = getBookGalleryImages(book, t)
+  const activeImageIndex = galleryImages[selectedImageIndex]
+    ? selectedImageIndex
     : 0
+  const activeImage = galleryImages[activeImageIndex]
+  const resolvedRatingSummary = getResolvedRatingSummary(book, ratingSummary)
+  const averageRating = resolvedRatingSummary.averageRating
+  const reviewCount = resolvedRatingSummary.reviewCount
+  const reviewItems = reviews.slice(0, 3)
+  const brandName = t('common.brand')
 
-  const specs = [
-    {
-      icon: Package,
-      label: t('book.detail.specStock'),
-      value: t('book.detail.stockValue', {
-        count: formatNumber(book.stockQuantity),
-      }),
-    },
-    {
-      icon: Building2,
-      label: t('book.detail.specPublisher'),
-      value: book.publisher || t('book.fallback.publisher'),
-    },
-    {
-      icon: Calendar,
-      label: t('book.detail.specUpdatedAt'),
-      value: formatDate(book.updatedAt),
-    },
+  const detailItems = [
+    createTextDetailItem(t('book.detail.specIsbn'), book.isbn, detailFallback),
+    createNumberDetailItem(
+      t('book.detail.specPageCount'),
+      book.detail?.pageCount,
+      (value) =>
+        t('book.detail.pageCountValue', { count: formatNumber(value) }),
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specLanguage'),
+      book.detail?.language,
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specCoverType'),
+      book.detail?.coverType,
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specDimensions'),
+      book.detail?.dimensions,
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specPublisher'),
+      book.publisher || null,
+      detailFallback,
+    ),
+    createNumberDetailItem(
+      t('book.detail.specPublicationYear'),
+      book.detail?.publicationYear,
+      (value) => formatNumber(value),
+      detailFallback,
+    ),
+    createNumberDetailItem(
+      t('book.detail.specWeight'),
+      book.detail?.weight,
+      (value) => t('book.detail.weightValue', { count: formatNumber(value) }),
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specTranslator'),
+      book.detail?.translator,
+      detailFallback,
+    ),
+    createTextDetailItem(
+      t('book.detail.specEdition'),
+      book.detail?.edition,
+      detailFallback,
+    ),
   ]
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <nav className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
+      <main className="mx-auto w-full max-w-[1380px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-primary">
             {t('book.detail.breadcrumbHome')}
           </Link>
@@ -99,128 +184,499 @@ export default function BookDetailPage() {
           <Link to="/books" className="hover:text-primary">
             {t('book.detail.breadcrumbBooks')}
           </Link>
+          {categoryTrail.map((category) => (
+            <div key={category.id} className="flex items-center gap-1">
+              <ChevronRight className="size-4" />
+              <span>{getCategoryLabel(category.name, t)}</span>
+            </div>
+          ))}
           <ChevronRight className="size-4" />
           <span className="line-clamp-1 text-foreground">{book.title}</span>
         </nav>
 
-        <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-muted shadow-lg">
-              <img
-                src={getBookCoverUrl(book.cover)}
-                alt={t('book.card.coverAlt', { title: book.title })}
-                className="absolute inset-0 size-full object-cover"
-              />
-              {discount > 0 && (
-                <span className="absolute left-3 top-3 rounded-full bg-primary px-3 py-1 text-sm font-bold text-primary-foreground">
-                  -{discount}%
-                </span>
-              )}
+        <section className="grid gap-6 xl:grid-cols-[88px_minmax(340px,430px)_minmax(0,1fr)_320px] 2xl:grid-cols-[96px_440px_minmax(0,1fr)_340px]">
+          <div className="order-2 flex gap-3 overflow-x-auto pb-2 xl:order-1 xl:flex-col xl:overflow-visible xl:pb-0 xl:pt-1">
+            {galleryImages.map((image, index) => (
+              <button
+                key={image.id}
+                type="button"
+                onClick={() => setSelectedImageIndex(index)}
+                aria-label={image.alt}
+                aria-pressed={index === activeImageIndex}
+                className={`relative aspect-[3/4] w-16 shrink-0 overflow-hidden rounded-[1.25rem] border bg-card transition-all xl:w-full ${
+                  index === activeImageIndex
+                    ? 'border-primary shadow-[0_12px_30px_-18px_hsl(var(--primary)/0.8)] ring-2 ring-primary/15'
+                    : 'border-border hover:border-primary/40'
+                }`}
+              >
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="absolute inset-0 size-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+
+          <div className="order-1 xl:order-2">
+            <div className="mx-auto w-full max-w-[440px] xl:mx-0">
+              <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_36px_90px_-48px_hsl(var(--foreground)/0.45)]">
+                <img
+                  src={activeImage.src}
+                  alt={activeImage.alt}
+                  className="absolute inset-0 size-full object-cover"
+                />
+                {discount > 0 && (
+                  <span className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-bold text-primary-foreground">
+                    -{discount}%
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div>
-            <span className="text-sm font-semibold text-accent">
-              {getCategoryLabel(book.category, t)}
-            </span>
-            <h1 className="mt-1 font-heading text-3xl font-bold tracking-tight text-balance">
-              {book.title}
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              {t('book.detail.author')}{' '}
-              <span className="font-medium text-foreground">
-                {book.author || t('book.fallback.author')}
+          <section className="order-3 min-w-0 space-y-6 xl:pt-6">
+            <div className="space-y-4">
+              <span className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+                {getCategoryLabel(book.category, t)}
               </span>
-            </p>
-
-            {hasRating && (
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Star
-                      key={index}
-                      className={
-                        index < Math.round(book.rating ?? 0)
-                          ? 'size-4 fill-chart-3 text-chart-3'
-                          : 'size-4 text-border'
-                      }
-                    />
-                  ))}
+              <div className="space-y-3">
+                <h1 className="font-heading text-4xl font-bold tracking-tight text-balance text-foreground lg:text-5xl">
+                  {book.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+                  <span>
+                    {t('book.detail.author')}{' '}
+                    <span className="font-semibold text-foreground">
+                      {book.author || t('book.fallback.author')}
+                    </span>
+                  </span>
+                  <span className="hidden h-4 w-px bg-border sm:block" />
+                  <span>
+                    {t('book.detail.specPublisher')}{' '}
+                    <span className="font-semibold text-foreground">
+                      {book.publisher || t('book.fallback.publisher')}
+                    </span>
+                  </span>
+                  <span className="hidden h-4 w-px bg-border sm:block" />
+                  <span>
+                    {t('book.detail.specPublicationYear')}{' '}
+                    <span className="font-semibold text-foreground">
+                      {book.detail?.publicationYear ?? detailFallback}
+                    </span>
+                  </span>
                 </div>
-                <span className="text-sm font-medium">{book.rating}</span>
-                <span className="text-sm text-muted-foreground">
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border py-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={index}
+                        className={
+                          index < Math.round(averageRating)
+                            ? 'size-4 fill-chart-3 text-chart-3'
+                            : 'size-4 text-border'
+                        }
+                      />
+                    ))}
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
+                  </span>
+                </div>
+                <span className="text-muted-foreground">
                   {t('book.detail.reviewsCount', {
-                    count: formatNumber(book.reviews ?? 0),
+                    count: formatNumber(reviewCount),
+                  })}
+                </span>
+                <span className="hidden h-4 w-px bg-border sm:block" />
+                <span className="text-muted-foreground">
+                  {t('book.detail.soldCountValue', {
+                    count: formatNumber(book.soldCount),
                   })}
                 </span>
               </div>
-            )}
+            </div>
 
-            <div className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl bg-muted/50 p-5">
-              <span className="font-heading text-3xl font-bold text-primary">
+            <div className="flex flex-wrap items-end gap-3">
+              <span className="font-heading text-4xl font-bold text-primary sm:text-5xl">
                 {formatCurrency(book.price)}
               </span>
-              {book.oldPrice && (
-                <span className="pb-1 text-lg text-muted-foreground line-through">
+              {book.oldPrice && book.oldPrice > book.price && (
+                <span className="pb-1 text-xl text-muted-foreground line-through">
                   {formatCurrency(book.oldPrice)}
                 </span>
               )}
-              {discount > 0 && (
-                <span className="mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">
+              {book.oldPrice && book.oldPrice > book.price && (
+                <span className="mb-1 rounded-full bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
                   {t('book.detail.saveAmount', {
-                    amount: formatCurrency((book.oldPrice ?? 0) - book.price),
+                    amount: formatCurrency(book.oldPrice - book.price),
                   })}
                 </span>
               )}
             </div>
 
-            <div className="mt-6">
-              <AddToCart book={book} />
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold ${
+                    book.stockQuantity > 0
+                      ? 'bg-emerald-500/10 text-emerald-600'
+                      : 'bg-destructive/10 text-destructive'
+                  }`}
+                >
+                  <span
+                    className={`size-2 rounded-full ${
+                      book.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-destructive'
+                    }`}
+                  />
+                  {book.stockQuantity > 0
+                    ? t('book.detail.stockValue', {
+                        count: formatNumber(book.stockQuantity),
+                      })
+                    : t('book.detail.stockOut')}
+                </span>
+                <span className="text-muted-foreground">
+                  {t('book.detail.shippingInfo', {
+                    amount: formatCurrency(200000),
+                  })}
+                </span>
+              </div>
+            
             </div>
 
-            <div className="mt-6 flex items-center gap-2 rounded-xl border border-dashed border-border p-4 text-sm">
-              <Truck className="size-5 text-accent" />
-              <span className="text-muted-foreground">
-                {t('book.detail.shippingInfo', {
-                  amount: formatCurrency(200000),
-                })}
-              </span>
-            </div>
+            <AddToCart book={book} />
+          </section>
 
-            <div className="mt-8">
-              <h2 className="mb-3 font-heading text-lg font-bold">
-                {t('book.detail.descriptionTitle')}
+          <aside className="order-4 space-y-4 xl:pt-1">
+            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <TicketPercent className="size-5 text-primary" />
+                <h2 className="font-heading text-xl font-bold">
+                  {t('book.detail.promotionsTitle')}
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {promotions.length > 0 ? (
+                  promotions.slice(0, 3).map((promotion) => (
+                    <div
+                      key={promotion.id}
+                      className="rounded-2xl border border-border bg-muted/30 p-3"
+                    >
+                      <p className="font-semibold text-foreground">
+                        {getPromotionDiscountLabel(
+                          promotion,
+                          formatCurrency,
+                          formatNumber,
+                        )}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {promotion.description?.trim() ||
+                          getPromotionMinOrderLabel(
+                            promotion,
+                            t,
+                            formatCurrency,
+                          )}
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">
+                          {t('book.detail.promotionCodeLabel')}:
+                        </span>
+                        <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold text-primary">
+                          {promotion.code}
+                        </span>
+                      </div>
+                      {promotion.maxDiscountAmount && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {t('book.detail.promotionMaxDiscount', {
+                            amount: formatCurrency(promotion.maxDiscountAmount),
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {t('book.detail.promotionsEmpty')}
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+              <h2 className="mb-4 font-heading text-xl font-bold">
+                {t('book.detail.commitmentsTitle', { brand: brandName })}
               </h2>
-              <p className="leading-relaxed text-muted-foreground text-pretty">
-                {book.description || t('book.detail.descriptionFallback')}
-              </p>
-            </div>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <CommitmentRow
+                  icon={<ShieldCheck className="size-4 text-primary" />}
+                  text={t('book.detail.commitmentAuthentic')}
+                />
+                <CommitmentRow
+                  icon={<Undo2 className="size-4 text-primary" />}
+                  text={t('book.detail.commitmentReturn')}
+                />
+                <CommitmentRow
+                  icon={<Truck className="size-4 text-primary" />}
+                  text={t('book.detail.commitmentShipping')}
+                />
+                <CommitmentRow
+                  icon={<Headphones className="size-4 text-primary" />}
+                  text={t('book.detail.commitmentSupport')}
+                />
+              </div>
+            </section>
+          </aside>
+        </section>
 
-            <div className="mt-8">
-              <h2 className="mb-3 font-heading text-lg font-bold">
+        <div className="mt-12 flex flex-wrap gap-6 border-b border-border text-sm">
+          <a
+            href="#book-details"
+            className="border-b-2 border-primary pb-3 font-semibold text-primary"
+          >
+            {t('book.detail.detailsTitle')}
+          </a>
+          <a
+            href="#book-description"
+            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t('book.detail.descriptionTitle')}
+          </a>
+          <a
+            href="#book-reviews"
+            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {`${t('book.detail.reviewTitle')} (${formatNumber(reviewCount)})`}
+          </a>
+        </div>
+
+        <section
+          id="book-details"
+          className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_360px]"
+        >
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div className="mb-5 flex items-center gap-2">
+              <BookOpenText className="size-5 text-primary" />
+              <h2 className="font-heading text-2xl font-bold">
                 {t('book.detail.detailsTitle')}
               </h2>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {specs.map((spec) => (
-                  <div
-                    key={spec.label}
-                    className="flex items-center gap-3 rounded-xl border border-border p-3"
-                  >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <spec.icon className="size-4" />
-                    </span>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {spec.label}
-                      </p>
-                      <p className="text-sm font-semibold">{spec.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {detailItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-border bg-muted/20 px-4 py-3"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+
+          <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="mb-5 font-heading text-2xl font-bold">
+              {t('book.detail.authorInfoTitle')}
+            </h2>
+            {author ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  {author.avatarUrl ? (
+                    <img
+                      src={author.avatarUrl}
+                      alt={author.name}
+                      className="size-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <UserRound className="size-8" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-heading text-xl font-bold text-foreground">
+                      {author.name}
+                    </p>
+                    {getAuthorLifeLabel(author) && (
+                      <p className="text-sm text-muted-foreground">
+                        {getAuthorLifeLabel(author)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <p className="leading-7 text-muted-foreground">
+                  {author.biography?.trim() || t('book.detail.authorBioFallback')}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t('book.detail.authorBioFallback')}
+              </p>
+            )}
+          </section>
+        </section>
+
+        <section
+          id="book-description"
+          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
+        >
+          <h2 className="font-heading text-2xl font-bold">
+            {t('book.detail.descriptionTitle')}
+          </h2>
+          <p className="mt-4 max-w-4xl leading-8 text-muted-foreground">
+            {book.description || t('book.detail.descriptionFallback')}
+          </p>
+        </section>
+
+        <section
+          id="book-reviews"
+          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
+        >
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-heading text-2xl font-bold">
+                {t('book.detail.reviewTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('book.detail.reviewsCount', {
+                  count: formatNumber(reviewCount),
+                })}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="rounded-3xl border border-border bg-muted/20 p-5">
+              <div className="flex items-end gap-2">
+                <span className="font-heading text-5xl font-bold text-foreground">
+                  {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
+                </span>
+                <span className="pb-2 text-lg text-muted-foreground">/5</span>
+              </div>
+              <div className="mt-3 flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star
+                    key={index}
+                    className={
+                      index < Math.round(averageRating)
+                        ? 'size-4 fill-chart-3 text-chart-3'
+                        : 'size-4 text-border'
+                    }
+                  />
+                ))}
+              </div>
+              <div className="mt-6 space-y-3">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = resolvedRatingSummary.starBreakdown[star] ?? 0
+                  const percentage =
+                    reviewCount > 0 ? (count / reviewCount) * 100 : 0
+
+                  return (
+                    <div key={star} className="grid grid-cols-[44px_1fr_44px] items-center gap-3 text-sm">
+                      <span className="text-muted-foreground">{star}★</span>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-right text-muted-foreground">
+                        {formatNumber(count)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {reviewItems.length > 0 ? (
+                reviewItems.map((review) => (
+                  <article
+                    key={review.reviewId}
+                    className="rounded-3xl border border-border bg-muted/10 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        {review.reviewerAvatarUrl ? (
+                          <img
+                            src={review.reviewerAvatarUrl}
+                            alt={review.reviewerName}
+                            className="size-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                            <UserRound className="size-6" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {review.reviewerName}
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star
+                                  key={index}
+                                  className={
+                                    index < review.rating
+                                      ? 'size-3.5 fill-chart-3 text-chart-3'
+                                      : 'size-3.5 text-border'
+                                  }
+                                />
+                              ))}
+                            </div>
+                            {review.verifiedPurchase && (
+                              <span className="inline-flex items-center gap-1 text-emerald-600">
+                                <ShieldCheck className="size-3.5" />
+                                {t('book.detail.reviewVerifiedPurchase')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(review.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="mt-4 leading-7 text-muted-foreground">
+                      {review.comment?.trim() || detailFallback}
+                    </p>
+
+                    {review.reviewImages.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        {review.reviewImages.map((image, index) => (
+                          <img
+                            key={`${review.reviewId}-${index}`}
+                            src={image}
+                            alt={`${review.reviewerName}-${index + 1}`}
+                            className="size-20 rounded-2xl object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{t('book.detail.reviewHelpful', { count: formatNumber(review.helpfulCount) })}</span>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-3xl border border-dashed border-border px-6 py-10 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {t('book.detail.reviewEmpty')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {suggestions.length > 0 && (
           <section className="mt-16">
@@ -238,4 +694,129 @@ export default function BookDetailPage() {
       <Footer />
     </div>
   )
+}
+
+function CommitmentRow({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode
+  text: string
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span>{text}</span>
+    </div>
+  )
+}
+
+function getBookGalleryImages(book: Book, t: TranslateFunction): GalleryImage[] {
+  const fallbackAlt = t('book.card.coverAlt', { title: book.title })
+  const galleryImages = new Map<string, GalleryImage>()
+
+  for (const [index, image] of book.images.entries()) {
+    const src = getBookCoverUrl(image.imageUrl)
+    if (galleryImages.has(src)) {
+      continue
+    }
+
+    galleryImages.set(src, {
+      id: image.id || `${book.id}-image-${index}`,
+      src,
+      alt: image.altText?.trim() || fallbackAlt,
+    })
+  }
+
+  const fallbackCover = getBookCoverUrl(book.cover)
+  if (!galleryImages.has(fallbackCover)) {
+    galleryImages.set(fallbackCover, {
+      id: `${book.id}-cover`,
+      src: fallbackCover,
+      alt: fallbackAlt,
+    })
+  }
+
+  return Array.from(galleryImages.values())
+}
+
+function getResolvedRatingSummary(
+  book: Book,
+  ratingSummary: BookRatingSummary | null,
+): BookRatingSummary {
+  if (ratingSummary) {
+    return ratingSummary
+  }
+
+  return {
+    averageRating: typeof book.rating === 'number' ? book.rating : 0,
+    reviewCount: book.reviews ?? 0,
+    starBreakdown: book.starBreakdown,
+  }
+}
+
+function getPromotionDiscountLabel(
+  promotion: BookPromotion,
+  formatCurrency: (value: number) => string,
+  formatNumber: (value: number) => string,
+) {
+  if (promotion.discountType.toUpperCase().includes('PERCENT')) {
+    return `${formatNumber(promotion.discountValue)}%`
+  }
+
+  return formatCurrency(promotion.discountValue)
+}
+
+function getPromotionMinOrderLabel(
+  promotion: BookPromotion,
+  t: TranslateFunction,
+  formatCurrency: (value: number) => string,
+) {
+  if (typeof promotion.minOrderAmount === 'number') {
+    return t('book.detail.promotionMinOrder', {
+      amount: formatCurrency(promotion.minOrderAmount),
+    })
+  }
+
+  return t('book.detail.promotionNoMinOrder')
+}
+
+function getAuthorLifeLabel(author: AuthorResponse) {
+  const birthYear = author.birthYear?.toString() ?? ''
+  const deathYear = author.deathYear?.toString() ?? ''
+
+  if (!birthYear && !deathYear) {
+    return ''
+  }
+
+  return `(${birthYear || '?'}-${deathYear || '?'})`
+}
+
+function createTextDetailItem(
+  label: string,
+  value: string | null | undefined,
+  fallbackValue: string,
+): DetailItem {
+  const normalizedValue = value?.trim()
+  return {
+    label,
+    value: normalizedValue || fallbackValue,
+  }
+}
+
+function createNumberDetailItem(
+  label: string,
+  value: number | null | undefined,
+  formatValue: (value: number) => string,
+  fallbackValue: string,
+): DetailItem {
+  const resolvedValue =
+    typeof value === 'number' ? formatValue(value) : fallbackValue
+
+  return {
+    label,
+    value: resolvedValue,
+  }
 }

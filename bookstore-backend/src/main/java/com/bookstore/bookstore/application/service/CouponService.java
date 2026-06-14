@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -27,6 +28,19 @@ public class CouponService implements ICouponService {
     @Transactional(readOnly = true)
     public List<Coupon> getAll() {
         return couponRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Coupon> getPublicActivePromotions(Instant at) {
+        Instant appliedAt = at == null ? Instant.now() : at;
+        return couponRepository.findAllActive().stream()
+                .filter(Coupon::isActive)
+                .filter(coupon -> !coupon.getStartsAt().isAfter(appliedAt))
+                .filter(coupon -> coupon.getExpiresAt().isAfter(appliedAt))
+                .filter(coupon -> coupon.getMaxUsageCount() == null || coupon.getUsedCount() < coupon.getMaxUsageCount())
+                .sorted(Comparator.comparing(Coupon::getStartsAt))
+                .toList();
     }
 
     @Override
@@ -57,6 +71,7 @@ public class CouponService implements ICouponService {
                 UUID.randomUUID(),
                 code,
                 StringUtils.trimToNull(command.description()),
+                command.couponType(),
                 command.discountType(),
                 command.discountValue(),
                 command.minOrderAmount(),
@@ -92,6 +107,7 @@ public class CouponService implements ICouponService {
         currentCoupon.updateCoupon(
                 code,
                 StringUtils.trimToNull(command.description()),
+                command.couponType(),
                 command.discountType(),
                 command.discountValue(),
                 command.minOrderAmount(),

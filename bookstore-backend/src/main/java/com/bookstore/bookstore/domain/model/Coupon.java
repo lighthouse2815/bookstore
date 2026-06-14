@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.CouponDiscountType;
+import com.bookstore.bookstore.domain.enums.CouponType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.CouponRule;
 import com.bookstore.bookstore.domain.validation.Guard;
@@ -16,6 +17,7 @@ public class Coupon {
     private UUID id;
     private String code;
     private String description;
+    private CouponType couponType;
     private CouponDiscountType discountType;
     private BigDecimal discountValue;
     private BigDecimal minOrderAmount;
@@ -46,9 +48,48 @@ public class Coupon {
             Instant updatedAt,
             Instant deletedAt
     ) {
+        this(
+                id,
+                code,
+                description,
+                CouponType.BOOK,
+                discountType,
+                discountValue,
+                minOrderAmount,
+                maxDiscountAmount,
+                maxUsageCount,
+                usedCount,
+                startsAt,
+                expiresAt,
+                active,
+                createdAt,
+                updatedAt,
+                deletedAt
+        );
+    }
+
+    public Coupon(
+            UUID id,
+            String code,
+            String description,
+            CouponType couponType,
+            CouponDiscountType discountType,
+            BigDecimal discountValue,
+            BigDecimal minOrderAmount,
+            BigDecimal maxDiscountAmount,
+            Integer maxUsageCount,
+            Integer usedCount,
+            Instant startsAt,
+            Instant expiresAt,
+            boolean active,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant deletedAt
+    ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_COUPON_ID, "id");
         setCode(code);
         setDescription(description);
+        setCouponType(couponType);
         setDiscountType(discountType);
         setDiscountValue(discountValue);
         setMinOrderAmount(minOrderAmount);
@@ -75,10 +116,39 @@ public class Coupon {
             Instant expiresAt,
             boolean active
     ) {
+        updateCoupon(
+                code,
+                description,
+                CouponType.BOOK,
+                discountType,
+                discountValue,
+                minOrderAmount,
+                maxDiscountAmount,
+                maxUsageCount,
+                startsAt,
+                expiresAt,
+                active
+        );
+    }
+
+    public void updateCoupon(
+            String code,
+            String description,
+            CouponType couponType,
+            CouponDiscountType discountType,
+            BigDecimal discountValue,
+            BigDecimal minOrderAmount,
+            BigDecimal maxDiscountAmount,
+            Integer maxUsageCount,
+            Instant startsAt,
+            Instant expiresAt,
+            boolean active
+    ) {
         CouponRule.requireCanUpdate(
                 deletedAt,
                 this.code,
                 this.description,
+                this.couponType,
                 this.discountType,
                 this.discountValue,
                 this.minOrderAmount,
@@ -89,6 +159,7 @@ public class Coupon {
                 this.active,
                 code,
                 description,
+                couponType,
                 discountType,
                 discountValue,
                 minOrderAmount,
@@ -101,6 +172,7 @@ public class Coupon {
 
         setCode(code);
         setDescription(description);
+        setCouponType(couponType);
         setDiscountType(discountType);
         setDiscountValue(discountValue);
         setMinOrderAmount(minOrderAmount);
@@ -113,11 +185,21 @@ public class Coupon {
     }
 
     public BigDecimal applyToOrder(BigDecimal orderAmount, Instant appliedAt) {
+        return applyTo(orderAmount, orderAmount, appliedAt);
+    }
+
+    public BigDecimal applyTo(BigDecimal orderAmount, BigDecimal discountableAmount, Instant appliedAt) {
         BigDecimal validOrderAmount = Guard.notNull(
                 orderAmount,
                 DomainErrorCode.INVALID_COUPON_MIN_ORDER_AMOUNT,
                 "orderAmount"
         );
+        BigDecimal validDiscountableAmount = Guard.notNull(
+                discountableAmount,
+                DomainErrorCode.INVALID_COUPON_DISCOUNT_VALUE,
+                "discountableAmount"
+        );
+        CouponRule.requireNonNegativeDiscountableAmount(validDiscountableAmount);
         Instant validAppliedAt = Guard.notInFuture(
                 appliedAt,
                 DomainErrorCode.INVALID_COUPON_UPDATED_AT,
@@ -137,7 +219,7 @@ public class Coupon {
         );
 
         BigDecimal discountAmount = switch (discountType) {
-            case PERCENTAGE -> validOrderAmount
+            case PERCENTAGE -> validDiscountableAmount
                     .multiply(discountValue)
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             case FIXED_AMOUNT -> discountValue;
@@ -147,8 +229,8 @@ public class Coupon {
             discountAmount = maxDiscountAmount;
         }
 
-        if (discountAmount.compareTo(validOrderAmount) > 0) {
-            discountAmount = validOrderAmount;
+        if (discountAmount.compareTo(validDiscountableAmount) > 0) {
+            discountAmount = validDiscountableAmount;
         }
 
         setUsedCount(usedCount + 1);
@@ -184,6 +266,10 @@ public class Coupon {
 
     private void setDescription(String description) {
         this.description = Guard.notBlankOrNull(description, DomainErrorCode.INVALID_COUPON_DESCRIPTION, "description");
+    }
+
+    private void setCouponType(CouponType couponType) {
+        this.couponType = Guard.notNull(couponType, DomainErrorCode.INVALID_COUPON_TYPE, "couponType");
     }
 
     private void setDiscountType(CouponDiscountType discountType) {

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 public record CreateCategoryRequest(
         @NotBlank(message = "name khong duoc de trong")
         String name,
-        String description
+        String description,
+        java.util.UUID parentId
 ) {
 }

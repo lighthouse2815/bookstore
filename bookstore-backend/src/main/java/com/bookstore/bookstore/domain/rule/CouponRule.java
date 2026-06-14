@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.domain.rule;
 
 import com.bookstore.bookstore.domain.enums.CouponDiscountType;
+import com.bookstore.bookstore.domain.enums.CouponType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import java.math.BigDecimal;
@@ -26,6 +27,12 @@ public final class CouponRule {
     public static void requireNonNegativeMinOrderAmount(BigDecimal minOrderAmount) {
         if (minOrderAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new DomainException(DomainErrorCode.INVALID_COUPON_MIN_ORDER_AMOUNT, "minOrderAmount");
+        }
+    }
+
+    public static void requireNonNegativeDiscountableAmount(BigDecimal discountableAmount) {
+        if (discountableAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException(DomainErrorCode.INVALID_COUPON_DISCOUNT_VALUE, "discountableAmount");
         }
     }
 
@@ -63,6 +70,7 @@ public final class CouponRule {
             Instant deletedAt,
             String currentCode,
             String currentDescription,
+            CouponType currentCouponType,
             CouponDiscountType currentDiscountType,
             BigDecimal currentDiscountValue,
             BigDecimal currentMinOrderAmount,
@@ -73,6 +81,7 @@ public final class CouponRule {
             boolean currentActive,
             String nextCode,
             String nextDescription,
+            CouponType nextCouponType,
             CouponDiscountType nextDiscountType,
             BigDecimal nextDiscountValue,
             BigDecimal nextMinOrderAmount,
@@ -88,6 +97,7 @@ public final class CouponRule {
 
         if (Objects.equals(currentCode, nextCode)
                 && Objects.equals(currentDescription, nextDescription)
+                && currentCouponType == nextCouponType
                 && currentDiscountType == nextDiscountType
                 && sameAmount(currentDiscountValue, nextDiscountValue)
                 && sameAmount(currentMinOrderAmount, nextMinOrderAmount)

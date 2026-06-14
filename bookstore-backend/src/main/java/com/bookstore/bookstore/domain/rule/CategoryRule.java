@@ -14,14 +14,18 @@ public final class CategoryRule {
             Instant deletedAt,
             String currentName,
             String currentDescription,
+            java.util.UUID currentParentId,
             String newName,
-            String newDescription
+            String newDescription,
+            java.util.UUID newParentId
     ) {
         if (deletedAt != null) {
             throw new DomainException(DomainErrorCode.CATEGORY_ALREADY_DELETED);
         }
 
-        if (Objects.equals(currentName, newName) && Objects.equals(currentDescription, newDescription)) {
+        if (Objects.equals(currentName, newName)
+                && Objects.equals(currentDescription, newDescription)
+                && Objects.equals(currentParentId, newParentId)) {
             throw new DomainException(DomainErrorCode.CATEGORY_DATA_NOT_CHANGED);
         }
     }

@@ -61,7 +61,7 @@ public class CartAssembler {
                     return new CartItemResult(
                             item.getBookId(),
                             book.getTitle(),
-                            book.getImageUrl(),
+                            book.getPrimaryImageUrl(),
                             book.getPrice(),
                             item.getQuantity(),
                             lineTotal

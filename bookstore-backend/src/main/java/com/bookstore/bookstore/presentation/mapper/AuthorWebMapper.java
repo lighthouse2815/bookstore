@@ -16,7 +16,10 @@ public class AuthorWebMapper {
     public CreateAuthorCommand toCreateCommand(CreateAuthorRequest request) {
         return new CreateAuthorCommand(
                 request.name(),
-                request.biography()
+                request.biography(),
+                request.avatarUrl(),
+                request.birthYear(),
+                request.deathYear()
         );
     }
 
@@ -24,7 +27,10 @@ public class AuthorWebMapper {
         return new UpdateAuthorCommand(
                 authorId,
                 request.name(),
-                request.biography()
+                request.biography(),
+                request.avatarUrl(),
+                request.birthYear(),
+                request.deathYear()
         );
     }
 
@@ -37,6 +43,9 @@ public class AuthorWebMapper {
                 author.getId(),
                 author.getName(),
                 author.getBiography(),
+                author.getAvatarUrl(),
+                author.getBirthYear(),
+                author.getDeathYear(),
                 author.getCreatedAt(),
                 author.getUpdatedAt()
         );
