@@ -5,6 +5,8 @@ import com.bookstore.bookstore.application.port.in.IPaymentService;
 import com.bookstore.bookstore.presentation.request.SepayWebhookRequest;
 import com.bookstore.bookstore.presentation.response.SepayWebhookResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PaymentController {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
+
     private final IPaymentService paymentService;
 
     @PostMapping("/api/payments/sepay/ipn")
@@ -24,6 +28,14 @@ public class PaymentController {
             @RequestHeader(value = "X-Secret-Key", required = false) String secretKeyHeader,
             @RequestBody SepayWebhookRequest request
     ) {
+        log.info(
+                "Received SePay IPN: transactionId={}, code={}, referenceCode={}, transferType={}, transferAmount={}",
+                request.resolvedTransactionId(),
+                request.code(),
+                request.referenceCode(),
+                request.transferType(),
+                request.transferAmount()
+        );
         paymentService.handleSepayIpn(new HandleSepayIpnCommand(
                 authorizationHeader,
                 secretKeyHeader,
