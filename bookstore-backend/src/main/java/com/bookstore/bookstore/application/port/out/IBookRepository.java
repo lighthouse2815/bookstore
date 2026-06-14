@@ -18,6 +18,8 @@ public interface IBookRepository {
 
     List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds);
 
+    List<Book> findRelatedActiveByCategoryId(UUID categoryId, UUID excludedBookId, int limit);
+
     List<Book> searchByKeywordActive(String keyword);
 
     Book save(Book book);

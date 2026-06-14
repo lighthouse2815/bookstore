@@ -53,13 +53,17 @@ public enum ApplicationErrorCode {
 
     COUPON_NOT_FOUND("APPLICATION_COUPON_001", "khong tim thay coupon"),
     COUPON_CODE_ALREADY_EXISTS("APPLICATION_COUPON_002", "coupon da ton tai"),
+    COUPON_TYPE_NOT_MATCH("APPLICATION_COUPON_003", "coupon khong dung loai ap dung"),
 
     BOOK_NOT_FOUND("APPLICATION_BOOK_001", "khong tim thay book"),
 
     CART_NOT_FOUND("APPLICATION_CART_001", "khong tim thay gio hang"),
     CART_EMPTY("APPLICATION_CART_002", "gio hang dang trong"),
+    CART_ITEM_NOT_FOUND("APPLICATION_CART_003", "khong tim thay san pham trong gio hang"),
 
     ORDER_NOT_FOUND("APPLICATION_ORDER_001", "khong tim thay don hang"),
+
+    PAYMENT_WEBHOOK_UNAUTHORIZED("APPLICATION_PAYMENT_001", "sepay webhook khong hop le"),
 
     USER_ADDRESS_NOT_FOUND("APPLICATION_USER_ADDRESS_001", "khong tim thay dia chi nhan hang"),
 

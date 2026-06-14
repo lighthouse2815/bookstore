@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.request;
 
 import com.bookstore.bookstore.domain.enums.CouponDiscountType;
+import com.bookstore.bookstore.domain.enums.CouponType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,8 @@ public record UpdateCouponRequest(
         String code,
         @Pattern(regexp = "^(?!\\s*$).+", message = "description khong duoc de trong")
         String description,
+        @NotNull(message = "couponType khong duoc null")
+        CouponType couponType,
         @NotNull(message = "discountType khong duoc null")
         CouponDiscountType discountType,
         @NotNull(message = "discountValue khong duoc null")

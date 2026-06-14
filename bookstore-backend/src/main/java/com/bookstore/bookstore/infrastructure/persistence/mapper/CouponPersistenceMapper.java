@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
+import com.bookstore.bookstore.domain.enums.CouponType;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ public class CouponPersistenceMapper {
                 entity.getId(),
                 entity.getCode(),
                 entity.getDescription(),
+                entity.getCouponType() == null ? CouponType.BOOK : entity.getCouponType(),
                 entity.getDiscountType(),
                 entity.getDiscountValue(),
                 entity.getMinOrderAmount(),
@@ -35,6 +37,7 @@ public class CouponPersistenceMapper {
         entity.setId(coupon.getId());
         entity.setCode(coupon.getCode());
         entity.setDescription(coupon.getDescription());
+        entity.setCouponType(coupon.getCouponType());
         entity.setDiscountType(coupon.getDiscountType());
         entity.setDiscountValue(coupon.getDiscountValue());
         entity.setMinOrderAmount(coupon.getMinOrderAmount());

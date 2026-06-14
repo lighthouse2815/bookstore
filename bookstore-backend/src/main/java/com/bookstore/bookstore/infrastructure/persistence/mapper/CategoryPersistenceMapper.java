@@ -16,6 +16,7 @@ public class CategoryPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getDescription(),
+                entity.getParentId(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
@@ -32,6 +33,7 @@ public class CategoryPersistenceMapper {
         entity.setId(category.getId());
         entity.setName(category.getName());
         entity.setDescription(category.getDescription());
+        entity.setParentId(category.getParentId());
         entity.setCreatedAt(category.getCreatedAt());
         entity.setUpdatedAt(category.getUpdatedAt());
         entity.setDeletedAt(category.getDeletedAt());

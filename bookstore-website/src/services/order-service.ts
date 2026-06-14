@@ -1,16 +1,40 @@
 import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
-  CheckoutRequest,
+  CreateOrderRequest,
+  CreateOrderResponse,
   OrderResponse,
   UpdateOrderStatusRequest,
 } from '@/types/order'
 import { unwrapResponse } from '@/utils'
 
-export async function checkout(data: CheckoutRequest): Promise<OrderResponse> {
-  const response = await api.post<ApiResponse<OrderResponse>>(
+type BackendCreateOrderRequest = {
+  cartItemIds: string[]
+  addressId: string | null
+  shippingMethod: CreateOrderRequest['shippingMethod']
+  paymentMethod: CreateOrderRequest['paymentMethod']
+  couponCode: string | null
+  note: string | null
+}
+
+export async function createOrder(
+  payload: CreateOrderRequest,
+): Promise<CreateOrderResponse> {
+  const requestBody: BackendCreateOrderRequest = {
+    cartItemIds: payload.cartItemIds,
+    addressId: payload.addressId,
+    shippingMethod: payload.shippingMethod,
+    paymentMethod: payload.paymentMethod,
+    couponCode:
+      payload.bookCouponCode?.trim() ||
+      payload.shippingCouponCode?.trim() ||
+      null,
+    note: payload.note?.trim() || null,
+  }
+
+  const response = await api.post<ApiResponse<CreateOrderResponse>>(
     '/orders/checkout',
-    data,
+    requestBody,
   )
   return unwrapResponse(response)
 }
@@ -20,9 +44,13 @@ export async function getMyOrders(): Promise<OrderResponse[]> {
   return unwrapResponse(response)
 }
 
-export async function getMyOrder(id: string): Promise<OrderResponse> {
-  const response = await api.get<ApiResponse<OrderResponse>>(`/orders/${id}`)
+export async function getOrderById(orderId: string): Promise<OrderResponse> {
+  const response = await api.get<ApiResponse<OrderResponse>>(`/orders/${orderId}`)
   return unwrapResponse(response)
+}
+
+export async function getMyOrder(id: string): Promise<OrderResponse> {
+  return getOrderById(id)
 }
 
 export async function getAdminOrders(): Promise<OrderResponse[]> {

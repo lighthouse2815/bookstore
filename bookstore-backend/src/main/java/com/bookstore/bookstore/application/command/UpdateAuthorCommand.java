@@ -7,7 +7,10 @@ import java.util.UUID;
 public record UpdateAuthorCommand(
         UUID authorId,
         String name,
-        String biography
+        String biography,
+        String avatarUrl,
+        Integer birthYear,
+        Integer deathYear
 ) {
     public UpdateAuthorCommand {
         if (authorId == null) {

@@ -3,14 +3,17 @@ package com.bookstore.bookstore.application.command;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public record CreateBookCommand(
         String title,
+        String isbn,
         String description,
         BigDecimal price,
         Integer stockQuantity,
-        String imageUrl,
+        List<BookImageCommand> images,
+        BookDetailCommand detail,
         UUID categoryId,
         UUID authorId,
         UUID publisherId

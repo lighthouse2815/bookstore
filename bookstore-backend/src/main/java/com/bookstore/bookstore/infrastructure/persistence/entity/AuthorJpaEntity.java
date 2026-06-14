@@ -26,6 +26,15 @@ public class AuthorJpaEntity {
     @Column(name = "biography", columnDefinition = "TEXT")
     private String biography;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    @Column(name = "birth_year")
+    private Integer birthYear;
+
+    @Column(name = "death_year")
+    private Integer deathYear;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

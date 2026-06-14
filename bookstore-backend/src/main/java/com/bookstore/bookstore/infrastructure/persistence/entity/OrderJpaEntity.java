@@ -32,12 +32,18 @@ public class OrderJpaEntity {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
+    @Column(name = "order_code", nullable = false, unique = true, length = 50)
+    private String orderCode;
+
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "item_order")
     private List<OrderItemJpaEntity> items = new ArrayList<>();
+
+    @Column(name = "product_total", nullable = false, precision = 19, scale = 2)
+    private BigDecimal productTotal;
 
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount;
@@ -48,6 +54,12 @@ public class OrderJpaEntity {
     @Column(name = "shipping_fee", nullable = false, precision = 19, scale = 2)
     private BigDecimal shippingFee;
 
+    @Column(name = "shipping_discount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal shippingDiscount;
+
+    @Column(name = "coupon_discount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal couponDiscount;
+
     @Column(name = "final_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal finalAmount;
 
@@ -56,6 +68,18 @@ public class OrderJpaEntity {
 
     @Column(name = "coupon_code", length = 100)
     private String couponCode;
+
+    @Column(name = "book_coupon_id")
+    private UUID bookCouponId;
+
+    @Column(name = "book_coupon_code", length = 100)
+    private String bookCouponCode;
+
+    @Column(name = "shipping_coupon_id")
+    private UUID shippingCouponId;
+
+    @Column(name = "shipping_coupon_code", length = 100)
+    private String shippingCouponCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 32)

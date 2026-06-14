@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +28,16 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
             order by o.createdAt desc
             """)
     List<OrderJpaEntity> findAllByUserId(@Param("userId") UUID userId);
+
+    @Query("""
+            select i.bookId, sum(i.quantity)
+            from OrderJpaEntity o
+            join o.items i
+            where o.status = com.bookstore.bookstore.domain.enums.OrderStatus.DELIVERED
+              and i.bookId in :bookIds
+            group by i.bookId
+            """)
+    List<Object[]> countDeliveredQuantityByBookIds(@Param("bookIds") Collection<UUID> bookIds);
 
     @EntityGraph(attributePaths = "items")
     @Query("""

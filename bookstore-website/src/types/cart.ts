@@ -10,6 +10,7 @@ export type UpdateCartItemRequest = {
 
 // Response types
 export type CartItemResponse = {
+  id: string
   bookId: string
   bookTitle: string
   imageUrl: string | null
@@ -29,6 +30,7 @@ export type CartResponse = {
 // Model types
 export type CartItem = {
   id: string
+  bookId: string
   title: string
   cover: string | null
   price: number

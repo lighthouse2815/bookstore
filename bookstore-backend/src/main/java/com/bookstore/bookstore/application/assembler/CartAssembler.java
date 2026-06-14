@@ -59,9 +59,10 @@ public class CartAssembler {
 
                     BigDecimal lineTotal = book.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
                     return new CartItemResult(
+                            item.getId(),
                             item.getBookId(),
                             book.getTitle(),
-                            book.getImageUrl(),
+                            book.getPrimaryImageUrl(),
                             book.getPrice(),
                             item.getQuantity(),
                             lineTotal

@@ -5,9 +5,12 @@ import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.OrderPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.OrderJpaRepository;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -29,6 +32,19 @@ public class OrderRepositoryAdapter implements IOrderRepository {
         return orderJpaRepository.findAllByUserId(userId).stream()
                 .map(orderPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<UUID, Long> countDeliveredQuantityByBookIds(Collection<UUID> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return orderJpaRepository.countDeliveredQuantityByBookIds(bookIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> ((Number) row[1]).longValue()
+                ));
     }
 
     @Override

@@ -1,12 +1,24 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { getBookById, getBookCatalog } from '@/services/book-service'
-import type { Book } from '@/types/book'
+import { getBookPageDetail, getBookReviews } from '@/services/book-service'
+import type {
+  AuthorResponse,
+  Book,
+  BookCategoryTrailItem,
+  BookPromotion,
+  BookRatingSummary,
+  BookReview,
+} from '@/types/book'
 import { getErrorMessage } from '@/utils'
 
 type UseBookDetailResult = {
   book: Book | null
   suggestions: Book[]
+  author: AuthorResponse | null
+  categoryTrail: BookCategoryTrailItem[]
+  promotions: BookPromotion[]
+  ratingSummary: BookRatingSummary | null
+  reviews: BookReview[]
   isLoading: boolean
   error: string | null
   notFound: boolean
@@ -15,6 +27,11 @@ type UseBookDetailResult = {
 const initialState: UseBookDetailResult = {
   book: null,
   suggestions: [],
+  author: null,
+  categoryTrail: [],
+  promotions: [],
+  ratingSummary: null,
+  reviews: [],
   isLoading: true,
   error: null,
   notFound: false,
@@ -26,10 +43,8 @@ export function useBookDetail(id?: string) {
   useEffect(() => {
     if (!id) {
       setState({
-        book: null,
-        suggestions: [],
+        ...initialState,
         isLoading: false,
-        error: null,
         notFound: true,
       })
       return
@@ -40,20 +55,23 @@ export function useBookDetail(id?: string) {
 
     async function loadBookDetail() {
       try {
-        const [book, catalog] = await Promise.all([
-          getBookById(bookId),
-          getBookCatalog().catch(() => ({ books: [], categories: [] })),
+        const [pageDetail, reviews] = await Promise.all([
+          getBookPageDetail(bookId),
+          getBookReviews(bookId).catch(() => []),
         ])
 
         if (isCancelled) {
           return
         }
 
-        const suggestions = getBookSuggestions(book, catalog.books)
-
         setState({
-          book,
-          suggestions,
+          book: pageDetail.book,
+          suggestions: pageDetail.relatedBooks,
+          author: pageDetail.author,
+          categoryTrail: pageDetail.categoryTrail,
+          promotions: pageDetail.promotions,
+          ratingSummary: pageDetail.ratingSummary,
+          reviews,
           isLoading: false,
           error: null,
           notFound: false,
@@ -67,8 +85,7 @@ export function useBookDetail(id?: string) {
           axios.isAxiosError(error) && error.response?.status === 404
 
         setState({
-          book: null,
-          suggestions: [],
+          ...initialState,
           isLoading: false,
           error: notFound ? null : getErrorMessage(error),
           notFound,
@@ -84,28 +101,4 @@ export function useBookDetail(id?: string) {
   }, [id])
 
   return state
-}
-
-function getBookSuggestions(book: Book, books: Book[]) {
-  const relatedBooks = books.filter(
-    (currentBook) =>
-      currentBook.id !== book.id &&
-      currentBook.category !== '' &&
-      currentBook.category === book.category,
-  )
-
-  if (relatedBooks.length >= 4) {
-    return relatedBooks.slice(0, 4)
-  }
-
-  const fallbackBooks = books.filter((currentBook) => currentBook.id !== book.id)
-
-  return [...relatedBooks, ...fallbackBooks]
-    .filter(
-      (currentBook, index, currentBooks) =>
-        currentBooks.findIndex(
-          (candidateBook) => candidateBook.id === currentBook.id,
-        ) === index,
-    )
-    .slice(0, 4)
 }

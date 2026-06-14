@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -47,7 +48,22 @@ public class BookRepositoryAdapter implements IBookRepository {
 
     @Override
     public List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds) {
-        return bookJpaRepository.findAllById(bookIds).stream()
+        if (bookIds == null || bookIds.isEmpty()) {
+            return List.of();
+        }
+
+        return bookJpaRepository.findAllByIdsIncludingDeleted(bookIds).stream()
+                .map(bookPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Book> findRelatedActiveByCategoryId(UUID categoryId, UUID excludedBookId, int limit) {
+        if (categoryId == null || excludedBookId == null || limit <= 0) {
+            return List.of();
+        }
+
+        return bookJpaRepository.findRelatedActiveByCategoryId(categoryId, excludedBookId, PageRequest.of(0, limit)).stream()
                 .map(bookPersistenceMapper::toDomain)
                 .toList();
     }

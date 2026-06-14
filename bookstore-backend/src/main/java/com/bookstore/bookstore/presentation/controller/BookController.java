@@ -1,10 +1,12 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IBookService;
+import com.bookstore.bookstore.application.port.in.IBookQueryService;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateBookRequest;
 import com.bookstore.bookstore.presentation.request.UpdateBookRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
 import com.bookstore.bookstore.presentation.response.BookResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,25 +29,44 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
 
     private final IBookService bookService;
+    private final IBookQueryService bookQueryService;
     private final BookWebMapper bookWebMapper;
 
     @GetMapping("/api/books")
     public ApiResponse<List<BookResponse>> getAll() {
-        return ApiResponse.success(bookService.getAll().stream()
+        return ApiResponse.success(bookQueryService.getAll().stream()
                 .map(bookWebMapper::toBookResponse)
                 .toList());
     }
 
     @GetMapping("/api/books/search")
     public ApiResponse<List<BookResponse>> search(@RequestParam(required = false) String keyword) {
-        return ApiResponse.success(bookService.search(keyword).stream()
+        return ApiResponse.success(bookQueryService.search(keyword).stream()
                 .map(bookWebMapper::toBookResponse)
                 .toList());
     }
 
+    @GetMapping("/api/books/{id}/related")
+    public ApiResponse<List<BookResponse>> getRelatedBooks(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "8") int limit
+    ) {
+        return ApiResponse.success(bookQueryService.getRelatedBooks(id, limit).stream()
+                .map(bookWebMapper::toBookResponse)
+                .toList());
+    }
+
+    @GetMapping("/api/books/{id}/page-detail")
+    public ApiResponse<BookPageDetailResponse> getPageDetail(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "8") int relatedLimit
+    ) {
+        return ApiResponse.success(bookWebMapper.toBookPageDetailResponse(bookQueryService.getPageDetail(id, relatedLimit)));
+    }
+
     @GetMapping("/api/books/{id}")
     public ApiResponse<BookResponse> getById(@PathVariable UUID id) {
-        return ApiResponse.success(bookWebMapper.toBookResponse(bookService.getById(id)));
+        return ApiResponse.success(bookWebMapper.toBookResponse(bookQueryService.getById(id)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

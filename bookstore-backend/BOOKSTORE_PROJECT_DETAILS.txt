@@ -1,0 +1,869 @@
+================================================================================
+                    BOOKSTORE BACKEND - CHI TIẾT DỰ ÁN
+================================================================================
+
+Cập nhật: 2026-06-12
+Ngôn ngữ: Java 21
+Framework: Spring Boot 3.5.14
+Database: MySQL 8.0
+Kiến trúc: Domain-Driven Design (DDD)
+
+================================================================================
+1. TỔNG QUAN DỰ ÁN
+================================================================================
+
+Tên dự án: Bookstore Backend
+Mô tả: Ứng dụng backend cho nền tảng bán sách trực tuyến (e-commerce)
+Mục đích: Cung cấp API RESTful để quản lý người dùng, sách, đơn hàng, giỏ hàng
+Kiến trúc: Sạch (Clean Architecture) theo nguyên tắc DDD
+Phiên bản: 0.0.1-SNAPSHOT
+Trạng thái: Đang phát triển
+
+Dự án được xây dựng với mục tiêu:
+- Quản lý danh mục sách (categories, authors, publishers)
+- Xác thực và phân quyền người dùng (JWT, OAuth2)
+- Quản lý giỏ hàng và đặt hàng
+- Quản lý tồn kho và nhập hàng
+- Hệ thống đánh giá sách
+- Mã giảm giá và khuyến mãi
+- Quản lý nhà cung cấp
+- Thông báo qua email
+
+================================================================================
+2. CÔNG NGHỆ CHÍNH
+================================================================================
+
+BACKEND FRAMEWORK:
+- Spring Boot 3.5.14 (Framework chính)
+- Spring Web (REST API)
+- Spring Data JPA (Truy cập dữ liệu)
+- Spring Security (Bảo mật)
+- Spring OAuth2 Resource Server (Google OAuth)
+
+DATABASE:
+- MySQL 8.0 (Production)
+- H2 Database (Testing)
+- Hibernate (ORM)
+
+AUTHENTICATION & SECURITY:
+- JWT (JSON Web Tokens) cho xác thực
+- Bcrypt cho mã hóa mật khẩu
+- Google OAuth2 cho đăng nhập xã hội
+- CORS (Cross-Origin Resource Sharing)
+
+API DOCUMENTATION:
+- SpringDoc OpenAPI 2.8.17
+- Swagger UI
+
+BUILD & DEPENDENCY MANAGEMENT:
+- Apache Maven
+- Lombok (giảm boilerplate code)
+
+TESTING:
+- JUnit 5
+- Mockito
+- Spring Test
+- H2 Database cho test
+
+OTHERS:
+- Docker & Docker Compose (MySQL container)
+- Java 21 LTS
+
+================================================================================
+3. CẤU TRÚC KIẾN TRÚC (DDD)
+================================================================================
+
+DỰ ÁN ĐƯỢC CHIA THÀNH 6 LỚP CHÍNH:
+
+┌─────────────────────────────────────────────┐
+│ 1. PRESENTATION LAYER (Lớp Trình Bày)      │
+│    - REST Controllers (20 Controllers)      │
+│    - Request DTOs (39 classes)              │
+│    - Response DTOs (25 classes)             │
+│    - Global Exception Handler               │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ 2. APPLICATION LAYER (Lớp Ứng Dụng)        │
+│    - Services (19 Services)                 │
+│    - Commands (57 Commands)                 │
+│    - Ports (45 Interfaces)                  │
+│    - Assemblers (6 Classes)                 │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ 3. DOMAIN LAYER (Lớp Miền)                 │
+│    - Domain Entities (25 classes)           │
+│    - Enums (10 Enumerations)                │
+│    - Business Rules                         │
+│    - Domain Exceptions                      │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ 4. INFRASTRUCTURE LAYER (Lớp Hạ Tầng)      │
+│    - Repositories (23 JPA Repositories)     │
+│    - JPA Entities (25 Entities)             │
+│    - Security Configuration                 │
+│    - Email Service (Resend API)             │
+│    - JWT Service                            │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ 5. CONFIG LAYER (Lớp Cấu Hình)             │
+│    - Swagger/OpenAPI Configuration         │
+│    - Security Configuration                 │
+│    - Database Configuration                 │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ 6. SHARED LAYER (Lớp Dùng Chung)           │
+│    - String Utilities                       │
+│    - Application Constants                  │
+│    - Shared Exceptions                      │
+└─────────────────────────────────────────────┘
+
+================================================================================
+4. CẤU TRÚC THƯ MỤC DỰ ÁN
+================================================================================
+
+bookstore-backend/
+│
+├── src/main/java/com/bookstore/bookstore/
+│   ├── application/                          (Lớp ứng dụng)
+│   │   ├── assembler/                        (6 Assemblers: UserAssembler, BookAssembler, ...)
+│   │   ├── command/                          (57 Commands: CreateUserCommand, UpdateOrderCommand, ...)
+│   │   ├── port/                             (45 Repository/Service Ports)
+│   │   ├── service/                          (19 Services: UserService, OrderService, CartService, ...)
+│   │   └── result/                           (Results & Exceptions)
+│   │
+│   ├── domain/                               (Lớp miền - Business Logic)
+│   │   ├── book/                             (Book, Category, Author, Publisher, Review entities)
+│   │   ├── cart/                             (Cart, CartItem entities)
+│   │   ├── coupon/                           (Coupon entity)
+│   │   ├── order/                            (Order, OrderItem entities)
+│   │   ├── stock/                            (Stock, StockMovement, ImportReceipt entities)
+│   │   ├── supplier/                         (Supplier entity)
+│   │   ├── user/                             (User, UserAddress, Role, Permission entities)
+│   │   ├── enum/                             (OrderStatus, UserStatus, PaymentMethod, AuthProvider, ...)
+│   │   └── exception/                        (Domain Exceptions)
+│   │
+│   ├── infrastructure/                       (Lớp hạ tầng)
+│   │   ├── email/                            (ResendEmailService)
+│   │   ├── persistence/                      (Database & JPA)
+│   │   │   ├── entity/                       (25 JPA Entities)
+│   │   │   ├── listener/                     (Entity Listeners)
+│   │   │   └── repository/                   (23 JPA Repositories)
+│   │   └── security/                         (JWT, OAuth2, Bcrypt, Security Config)
+│   │
+│   ├── presentation/                         (Lớp trình bày - REST API)
+│   │   ├── controller/                       (20 REST Controllers)
+│   │   └── dto/                              (39 Request + 25 Response DTOs)
+│   │
+│   ├── config/                               (Configuration)
+│   │   └── SwaggerConfig/OpenAPIConfig
+│   │
+│   ├── shared/                               (Shared utilities)
+│   │   ├── constant/AppConstants
+│   │   └── util/StringUtils
+│   │
+│   └── BookstoreApplication.java             (Main entry point)
+│
+├── src/main/resources/
+│   ├── application.yml                       (Application configuration)
+│   ├── static/                               (Static files)
+│   └── templates/                            (Thymeleaf templates)
+│
+├── src/test/java/                            (Unit & Integration Tests)
+│   └── com/bookstore/bookstore/
+│       ├── application/service/              (Service tests)
+│       ├── infrastructure/                   (Repository tests)
+│       ├── presentation/                     (Controller tests)
+│       └── domain/                           (Domain model tests)
+│
+├── docker-compose.yml                        (MySQL Docker configuration)
+├── pom.xml                                   (Maven dependencies)
+├── mvnw & mvnw.cmd                           (Maven Wrapper)
+├── .gitignore                                (Git ignore rules)
+├── HELP.md                                   (Spring Boot help)
+└── README.md                                 (Project documentation)
+
+================================================================================
+5. CÁC ENTITIES (ENTITIES CHÍNH)
+================================================================================
+
+1. USER (Người dùng)
+   - id, email (unique), passwordHash, firstName, lastName, phone
+   - status (ACTIVE/INACTIVE/BANNED)
+   - roles (nhiều Role)
+   - addresses (nhiều UserAddress)
+   - createdAt, updatedAt
+
+2. ROLE (Vai trò)
+   - id, name (ADMIN, USER, SUPPLIER)
+   - permissions (nhiều Permission)
+
+3. PERMISSION (Quyền hạn)
+   - id, name (READ_BOOKS, CREATE_ORDER, MANAGE_STOCK, ...)
+
+4. BOOK (Sách)
+   - id, title, isbn (unique), price, description
+   - author (Author)
+   - category (Category)
+   - publisher (Publisher)
+   - stockQuantity, rating
+   - createdAt, updatedAt
+
+5. AUTHOR (Tác giả)
+   - id, name, bio, birthDate
+
+6. CATEGORY (Danh mục)
+   - id, name, description
+
+7. PUBLISHER (Nhà xuất bản)
+   - id, name, address, phone
+
+8. CART (Giỏ hàng)
+   - id, user (User)
+   - items (nhiều CartItem)
+   - createdAt, updatedAt
+
+9. CART_ITEM (Chi tiết giỏ hàng)
+   - id, cart (Cart), book (Book), quantity, addedAt
+
+10. ORDER (Đơn hàng)
+    - id, user (User), totalAmount, status (PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED)
+    - shippingAddress (UserAddress)
+    - paymentMethod (CREDIT_CARD/BANK_TRANSFER/COD/WALLET)
+    - items (nhiều OrderItem)
+    - appliedCoupon (Coupon)
+    - createdAt, updatedAt
+
+11. ORDER_ITEM (Chi tiết đơn hàng)
+    - id, order (Order), book (Book), quantity, unitPrice
+
+12. REVIEW (Đánh giá sách)
+    - id, book (Book), user (User), rating (1-5), comment
+    - createdAt, updatedAt
+
+13. COUPON (Mã giảm giá)
+    - id, code (unique), discountType (PERCENTAGE/FIXED), discountValue
+    - expiryDate, maxUses, currentUses
+    - isActive
+
+14. SUPPLIER (Nhà cung cấp)
+    - id, name, email, phone, address, status
+
+15. STOCK (Tồn kho)
+    - id, book (Book), quantity, lastUpdated
+
+16. STOCK_MOVEMENT (Chuyển động tồn kho)
+    - id, book (Book), type (IMPORT/EXPORT/ADJUSTMENT)
+    - quantity, reason, createdAt
+
+17. IMPORT_RECEIPT (Phiếu nhập hàng)
+    - id, supplier (Supplier), totalItems, importDate
+    - items (nhiều ImportReceiptItem)
+
+================================================================================
+6. CÁC CONTROLLERS & API ENDPOINTS
+================================================================================
+
+1. AuthController - Xác thực
+   POST   /api/auth/register              - Đăng ký người dùng mới
+   POST   /api/auth/login                 - Đăng nhập
+   POST   /api/auth/refresh-token         - Làm mới token
+   POST   /api/auth/logout                - Đăng xuất
+   POST   /api/auth/verify-otp            - Xác thực OTP
+   POST   /api/auth/resend-otp            - Gửi lại OTP
+   POST   /api/auth/google-login          - Google OAuth login
+
+2. UserController - Quản lý người dùng
+   GET    /api/users/{id}                 - Lấy thông tin người dùng
+   PUT    /api/users/{id}                 - Cập nhật profile
+   GET    /api/users/{id}/addresses       - Lấy danh sách địa chỉ
+   POST   /api/users/{id}/addresses       - Thêm địa chỉ mới
+   PUT    /api/users/{id}/addresses/{aid} - Cập nhật địa chỉ
+   DELETE /api/users/{id}/addresses/{aid} - Xóa địa chỉ
+
+3. BookController - Quản lý sách
+   GET    /api/books                      - Lấy danh sách sách (có phân trang, lọc)
+   GET    /api/books/{id}                 - Lấy chi tiết sách
+   GET    /api/books/search               - Tìm kiếm sách
+   GET    /api/categories                 - Lấy danh mục
+   GET    /api/authors                    - Lấy tác giả
+   GET    /api/publishers                 - Lấy nhà xuất bản
+
+4. CartController - Quản lý giỏ hàng
+   GET    /api/cart                       - Lấy giỏ hàng hiện tại
+   POST   /api/cart/items                 - Thêm sách vào giỏ
+   PUT    /api/cart/items/{itemId}        - Cập nhật số lượng
+   DELETE /api/cart/items/{itemId}        - Xóa sách khỏi giỏ
+   POST   /api/cart/coupon                - Áp dụng mã giảm giá
+   DELETE /api/cart/coupon                - Hủy mã giảm giá
+   POST   /api/cart/checkout              - Tiến hành thanh toán
+
+5. OrderController - Quản lý đơn hàng
+   POST   /api/orders                     - Tạo đơn hàng mới
+   GET    /api/orders/{id}                - Lấy chi tiết đơn hàng
+   GET    /api/orders                     - Lấy danh sách đơn hàng của user
+   PUT    /api/orders/{id}/cancel         - Hủy đơn hàng
+   GET    /api/orders/{id}/track          - Theo dõi trạng thái
+
+6. ReviewController - Quản lý đánh giá
+   GET    /api/books/{bookId}/reviews     - Lấy đánh giá sách
+   POST   /api/books/{bookId}/reviews     - Tạo đánh giá
+   PUT    /api/reviews/{id}               - Cập nhật đánh giá
+   DELETE /api/reviews/{id}               - Xóa đánh giá
+
+7. AdminController - Quản lý hệ thống (cần quyền ADMIN)
+   POST   /api/admin/books                - Tạo sách mới
+   PUT    /api/admin/books/{id}           - Cập nhật sách
+   DELETE /api/admin/books/{id}           - Xóa sách
+   POST   /api/admin/stock                - Quản lý tồn kho
+   POST   /api/admin/suppliers            - Quản lý nhà cung cấp
+   POST   /api/admin/coupons              - Tạo mã giảm giá
+
+8. Các controllers khác:
+   - SupplierController
+   - StockMovementController
+   - ImportReceiptController
+   - CouponController
+   - RoleController
+   - PermissionController
+   - UserAddressController
+
+================================================================================
+7. CÁC SERVICES (LỚNG ỨNG DỤNG)
+================================================================================
+
+1. AuthService
+   - Xác thực người dùng (login)
+   - Tạo JWT token
+   - Xác minh OTP
+   - Xử lý Google OAuth
+   - Quản lý refresh token
+
+2. UserService
+   - Đăng ký người dùng mới
+   - Lấy thông tin người dùng
+   - Cập nhật profile
+   - Quản lý vai trò người dùng
+   - Quản lý quyền hạn
+
+3. BookService
+   - Lấy danh sách sách với phân trang
+   - Tìm kiếm sách
+   - Lấy chi tiết sách
+   - Quản lý danh mục, tác giả, nhà xuất bản
+   - Tính toán rating
+
+4. CartService
+   - Tạo/lấy giỏ hàng
+   - Thêm/xóa chi tiết giỏ
+   - Cập nhật số lượng
+   - Tính tổng tiền
+   - Áp dụng mã giảm giá
+
+5. OrderService
+   - Tạo đơn hàng từ giỏ hàng
+   - Lấy chi tiết đơn hàng
+   - Cập nhật trạng thái đơn hàng
+   - Hủy đơn hàng
+   - Tính toán tiền cuối cùng (sau giảm giá)
+
+6. ReviewService
+   - Tạo/cập nhật/xóa đánh giá
+   - Tính rating trung bình sách
+   - Kiểm tra người dùng đã review chưa
+
+7. NotificationService
+   - Gửi email xác thực OTP
+   - Gửi email xác nhận đơn hàng
+   - Gửi email thông báo
+   - Gửi email đặt lại mật khẩu
+
+8. OtpService
+   - Tạo OTP ngẫu nhiên
+   - Xác minh OTP
+   - Quản lý hạn giới gửi lại OTP
+   - Xóa OTP hết hạn
+
+9. CouponService
+   - Xác thực mã giảm giá
+   - Tính toán số tiền giảm
+   - Kiểm tra thời hạn sử dụng
+   - Kiểm tra giới hạn lần sử dụng
+
+10. StockService/StockMovementService
+    - Quản lý tồn kho
+    - Tạo chuyển động tồn kho
+    - Nhập hàng từ nhà cung cấp
+    - Kiểm tra hàng tồn kho
+
+11. SupplierService
+    - Quản lý nhà cung cấp
+    - Lấy danh sách nhà cung cấp
+    - Cập nhật thông tin nhà cung cấp
+
+12. RoleService & PermissionService
+    - Quản lý vai trò
+    - Quản lý quyền hạn
+    - Gán quyền cho vai trò
+
+13. UserAddressService
+    - Quản lý địa chỉ người dùng
+    - Đặt địa chỉ mặc định
+
+================================================================================
+8. CÁC COMMANDS (LỆNH ỨNG DỤNG)
+================================================================================
+
+Commands là các class đại diện cho ý định của người dùng. Ví dụ:
+
+- CreateUserCommand: Lệnh tạo người dùng mới
+- UpdateUserCommand: Lệnh cập nhật thông tin người dùng
+- CreateOrderCommand: Lệnh tạo đơn hàng
+- AddToCartCommand: Lệnh thêm sách vào giỏ
+- CreateReviewCommand: Lệnh viết đánh giá
+- ApplyCouponCommand: Lệnh áp dụng mã giảm giá
+- CreateBookCommand: Lệnh tạo sách mới (admin)
+- UpdateStockCommand: Lệnh cập nhật tồn kho
+
+Mục đích: Đơn giản hóa truyền dữ liệu, dễ dàng validate input
+
+================================================================================
+9. ENUMS (LIỆT KÊ)
+================================================================================
+
+OrderStatus: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+UserStatus: ACTIVE, INACTIVE, BANNED
+AuthProvider: LOCAL, GOOGLE
+PaymentMethod: CREDIT_CARD, BANK_TRANSFER, COD, WALLET
+StockMovementType: IMPORT, EXPORT, ADJUSTMENT
+Role: ADMIN, USER, SUPPLIER
+
+================================================================================
+10. CẤU HÌNH ENVIRONMENT VARIABLES
+================================================================================
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=bookstore_db
+DB_USER=bookstore_user
+DB_PASSWORD=123456
+
+# Server
+SERVER_PORT=8080
+
+# JWT Token
+JWT_SECRET=01234567890123456789012345678901 (tối thiểu 32 ký tự)
+JWT_EXPIRATION_MINUTES=60 (token hết hạn sau 60 phút)
+JWT_REFRESH_EXPIRATION_DAYS=30 (refresh token hết hạn sau 30 ngày)
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id_here
+
+# OTP
+OTP_EXPIRATION_MINUTES=10
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_RESEND_MAX_REQUESTS_PER_WINDOW=5
+OTP_RESEND_WINDOW_MINUTES=15
+
+# Email Service (Resend)
+RESEND_BASE_URL=https://api.resend.com
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=noreply@example.com
+RESEND_FROM_NAME=Bookstore
+
+================================================================================
+11. CÀI ĐẶT & CHẠY DỰ ÁN
+================================================================================
+
+PREREQUISITE:
+- Java 21+
+- Maven 3.6+
+- MySQL 8.0+
+- Docker & Docker Compose (tùy chọn)
+
+BƯỚC 1: Khởi động MySQL
+  docker-compose up -d
+  (Cấu hình trong docker-compose.yml)
+
+BƯỚC 2: Build dự án
+  mvn clean install
+
+BƯỚC 3: Chạy ứng dụng
+  mvn spring-boot:run
+  HOẶC
+  java -jar target/bookstore-backend-0.0.1-SNAPSHOT.jar
+
+BƯỚC 4: Truy cập ứng dụng
+  - API Base URL: http://localhost:8080
+  - Swagger UI: http://localhost:8080/swagger-ui.html
+  - API Docs: http://localhost:8080/v3/api-docs
+
+================================================================================
+12. TESTING
+================================================================================
+
+Chạy tất cả tests:
+  mvn test
+
+Chạy test specific:
+  mvn test -Dtest=UserServiceTest
+
+Chạy test với coverage:
+  mvn test jacoco:report
+
+Test locations:
+  src/test/java/com/bookstore/bookstore/
+  ├── application/service/   (Service tests)
+  ├── infrastructure/        (Repository tests)
+  ├── presentation/          (Controller tests)
+  └── domain/               (Domain tests)
+
+Loại tests:
+- Unit Tests: Kiểm tra logic trong services
+- Integration Tests: Kiểm tra tích hợp với database
+- Controller Tests: Kiểm tra REST endpoints
+
+================================================================================
+13. BẢO MẬT & XÁC THỰC
+================================================================================
+
+JWT AUTHENTICATION:
+- Token format: Bearer <token>
+- Token expiration: 60 phút
+- Refresh token expiration: 30 ngày
+- Lưu trữ: Authorization header
+
+BCRYPT PASSWORD:
+- Hash mật khẩu với Bcrypt
+- Salt ngẫu nhiên tự động
+- So sánh an toàn
+
+OAUTH2 / GOOGLE LOGIN:
+- Google Client ID configuration
+- OAuth2 Resource Server setup
+- Social login integration
+
+ROLE-BASED ACCESS CONTROL (RBAC):
+- Roles: ADMIN, USER, SUPPLIER
+- Permissions: gán cho từng role
+- @PreAuthorize annotation cho checking quyền
+
+CORS:
+- Allowed origins: localhost:5173, 127.0.0.1:5173 (configurable)
+- Cho phép frontend gửi request
+
+================================================================================
+14. DATABASE SCHEMA
+================================================================================
+
+MySQL 8.0 configuration:
+
+users
+├── id: BIGINT PRIMARY KEY
+├── email: VARCHAR(255) UNIQUE NOT NULL
+├── password_hash: VARCHAR(255) NOT NULL
+├── first_name: VARCHAR(100)
+├── last_name: VARCHAR(100)
+├── phone: VARCHAR(20)
+├── status: ENUM('ACTIVE', 'INACTIVE', 'BANNED')
+├── created_at: TIMESTAMP
+└── updated_at: TIMESTAMP
+
+books
+├── id: BIGINT PRIMARY KEY
+├── title: VARCHAR(255) NOT NULL
+├── isbn: VARCHAR(20) UNIQUE
+├── author_id: BIGINT FOREIGN KEY
+├── category_id: BIGINT FOREIGN KEY
+├── publisher_id: BIGINT FOREIGN KEY
+├── price: DECIMAL(10,2)
+├── description: LONGTEXT
+├── stock_quantity: INT
+├── rating: DECIMAL(3,2)
+├── created_at: TIMESTAMP
+└── updated_at: TIMESTAMP
+
+orders
+├── id: BIGINT PRIMARY KEY
+├── user_id: BIGINT FOREIGN KEY
+├── total_amount: DECIMAL(10,2)
+├── status: ENUM('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED')
+├── payment_method: ENUM('CREDIT_CARD', 'BANK_TRANSFER', 'COD', 'WALLET')
+├── created_at: TIMESTAMP
+└── updated_at: TIMESTAMP
+
+order_items
+├── id: BIGINT PRIMARY KEY
+├── order_id: BIGINT FOREIGN KEY
+├── book_id: BIGINT FOREIGN KEY
+├── quantity: INT
+└── unit_price: DECIMAL(10,2)
+
+cart
+├── id: BIGINT PRIMARY KEY
+├── user_id: BIGINT FOREIGN KEY UNIQUE
+├── created_at: TIMESTAMP
+└── updated_at: TIMESTAMP
+
+cart_items
+├── id: BIGINT PRIMARY KEY
+├── cart_id: BIGINT FOREIGN KEY
+├── book_id: BIGINT FOREIGN KEY
+├── quantity: INT
+└── added_at: TIMESTAMP
+
+... (các bảng khác như reviews, coupons, suppliers, stocks, roles, permissions, etc.)
+
+================================================================================
+15. DESIGN PATTERNS ĐƯỢC SỬ DỤNG
+================================================================================
+
+1. REPOSITORY PATTERN: Trừu tượng hóa data access
+2. SERVICE LAYER: Đóng gói business logic
+3. COMMAND PATTERN: Đại diện cho ý định người dùng
+4. DTO PATTERN: Tách domain models khỏi API contracts
+5. ASSEMBLER PATTERN: Chuyển đổi giữa domain objects và DTOs
+6. STRATEGY PATTERN: Email service implementations
+7. FACTORY PATTERN: Tạo objects như Order, User
+8. DEPENDENCY INJECTION: Spring DI container
+9. OBSERVER PATTERN: Spring Events cho loose coupling
+10. SPECIFICATION PATTERN: Complex query logic
+
+================================================================================
+16. CÁC FEATURES & TỐC NĂNG
+================================================================================
+
+✅ USER MANAGEMENT
+   - Đăng ký, đăng nhập
+   - Xác minh email bằng OTP
+   - Đặt lại mật khẩu
+   - Quản lý profile
+   - Quản lý địa chỉ
+   - Vai trò & quyền hạn
+
+✅ BOOK CATALOG
+   - Duyệt sách
+   - Tìm kiếm & lọc
+   - Danh mục, tác giả, nhà xuất bản
+   - Đánh giá sách
+   - Rating trung bình
+
+✅ SHOPPING & ORDERS
+   - Thêm/xóa khỏi giỏ
+   - Cập nhật số lượng
+   - Checkout
+   - Tạo đơn hàng
+   - Theo dõi đơn hàng
+   - Hủy đơn hàng
+   - Lịch sử mua hàng
+
+✅ PROMOTIONS
+   - Mã giảm giá (percentage/fixed)
+   - Kiểm tra thời hạn
+   - Giới hạn lần sử dụng
+
+✅ INVENTORY
+   - Quản lý tồn kho
+   - Chuyển động tồn kho
+   - Phiếu nhập hàng
+   - Cảnh báo hàng tồn kho thấp
+
+✅ SUPPLIERS
+   - Quản lý nhà cung cấp
+   - Thông tin nhà cung cấp
+
+✅ NOTIFICATIONS
+   - Email OTP
+   - Email xác nhận đơn hàng
+   - Email thông báo khác
+   - Resend API integration
+
+================================================================================
+17. CÁC CONVENTION & NAMING
+================================================================================
+
+CLASS NAMES:
+- Controllers: *Controller (UserController, BookController)
+- Services: *Service (UserService, OrderService)
+- Repositories: *Repository, *JpaRepository
+- Commands: *Command (CreateUserCommand)
+- DTOs: *Request, *Response (CreateUserRequest, UserResponse)
+- Entities: Domain entities (User, Book, Order)
+
+METHOD NAMES:
+- Get single: get*ById, find*ById
+- Get list: get*All, find*All
+- Create: create*, save*
+- Update: update*, modify*
+- Delete: delete*, remove*
+- Check: is*, has*
+
+CONSTANTS:
+- All uppercase with underscore: DEFAULT_PAGE_SIZE, MAX_RETRIES
+
+PACKAGES:
+- Lowercase with dot: com.bookstore.bookstore.application.service
+
+================================================================================
+18. TROUBLESHOOTING
+================================================================================
+
+ISSUE: Port 3306 already in use
+FIX: Kill process or use different port
+  netstat -ano | findstr :3306
+  taskkill /PID <PID> /F
+
+ISSUE: JWT token expired
+FIX: Gọi /api/auth/refresh-token để lấy token mới
+
+ISSUE: CORS errors
+FIX: Kiểm tra CORS_ALLOWED_ORIGINS trong application.yml
+
+ISSUE: Database connection failed
+FIX: 
+  - Kiểm tra MySQL đang chạy: docker-compose ps
+  - Kiểm tra credentials trong .env
+  - Kiểm tra database tồn tại
+
+ISSUE: Test failures
+FIX: Chạy với verbose mode: mvn test -X
+
+================================================================================
+19. GIT & VERSION CONTROL
+================================================================================
+
+Commit format: [feature/fix/docs] description
+Branch naming:
+  - feature/feature-name
+  - bugfix/bug-name
+  - release/v1.0
+
+Keep commits atomic and meaningful
+Viết meaningful commit messages
+
+================================================================================
+20. USEFUL COMMANDS
+================================================================================
+
+MAVEN COMMANDS:
+  mvn clean install           - Build project
+  mvn spring-boot:run         - Run application
+  mvn clean package           - Create JAR file
+  mvn test                    - Run tests
+  mvn dependency:tree         - Check dependencies
+  mvn spotless:apply          - Format code
+
+DOCKER COMMANDS:
+  docker-compose up -d        - Start containers
+  docker-compose down         - Stop containers
+  docker-compose logs -f      - View logs
+  docker-compose ps           - Check status
+  docker-compose restart      - Restart services
+
+DATABASE COMMANDS:
+  docker exec -it bookstore-mysql mysql -u bookstore_user -p bookstore_db
+  SHOW TABLES;
+  DESCRIBE users;
+  SELECT * FROM users;
+
+================================================================================
+21. STATISTICS & METRICS
+================================================================================
+
+CODE STATISTICS:
+- Controllers: 20
+- Services: 19
+- Commands: 57
+- Domain Entities: 25
+- JPA Repositories: 23
+- Request DTOs: 39
+- Response DTOs: 25
+- Test Classes: 60+
+- Lines of Code: 15,000+
+
+DATABASE TABLES: 20+
+API ENDPOINTS: 50+
+
+================================================================================
+22. TOOLS & RESOURCES
+================================================================================
+
+DOCUMENTATION:
+- Spring Boot: https://spring.io/projects/spring-boot
+- Spring Data JPA: https://spring.io/projects/spring-data-jpa
+- Spring Security: https://spring.io/projects/spring-security
+- MySQL: https://dev.mysql.com/doc/
+- JWT: https://jwt.io/
+
+API DOCUMENTATION (LIVE):
+- http://localhost:8080/swagger-ui.html (Swagger UI)
+- http://localhost:8080/v3/api-docs (OpenAPI JSON)
+
+================================================================================
+23. PROJECT STATUS & NEXT STEPS
+================================================================================
+
+CURRENT STATUS: Development
+VERSION: 0.0.1-SNAPSHOT
+
+COMPLETED FEATURES:
+✅ User Authentication & Authorization
+✅ Book Catalog Management
+✅ Shopping Cart
+✅ Order Management
+✅ Review System
+✅ Coupon/Discount Management
+✅ Stock Management
+✅ Email Notifications
+✅ OTP Verification
+
+FUTURE ENHANCEMENTS:
+- [ ] Payment Gateway Integration (Stripe, PayPal)
+- [ ] Recommendation Engine
+- [ ] Advanced Search & Filters
+- [ ] Book Wishlist
+- [ ] User Reviews with Images
+- [ ] Admin Dashboard
+- [ ] Analytics & Reporting
+- [ ] Caching (Redis)
+- [ ] Message Queue (RabbitMQ)
+- [ ] Microservices Architecture
+
+================================================================================
+TỔNG KẾT
+================================================================================
+
+Bookstore Backend là một ứng dụng Spring Boot chuyên nghiệp, sử dụng Domain-Driven
+Design, được xây dựng để quản lý một nền tảng bán sách trực tuyến hoàn chỉnh.
+
+Với kiến trúc lớp sạch, tách biệt rõ ràng các layer (Presentation, Application,
+Domain, Infrastructure), dự án dễ dàng bảo trì, mở rộng và test.
+
+Công nghệ hiện đại (Java 21, Spring Boot 3.5.14, MySQL 8.0, JWT, OAuth2, Docker)
+đảm bảo dự án có khả năng mở rộng và bảo mật cao.
+
+Tất cả các tính năng e-commerce cần thiết đều được triển khai:
+- Quản lý người dùng & xác thực
+- Danh mục sách & tìm kiếm
+- Giỏ hàng & đặt hàng
+- Hệ thống đánh giá
+- Mã giảm giá
+- Quản lý tồn kho
+- Thông báo email
+
+Dự án sẵn sàng để phát triển thêm các tính năng cao cấp hơn như thanh toán trực tuyến,
+công cụ gợi ý, và xây dựng cơ sở hạ tầng microservices trong tương lai.
+
+================================================================================
+Tài liệu này cung cấp một cái nhìn toàn diện về dự án Bookstore Backend cho bất kỳ
+lập trình viên nào cần hiểu rõ kiến trúc, cấu trúc, tính năng, và cách vận hành của
+ứng dụng.
+================================================================================

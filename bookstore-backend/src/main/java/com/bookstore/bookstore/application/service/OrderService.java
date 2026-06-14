@@ -1,7 +1,7 @@
 package com.bookstore.bookstore.application.service;
 
 import com.bookstore.bookstore.application.assembler.OrderAssembler;
-import com.bookstore.bookstore.application.command.CheckoutCommand;
+import com.bookstore.bookstore.application.command.CreateOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
@@ -12,30 +12,38 @@ import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
 import com.bookstore.bookstore.application.port.out.INotificationRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
+import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
-import com.bookstore.bookstore.domain.enums.PaymentMethod;
-import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
+import com.bookstore.bookstore.domain.enums.PaymentMethod;
+import com.bookstore.bookstore.domain.enums.PaymentProvider;
+import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.domain.enums.ShippingMethod;
 import com.bookstore.bookstore.domain.enums.StockMovementType;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.Cart;
+import com.bookstore.bookstore.domain.model.CartItem;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.domain.model.CouponUsage;
 import com.bookstore.bookstore.domain.model.Notification;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
+import com.bookstore.bookstore.domain.model.Payment;
 import com.bookstore.bookstore.domain.model.StockMovement;
 import com.bookstore.bookstore.domain.model.UserAddress;
+import com.bookstore.bookstore.infrastructure.payment.SepayProperties;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,34 +56,37 @@ public class OrderService implements IOrderService {
     private final IOrderRepository orderRepository;
     private final ICartRepository cartRepository;
     private final IBookRepository bookRepository;
+    private final IPaymentRepository paymentRepository;
     private final IUserAddressRepository userAddressRepository;
     private final ICouponRepository couponRepository;
     private final ICouponUsageRepository couponUsageRepository;
     private final IStockMovementRepository stockMovementRepository;
     private final INotificationRepository notificationRepository;
     private final OrderAssembler orderAssembler;
+    private final SepayProperties sepayProperties;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderResult checkout(CheckoutCommand command) {
+    public CreateOrderResult checkout(CreateOrderCommand command) {
         if (command == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
-
-        UserAddress userAddress = userAddressRepository.findByIdAndUserIdActive(command.addressId(), command.userId())
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
 
         Cart cart = cartRepository.findByUserId(command.userId())
                 .filter(currentCart -> !currentCart.getItems().isEmpty())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_EMPTY));
 
-        Map<UUID, Book> booksById = loadCheckoutBooks(cart);
+        validatePaymentMethod(command.paymentMethod());
+        UserAddress userAddress = resolveOrderAddress(command);
+        List<CartItem> checkoutItems = resolveCheckoutItems(cart, command.cartItemIds());
+        Map<UUID, Book> booksById = loadCheckoutBooks(checkoutItems);
         UUID orderId = UUID.randomUUID();
         Instant now = Instant.now();
+        String orderCode = generateOrderCode(now);
         List<OrderItem> orderItems = new ArrayList<>();
         List<StockMovement> stockMovements = new ArrayList<>();
 
-        for (var cartItem : cart.getItems()) {
+        for (var cartItem : checkoutItems) {
             Book book = booksById.get(cartItem.getBookId());
             int beforeQuantity = book.getStockQuantity();
             book.decreaseStock(cartItem.getQuantity());
@@ -105,26 +116,54 @@ public class OrderService implements IOrderService {
             ));
         }
 
-        BigDecimal totalAmount = orderItems.stream()
+        BigDecimal productTotal = orderItems.stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal shippingFee = calculateShippingFee(command.shippingMethod(), productTotal);
+        Coupon appliedCoupon = resolveCoupon(command.couponCode());
+        BigDecimal couponDiscount = BigDecimal.ZERO;
+        BigDecimal shippingDiscount = BigDecimal.ZERO;
+        UUID bookCouponId = null;
+        String bookCouponCode = null;
+        UUID shippingCouponId = null;
+        String shippingCouponCode = null;
 
-        Coupon coupon = resolveCoupon(command.couponCode());
-        BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO : coupon.applyToOrder(totalAmount, now);
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+        if (appliedCoupon != null) {
+            switch (appliedCoupon.getCouponType()) {
+                case BOOK -> {
+                    couponDiscount = appliedCoupon.applyTo(productTotal, productTotal, now);
+                    bookCouponId = appliedCoupon.getId();
+                    bookCouponCode = appliedCoupon.getCode();
+                }
+                case SHIPPING -> {
+                    shippingDiscount = appliedCoupon.applyTo(productTotal, shippingFee, now);
+                    shippingCouponId = appliedCoupon.getId();
+                    shippingCouponCode = appliedCoupon.getCode();
+                }
+            }
+        }
+
+        BigDecimal totalAmount = productTotal
+                .add(shippingFee)
+                .subtract(shippingDiscount)
+                .subtract(couponDiscount);
 
         Order order = new Order(
                 orderId,
+                orderCode,
                 command.userId(),
                 orderItems,
+                productTotal,
+                shippingFee,
+                shippingDiscount,
+                couponDiscount,
                 totalAmount,
-                discountAmount,
-                BigDecimal.ZERO,
-                finalAmount,
-                coupon == null ? null : coupon.getId(),
-                coupon == null ? null : coupon.getCode(),
-                PaymentMethod.COD,
-                PaymentStatus.UNPAID,
+                bookCouponId,
+                bookCouponCode,
+                shippingCouponId,
+                shippingCouponCode,
+                command.paymentMethod(),
+                PaymentStatus.PENDING,
                 OrderStatus.PENDING,
                 userAddress.getReceiverName(),
                 userAddress.getReceiverPhone(),
@@ -135,22 +174,35 @@ public class OrderService implements IOrderService {
         );
 
         Order savedOrder = orderRepository.save(order);
-        if (coupon != null) {
-            couponRepository.save(coupon);
-            couponUsageRepository.save(new CouponUsage(
-                    UUID.randomUUID(),
-                    coupon.getId(),
-                    command.userId(),
-                    orderId,
-                    now
-            ));
-        }
+        Payment savedPayment = paymentRepository.save(new Payment(
+                UUID.randomUUID(),
+                savedOrder.getId(),
+                PaymentProvider.SEPAY,
+                PaymentStatus.PENDING,
+                savedOrder.getTotalAmount(),
+                StringUtils.trimToNull(sepayProperties.merchantId()),
+                null,
+                savedOrder.getOrderCode(),
+                savedOrder.getOrderCode(),
+                null,
+                null,
+                now,
+                now
+        ));
+        saveAppliedCoupon(appliedCoupon, command.userId(), orderId, now);
         stockMovements.forEach(stockMovementRepository::save);
         booksById.values().forEach(bookRepository::save);
-        cart.clear();
+        checkoutItems.forEach(item -> cart.removeItem(item.getBookId()));
         cartRepository.save(cart);
         notificationRepository.save(newOrderNotification(savedOrder, now));
-        return orderAssembler.toResult(savedOrder);
+        return new CreateOrderResult(
+                savedOrder.getId(),
+                savedOrder.getOrderCode(),
+                savedOrder.getPaymentMethod(),
+                savedPayment.getStatus(),
+                savedOrder.getTotalAmount(),
+                savedPayment.getTransferContent()
+        );
     }
 
     @Override
@@ -209,9 +261,33 @@ public class OrderService implements IOrderService {
         return orderAssembler.toResult(savedOrder);
     }
 
-    private Map<UUID, Book> loadCheckoutBooks(Cart cart) {
+    private List<CartItem> resolveCheckoutItems(Cart cart, List<UUID> selectedCartItemIds) {
+        if (selectedCartItemIds.isEmpty()) {
+            return List.copyOf(cart.getItems());
+        }
+
+        Map<UUID, CartItem> cartItemsById = cart.getItems().stream()
+                .collect(
+                        LinkedHashMap::new,
+                        (map, item) -> map.put(item.getId(), item),
+                        Map::putAll
+                );
+        List<CartItem> checkoutItems = new ArrayList<>();
+
+        for (UUID selectedCartItemId : selectedCartItemIds) {
+            CartItem cartItem = cartItemsById.get(selectedCartItemId);
+            if (cartItem == null) {
+                throw new ApplicationException(ApplicationErrorCode.CART_ITEM_NOT_FOUND);
+            }
+            checkoutItems.add(cartItem);
+        }
+
+        return checkoutItems;
+    }
+
+    private Map<UUID, Book> loadCheckoutBooks(List<CartItem> checkoutItems) {
         Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
-                        cart.getItems().stream()
+                        checkoutItems.stream()
                                 .map(item -> item.getBookId())
                                 .toList()
                 ).stream()
@@ -221,7 +297,7 @@ public class OrderService implements IOrderService {
                         Map::putAll
                 );
 
-        for (var cartItem : cart.getItems()) {
+        for (var cartItem : checkoutItems) {
             Book book = booksById.get(cartItem.getBookId());
             if (book == null || book.getDeletedAt() != null) {
                 throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
@@ -239,6 +315,21 @@ public class OrderService implements IOrderService {
 
         return couponRepository.findByCodeActive(normalizedCouponCode.toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
+    }
+
+    private void saveAppliedCoupon(Coupon coupon, UUID userId, UUID orderId, Instant usedAt) {
+        if (coupon == null) {
+            return;
+        }
+
+        couponRepository.save(coupon);
+        couponUsageRepository.save(new CouponUsage(
+                UUID.randomUUID(),
+                coupon.getId(),
+                userId,
+                orderId,
+                usedAt
+        ));
     }
 
     private void rollbackCancelledOrder(Order order) {
@@ -268,13 +359,57 @@ public class OrderService implements IOrderService {
 
         booksById.values().forEach(bookRepository::save);
 
-        if (order.getCouponId() != null) {
-            Coupon coupon = couponRepository.findByIdIncludingDeleted(order.getCouponId())
-                    .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
-            coupon.rollbackUsage(now);
-            couponRepository.save(coupon);
+        UUID bookCouponId = order.getBookCouponId();
+        UUID shippingCouponId = order.getShippingCouponId();
+        if (bookCouponId != null) {
+            rollbackCouponUsage(bookCouponId, now);
+        }
+        if (shippingCouponId != null && !shippingCouponId.equals(bookCouponId)) {
+            rollbackCouponUsage(shippingCouponId, now);
+        }
+        if (bookCouponId != null || shippingCouponId != null) {
             couponUsageRepository.deleteByOrderId(order.getId());
         }
+    }
+
+    private void validatePaymentMethod(PaymentMethod paymentMethod) {
+        if (paymentMethod != PaymentMethod.BANK_TRANSFER_QR) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "paymentMethod");
+        }
+    }
+
+    private UserAddress resolveOrderAddress(CreateOrderCommand command) {
+        if (command.shippingMethod() == ShippingMethod.DELIVERY) {
+            return userAddressRepository.findByIdAndUserIdActive(command.addressId(), command.userId())
+                    .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
+        }
+
+        if (command.addressId() != null) {
+            return userAddressRepository.findByIdAndUserIdActive(command.addressId(), command.userId())
+                    .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
+        }
+
+        return userAddressRepository.findAllByUserIdActive(command.userId()).stream()
+                .findFirst()
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
+    }
+
+    private BigDecimal calculateShippingFee(ShippingMethod shippingMethod, BigDecimal productTotal) {
+        return switch (shippingMethod) {
+            case DELIVERY -> BigDecimal.ZERO;
+            case PICKUP -> BigDecimal.ZERO;
+        };
+    }
+
+    private String generateOrderCode(Instant now) {
+        return "DH" + now.toEpochMilli() + ThreadLocalRandom.current().nextInt(100_000, 1_000_000);
+    }
+
+    private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {
+        Coupon coupon = couponRepository.findByIdIncludingDeleted(couponId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
+        coupon.rollbackUsage(rolledBackAt);
+        couponRepository.save(coupon);
     }
 
     private Map<UUID, Book> loadOrderBooks(Order order) {

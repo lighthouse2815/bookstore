@@ -25,6 +25,12 @@ public final class OrderRule {
         }
     }
 
+    public static void requireNonNegativeProductTotal(BigDecimal productTotal) {
+        if (productTotal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException(DomainErrorCode.INVALID_ORDER_PRODUCT_TOTAL, "productTotal");
+        }
+    }
+
     public static void requireNonNegativeDiscountAmount(BigDecimal discountAmount) {
         if (discountAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new DomainException(DomainErrorCode.INVALID_ORDER_DISCOUNT_AMOUNT, "discountAmount");
@@ -34,6 +40,18 @@ public final class OrderRule {
     public static void requireNonNegativeShippingFee(BigDecimal shippingFee) {
         if (shippingFee.compareTo(BigDecimal.ZERO) < 0) {
             throw new DomainException(DomainErrorCode.INVALID_ORDER_SHIPPING_FEE, "shippingFee");
+        }
+    }
+
+    public static void requireNonNegativeShippingDiscount(BigDecimal shippingDiscount) {
+        if (shippingDiscount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException(DomainErrorCode.INVALID_ORDER_SHIPPING_DISCOUNT, "shippingDiscount");
+        }
+    }
+
+    public static void requireNonNegativeCouponDiscount(BigDecimal couponDiscount) {
+        if (couponDiscount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException(DomainErrorCode.INVALID_ORDER_COUPON_DISCOUNT, "couponDiscount");
         }
     }
 
@@ -50,6 +68,33 @@ public final class OrderRule {
 
         if (expectedTotalAmount.compareTo(totalAmount) != 0) {
             throw new DomainException(DomainErrorCode.ORDER_TOTAL_AMOUNT_MISMATCH);
+        }
+    }
+
+    public static void requireMatchingProductTotal(List<OrderItem> items, BigDecimal productTotal) {
+        BigDecimal expectedProductTotal = items.stream()
+                .map(OrderItem::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (expectedProductTotal.compareTo(productTotal) != 0) {
+            throw new DomainException(DomainErrorCode.ORDER_TOTAL_AMOUNT_MISMATCH);
+        }
+    }
+
+    public static void requireMatchingTotalAmount(
+            BigDecimal productTotal,
+            BigDecimal shippingFee,
+            BigDecimal shippingDiscount,
+            BigDecimal couponDiscount,
+            BigDecimal totalAmount
+    ) {
+        BigDecimal expectedTotalAmount = productTotal
+                .add(shippingFee)
+                .subtract(shippingDiscount)
+                .subtract(couponDiscount);
+
+        if (expectedTotalAmount.compareTo(totalAmount) != 0) {
+            throw new DomainException(DomainErrorCode.ORDER_PAYMENT_TOTAL_MISMATCH);
         }
     }
 

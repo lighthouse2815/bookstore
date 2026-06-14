@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/language-context'
-import { getMyOrder, getMyOrders } from '@/services/order-service'
+import { getMyOrders, getOrderById } from '@/services/order-service'
 import type { OrderResponse } from '@/types/order'
 import { getErrorMessage } from '@/utils'
 
@@ -77,7 +77,7 @@ export function useOrderResource(
 
     async function loadOrder() {
       try {
-        const data = await getMyOrder(currentOrderId)
+        const data = await getOrderById(currentOrderId)
 
         if (isCancelled) {
           return

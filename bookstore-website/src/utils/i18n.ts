@@ -1,7 +1,7 @@
 import type {
   OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
+  OrderPaymentMethod,
+  OrderPaymentStatus,
 } from '@/types/order'
 import type { Gender, UserRole } from '@/types/auth'
 
@@ -43,17 +43,20 @@ const orderStatusKeys: Record<string, string> = {
   cancelled: 'orderStatus.cancelled',
 }
 
-const paymentMethodKeys: Record<PaymentMethod, string> = {
+const paymentMethodKeys: Record<OrderPaymentMethod, string> = {
+  BANK_TRANSFER_QR: 'paymentMethods.BANK_TRANSFER_QR',
   COD: 'paymentMethods.COD',
   BANK_TRANSFER: 'paymentMethods.BANK_TRANSFER',
   VNPAY: 'paymentMethods.VNPAY',
   MOMO: 'paymentMethods.MOMO',
 }
 
-const paymentStatusKeys: Record<PaymentStatus, string> = {
+const paymentStatusKeys: Record<OrderPaymentStatus, string> = {
+  PENDING: 'paymentStatus.PENDING',
   UNPAID: 'paymentStatus.UNPAID',
   PAID: 'paymentStatus.PAID',
   FAILED: 'paymentStatus.FAILED',
+  CANCELLED: 'paymentStatus.CANCELLED',
   REFUNDED: 'paymentStatus.REFUNDED',
 }
 
@@ -85,14 +88,14 @@ export function getOrderStatusLabel(status: string, t: TranslateFunction) {
 }
 
 export function getPaymentMethodLabel(
-  paymentMethod: PaymentMethod,
+  paymentMethod: OrderPaymentMethod,
   t: TranslateFunction,
 ) {
   return t(paymentMethodKeys[paymentMethod])
 }
 
 export function getPaymentStatusLabel(
-  paymentStatus: PaymentStatus,
+  paymentStatus: OrderPaymentStatus,
   t: TranslateFunction,
 ) {
   return t(paymentStatusKeys[paymentStatus])

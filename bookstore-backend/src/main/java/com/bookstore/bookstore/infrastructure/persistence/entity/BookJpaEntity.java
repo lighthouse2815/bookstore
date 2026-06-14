@@ -1,11 +1,17 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +31,9 @@ public class BookJpaEntity {
     @Column(nullable = false, length = 255)
     private String title;
 
+    @Column(length = 32)
+    private String isbn;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -36,6 +45,13 @@ public class BookJpaEntity {
 
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC, createdAt ASC")
+    private List<BookImageJpaEntity> images = new ArrayList<>();
+
+    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private BookDetailJpaEntity detail;
 
     @Column(name = "category_id", nullable = false)
     private UUID categoryId;

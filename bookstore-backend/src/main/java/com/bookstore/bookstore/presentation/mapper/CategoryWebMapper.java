@@ -16,7 +16,8 @@ public class CategoryWebMapper {
     public CreateCategoryCommand toCreateCommand(CreateCategoryRequest request) {
         return new CreateCategoryCommand(
                 request.name(),
-                request.description()
+                request.description(),
+                request.parentId()
         );
     }
 
@@ -24,7 +25,8 @@ public class CategoryWebMapper {
         return new UpdateCategoryCommand(
                 categoryId,
                 request.name(),
-                request.description()
+                request.description(),
+                request.parentId()
         );
     }
 
@@ -37,6 +39,7 @@ public class CategoryWebMapper {
                 category.getId(),
                 category.getName(),
                 category.getDescription(),
+                category.getParentId(),
                 category.getCreatedAt(),
                 category.getUpdatedAt()
         );

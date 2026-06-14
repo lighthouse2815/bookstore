@@ -4,12 +4,15 @@ import com.bookstore.bookstore.application.command.CreateCouponCommand;
 import com.bookstore.bookstore.application.command.DeleteCouponCommand;
 import com.bookstore.bookstore.application.command.UpdateCouponCommand;
 import com.bookstore.bookstore.domain.model.Coupon;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 public interface ICouponService {
 
     List<Coupon> getAll();
+
+    List<Coupon> getPublicActivePromotions(Instant at);
 
     Coupon getById(UUID couponId);
 

@@ -20,15 +20,20 @@ const CATEGORY_PRESETS = {
 export function useBookListing() {
   const [searchParams] = useSearchParams()
   const requestedCategory = searchParams.get('category') ?? ALL_CATEGORIES
+  const requestedQuery = searchParams.get('q')?.trim() ?? ''
   const { t, formatNumber } = useLanguage()
   const { books, categories, isLoading, error } = useBookCatalog()
   const [category, setCategory] = useState(requestedCategory)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(requestedQuery)
   const [sort, setSort] = useState<SortKey>('popular')
 
   useEffect(() => {
     setCategory(resolveRequestedCategory(requestedCategory, categories, t))
   }, [categories, requestedCategory, t])
+
+  useEffect(() => {
+    setQuery(requestedQuery)
+  }, [requestedQuery])
 
   const filteredBooks = useMemo(() => {
     let result = books.filter((book) => {
@@ -66,11 +71,19 @@ export function useBookListing() {
     setQuery(event.currentTarget.value)
   }
 
-  function handleCategorySelect(nextCategory: string) {
+  function handleCategorySelect(nextCategory: string | null) {
+    if (!nextCategory) {
+      return
+    }
+
     setCategory(nextCategory)
   }
 
-  function handleSortChange(nextSort: string) {
+  function handleSortChange(nextSort: string | null) {
+    if (!nextSort) {
+      return
+    }
+
     setSort(nextSort as SortKey)
   }
 

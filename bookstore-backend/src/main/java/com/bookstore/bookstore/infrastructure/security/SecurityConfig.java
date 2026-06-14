@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.security;
 
+import com.bookstore.bookstore.infrastructure.payment.SepayProperties;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -26,7 +27,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, GoogleAuthProperties.class})
+@EnableConfigurationProperties({
+        JwtProperties.class,
+        CorsProperties.class,
+        GoogleAuthProperties.class,
+        SepayProperties.class
+})
 public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINT = {
@@ -55,12 +61,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/test", "/api/auth/**", "/api/otp/**").permitAll()
+                        .requestMatchers(
+                                "/api/test",
+                                "/api/auth/**",
+                                "/api/otp/**",
+                                "/api/payments/sepay/ipn"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/books/**",
                                 "/api/categories/**",
                                 "/api/authors/**",
-                                "/api/publishers/**"
+                                "/api/publishers/**",
+                                "/api/coupons/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

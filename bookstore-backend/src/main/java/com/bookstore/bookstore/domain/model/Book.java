@@ -4,6 +4,9 @@ import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.BookRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
@@ -13,10 +16,12 @@ public class Book {
 
     private UUID id;
     private String title;
+    private String isbn;
     private String description;
     private BigDecimal price;
     private Integer stockQuantity;
-    private String imageUrl;
+    private List<BookImage> images = new ArrayList<>();
+    private BookDetail detail;
     private UUID categoryId;
     private UUID authorId;
     private UUID publisherId;
@@ -27,10 +32,12 @@ public class Book {
     public Book(
             UUID id,
             String title,
+            String isbn,
             String description,
             BigDecimal price,
             Integer stockQuantity,
-            String imageUrl,
+            List<BookImage> images,
+            BookDetail detail,
             UUID categoryId,
             UUID authorId,
             UUID publisherId,
@@ -40,10 +47,12 @@ public class Book {
     ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_BOOK_ID, "id");
         setTitle(title);
+        setIsbn(isbn);
         setDescription(description);
         setPrice(price);
         setStockQuantity(stockQuantity);
-        setImageUrl(imageUrl);
+        setImages(images);
+        setDetail(detail);
         setCategoryId(categoryId);
         setAuthorId(authorId);
         setPublisherId(publisherId);
@@ -54,10 +63,12 @@ public class Book {
 
     public void updateBook(
             String title,
+            String isbn,
             String description,
             BigDecimal price,
             Integer stockQuantity,
-            String imageUrl,
+            List<BookImage> images,
+            BookDetail detail,
             UUID categoryId,
             UUID authorId,
             UUID publisherId
@@ -65,27 +76,33 @@ public class Book {
         BookRule.requireCanUpdate(
                 deletedAt,
                 this.title,
+                this.isbn,
                 this.description,
                 this.price,
                 this.stockQuantity,
-                this.imageUrl,
+                this.images,
+                this.detail,
                 this.categoryId,
                 this.authorId,
                 this.publisherId,
                 title,
+                isbn,
                 description,
                 price,
                 stockQuantity,
-                imageUrl,
+                images,
+                detail,
                 categoryId,
                 authorId,
                 publisherId
         );
         setTitle(title);
+        setIsbn(isbn);
         setDescription(description);
         setPrice(price);
         setStockQuantity(stockQuantity);
-        setImageUrl(imageUrl);
+        setImages(images);
+        setDetail(detail);
         setCategoryId(categoryId);
         setAuthorId(authorId);
         setPublisherId(publisherId);
@@ -112,12 +129,25 @@ public class Book {
         setUpdatedAt(Instant.now());
     }
 
+    public String getPrimaryImageUrl() {
+        return images.stream()
+                .filter(image -> Boolean.TRUE.equals(image.getPrimaryImage()))
+                .findFirst()
+                .or(() -> images.stream().findFirst())
+                .map(BookImage::getImageUrl)
+                .orElse(null);
+    }
+
     private void setTitle(String title) {
         this.title = Guard.notBlank(title, DomainErrorCode.INVALID_BOOK_TITLE, "title");
     }
 
     private void setDescription(String description) {
         this.description = description;
+    }
+
+    private void setIsbn(String isbn) {
+        this.isbn = Guard.notBlankOrNull(isbn, DomainErrorCode.INVALID_BOOK_ISBN, "isbn");
     }
 
     private void setPrice(BigDecimal price) {
@@ -146,8 +176,22 @@ public class Book {
         this.stockQuantity = normalized;
     }
 
-    private void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    private void setImages(List<BookImage> images) {
+        List<BookImage> normalizedImages = images == null
+                ? List.of()
+                : new ArrayList<>(Guard.noNullElements(images, DomainErrorCode.INVALID_BOOK_IMAGES, "images"));
+        BookRule.requireImagesBelongToBook(id, normalizedImages);
+        BookRule.requireAtMostOnePrimaryImage(normalizedImages);
+        this.images = normalizedImages.stream()
+                .sorted(Comparator.comparing(BookImage::getSortOrder)
+                        .thenComparing(BookImage::getCreatedAt)
+                        .thenComparing(BookImage::getId))
+                .toList();
+    }
+
+    private void setDetail(BookDetail detail) {
+        BookRule.requireDetailBelongsToBook(id, detail);
+        this.detail = detail;
     }
 
     private void setCategoryId(UUID categoryId) {
