@@ -11,7 +11,7 @@ import {
   Store,
   Tag,
   Truck,
-  X,
+  X, 
 } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
@@ -21,15 +21,14 @@ import { Textarea } from '@/components/common/textarea'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
-import {
-  NEW_ADDRESS_VALUE,
-  useCheckoutFlow,
-} from '@/hooks/use-checkout-flow'
-import type { UserAddressResponse } from '@/types/address'
-import type { CartItem } from '@/types/cart'
-import type { CouponResponse } from '@/types/coupon'
+import { NEW_ADDRESS_VALUE, useCheckoutFlow } from '@/hooks/use-checkout-flow'
 import { cn } from '@/utils'
 import { getBookCoverUrl } from '@/utils/book-cover'
+import type { UserAddressResponse } from '@/types/address'
+import type { CouponResponse } from '@/types/coupon'
+import type { CartItem } from '@/types/cart'
+
+type CheckoutLabels = Record<string, string>
 
 type CheckoutAddressFormData = {
   fullName: string
@@ -39,26 +38,27 @@ type CheckoutAddressFormData = {
   district: string
   ward: string
   couponCode: string
+  note: string
 }
 
 export default function CheckoutPage() {
-  const { t, formatCurrency, language } = useLanguage()
+  const { t, formatCurrency } = useLanguage()
   const {
     items,
     subtotal,
+    shippingMethod,
+    paymentMethod,
     shippingFee,
     shippingDiscount,
     couponDiscount,
     finalTotal,
-    shippingMethod,
-    paymentMethod,
     loading,
     isAddressLoading,
     isCartLoading,
     isCouponLoading,
+    savedAddresses,
     activeCoupons,
     selectedCoupon,
-    savedAddresses,
     selectedAddress,
     selectedAddressId,
     formData,
@@ -69,13 +69,63 @@ export default function CheckoutPage() {
     handlePaymentMethodChange,
     handleSubmit,
   } = useCheckoutFlow()
-  const labels = buildCheckoutLabels(language)
+
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false)
   const [addressDialogValue, setAddressDialogValue] = useState('')
   const [isCouponDialogOpen, setIsCouponDialogOpen] = useState(false)
   const [couponDialogCode, setCouponDialogCode] = useState('')
 
   const isUsingNewAddress = selectedAddressId === NEW_ADDRESS_VALUE
+
+  const labels: CheckoutLabels = {
+    shippingAddressTitle: t('checkout.shippingAddressTitle'),
+    changeAddress: t('checkout.changeAddress'),
+    addAddress: t('checkout.addAddress'),
+    addNewAddress: t('checkout.addNewAddress'),
+    chooseSavedAddress: t('checkout.chooseSavedAddress'),
+    chooseAddressTitle: t('checkout.chooseAddressTitle'),
+    chooseAddressDescription: t('checkout.chooseAddressDescription'),
+    useThisAddress: t('checkout.useThisAddress'),
+    cancel: t('checkout.cancel'),
+    close: t('checkout.close'),
+    defaultAddress: t('checkout.defaultAddress'),
+    noAddressTitle: t('checkout.noAddressTitle'),
+    noAddressDescription: t('checkout.noAddressDescription'),
+    newAddressHeading: t('checkout.newAddressHeading'),
+    shippingMethodTitle: t('checkout.shippingMethodTitle'),
+    homeDelivery: t('checkout.homeDelivery'),
+    deliveryDescription: t('checkout.deliveryDescription'),
+    storePickup: t('checkout.storePickup'),
+    pickupDescription: t('checkout.pickupDescription'),
+    noteTitle: t('checkout.noteTitle'),
+    noteLabel: t('checkout.noteLabel'),
+    notePlaceholder: t('checkout.notePlaceholder'),
+    bankTransferQr: t('checkout.bankTransferQr'),
+    bankTransferQrDescription: t('checkout.bankTransferQrDescription'),
+    cashOnDelivery: t('checkout.cashOnDelivery'),
+    cashOnDeliveryDescription: t('checkout.cashOnDeliveryDescription'),
+    paymentMethodNotice: t('checkout.paymentMethodNotice'),
+    chooseCoupon: t('checkout.chooseCoupon'),
+    selectedCouponPrefix: t('checkout.selectedCouponPrefix'),
+    productTotal: t('checkout.productTotal'),
+    shippingFeeTotal: t('checkout.shippingFeeTotal'),
+    shippingDiscount: t('checkout.shippingDiscount'),
+    couponDiscount: t('checkout.couponDiscount'),
+    chooseCouponTitle: t('checkout.chooseCouponTitle'),
+    couponInputPlaceholder: t('checkout.couponInputPlaceholder'),
+    applyCoupon: t('checkout.applyCoupon'),
+    useCoupon: t('checkout.useCoupon'),
+    shippingCoupons: t('checkout.shippingCoupons'),
+    bookCoupons: t('checkout.bookCoupons'),
+    couponLoading: t('checkout.couponLoading'),
+    noCoupons: t('checkout.noCoupons'),
+    couponMinOrder: t('checkout.couponMinOrder'),
+    couponMaxDiscount: t('checkout.couponMaxDiscount'),
+    couponUsage: t('checkout.couponUsage'),
+    couponUsageNoLimit: t('checkout.couponUsageNoLimit'),
+    couponUnavailable: t('checkout.couponUnavailable'),
+  }
+
   const hasSavedAddresses = savedAddresses.length > 0
   const hasCheckoutAddress = Boolean(selectedAddress) || isUsingNewAddress
 
@@ -287,15 +337,24 @@ export default function CheckoutPage() {
                 title={t('checkout.paymentMethodTitle')}
                 icon={<CreditCard className="size-5" />}
               >
-                <div className="grid gap-4">
-                  <CheckoutOptionCard
-                    selected={paymentMethod === 'BANK_TRANSFER_QR'}
-                    icon={<Landmark className="size-5" />}
-                    title={labels.bankTransferQr}
-                    description={labels.bankTransferQrDescription}
-                    onClick={() => handlePaymentMethodChange('BANK_TRANSFER_QR')}
-                  />
-                </div>
+              <div className="grid gap-4">
+                <CheckoutOptionCard
+                  selected={paymentMethod === 'COD'}
+                  icon={<PackageCheck className="size-5" />}
+                  title={labels.cashOnDelivery}
+                  description={labels.cashOnDeliveryDescription}
+                  onClick={() => handlePaymentMethodChange('COD')}
+                />
+
+                <CheckoutOptionCard
+                  selected={paymentMethod === 'BANK_TRANSFER_QR'}
+                  icon={<Landmark className="size-5" />}
+                  title={labels.bankTransferQr}
+                  description={labels.bankTransferQrDescription}
+                  onClick={() => handlePaymentMethodChange('BANK_TRANSFER_QR')}
+                />
+              </div>
+              
                 <p className="mt-3 text-sm text-muted-foreground">
                   {labels.paymentMethodNotice}
                 </p>
@@ -393,215 +452,11 @@ export default function CheckoutPage() {
         />
       )}
 
-      <Footer />
-    </div>
-  )
-}
 
-type CheckoutLabels = ReturnType<typeof buildCheckoutLabels>
-
-function getCheckoutLabels(language: 'vi' | 'en') {
-  if (language === 'en') {
-    return {
-      shippingAddressTitle: 'Shipping address',
-      changeAddress: 'Change',
-      addAddress: 'Add address',
-      addNewAddress: 'Add new address',
-      chooseSavedAddress: 'Choose saved address',
-      chooseAddressTitle: 'Choose shipping address',
-      chooseAddressDescription: 'Only the selected address will be used for this order.',
-      useThisAddress: 'Use this address',
-      cancel: 'Cancel',
-      close: 'Close',
-      defaultAddress: 'Default',
-      noAddressTitle: 'No shipping address yet',
-      noAddressDescription: 'Add a shipping address before placing this order.',
-      newAddressHeading: 'New shipping address',
-      shippingMethodTitle: 'Shipping method',
-      homeDelivery: 'Home delivery',
-      deliveryEstimate: 'Estimated delivery in 2-4 business days',
-      storePickup: 'Store pickup',
-      pickupUnavailable: 'Currently unavailable',
-      codPayment: 'Cash on delivery (COD)',
-      codDescription: 'Pay when the order is delivered',
-      walletPayment: 'E-wallet',
-      bankPayment: 'Bank transfer',
-      paymentUnavailable: 'Coming soon',
-      chooseCoupon: 'Choose code',
-      selectedCouponPrefix: 'Selected code:',
-      productTotal: 'Product total',
-      shippingFeeTotal: 'Shipping fee total',
-      shippingDiscount: 'Shipping fee discount',
-      couponDiscount: 'Coupon discount',
-      chooseCouponTitle: 'Choose coupon code',
-      couponInputPlaceholder: 'Enter coupon code',
-      applyCoupon: 'Apply code',
-      useCoupon: 'Use code',
-      shippingCoupons: 'Shipping codes',
-      bookCoupons: 'Book discount codes',
-      couponLoading: 'Loading coupon codes...',
-      noCoupons: 'No coupon codes available',
-      couponMinOrder: 'Min order {amount}',
-      couponMaxDiscount: 'Max discount {amount}',
-      couponUsage: 'Used {used}/{limit}',
-      couponUsageNoLimit: 'Used {used}',
-      couponUnavailable: 'Order has not reached the minimum value',
-    }
+        <Footer />
+      </div>
+    )
   }
-
-  return {
-    shippingAddressTitle: 'Địa chỉ giao hàng',
-    changeAddress: 'Thay đổi',
-    addAddress: 'Thêm địa chỉ',
-    addNewAddress: 'Thêm địa chỉ mới',
-    chooseSavedAddress: 'Chọn địa chỉ đã lưu',
-    chooseAddressTitle: 'Chọn địa chỉ giao hàng',
-    chooseAddressDescription: 'Chỉ địa chỉ được chọn sẽ dùng cho đơn hàng này.',
-    useThisAddress: 'Dùng địa chỉ này',
-    cancel: 'Hủy',
-    close: 'Đóng',
-    defaultAddress: 'Mặc định',
-    noAddressTitle: 'Chưa có địa chỉ giao hàng',
-    noAddressDescription: 'Thêm địa chỉ giao hàng trước khi đặt đơn.',
-    newAddressHeading: 'Địa chỉ giao hàng mới',
-    shippingMethodTitle: 'Phương thức vận chuyển',
-    homeDelivery: 'Giao hàng tận nơi',
-    deliveryEstimate: 'Dự kiến giao trong 2-4 ngày làm việc',
-    storePickup: 'Đến cửa hàng nhận',
-    pickupUnavailable: 'Hiện chưa hỗ trợ',
-    codPayment: 'Thanh toán khi nhận hàng (COD)',
-    codDescription: 'Thanh toán khi nhận và kiểm tra hàng',
-    walletPayment: 'Ví điện tử',
-    bankPayment: 'Chuyển khoản ngân hàng',
-    paymentUnavailable: 'Sắp hỗ trợ',
-    chooseCoupon: 'Chọn mã',
-    selectedCouponPrefix: 'Mã đã chọn:',
-    productTotal: 'Tổng tiền sản phẩm',
-    shippingFeeTotal: 'Tổng tiền phí vận chuyển',
-    shippingDiscount: 'Giảm phí vận chuyển',
-    couponDiscount: 'Giảm giá mã giảm giá',
-    chooseCouponTitle: 'Chọn mã giảm giá',
-    couponInputPlaceholder: 'Nhập mã giảm giá',
-    applyCoupon: 'Áp dụng mã',
-    useCoupon: 'Dùng mã',
-    shippingCoupons: 'Mã ship',
-    bookCoupons: 'Mã giảm tiền sách',
-    couponLoading: 'Đang tải mã giảm giá...',
-    noCoupons: 'Chưa có mã giảm giá phù hợp',
-    couponMinOrder: 'Đơn tối thiểu {amount}',
-    couponMaxDiscount: 'Giảm tối đa {amount}',
-    couponUsage: 'Đã dùng {used}/{limit}',
-    couponUsageNoLimit: 'Đã dùng {used}',
-    couponUnavailable: 'Đơn hàng chưa đạt giá trị tối thiểu',
-  }
-}
-
-function buildCheckoutLabels(language: 'vi' | 'en') {
-  if (language === 'en') {
-    return {
-      shippingAddressTitle: 'Shipping address',
-      changeAddress: 'Change',
-      addAddress: 'Add address',
-      addNewAddress: 'Add new address',
-      chooseSavedAddress: 'Choose saved address',
-      chooseAddressTitle: 'Choose shipping address',
-      chooseAddressDescription:
-        'Only the selected address will be used for this order.',
-      useThisAddress: 'Use this address',
-      cancel: 'Cancel',
-      close: 'Close',
-      defaultAddress: 'Default',
-      noAddressTitle: 'No shipping address yet',
-      noAddressDescription: 'Add a shipping address before placing this order.',
-      newAddressHeading: 'New shipping address',
-      shippingMethodTitle: 'Shipping method',
-      homeDelivery: 'Home delivery',
-      deliveryDescription:
-        'Deliver to the saved shipping contact for this order',
-      storePickup: 'Store pickup',
-      pickupDescription: 'Pick up at the shop while keeping your contact details',
-      noteTitle: 'Note for the shop',
-      noteLabel: 'Message',
-      notePlaceholder:
-        'Optional note about delivery time or order instructions',
-      bankTransferQr: 'Bank transfer via SePay',
-      bankTransferQrDescription:
-        'Place the order first, then transfer with the exact content from the waiting page',
-      paymentMethodNotice:
-        'Frontend only reads payment status from the backend and never marks the order as paid on its own.',
-      chooseCoupon: 'Choose code',
-      selectedCouponPrefix: 'Selected code:',
-      productTotal: 'Product total',
-      shippingFeeTotal: 'Shipping fee',
-      shippingDiscount: 'Shipping discount',
-      couponDiscount: 'Coupon discount',
-      chooseCouponTitle: 'Choose coupon code',
-      couponInputPlaceholder: 'Enter coupon code',
-      applyCoupon: 'Apply code',
-      useCoupon: 'Use code',
-      shippingCoupons: 'Shipping codes',
-      bookCoupons: 'Book discount codes',
-      couponLoading: 'Loading coupon codes...',
-      noCoupons: 'No coupon codes available',
-      couponMinOrder: 'Min order {amount}',
-      couponMaxDiscount: 'Max discount {amount}',
-      couponUsage: 'Used {used}/{limit}',
-      couponUsageNoLimit: 'Used {used}',
-      couponUnavailable: 'Order has not reached the minimum value',
-    }
-  }
-
-  return {
-    shippingAddressTitle: 'Dia chi giao hang',
-    changeAddress: 'Thay doi',
-    addAddress: 'Them dia chi',
-    addNewAddress: 'Them dia chi moi',
-    chooseSavedAddress: 'Chon dia chi da luu',
-    chooseAddressTitle: 'Chon dia chi giao hang',
-    chooseAddressDescription:
-      'Chi dia chi duoc chon se duoc dung cho don hang nay.',
-    useThisAddress: 'Dung dia chi nay',
-    cancel: 'Huy',
-    close: 'Dong',
-    defaultAddress: 'Mac dinh',
-    noAddressTitle: 'Chua co dia chi giao hang',
-    noAddressDescription: 'Them dia chi giao hang truoc khi dat don.',
-    newAddressHeading: 'Dia chi giao hang moi',
-    shippingMethodTitle: 'Phuong thuc van chuyen',
-    homeDelivery: 'Giao hang tan noi',
-    deliveryDescription: 'Giao theo thong tin nguoi nhan da luu cho don nay',
-    storePickup: 'Nhan tai cua hang',
-    pickupDescription: 'Nhan tai shop nhung van giu thong tin lien he cho don',
-    noteTitle: 'Loi nhan cho shop',
-    noteLabel: 'Ghi chu',
-    notePlaceholder: 'Them ghi chu ve thoi gian nhan hoac yeu cau cho don',
-    bankTransferQr: 'Chuyen khoan SePay',
-    bankTransferQrDescription:
-      'Dat don truoc, sau do chuyen khoan dung noi dung o man hinh cho thanh toan',
-    paymentMethodNotice:
-      'Frontend chi doc trang thai thanh toan tu backend va khong tu dong danh dau da thanh toan.',
-    chooseCoupon: 'Chon ma',
-    selectedCouponPrefix: 'Ma da chon:',
-    productTotal: 'Tong tien san pham',
-    shippingFeeTotal: 'Phi van chuyen',
-    shippingDiscount: 'Giam phi van chuyen',
-    couponDiscount: 'Giam gia ma giam gia',
-    chooseCouponTitle: 'Chon ma giam gia',
-    couponInputPlaceholder: 'Nhap ma giam gia',
-    applyCoupon: 'Ap dung ma',
-    useCoupon: 'Dung ma',
-    shippingCoupons: 'Ma ship',
-    bookCoupons: 'Ma giam tien sach',
-    couponLoading: 'Dang tai ma giam gia...',
-    noCoupons: 'Chua co ma giam gia phu hop',
-    couponMinOrder: 'Don toi thieu {amount}',
-    couponMaxDiscount: 'Giam toi da {amount}',
-    couponUsage: 'Da dung {used}/{limit}',
-    couponUsageNoLimit: 'Da dung {used}',
-    couponUnavailable: 'Don hang chua dat gia tri toi thieu',
-  }
-}
-
 function CheckoutSection({
   step,
   title,

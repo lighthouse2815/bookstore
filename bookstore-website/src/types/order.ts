@@ -5,11 +5,10 @@ export type OrderStatus =
   | 'DELIVERED'
   | 'CANCELLED'
 
-export type PaymentMethod = 'BANK_TRANSFER_QR'
+export type PaymentMethod = 'BANK_TRANSFER_QR' | 'COD' 
 
 export type OrderPaymentMethod =
   | PaymentMethod
-  | 'COD'
   | 'BANK_TRANSFER'
   | 'VNPAY'
   | 'MOMO'
