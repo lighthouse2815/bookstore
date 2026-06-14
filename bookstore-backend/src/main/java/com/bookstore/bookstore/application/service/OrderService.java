@@ -402,7 +402,7 @@ public class OrderService implements IOrderService {
     }
 
     private String generateOrderCode(Instant now) {
-        return "SV" + now.toEpochMilli() + ThreadLocalRandom.current().nextInt(100_000, 1_000_000);
+        return "DH" + now.toEpochMilli() + ThreadLocalRandom.current().nextInt(100_000, 1_000_000);
     }
 
     private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {
