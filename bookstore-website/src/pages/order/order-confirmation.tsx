@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -39,25 +39,73 @@ export default function OrderConfirmationPage() {
     isPolling,
     error,
   } = useOrderConfirmationPage()
-  const bankInfo = useMemo(
-    () => ({
-      bankName:
-        import.meta.env.VITE_BANK_TRANSFER_BANK_NAME?.trim() || labels.bankFallback,
-      accountNumber:
-        import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NUMBER?.trim() ||
-        labels.accountNumberFallback,
-      accountName:
-        import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NAME?.trim() ||
-        labels.accountNameFallback,
-      qrUrl: import.meta.env.VITE_BANK_TRANSFER_QR_URL?.trim() || null,
-    }),
-    [
-      labels.accountNameFallback,
-      labels.accountNumberFallback,
-      labels.bankFallback,
-    ],
-  )
+  const [hasQrImageError, setHasQrImageError] = useState(false)
+  const bankInfo = useMemo(() => {
+    const bankName = readConfiguredValue(
+      import.meta.env.VITE_BANK_TRANSFER_BANK_NAME,
+    )
+    const bankCode = readConfiguredValue(
+      import.meta.env.VITE_BANK_TRANSFER_BANK_CODE,
+    )
+    const accountNumber = readConfiguredValue(
+      import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NUMBER,
+    )
+    const accountName = readConfiguredValue(
+      import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NAME,
+    )
+    const paymentReference = transferContent.trim() || orderCode.trim()
+
+    return {
+      bankName: bankName || labels.bankFallback,
+      accountNumber: accountNumber || labels.accountNumberFallback,
+      accountName: accountName || labels.accountNameFallback,
+      dynamicQrUrl: buildVietQrUrl(
+        bankCode,
+        accountNumber,
+        accountName,
+        totalAmount,
+        paymentReference,
+      ),
+      fallbackQrUrl: buildFallbackQrUrl(
+        import.meta.env.VITE_BANK_TRANSFER_QR_URL,
+        totalAmount,
+        paymentReference,
+        accountName,
+      ),
+    }
+  }, [
+    labels.accountNameFallback,
+    labels.accountNumberFallback,
+    labels.bankFallback,
+    orderCode,
+    totalAmount,
+    transferContent,
+  ])
+  const qrDisplay = useMemo(() => {
+    if (bankInfo.dynamicQrUrl) {
+      return {
+        kind: 'dynamic' as const,
+        url: bankInfo.dynamicQrUrl,
+      }
+    }
+
+    if (bankInfo.fallbackQrUrl) {
+      return {
+        kind: 'fallback' as const,
+        url: bankInfo.fallbackQrUrl,
+      }
+    }
+
+    return {
+      kind: 'none' as const,
+      url: null,
+    }
+  }, [bankInfo.dynamicQrUrl, bankInfo.fallbackQrUrl])
   const statusMeta = getStatusMeta(paymentStatus, labels)
+
+  useEffect(() => {
+    setHasQrImageError(false)
+  }, [qrDisplay.url])
 
   async function handleCopyTransferContent() {
     try {
@@ -190,22 +238,48 @@ export default function OrderConfirmationPage() {
                 </div>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-muted/30">
-                  {bankInfo.qrUrl ? (
+                  {qrDisplay.url && !hasQrImageError ? (
                     <img
-                      src={bankInfo.qrUrl}
+                      key={qrDisplay.url}
+                      src={qrDisplay.url}
                       alt={labels.qrTitle}
+                      onError={() => setHasQrImageError(true)}
                       className="h-[320px] w-full object-contain p-6"
                     />
                   ) : (
                     <div className="flex h-[320px] flex-col items-center justify-center gap-3 px-6 text-center">
-                      <QrCode className="size-14 text-muted-foreground" />
-                      <p className="font-semibold">{labels.qrPlaceholderTitle}</p>
+                      <AlertTriangle className="size-14 text-amber-600" />
+                      <p className="font-semibold">
+                        {hasQrImageError
+                          ? labels.qrImageErrorTitle
+                          : labels.qrUnavailableTitle}
+                      </p>
                       <p className="max-w-md text-sm leading-6 text-muted-foreground">
-                        {labels.qrPlaceholderDescription}
+                        {hasQrImageError
+                          ? labels.qrImageErrorDescription
+                          : labels.qrUnavailableDescription}
                       </p>
                     </div>
                   )}
                 </div>
+
+                {qrDisplay.kind === 'fallback' && !hasQrImageError && (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                    <p className="font-semibold">{labels.qrFallbackNoticeTitle}</p>
+                    <p className="mt-1 leading-6">
+                      {labels.qrFallbackNoticeDescription}
+                    </p>
+                  </div>
+                )}
+
+                {(qrDisplay.kind === 'none' || hasQrImageError) && (
+                  <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-4">
+                    <p className="font-semibold">{labels.manualTransferTitle}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {labels.manualTransferDescription}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -381,6 +455,68 @@ function getStatusMeta(
   return config[paymentStatus]
 }
 
+function readConfiguredValue(value: string | undefined) {
+  const normalizedValue = value?.trim() || ''
+  return normalizedValue === '' ? null : normalizedValue
+}
+
+function buildVietQrUrl(
+  bankCode: string | null,
+  accountNumber: string | null,
+  accountName: string | null,
+  amount: number,
+  content: string | null,
+) {
+  if (!bankCode || !accountNumber || !accountName) {
+    return null
+  }
+
+  const roundedAmount = Math.max(0, Math.round(amount))
+  const query = new URLSearchParams()
+
+  query.set('amount', String(roundedAmount))
+
+  if (content && content.trim() !== '') {
+    query.set('addInfo', content.trim())
+  }
+
+  query.set('accountName', accountName)
+
+  return `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?${query.toString()}`
+}
+
+function buildFallbackQrUrl(
+  fallbackUrl: string | undefined,
+  amount: number,
+  content: string | null,
+  accountName: string | null,
+) {
+  const normalizedFallbackUrl = readConfiguredValue(fallbackUrl)
+
+  if (!normalizedFallbackUrl) {
+    return null
+  }
+
+  try {
+    const url = new URL(normalizedFallbackUrl)
+    const roundedAmount = Math.max(0, Math.round(amount))
+
+    url.searchParams.set('amount', String(roundedAmount))
+
+    if (content && content.trim() !== '') {
+      url.searchParams.set('addInfo', content.trim())
+    }
+
+    if (accountName) {
+      url.searchParams.set('accountName', accountName)
+    }
+
+    return url.toString()
+  } catch {
+    return normalizedFallbackUrl
+  }
+}
+
 function getPaymentWaitingLabels(language: 'vi' | 'en') {
   if (language === 'en') {
     return {
@@ -410,10 +546,20 @@ function getPaymentWaitingLabels(language: 'vi' | 'en') {
       copySuccess: 'Transfer content copied.',
       copyError: 'Unable to copy transfer content.',
       qrTitle: 'QR payment area',
-      qrDescription: 'Use a configured static QR image or transfer manually.',
-      qrPlaceholderTitle: 'Static QR placeholder',
-      qrPlaceholderDescription:
-        'Add VITE_BANK_TRANSFER_QR_URL to show a static QR image here.',
+      qrDescription:
+        'The QR code is generated from the order amount and transfer content whenever the bank config is available.',
+      qrUnavailableTitle: 'Dynamic QR is unavailable',
+      qrUnavailableDescription:
+        'The bank config is incomplete, so please transfer manually with the exact account, amount, and transfer content shown above.',
+      qrImageErrorTitle: 'Unable to load the QR image',
+      qrImageErrorDescription:
+        'The QR service could not be loaded right now. Please transfer manually with the exact details shown above.',
+      qrFallbackNoticeTitle: 'Using fallback QR configuration',
+      qrFallbackNoticeDescription:
+        'A legacy QR URL is being used because dynamic VietQR config is incomplete.',
+      manualTransferTitle: 'Manual transfer instructions',
+      manualTransferDescription:
+        'Use the bank, account number, account name, amount, and transfer content exactly as shown on this page.',
       orderSummaryTitle: 'Order summary',
       summaryDescription: 'This screen only reflects payment data from the backend.',
       orderIdLabel: 'Order ID',
@@ -462,10 +608,20 @@ function getPaymentWaitingLabels(language: 'vi' | 'en') {
     copySuccess: 'Da copy noi dung chuyen khoan.',
     copyError: 'Khong the copy noi dung chuyen khoan.',
     qrTitle: 'Khu vuc QR thanh toan',
-    qrDescription: 'Dung QR tinh neu da cau hinh, hoac chuyen khoan thu cong.',
-    qrPlaceholderTitle: 'Placeholder QR tinh',
-    qrPlaceholderDescription:
-      'Them VITE_BANK_TRANSFER_QR_URL neu muon hien QR tinh o day.',
+    qrDescription:
+      'QR duoc tao dong theo so tien va noi dung chuyen khoan cua don hang neu cau hinh ngan hang day du.',
+    qrUnavailableTitle: 'Chua tao duoc QR dong',
+    qrUnavailableDescription:
+      'Cau hinh ngan hang dang thieu, vui long chuyen khoan thu cong dung thong tin hien thi o tren.',
+    qrImageErrorTitle: 'Khong tai duoc anh QR',
+    qrImageErrorDescription:
+      'Dich vu QR tam thoi khong tai duoc. Vui long chuyen khoan thu cong dung dung thong tin hien thi o tren.',
+    qrFallbackNoticeTitle: 'Dang dung QR fallback',
+    qrFallbackNoticeDescription:
+      'He thong dang dung URL QR cu vi chua du cau hinh de tao VietQR dong.',
+    manualTransferTitle: 'Huong dan chuyen khoan thu cong',
+    manualTransferDescription:
+      'Hay dung dung ngan hang, so tai khoan, chu tai khoan, so tien va noi dung chuyen khoan hien tren trang nay.',
     orderSummaryTitle: 'Tom tat thanh toan',
     summaryDescription:
       'Man hinh nay chi doc trang thai va du lieu thanh toan tu backend.',
