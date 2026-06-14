@@ -1,4 +1,3 @@
-// Enum-like types
 export type OrderStatus =
   | 'PENDING'
   | 'CONFIRMED'
@@ -6,22 +5,44 @@ export type OrderStatus =
   | 'DELIVERED'
   | 'CANCELLED'
 
-export type PaymentMethod = 'COD' | 'BANK_TRANSFER' | 'VNPAY' | 'MOMO'
+export type PaymentMethod = 'BANK_TRANSFER_QR'
 
-export type PaymentStatus = 'UNPAID' | 'PAID' | 'FAILED' | 'REFUNDED'
+export type OrderPaymentMethod =
+  | PaymentMethod
+  | 'COD'
+  | 'BANK_TRANSFER'
+  | 'VNPAY'
+  | 'MOMO'
 
-// Request types
-export type CheckoutRequest = {
-  addressId: string
-  couponCode?: string | null
-  bookIds?: string[] | null
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED'
+
+export type OrderPaymentStatus = PaymentStatus | 'UNPAID' | 'REFUNDED'
+
+export type ShippingMethod = 'DELIVERY' | 'PICKUP'
+
+export type CreateOrderRequest = {
+  cartItemIds: string[]
+  addressId: string | null
+  shippingMethod: ShippingMethod
+  paymentMethod: PaymentMethod
+  bookCouponCode?: string | null
+  shippingCouponCode?: string | null
+  note?: string | null
+}
+
+export type CreateOrderResponse = {
+  orderId: string
+  orderCode: string
+  paymentMethod: PaymentMethod
+  paymentStatus: PaymentStatus
+  totalAmount: number
+  transferContent: string
 }
 
 export type UpdateOrderStatusRequest = {
   status: OrderStatus
 }
 
-// Response types
 export type OrderItemResponse = {
   id: string
   bookId: string
@@ -35,14 +56,21 @@ export type OrderResponse = {
   orderId: string
   userId: string
   items: OrderItemResponse[]
+  productTotal: number
   totalAmount: number
   discountAmount: number
   shippingFee: number
+  shippingDiscount: number
+  couponDiscount: number
   finalAmount: number
   couponId: string | null
   couponCode: string | null
-  paymentMethod: PaymentMethod
-  paymentStatus: PaymentStatus
+  bookCouponId: string | null
+  bookCouponCode: string | null
+  shippingCouponId: string | null
+  shippingCouponCode: string | null
+  paymentMethod: OrderPaymentMethod
+  paymentStatus: OrderPaymentStatus
   status: OrderStatus
   receiverName: string
   receiverPhone: string

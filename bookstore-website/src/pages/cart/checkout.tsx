@@ -11,13 +11,13 @@ import {
   Store,
   Tag,
   Truck,
-  Wallet,
   X,
 } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { Textarea } from '@/components/common/textarea'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -50,6 +50,8 @@ export default function CheckoutPage() {
     shippingDiscount,
     couponDiscount,
     finalTotal,
+    shippingMethod,
+    paymentMethod,
     loading,
     isAddressLoading,
     isCartLoading,
@@ -63,9 +65,11 @@ export default function CheckoutPage() {
     handleChange,
     handleCouponCodeChange,
     handleSelectAddressChange,
+    handleShippingMethodChange,
+    handlePaymentMethodChange,
     handleSubmit,
   } = useCheckoutFlow()
-  const labels = getCheckoutLabels(language)
+  const labels = buildCheckoutLabels(language)
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false)
   const [addressDialogValue, setAddressDialogValue] = useState('')
   const [isCouponDialogOpen, setIsCouponDialogOpen] = useState(false)
@@ -213,16 +217,18 @@ export default function CheckoutPage() {
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <CheckoutOptionCard
-                    selected
+                    selected={shippingMethod === 'DELIVERY'}
                     icon={<Truck className="size-5" />}
                     title={labels.homeDelivery}
-                    description={labels.deliveryEstimate}
+                    description={labels.deliveryDescription}
+                    onClick={() => handleShippingMethodChange('DELIVERY')}
                   />
                   <CheckoutOptionCard
-                    disabled
+                    selected={shippingMethod === 'PICKUP'}
                     icon={<Store className="size-5" />}
                     title={labels.storePickup}
-                    description={labels.pickupUnavailable}
+                    description={labels.pickupDescription}
+                    onClick={() => handleShippingMethodChange('PICKUP')}
                   />
                 </div>
               </CheckoutSection>
@@ -260,31 +266,38 @@ export default function CheckoutPage() {
 
               <CheckoutSection
                 step="4."
+                title={labels.noteTitle}
+                icon={<Pencil className="size-5" />}
+              >
+                <div>
+                  <Label htmlFor="note">{labels.noteLabel}</Label>
+                  <Textarea
+                    id="note"
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    placeholder={labels.notePlaceholder}
+                    className="mt-2 min-h-[120px] resize-none"
+                  />
+                </div>
+              </CheckoutSection>
+
+              <CheckoutSection
+                step="5."
                 title={t('checkout.paymentMethodTitle')}
                 icon={<CreditCard className="size-5" />}
               >
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4">
                   <CheckoutOptionCard
-                    selected
-                    icon={<CreditCard className="size-5" />}
-                    title={labels.codPayment}
-                    description={labels.codDescription}
-                  />
-                  <CheckoutOptionCard
-                    disabled
-                    icon={<Wallet className="size-5" />}
-                    title={labels.walletPayment}
-                    description={labels.paymentUnavailable}
-                  />
-                  <CheckoutOptionCard
-                    disabled
+                    selected={paymentMethod === 'BANK_TRANSFER_QR'}
                     icon={<Landmark className="size-5" />}
-                    title={labels.bankPayment}
-                    description={labels.paymentUnavailable}
+                    title={labels.bankTransferQr}
+                    description={labels.bankTransferQrDescription}
+                    onClick={() => handlePaymentMethodChange('BANK_TRANSFER_QR')}
                   />
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {t('checkout.paymentMethodNotice')}
+                  {labels.paymentMethodNotice}
                 </p>
               </CheckoutSection>
             </div>
@@ -385,7 +398,7 @@ export default function CheckoutPage() {
   )
 }
 
-type CheckoutLabels = ReturnType<typeof getCheckoutLabels>
+type CheckoutLabels = ReturnType<typeof buildCheckoutLabels>
 
 function getCheckoutLabels(language: 'vi' | 'en') {
   if (language === 'en') {
@@ -480,6 +493,112 @@ function getCheckoutLabels(language: 'vi' | 'en') {
     couponUsage: 'Đã dùng {used}/{limit}',
     couponUsageNoLimit: 'Đã dùng {used}',
     couponUnavailable: 'Đơn hàng chưa đạt giá trị tối thiểu',
+  }
+}
+
+function buildCheckoutLabels(language: 'vi' | 'en') {
+  if (language === 'en') {
+    return {
+      shippingAddressTitle: 'Shipping address',
+      changeAddress: 'Change',
+      addAddress: 'Add address',
+      addNewAddress: 'Add new address',
+      chooseSavedAddress: 'Choose saved address',
+      chooseAddressTitle: 'Choose shipping address',
+      chooseAddressDescription:
+        'Only the selected address will be used for this order.',
+      useThisAddress: 'Use this address',
+      cancel: 'Cancel',
+      close: 'Close',
+      defaultAddress: 'Default',
+      noAddressTitle: 'No shipping address yet',
+      noAddressDescription: 'Add a shipping address before placing this order.',
+      newAddressHeading: 'New shipping address',
+      shippingMethodTitle: 'Shipping method',
+      homeDelivery: 'Home delivery',
+      deliveryDescription:
+        'Deliver to the saved shipping contact for this order',
+      storePickup: 'Store pickup',
+      pickupDescription: 'Pick up at the shop while keeping your contact details',
+      noteTitle: 'Note for the shop',
+      noteLabel: 'Message',
+      notePlaceholder:
+        'Optional note about delivery time or order instructions',
+      bankTransferQr: 'Bank transfer via SePay',
+      bankTransferQrDescription:
+        'Place the order first, then transfer with the exact content from the waiting page',
+      paymentMethodNotice:
+        'Frontend only reads payment status from the backend and never marks the order as paid on its own.',
+      chooseCoupon: 'Choose code',
+      selectedCouponPrefix: 'Selected code:',
+      productTotal: 'Product total',
+      shippingFeeTotal: 'Shipping fee',
+      shippingDiscount: 'Shipping discount',
+      couponDiscount: 'Coupon discount',
+      chooseCouponTitle: 'Choose coupon code',
+      couponInputPlaceholder: 'Enter coupon code',
+      applyCoupon: 'Apply code',
+      useCoupon: 'Use code',
+      shippingCoupons: 'Shipping codes',
+      bookCoupons: 'Book discount codes',
+      couponLoading: 'Loading coupon codes...',
+      noCoupons: 'No coupon codes available',
+      couponMinOrder: 'Min order {amount}',
+      couponMaxDiscount: 'Max discount {amount}',
+      couponUsage: 'Used {used}/{limit}',
+      couponUsageNoLimit: 'Used {used}',
+      couponUnavailable: 'Order has not reached the minimum value',
+    }
+  }
+
+  return {
+    shippingAddressTitle: 'Dia chi giao hang',
+    changeAddress: 'Thay doi',
+    addAddress: 'Them dia chi',
+    addNewAddress: 'Them dia chi moi',
+    chooseSavedAddress: 'Chon dia chi da luu',
+    chooseAddressTitle: 'Chon dia chi giao hang',
+    chooseAddressDescription:
+      'Chi dia chi duoc chon se duoc dung cho don hang nay.',
+    useThisAddress: 'Dung dia chi nay',
+    cancel: 'Huy',
+    close: 'Dong',
+    defaultAddress: 'Mac dinh',
+    noAddressTitle: 'Chua co dia chi giao hang',
+    noAddressDescription: 'Them dia chi giao hang truoc khi dat don.',
+    newAddressHeading: 'Dia chi giao hang moi',
+    shippingMethodTitle: 'Phuong thuc van chuyen',
+    homeDelivery: 'Giao hang tan noi',
+    deliveryDescription: 'Giao theo thong tin nguoi nhan da luu cho don nay',
+    storePickup: 'Nhan tai cua hang',
+    pickupDescription: 'Nhan tai shop nhung van giu thong tin lien he cho don',
+    noteTitle: 'Loi nhan cho shop',
+    noteLabel: 'Ghi chu',
+    notePlaceholder: 'Them ghi chu ve thoi gian nhan hoac yeu cau cho don',
+    bankTransferQr: 'Chuyen khoan SePay',
+    bankTransferQrDescription:
+      'Dat don truoc, sau do chuyen khoan dung noi dung o man hinh cho thanh toan',
+    paymentMethodNotice:
+      'Frontend chi doc trang thai thanh toan tu backend va khong tu dong danh dau da thanh toan.',
+    chooseCoupon: 'Chon ma',
+    selectedCouponPrefix: 'Ma da chon:',
+    productTotal: 'Tong tien san pham',
+    shippingFeeTotal: 'Phi van chuyen',
+    shippingDiscount: 'Giam phi van chuyen',
+    couponDiscount: 'Giam gia ma giam gia',
+    chooseCouponTitle: 'Chon ma giam gia',
+    couponInputPlaceholder: 'Nhap ma giam gia',
+    applyCoupon: 'Ap dung ma',
+    useCoupon: 'Dung ma',
+    shippingCoupons: 'Ma ship',
+    bookCoupons: 'Ma giam tien sach',
+    couponLoading: 'Dang tai ma giam gia...',
+    noCoupons: 'Chua co ma giam gia phu hop',
+    couponMinOrder: 'Don toi thieu {amount}',
+    couponMaxDiscount: 'Giam toi da {amount}',
+    couponUsage: 'Da dung {used}/{limit}',
+    couponUsageNoLimit: 'Da dung {used}',
+    couponUnavailable: 'Don hang chua dat gia tri toi thieu',
   }
 }
 
@@ -687,23 +806,24 @@ function CheckoutOptionCard({
   icon,
   selected = false,
   disabled = false,
+  onClick,
 }: {
   title: string
   description: string
   icon: ReactNode
   selected?: boolean
   disabled?: boolean
+  onClick?: () => void
 }) {
-  return (
-    <div
-      className={cn(
-        'flex min-h-[76px] items-center gap-3 rounded-lg border p-4 transition-colors',
-        selected
-          ? 'border-primary/60 bg-primary/5'
-          : 'border-border bg-background',
-        disabled && 'opacity-60',
-      )}
-    >
+  const className = cn(
+    'flex min-h-[76px] items-center gap-3 rounded-lg border p-4 text-left transition-colors',
+    selected ? 'border-primary/60 bg-primary/5' : 'border-border bg-background',
+    disabled && 'cursor-not-allowed opacity-60',
+    onClick && !disabled && 'cursor-pointer hover:border-primary/40',
+  )
+
+  const content = (
+    <>
       <span
         className={cn(
           'flex size-5 shrink-0 items-center justify-center rounded-full border',
@@ -717,8 +837,23 @@ function CheckoutOptionCard({
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>
       </div>
       <span className="text-primary">{icon}</span>
-    </div>
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={className}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return <div className={className}>{content}</div>
 }
 
 function OrderSummaryItem({
@@ -733,7 +868,7 @@ function OrderSummaryItem({
   return (
     <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-3 text-sm">
       <Link
-        to={`/books/${item.id}`}
+        to={`/books/${item.bookId}`}
         className="relative block size-16 overflow-hidden rounded-lg bg-muted"
       >
         <img
@@ -747,7 +882,7 @@ function OrderSummaryItem({
       </Link>
 
       <div className="min-w-0">
-        <Link to={`/books/${item.id}`}>
+        <Link to={`/books/${item.bookId}`}>
           <p className="line-clamp-2 font-semibold hover:text-primary">
             {item.title}
           </p>
@@ -785,6 +920,10 @@ function formatDiscountValue(
   amount: number,
   formatCurrency: (value: number) => string,
 ) {
+  if (amount <= 0) {
+    return formatCurrency(0)
+  }
+
   return `- ${formatCurrency(amount)}`
 }
 

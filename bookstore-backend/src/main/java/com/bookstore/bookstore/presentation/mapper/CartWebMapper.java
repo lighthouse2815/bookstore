@@ -49,6 +49,7 @@ public class CartWebMapper {
 
     private CartItemResponse toItemResponse(CartItemResult result) {
         return new CartItemResponse(
+                result.id(),
                 result.bookId(),
                 result.bookTitle(),
                 result.imageUrl(),

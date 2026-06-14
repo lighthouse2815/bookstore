@@ -1404,3 +1404,21 @@ export const messages = {
     },
   },
 } as const
+
+Object.assign(messages.vi.paymentMethods as Record<string, string>, {
+  BANK_TRANSFER_QR: 'Chuyen khoan SePay',
+})
+
+Object.assign(messages.vi.paymentStatus as Record<string, string>, {
+  PENDING: 'Cho thanh toan',
+  CANCELLED: 'Da huy',
+})
+
+Object.assign(messages.en.paymentMethods as Record<string, string>, {
+  BANK_TRANSFER_QR: 'SePay bank transfer',
+})
+
+Object.assign(messages.en.paymentStatus as Record<string, string>, {
+  PENDING: 'Waiting for payment',
+  CANCELLED: 'Cancelled',
+})

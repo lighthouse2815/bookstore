@@ -101,7 +101,7 @@ export default function CartPage() {
       setSelectedItemIds((currentIds) =>
         currentIds.filter((id) => !selectedItemIdSet.has(id)),
       )
-      await removeItems(selectedItems.map((item) => item.id))
+      await removeItems(selectedItems.map((item) => item.bookId))
     } finally {
       setIsRemovingSelected(false)
     }
@@ -190,16 +190,16 @@ export default function CartPage() {
                       checked={selectedItemIdSet.has(item.id)}
                       onToggle={() => toggleItem(item.id)}
                       onDecrease={() => {
-                        void updateQty(item.id, Math.max(1, item.qty - 1))
+                        void updateQty(item.bookId, Math.max(1, item.qty - 1))
                       }}
                       onIncrease={() => {
-                        void updateQty(item.id, item.qty + 1)
+                        void updateQty(item.bookId, item.qty + 1)
                       }}
                       onRemove={() => {
                         setSelectedItemIds((currentIds) =>
                           currentIds.filter((id) => id !== item.id),
                         )
-                        void removeItem(item.id)
+                        void removeItem(item.bookId)
                       }}
                       formatCurrency={formatCurrency}
                       t={t}
@@ -377,7 +377,7 @@ function CartLineItem({
       />
 
       <Link
-        to={`/books/${item.id}`}
+        to={`/books/${item.bookId}`}
         className="block size-24 overflow-hidden rounded-xl bg-muted sm:size-28"
       >
         <img
@@ -389,7 +389,7 @@ function CartLineItem({
 
       <div className="min-w-0 space-y-3">
         <div>
-          <Link to={`/books/${item.id}`}>
+          <Link to={`/books/${item.bookId}`}>
             <h3 className="line-clamp-2 font-heading text-lg font-bold hover:text-primary">
               {item.title}
             </h3>

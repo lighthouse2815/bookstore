@@ -24,9 +24,9 @@ type CartContextType = {
   totalQuantity: number
   isLoading: boolean
   addItem: (bookId: string, quantity?: number) => Promise<void>
-  removeItem: (id: string) => Promise<void>
-  removeItems: (ids: string[]) => Promise<void>
-  updateQty: (id: string, quantity: number) => Promise<void>
+  removeItem: (bookId: string) => Promise<void>
+  removeItems: (bookIds: string[]) => Promise<void>
+  updateQty: (bookId: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
   refreshCart: () => Promise<void>
 }
@@ -35,7 +35,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 function mapCartItems(response: CartResponse): CartItem[] {
   return response.items.map((item) => ({
-    id: item.bookId,
+    id: item.id,
+    bookId: item.bookId,
     title: item.bookTitle,
     cover: item.imageUrl,
     price: item.price,
@@ -101,49 +102,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function removeItem(id: string) {
+  async function removeItem(bookId: string) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
     try {
-      await removeCartItem(id)
+      await removeCartItem(bookId)
       await refreshCart()
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
     }
   }
 
-  async function removeItems(ids: string[]) {
+  async function removeItems(bookIds: string[]) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
-    const uniqueIds = Array.from(new Set(ids))
-    if (uniqueIds.length === 0) {
+    const uniqueBookIds = Array.from(new Set(bookIds))
+    if (uniqueBookIds.length === 0) {
       return
     }
 
     try {
-      await Promise.all(uniqueIds.map((id) => removeCartItem(id)))
+      await Promise.all(uniqueBookIds.map((bookId) => removeCartItem(bookId)))
       await refreshCart()
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
     }
   }
 
-  async function updateQty(id: string, quantity: number) {
+  async function updateQty(bookId: string, quantity: number) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
     if (quantity <= 0) {
-      await removeItem(id)
+      await removeItem(bookId)
       return
     }
 
     try {
-      const cart = await updateCartItem(id, { quantity })
+      const cart = await updateCartItem(bookId, { quantity })
       applyCartResponse(cart)
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
