@@ -7,43 +7,34 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
+
 
 public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = "items")
-    @Query("""
-            select o
-            from OrderJpaEntity o
-            where o.id = :orderId
-            """)
-    Optional<OrderJpaEntity> findDetailedById(@Param("orderId") UUID orderId);
+    Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNull(UUID id);
+
 
     @EntityGraph(attributePaths = "items")
-    @Query("""
-            select o
-            from OrderJpaEntity o
-            where o.userId = :userId
-            order by o.createdAt desc
-            """)
-    List<OrderJpaEntity> findAllByUserId(@Param("userId") UUID userId);
+    List<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNull(UUID userId);
+
 
     @Query("""
-            select i.bookId, sum(i.quantity)
+            select i.book.id, sum(i.quantity)
             from OrderJpaEntity o
             join o.items i
             where o.status = com.bookstore.bookstore.domain.enums.OrderStatus.DELIVERED
-              and i.bookId in :bookIds
-            group by i.bookId
+              and i.book.id in :bookIds
+              and i.book.deletedAt is null
+            group by i.book.id
             """)
     List<Object[]> countDeliveredQuantityByBookIds(@Param("bookIds") Collection<UUID> bookIds);
 
     @EntityGraph(attributePaths = "items")
-    @Query("""
-            select o
-            from OrderJpaEntity o
-            order by o.createdAt desc
-            """)
-    List<OrderJpaEntity> findAllDetailed();
+    List<OrderJpaEntity> findAllByUser_DeletedAtIsNull();
+
+
 }
+

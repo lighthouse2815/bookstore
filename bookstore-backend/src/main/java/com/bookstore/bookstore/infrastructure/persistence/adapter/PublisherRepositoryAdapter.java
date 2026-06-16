@@ -20,49 +20,49 @@ public class PublisherRepositoryAdapter implements IPublisherRepository {
 
     @Override
     public List<Publisher> findAllActive() {
-        return publisherJpaRepository.findAllActive().stream()
+        return publisherJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(publisherPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Publisher> findAllIncludingDeleted() {
-        return publisherJpaRepository.findAllIncludingDeleted().stream()
+        return publisherJpaRepository.findAll().stream()
                 .map(publisherPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Publisher> findByIdActive(UUID publisherId) {
-        return publisherJpaRepository.findByIdActive(publisherId)
+        return publisherJpaRepository.findByIdAndDeletedAtIsNull(publisherId)
                 .map(publisherPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Publisher> findByIdIncludingDeleted(UUID publisherId) {
-        return publisherJpaRepository.findByIdIncludingDeleted(publisherId)
+        return publisherJpaRepository.findById(publisherId)
                 .map(publisherPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Publisher> findByNameActive(String publisherName) {
-        return publisherJpaRepository.findByNameActive(publisherName)
+        return publisherJpaRepository.findByNameAndDeletedAtIsNull(publisherName)
                 .map(publisherPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID publisherId) {
-        return publisherJpaRepository.existsByIdIncludingDeleted(publisherId);
+        return publisherJpaRepository.existsById(publisherId);
     }
 
     @Override
     public boolean existsByNameIncludingDeleted(String publisherName) {
-        return publisherJpaRepository.existsByNameIncludingDeleted(publisherName);
+        return publisherJpaRepository.existsByName(publisherName);
     }
 
     @Override
     public Publisher save(Publisher publisher) {
-        PublisherJpaEntity entity = publisherJpaRepository.findByIdIncludingDeleted(publisher.getId())
+        PublisherJpaEntity entity = publisherJpaRepository.findById(publisher.getId())
                 .orElseGet(PublisherJpaEntity::new);
         publisherPersistenceMapper.copyToEntity(entity, publisher);
         return publisherPersistenceMapper.toDomain(publisherJpaRepository.save(entity));

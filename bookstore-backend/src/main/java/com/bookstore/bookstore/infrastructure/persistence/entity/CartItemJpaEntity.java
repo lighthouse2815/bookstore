@@ -32,8 +32,9 @@ public class CartItemJpaEntity {
     @JoinColumn(name = "cart_id", nullable = false)
     private CartJpaEntity cart;
 
-    @Column(name = "book_id", nullable = false)
-    private UUID bookId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
+    private BookJpaEntity book;
 
     @Column(nullable = false)
     private Integer quantity;

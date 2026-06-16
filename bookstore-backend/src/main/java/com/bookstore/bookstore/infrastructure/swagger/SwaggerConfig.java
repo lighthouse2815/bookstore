@@ -1,4 +1,4 @@
-package com.bookstore.bookstore.config;
+package com.bookstore.bookstore.infrastructure.swagger;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

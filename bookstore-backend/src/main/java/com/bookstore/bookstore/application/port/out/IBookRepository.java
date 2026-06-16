@@ -16,6 +16,8 @@ public interface IBookRepository {
 
     Optional<Book> findByIdIncludingDeleted(UUID bookId);
 
+    boolean existsByIdIncludingDeleted(UUID bookId);
+
     List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds);
 
     List<Book> findRelatedActiveByCategoryId(UUID categoryId, UUID excludedBookId, int limit);

@@ -20,38 +20,41 @@ public class CouponRepositoryAdapter implements ICouponRepository {
 
     @Override
     public List<Coupon> findAllActive() {
-        return couponJpaRepository.findAllActive().stream()
+        return couponJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(couponPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Coupon> findByIdActive(UUID couponId) {
-        return couponJpaRepository.findByIdActive(couponId)
+        return couponJpaRepository.findByDeletedAtIsNullAndId(couponId)
                 .map(couponPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Coupon> findByIdIncludingDeleted(UUID couponId) {
-        return couponJpaRepository.findByIdIncludingDeleted(couponId)
+        return couponJpaRepository.findById(couponId)
                 .map(couponPersistenceMapper::toDomain);
     }
 
+
+
     @Override
     public Optional<Coupon> findByCodeActive(String code) {
-        return couponJpaRepository.findByCodeActive(code)
+        return couponJpaRepository.findByDeletedAtIsNullAndCode(code)
                 .map(couponPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByCodeIncludingDeleted(String code) {
-        return couponJpaRepository.existsByCodeIncludingDeleted(code);
+        return couponJpaRepository.existsByCode(code);
     }
 
     @Override
     public Coupon save(Coupon coupon) {
-        CouponJpaEntity entity = couponJpaRepository.findByIdIncludingDeleted(coupon.getId())
+        CouponJpaEntity entity = couponJpaRepository.findById(coupon.getId())
                 .orElseGet(CouponJpaEntity::new);
+
         couponPersistenceMapper.copyToEntity(coupon, entity);
         return couponPersistenceMapper.toDomain(couponJpaRepository.save(entity));
     }

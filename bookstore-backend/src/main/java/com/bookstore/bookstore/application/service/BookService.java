@@ -12,12 +12,9 @@ import com.bookstore.bookstore.application.port.out.IAuthorRepository;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
-import com.bookstore.bookstore.domain.model.Author;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookDetail;
 import com.bookstore.bookstore.domain.model.BookImage;
-import com.bookstore.bookstore.domain.model.Category;
-import com.bookstore.bookstore.domain.model.Publisher;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -177,19 +174,22 @@ public class BookService implements IBookService {
         // TODO : the loai, tac gia , nha xuat ban bi xoa thi van cho hien, dung ham getAllIncludingDeleted
     }
 
-    private Category requireActiveCategory(UUID categoryId) {
-        return categoryRepository.findByIdActive(categoryId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
+    private void requireActiveCategory(UUID categoryId) {
+        if (!categoryRepository.existsByIdIncludingDeleted(categoryId)) {
+            throw new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND);
+        }
     }
 
-    private Author requireActiveAuthor(UUID authorId) {
-        return authorRepository.findByIdActive(authorId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTHOR_NOT_FOUND));
+    private void requireActiveAuthor(UUID authorId) {
+        if (!authorRepository.existsByIdIncludingDeleted(authorId)) {
+            throw new ApplicationException(ApplicationErrorCode.AUTHOR_NOT_FOUND);
+        }
     }
 
-    private Publisher requireActivePublisher(UUID publisherId) {
-        return publisherRepository.findByIdActive(publisherId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PUBLISHER_NOT_FOUND));
+    private void requireActivePublisher(UUID publisherId) {
+        if (!publisherRepository.existsByIdIncludingDeleted(publisherId)) {
+            throw new ApplicationException(ApplicationErrorCode.PUBLISHER_NOT_FOUND);
+        }
     }
 
     private List<BookImage> toBookImages(

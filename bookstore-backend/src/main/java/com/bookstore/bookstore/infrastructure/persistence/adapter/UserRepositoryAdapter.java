@@ -26,66 +26,66 @@ public class UserRepositoryAdapter implements IUserRepository {
 
     @Override
     public List<User> findAllActive() {
-        return userJpaRepository.findAllActive().stream()
+        return userJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(userPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<User> findAllIncludingDeleted() {
-        return userJpaRepository.findAllIncludingDeleted().stream()
+        return userJpaRepository.findAll().stream()
                 .map(userPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<User> findByIdActive(UUID userId) {
-        return userJpaRepository.findByIdActive(userId)
+        return userJpaRepository.findByIdAndDeletedAtIsNull(userId)
                 .map(userPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByIdIncludingDeleted(UUID userId) {
-        return userJpaRepository.findByIdIncludingDeleted(userId)
+        return userJpaRepository.findById(userId)
                 .map(userPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByUsernameActive(String username) {
-        return userJpaRepository.findByUsernameActive(username)
+        return userJpaRepository.findByUsernameAndDeletedAtIsNull(username)
                 .map(userPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByUsernameIncludingDeleted(String username) {
-        return userJpaRepository.findByUsernameIncludingDeleted(username)
+        return userJpaRepository.findByUsername(username)
                 .map(userPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByEmailIncludingDeleted(String email) {
-        return userJpaRepository.findByEmailIncludingDeleted(email)
+        return userJpaRepository.findByEmail(email)
                 .map(userPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID userId) {
-        return userJpaRepository.existsByIdIncludingDeleted(userId);
+        return userJpaRepository.existsById(userId);
     }
 
     @Override
     public boolean existsByUsernameIncludingDeleted(String username) {
-        return userJpaRepository.existsByUsernameIncludingDeleted(username);
+        return userJpaRepository.existsByUsername(username);
     }
 
     @Override
     public boolean existsByPhoneNumberIncludingDeleted(String phoneNumber) {
-        return userJpaRepository.existsByPhoneNumberIncludingDeleted(phoneNumber);
+        return userJpaRepository.existsByPhoneNumber(phoneNumber);
     }
 
     @Override
     public boolean existsByEmailIncludingDeleted(String email) {
-        return userJpaRepository.existsByEmailIncludingDeleted(email);
+        return userJpaRepository.existsByEmail(email);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class UserRepositoryAdapter implements IUserRepository {
 
     @Override
     public User save(User user) {
-        UserJpaEntity entity = userJpaRepository.findByIdIncludingDeleted(user.getId())
+        UserJpaEntity entity = userJpaRepository.findById(user.getId())
                 .orElseGet(UserJpaEntity::new);
         userPersistenceMapper.copyToEntity(user, entity, resolveRoles(user.getRoles()));
         return userPersistenceMapper.toDomain(userJpaRepository.save(entity));
@@ -104,7 +104,7 @@ public class UserRepositoryAdapter implements IUserRepository {
     private Set<RoleJpaEntity> resolveRoles(Set<Role> roles) {
         Set<RoleJpaEntity> resolved = new LinkedHashSet<>();
         for (Role role : roles) {
-            RoleJpaEntity entity = roleJpaRepository.findByIdIncludingDeleted(role.getId())
+            RoleJpaEntity entity = roleJpaRepository.findById(role.getId())
                     .orElseThrow(() -> new IllegalStateException("Role not found: " + role.getId()));
             resolved.add(entity);
         }

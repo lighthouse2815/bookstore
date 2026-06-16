@@ -3,7 +3,10 @@ package com.bookstore.bookstore.infrastructure.persistence.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
@@ -50,17 +53,20 @@ public class BookJpaEntity {
     @OrderBy("sortOrder ASC, createdAt ASC")
     private List<BookImageJpaEntity> images = new ArrayList<>();
 
-    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
     private BookDetailJpaEntity detail;
 
-    @Column(name = "category_id", nullable = false)
-    private UUID categoryId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private CategoryJpaEntity category;
 
-    @Column(name = "author_id", nullable = false)
-    private UUID authorId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "author_id", nullable = false)
+    private AuthorJpaEntity author;
 
-    @Column(name = "publisher_id", nullable = false)
-    private UUID publisherId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "publisher_id", nullable = false)
+    private PublisherJpaEntity publisher;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

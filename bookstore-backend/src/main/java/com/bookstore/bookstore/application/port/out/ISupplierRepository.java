@@ -13,6 +13,8 @@ public interface ISupplierRepository {
 
     Optional<Supplier> findByIdIncludingDeleted(UUID supplierId);
 
+    boolean existsByIdIncludingDeleted(UUID supplierId);
+
     boolean existsByNameIncludingDeleted(String name);
 
     Supplier save(Supplier supplier);

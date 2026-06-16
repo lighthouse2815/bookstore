@@ -54,7 +54,7 @@ public class PersistenceDataInitializer implements ApplicationRunner {
 
     private void seedPermissions() {
         for (PermissionCode code : PermissionCode.values()) {
-            if (permissionJpaRepository.findByCodeIncludingDeleted(code).isPresent()) {
+            if (permissionJpaRepository.findByCode(code).isPresent()) {
                 continue;
             }
 
@@ -122,7 +122,7 @@ public class PersistenceDataInitializer implements ApplicationRunner {
     }
 
     private void seedRole(String name, String description, Set<PermissionCode> permissionCodes) {
-        if (roleJpaRepository.existsByNameIncludingDeleted(name)) {
+        if (roleJpaRepository.existsByName(name)) {
             return;
         }
 
@@ -132,7 +132,7 @@ public class PersistenceDataInitializer implements ApplicationRunner {
         entity.setName(name);
         entity.setDescription(description);
         entity.setPermissions(permissionCodes.stream()
-                .map(code -> permissionJpaRepository.findByCodeIncludingDeleted(code)
+                .map(code -> permissionJpaRepository.findByCode(code)
                         .orElseThrow(() -> new IllegalStateException("Permission not found: " + code)))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
         entity.setCreatedAt(now);
@@ -142,10 +142,10 @@ public class PersistenceDataInitializer implements ApplicationRunner {
     }
 
     private void seedAdminAccount() {
-        RoleJpaEntity adminRole = roleJpaRepository.findByNameActive(ADMIN_ROLE)
+        RoleJpaEntity adminRole = roleJpaRepository.findByNameAndDeletedAtIsNull(ADMIN_ROLE)
                 .orElseThrow(() -> new IllegalStateException("Role not found: " + ADMIN_ROLE));
 
-        UserJpaEntity adminUser = userJpaRepository.findByUsernameIncludingDeleted(ADMIN_USERNAME)
+        UserJpaEntity adminUser = userJpaRepository.findByUsername(ADMIN_USERNAME)
                 .map(existingUser -> ensureAdminUser(existingUser, adminRole))
                 .orElseGet(() -> createAdminUser(adminRole));
 
@@ -185,7 +185,7 @@ public class PersistenceDataInitializer implements ApplicationRunner {
     }
 
     private void ensureAdminProfile(UserJpaEntity adminUser) {
-        profileJpaRepository.findByUserIdIncludingDeleted(adminUser.getId())
+        profileJpaRepository.findByUserId(adminUser.getId())
                 .ifPresentOrElse(
                         existingProfile -> restoreProfileIfNeeded(existingProfile),
                         () -> createAdminProfile(adminUser)

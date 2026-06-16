@@ -16,7 +16,7 @@ public class CategoryPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getDescription(),
-                entity.getParentId(),
+                null, // parentId not supported by entity
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
@@ -33,7 +33,7 @@ public class CategoryPersistenceMapper {
         entity.setId(category.getId());
         entity.setName(category.getName());
         entity.setDescription(category.getDescription());
-        entity.setParentId(category.getParentId());
+        // parentId not supported by entity - ignored
         entity.setCreatedAt(category.getCreatedAt());
         entity.setUpdatedAt(category.getUpdatedAt());
         entity.setDeletedAt(category.getDeletedAt());

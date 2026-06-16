@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.UserOtp;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserOtpJpaEntity;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,7 @@ public class UserOtpPersistenceMapper {
 
         return new UserOtp(
                 entity.getId(),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getPurpose(),
                 entity.getOtpHash(),
                 entity.getExpiresAt(),
@@ -25,9 +26,9 @@ public class UserOtpPersistenceMapper {
         );
     }
 
-    public void copyToEntity(UserOtp userOtp, UserOtpJpaEntity entity) {
+    public void copyToEntity(UserOtp userOtp, UserOtpJpaEntity entity, UserJpaEntity user) {
         entity.setId(userOtp.getId());
-        entity.setUserId(userOtp.getUserId());
+        entity.setUser(user);
         entity.setPurpose(userOtp.getPurpose());
         entity.setOtpHash(userOtp.getOtpHash());
         entity.setExpiresAt(userOtp.getExpiresAt());

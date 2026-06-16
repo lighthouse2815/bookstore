@@ -39,8 +39,7 @@ public class ReviewService implements IReviewService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
         }
 
-        bookRepository.findByIdActive(bookId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
+        requireActiveBook(bookId);
 
         return reviewRepository.findAllByBookIdActive(bookId).stream()
                 .map(reviewAssembler::toResult)
@@ -54,8 +53,7 @@ public class ReviewService implements IReviewService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        bookRepository.findByIdActive(command.bookId())
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
+        requireActiveBook(command.bookId());
 
         if (reviewRepository.existsByOrderItemIdIncludingDeleted(command.orderItemId())) {
             throw new ApplicationException(ApplicationErrorCode.REVIEW_ALREADY_EXISTS);
@@ -77,6 +75,12 @@ public class ReviewService implements IReviewService {
         );
 
         return reviewAssembler.toResult(reviewRepository.save(review));
+    }
+
+    private void requireActiveBook(UUID bookId) {
+        if (!bookRepository.existsByIdIncludingDeleted(bookId)) {
+            throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+        }
     }
 
     @Override

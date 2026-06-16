@@ -20,50 +20,52 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
 
     @Override
     public List<Category> findAllActive() {
-        return categoryJpaRepository.findAllActive().stream()
+        return categoryJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(categoryPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Category> findAllIncludingDeleted() {
-        return categoryJpaRepository.findAllIncludingDeleted().stream()
+        return categoryJpaRepository.findAll().stream()
                 .map(categoryPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Category> findByIdActive(UUID categoryId) {
-        return categoryJpaRepository.findByIdActive(categoryId)
+        return categoryJpaRepository.findByIdAndDeletedAtIsNull(categoryId)
                 .map(categoryPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Category> findByIdIncludingDeleted(UUID categoryId) {
-        return categoryJpaRepository.findByIdIncludingDeleted(categoryId)
+        return categoryJpaRepository.findById(categoryId)
                 .map(categoryPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Category> findByNameActive(String categoryName) {
-        return categoryJpaRepository.findByNameActive(categoryName)
+        return categoryJpaRepository.findByNameAndDeletedAtIsNull(categoryName)
                 .map(categoryPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID categoryId) {
-        return categoryJpaRepository.existsByIdIncludingDeleted(categoryId);
+        return categoryJpaRepository.existsById(categoryId);
     }
+
 
     @Override
     public boolean existsByNameIncludingDeleted(String categoryName) {
-        return categoryJpaRepository.existsByNameIncludingDeleted(categoryName);
+        return categoryJpaRepository.existsByName(categoryName);
     }
 
     @Override
     public Category save(Category category) {
-        CategoryJpaEntity entity = categoryJpaRepository.findByIdIncludingDeleted(category.getId())
+        CategoryJpaEntity entity = categoryJpaRepository.findById(category.getId())
                 .orElseGet(CategoryJpaEntity::new);
+
         categoryPersistenceMapper.copyToEntity(entity, category);
         return categoryPersistenceMapper.toDomain(categoryJpaRepository.save(entity));
     }

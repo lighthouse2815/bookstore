@@ -128,7 +128,8 @@ public class CategoryService implements ICategoryService {
         if (Objects.equals(parentId, categoryId)) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "parentId");
         }
-        categoryRepository.findByIdActive(parentId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
+        if (!categoryRepository.existsByIdIncludingDeleted(parentId)) {
+            throw new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND);
+        }
     }
 }

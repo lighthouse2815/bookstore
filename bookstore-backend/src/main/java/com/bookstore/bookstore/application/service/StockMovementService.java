@@ -36,11 +36,16 @@ public class StockMovementService implements IStockMovementService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
         }
 
-        bookRepository.findByIdIncludingDeleted(bookId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
+        requireBookExists(bookId);
 
         return stockMovementRepository.findAllByBookId(bookId).stream()
                 .map(stockMovementAssembler::toResult)
                 .toList();
+    }
+
+    private void requireBookExists(UUID bookId) {
+        if (!bookRepository.existsByIdIncludingDeleted(bookId)) {
+            throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+        }
     }
 }

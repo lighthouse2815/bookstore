@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Notification;
 import com.bookstore.bookstore.infrastructure.persistence.entity.NotificationJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class NotificationPersistenceMapper {
 
         return new Notification(
                 entity.getId(),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getTitle(),
                 entity.getContent(),
                 entity.isRead(),
@@ -25,9 +26,9 @@ public class NotificationPersistenceMapper {
         );
     }
 
-    public void copyToEntity(NotificationJpaEntity entity, Notification notification) {
+    public void copyToEntity(NotificationJpaEntity entity, Notification notification, UserJpaEntity user) {
         entity.setId(notification.getId());
-        entity.setUserId(notification.getUserId());
+        entity.setUser(user);
         entity.setTitle(notification.getTitle());
         entity.setContent(notification.getContent());
         entity.setRead(notification.isRead());

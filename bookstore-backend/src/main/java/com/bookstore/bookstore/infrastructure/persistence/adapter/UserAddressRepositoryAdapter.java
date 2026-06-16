@@ -23,26 +23,26 @@ public class UserAddressRepositoryAdapter implements IUserAddressRepository {
 
     @Override
     public List<UserAddress> findAllByUserIdActive(UUID userId) {
-        return userAddressJpaRepository.findAllByUserIdActive(userId).stream()
+        return userAddressJpaRepository.findAllByUser_IdActive(userId).stream()
                 .map(userAddressPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<UserAddress> findByIdAndUserIdActive(UUID addressId, UUID userId) {
-        return userAddressJpaRepository.findByIdAndUserIdActive(addressId, userId)
+        return userAddressJpaRepository.findByIdAndDeletedAtIsNullAndUser_IdAndUser_DeletedAtIsNull(addressId, userId)
                 .map(userAddressPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<UserAddress> findByIdIncludingDeleted(UUID addressId) {
-        return userAddressJpaRepository.findByIdIncludingDeleted(addressId)
+        return userAddressJpaRepository.findById(addressId)
                 .map(userAddressPersistenceMapper::toDomain);
     }
 
     @Override
     public UserAddress save(UserAddress userAddress) {
-        UserAddressJpaEntity entity = userAddressJpaRepository.findByIdIncludingDeleted(userAddress.getId())
+        UserAddressJpaEntity entity = userAddressJpaRepository.findById(userAddress.getId())
                 .orElseGet(UserAddressJpaEntity::new);
         UserJpaEntity user = userJpaRepository.getReferenceById(userAddress.getUserId());
         userAddressPersistenceMapper.copyToEntity(userAddress, entity, user);

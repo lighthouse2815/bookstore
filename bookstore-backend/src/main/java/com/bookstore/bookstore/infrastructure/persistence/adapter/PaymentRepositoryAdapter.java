@@ -1,6 +1,8 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
+import com.bookstore.bookstore.domain.enums.PaymentProvider;
+import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.model.Payment;
 import com.bookstore.bookstore.infrastructure.persistence.entity.PaymentJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.PaymentPersistenceMapper;
@@ -43,7 +45,7 @@ public class PaymentRepositoryAdapter implements IPaymentRepository {
 
     @Override
     public Optional<Payment> findPendingSepayByOrderCode(String orderCode) {
-        return paymentJpaRepository.findPendingSepayByOrderCode(orderCode)
+        return paymentJpaRepository.findPendingSepayByOrderCode(orderCode,PaymentProvider.SEPAY,PaymentStatus.PENDING)
                 .map(paymentPersistenceMapper::toDomain);
     }
 

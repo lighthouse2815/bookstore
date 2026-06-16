@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.UserAuthIdentity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserAuthIdentityJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class UserAuthIdentityPersistenceMapper {
 
         return new UserAuthIdentity(
                 entity.getId(),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getProvider(),
                 entity.getProviderSubject(),
                 entity.getProviderEmail(),
@@ -24,9 +25,9 @@ public class UserAuthIdentityPersistenceMapper {
         );
     }
 
-    public void copyToEntity(UserAuthIdentity userAuthIdentity, UserAuthIdentityJpaEntity entity) {
+    public void copyToEntity(UserAuthIdentity userAuthIdentity, UserAuthIdentityJpaEntity entity, UserJpaEntity user) {
         entity.setId(userAuthIdentity.getId());
-        entity.setUserId(userAuthIdentity.getUserId());
+        entity.setUser(user);
         entity.setProvider(userAuthIdentity.getProvider());
         entity.setProviderSubject(userAuthIdentity.getProviderSubject());
         entity.setProviderEmail(userAuthIdentity.getProviderEmail());

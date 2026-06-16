@@ -17,7 +17,8 @@ public interface PasswordResetTokenJpaRepository extends JpaRepository<PasswordR
     @Query("""
             update PasswordResetTokenJpaEntity prt
             set prt.usedAt = :usedAt
-            where prt.userId = :userId
+            where prt.user.id = :userId
+              and prt.user.deletedAt is null
               and prt.usedAt is null
             """)
     void markUnusedByUserIdAsUsed(

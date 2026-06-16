@@ -15,58 +15,30 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, UUID
             select r
             from ReviewJpaEntity r
             where r.deletedAt is null
-              and r.bookId = :bookId
+              and r.book.deletedAt is null
+              and r.user.deletedAt is null
+              and r.book.id = :bookId
             order by r.createdAt desc
             """)
-    List<ReviewJpaEntity> findAllByBookIdActive(@Param("bookId") UUID bookId);
+    List<ReviewJpaEntity> findAllByBook_IdActive(@Param("bookId") UUID bookId);
 
     @Query("""
-            select r.bookId, r.rating
+            select r.book.id, r.rating
             from ReviewJpaEntity r
             where r.deletedAt is null
-              and r.bookId in :bookIds
+              and r.book.deletedAt is null
+              and r.user.deletedAt is null
+              and r.book.id in :bookIds
             """)
     List<Object[]> findRatingsByBookIds(@Param("bookIds") Collection<UUID> bookIds);
 
-    @Query("""
-            select r
-            from ReviewJpaEntity r
-            where r.deletedAt is null
-            order by r.createdAt desc
-            """)
-    List<ReviewJpaEntity> findAllActive();
+    List<ReviewJpaEntity> findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc();
 
-    @Query("""
-            select r
-            from ReviewJpaEntity r
-            where r.deletedAt is null
-              and r.id = :reviewId
-            """)
-    Optional<ReviewJpaEntity> findByIdActive(@Param("reviewId") UUID reviewId);
+    Optional<ReviewJpaEntity> findByIdAndDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNull(UUID reviewId);
 
-    @Query("""
-            select r
-            from ReviewJpaEntity r
-            where r.deletedAt is null
-              and r.id = :reviewId
-              and r.userId = :userId
-            """)
-    Optional<ReviewJpaEntity> findByIdAndUserIdActive(
-            @Param("reviewId") UUID reviewId,
-            @Param("userId") UUID userId
-    );
+    Optional<ReviewJpaEntity> findByIdAndUser_IdAndDeletedAtIsNullAndUser_DeletedAtIsNull(UUID reviewId, UUID userId);
 
-    @Query("""
-            select r
-            from ReviewJpaEntity r
-            where r.id = :reviewId
-            """)
-    Optional<ReviewJpaEntity> findByIdIncludingDeleted(@Param("reviewId") UUID reviewId);
+    Optional<ReviewJpaEntity> findById(UUID reviewId);
 
-    @Query("""
-            select case when count(r) > 0 then true else false end
-            from ReviewJpaEntity r
-            where r.orderItemId = :orderItemId
-            """)
-    boolean existsByOrderItemIdIncludingDeleted(@Param("orderItemId") UUID orderItemId);
+    boolean existsByOrderItemId(UUID orderItemId);
 }

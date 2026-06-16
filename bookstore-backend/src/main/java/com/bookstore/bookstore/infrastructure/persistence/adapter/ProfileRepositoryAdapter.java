@@ -23,50 +23,50 @@ public class ProfileRepositoryAdapter implements IProfileRepository {
 
     @Override
     public List<Profile> findAllActive() {
-        return profileJpaRepository.findAllActive().stream()
+        return profileJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(profilePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Profile> findAllIncludingDeleted() {
-        return profileJpaRepository.findAllIncludingDeleted().stream()
+        return profileJpaRepository.findAll().stream()
                 .map(profilePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Profile> findByIdActive(UUID profileId) {
-        return profileJpaRepository.findByIdActive(profileId)
+        return profileJpaRepository.findByIdAndDeletedAtIsNull(profileId)
                 .map(profilePersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Profile> findByIdIncludingDeleted(UUID profileId) {
-        return profileJpaRepository.findByIdIncludingDeleted(profileId)
+        return profileJpaRepository.findById(profileId)
                 .map(profilePersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Profile> findByUserIdActive(UUID userId) {
-        return profileJpaRepository.findByUserIdActive(userId)
+        return profileJpaRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .map(profilePersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Profile> findByUserIdIncludingDeleted(UUID userId) {
-        return profileJpaRepository.findByUserIdIncludingDeleted(userId)
+        return profileJpaRepository.findByUserId(userId)
                 .map(profilePersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID profileId) {
-        return profileJpaRepository.existsByIdIncludingDeleted(profileId);
+        return profileJpaRepository.existsById(profileId);
     }
 
     @Override
     public boolean existsByUserIdIncludingDeleted(UUID userId) {
-        return profileJpaRepository.existsByUserIdIncludingDeleted(userId);
+        return profileJpaRepository.existsByUserId(userId);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class ProfileRepositoryAdapter implements IProfileRepository {
 
     @Override
     public Profile save(Profile profile) {
-        ProfileJpaEntity entity = profileJpaRepository.findByIdIncludingDeleted(profile.getId())
+        ProfileJpaEntity entity = profileJpaRepository.findById(profile.getId())
                 .orElseGet(ProfileJpaEntity::new);
         UserJpaEntity user = userJpaRepository.getReferenceById(profile.getUserId());
         profilePersistenceMapper.copyToEntity(profile, entity, user);

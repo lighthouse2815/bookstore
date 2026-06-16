@@ -10,18 +10,14 @@ import org.springframework.data.repository.query.Param;
 
 public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenJpaEntity, UUID> {
 
-    @Query("""
-            select rt
-            from RefreshTokenJpaEntity rt
-            where rt.token = :token
-            """)
-    Optional<RefreshTokenJpaEntity> findByToken(@Param("token") String token);
+    Optional<RefreshTokenJpaEntity> findByToken(String token);
 
     @Modifying
     @Query("""
             update RefreshTokenJpaEntity rt
             set rt.revoked = true
-            where rt.userId = :userId
+            where rt.user.id = :userId
+              and rt.user.deletedAt is null
               and rt.revoked = false
             """)
     void revokeAllByUserId(@Param("userId") UUID userId);

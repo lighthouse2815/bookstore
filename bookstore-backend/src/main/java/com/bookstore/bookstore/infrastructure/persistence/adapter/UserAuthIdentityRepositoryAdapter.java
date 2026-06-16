@@ -4,8 +4,10 @@ import com.bookstore.bookstore.application.port.out.IUserAuthIdentityRepository;
 import com.bookstore.bookstore.domain.enums.AuthProvider;
 import com.bookstore.bookstore.domain.model.UserAuthIdentity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserAuthIdentityJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.UserAuthIdentityPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserAuthIdentityJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Repository;
 public class UserAuthIdentityRepositoryAdapter implements IUserAuthIdentityRepository {
 
     private final UserAuthIdentityJpaRepository userAuthIdentityJpaRepository;
+    private final UserJpaRepository userJpaRepository;
     private final UserAuthIdentityPersistenceMapper userAuthIdentityPersistenceMapper;
 
     @Override
@@ -34,7 +37,9 @@ public class UserAuthIdentityRepositoryAdapter implements IUserAuthIdentityRepos
     public UserAuthIdentity save(UserAuthIdentity userAuthIdentity) {
         UserAuthIdentityJpaEntity entity = userAuthIdentityJpaRepository.findById(userAuthIdentity.getId())
                 .orElseGet(UserAuthIdentityJpaEntity::new);
-        userAuthIdentityPersistenceMapper.copyToEntity(userAuthIdentity, entity);
+        
+        UserJpaEntity user = userJpaRepository.getReferenceById(userAuthIdentity.getUserId());
+        userAuthIdentityPersistenceMapper.copyToEntity(userAuthIdentity, entity, user);
         return userAuthIdentityPersistenceMapper.toDomain(userAuthIdentityJpaRepository.save(entity));
     }
 }

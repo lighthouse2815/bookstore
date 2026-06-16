@@ -16,29 +16,15 @@ public interface UserAddressJpaRepository extends JpaRepository<UserAddressJpaEn
             select ua
             from UserAddressJpaEntity ua
             where ua.deletedAt is null
+              and ua.user.deletedAt is null
               and ua.user.id = :userId
             order by ua.defaultAddress desc, ua.createdAt asc
             """)
-    List<UserAddressJpaEntity> findAllByUserIdActive(@Param("userId") UUID userId);
+    List<UserAddressJpaEntity> findAllByUser_IdActive(@Param("userId") UUID userId);
 
     @EntityGraph(attributePaths = "user")
-    @Query("""
-            select ua
-            from UserAddressJpaEntity ua
-            where ua.deletedAt is null
-              and ua.id = :addressId
-              and ua.user.id = :userId
-            """)
-    Optional<UserAddressJpaEntity> findByIdAndUserIdActive(
-            @Param("addressId") UUID addressId,
-            @Param("userId") UUID userId
-    );
+    Optional<UserAddressJpaEntity> findByIdAndDeletedAtIsNullAndUser_IdAndUser_DeletedAtIsNull(UUID id, UUID userId);
 
     @EntityGraph(attributePaths = "user")
-    @Query("""
-            select ua
-            from UserAddressJpaEntity ua
-            where ua.id = :addressId
-            """)
-    Optional<UserAddressJpaEntity> findByIdIncludingDeleted(@Param("addressId") UUID addressId);
+    Optional<UserAddressJpaEntity> findById(UUID id);
 }

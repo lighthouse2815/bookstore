@@ -39,14 +39,15 @@ public interface UserOtpJpaRepository extends JpaRepository<UserOtpJpaEntity, UU
             update UserOtpJpaEntity uo
             set uo.invalidatedAt = :invalidatedAt,
                 uo.updatedAt = :invalidatedAt
-            where uo.userId = :userId
+            where uo.user.id = :userId
+              and uo.user.deletedAt is null
               and uo.purpose = :purpose
               and uo.verifiedAt is null
               and uo.invalidatedAt is null
             """)
     void invalidatePendingByUserIdAndPurpose(
             @Param("userId") UUID userId,
-            @Param("purpose") OtpPurpose purpose,
+            @Param("purpose") OtpPurpose purpose, 
             @Param("invalidatedAt") Instant invalidatedAt
     );
 
@@ -55,7 +56,8 @@ public interface UserOtpJpaRepository extends JpaRepository<UserOtpJpaEntity, UU
             update UserOtpJpaEntity uo
             set uo.invalidatedAt = :invalidatedAt,
                 uo.updatedAt = :invalidatedAt
-            where uo.userId = :userId
+            where uo.user.id = :userId
+              and uo.user.deletedAt is null
               and uo.purpose = :purpose
               and uo.invalidatedAt is null
             """)
