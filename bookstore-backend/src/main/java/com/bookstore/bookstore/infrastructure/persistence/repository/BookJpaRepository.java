@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.LowStockBookProjection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -57,4 +58,17 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
             @Param("excludedBookId") UUID excludedBookId,
             Pageable pageable
     );
+
+    long countByDeletedAtIsNullAndStockQuantityLessThanEqual(int threshold);
+
+    @Query("""
+            select b.id as bookId,
+                   b.title as title,
+                   b.stockQuantity as stockQuantity
+            from BookJpaEntity b
+            where b.deletedAt is null
+              and b.stockQuantity <= :threshold
+            order by b.stockQuantity asc, b.createdAt asc
+            """)
+    List<LowStockBookProjection> findLowStockBooks(@Param("threshold") int threshold);
 }

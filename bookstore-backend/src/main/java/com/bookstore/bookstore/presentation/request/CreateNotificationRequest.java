@@ -10,6 +10,10 @@ public record CreateNotificationRequest(
         @NotBlank(message = "title khong duoc de trong")
         String title,
         @NotBlank(message = "content khong duoc de trong")
-        String content
+        String content,
+        String type,
+        String targetType,
+        UUID targetId,
+        String link
 ) {
 }

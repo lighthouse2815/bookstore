@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.domain.model.Review;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ public interface IReviewRepository {
     Optional<Review> findByIdIncludingDeleted(UUID reviewId);
 
     boolean existsByOrderItemIdIncludingDeleted(UUID orderItemId);
+
+    long countNewReviewsBetween(Instant fromInclusive, Instant toExclusive);
 
     Review save(Review review);
 }

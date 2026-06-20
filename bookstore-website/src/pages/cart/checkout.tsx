@@ -22,11 +22,12 @@ import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
 import { NEW_ADDRESS_VALUE, useCheckoutFlow } from '@/hooks/use-checkout-flow'
-import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
 import type { UserAddressResponse } from '@/types/address'
-import type { CouponResponse } from '@/types/coupon'
 import type { CartItem } from '@/types/cart'
+import type { CouponResponse, CouponType } from '@/types/coupon'
+import { cn } from '@/utils'
+import { filterCouponsByType } from '@/utils/checkout-coupon'
+import { getBookCoverUrl } from '@/utils/book-cover'
 
 type CheckoutLabels = Record<string, string>
 
@@ -37,12 +38,13 @@ type CheckoutAddressFormData = {
   city: string
   district: string
   ward: string
-  couponCode: string
+  bookCouponCode: string
+  shippingCouponCode: string
   note: string
 }
 
 export default function CheckoutPage() {
-  const { t, formatCurrency } = useLanguage()
+  const { language, t, formatCurrency } = useLanguage()
   const {
     items,
     subtotal,
@@ -58,7 +60,8 @@ export default function CheckoutPage() {
     isCouponLoading,
     savedAddresses,
     activeCoupons,
-    selectedCoupon,
+    selectedBookCoupon,
+    selectedShippingCoupon,
     selectedAddress,
     selectedAddressId,
     formData,
@@ -73,9 +76,11 @@ export default function CheckoutPage() {
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false)
   const [addressDialogValue, setAddressDialogValue] = useState('')
   const [isCouponDialogOpen, setIsCouponDialogOpen] = useState(false)
+  const [couponDialogType, setCouponDialogType] = useState<CouponType>('BOOK')
   const [couponDialogCode, setCouponDialogCode] = useState('')
 
   const isUsingNewAddress = selectedAddressId === NEW_ADDRESS_VALUE
+  const isVietnamese = language === 'vi'
 
   const labels: CheckoutLabels = {
     shippingAddressTitle: t('checkout.shippingAddressTitle'),
@@ -96,15 +101,21 @@ export default function CheckoutPage() {
     homeDelivery: t('checkout.homeDelivery'),
     deliveryDescription: t('checkout.deliveryDescription'),
     storePickup: t('checkout.storePickup'),
-    pickupDescription: t('checkout.pickupDescription'),
+    pickupDescription: isVietnamese
+      ? 'Nhận tại cửa hàng, nhân viên sẽ liên hệ xác nhận sau khi đặt đơn.'
+      : 'Pick up at the store. Staff will contact you to confirm after checkout.',
     noteTitle: t('checkout.noteTitle'),
     noteLabel: t('checkout.noteLabel'),
     notePlaceholder: t('checkout.notePlaceholder'),
     bankTransferQr: t('checkout.bankTransferQr'),
     bankTransferQrDescription: t('checkout.bankTransferQrDescription'),
     cashOnDelivery: t('checkout.cashOnDelivery'),
-    cashOnDeliveryDescription: t('checkout.cashOnDeliveryDescription'),
-    paymentMethodNotice: t('checkout.paymentMethodNotice'),
+    cashOnDeliveryDescription: isVietnamese
+      ? 'Tạm thời chưa hỗ trợ cho đơn online.'
+      : 'Currently unavailable for online orders.',
+    paymentMethodNotice: isVietnamese
+      ? 'Đơn online hiện đang xử lý thanh toán qua SePay QR.'
+      : 'Online checkout currently supports SePay QR payment.',
     chooseCoupon: t('checkout.chooseCoupon'),
     selectedCouponPrefix: t('checkout.selectedCouponPrefix'),
     productTotal: t('checkout.productTotal'),
@@ -125,6 +136,11 @@ export default function CheckoutPage() {
     couponUsageNoLimit: t('checkout.couponUsageNoLimit'),
     couponUnavailable: t('checkout.couponUnavailable'),
   }
+
+  labels.cashOnDeliveryDescription = t('checkout.cashOnDeliveryDescription')
+  labels.paymentMethodNotice = isVietnamese
+    ? 'Giao tan noi tinh phi 30.000đ va mien phi tu 200.000đ. Chuyen khoan SePay se co QR sau khi dat don, COD thanh toan luc nhan hang.'
+    : 'Delivery costs 30,000 VND and becomes free from 200,000 VND. SePay transfer shows a QR after checkout, while COD is paid on delivery.'
 
   const hasSavedAddresses = savedAddresses.length > 0
   const hasCheckoutAddress = Boolean(selectedAddress) || isUsingNewAddress
@@ -159,8 +175,11 @@ export default function CheckoutPage() {
     closeAddressDialog()
   }
 
-  function openCouponDialog() {
-    setCouponDialogCode(formData.couponCode)
+  function openCouponDialog(couponType: CouponType) {
+    setCouponDialogType(couponType)
+    setCouponDialogCode(
+      couponType === 'BOOK' ? formData.bookCouponCode : formData.shippingCouponCode,
+    )
     setIsCouponDialogOpen(true)
   }
 
@@ -169,7 +188,7 @@ export default function CheckoutPage() {
   }
 
   function handleApplyCouponCode(nextCouponCode: string) {
-    handleCouponCodeChange(nextCouponCode.trim().toUpperCase())
+    handleCouponCodeChange(couponDialogType, nextCouponCode.trim().toUpperCase())
     closeCouponDialog()
   }
 
@@ -288,30 +307,32 @@ export default function CheckoutPage() {
                 title={t('checkout.couponCode')}
                 icon={<Tag className="size-5" />}
               >
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Input
-                    id="couponCode"
-                    name="couponCode"
-                    value={formData.couponCode}
-                    onChange={handleChange}
+                <div className="space-y-4">
+                  <CouponInputRow
+                    title={labels.bookCoupons}
+                    inputId="bookCouponCode"
+                    inputName="bookCouponCode"
+                    value={formData.bookCouponCode}
+                    selectedCode={selectedBookCoupon?.code ?? ''}
+                    selectedLabel={labels.selectedCouponPrefix}
                     placeholder={t('checkout.couponPlaceholder')}
-                    className="h-11 flex-1"
+                    buttonLabel={labels.chooseCoupon}
+                    onChange={handleChange}
+                    onOpenDialog={() => openCouponDialog('BOOK')}
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={openCouponDialog}
-                    className="h-11 sm:w-32"
-                  >
-                    <Tag className="size-4" />
-                    {labels.chooseCoupon}
-                  </Button>
+                  <CouponInputRow
+                    title={labels.shippingCoupons}
+                    inputId="shippingCouponCode"
+                    inputName="shippingCouponCode"
+                    value={formData.shippingCouponCode}
+                    selectedCode={selectedShippingCoupon?.code ?? ''}
+                    selectedLabel={labels.selectedCouponPrefix}
+                    placeholder={t('checkout.couponPlaceholder')}
+                    buttonLabel={labels.chooseCoupon}
+                    onChange={handleChange}
+                    onOpenDialog={() => openCouponDialog('SHIPPING')}
+                  />
                 </div>
-                {selectedCoupon && (
-                  <p className="mt-2 text-sm text-primary">
-                    {labels.selectedCouponPrefix} {selectedCoupon.code}
-                  </p>
-                )}
               </CheckoutSection>
 
               <CheckoutSection
@@ -337,24 +358,24 @@ export default function CheckoutPage() {
                 title={t('checkout.paymentMethodTitle')}
                 icon={<CreditCard className="size-5" />}
               >
-              <div className="grid gap-4">
-                <CheckoutOptionCard
-                  selected={paymentMethod === 'COD'}
-                  icon={<PackageCheck className="size-5" />}
-                  title={labels.cashOnDelivery}
-                  description={labels.cashOnDeliveryDescription}
-                  onClick={() => handlePaymentMethodChange('COD')}
-                />
+                <div className="grid gap-4">
+                  <CheckoutOptionCard
+                    selected={paymentMethod === 'BANK_TRANSFER_QR'}
+                    icon={<Landmark className="size-5" />}
+                    title={labels.bankTransferQr}
+                    description={labels.bankTransferQrDescription}
+                    onClick={() => handlePaymentMethodChange('BANK_TRANSFER_QR')}
+                  />
 
-                <CheckoutOptionCard
-                  selected={paymentMethod === 'BANK_TRANSFER_QR'}
-                  icon={<Landmark className="size-5" />}
-                  title={labels.bankTransferQr}
-                  description={labels.bankTransferQrDescription}
-                  onClick={() => handlePaymentMethodChange('BANK_TRANSFER_QR')}
-                />
-              </div>
-              
+                  <CheckoutOptionCard
+                    selected={paymentMethod === 'COD'}
+                    icon={<PackageCheck className="size-5" />}
+                    title={labels.cashOnDelivery}
+                    description={labels.cashOnDeliveryDescription}
+                    onClick={() => handlePaymentMethodChange('COD')}
+                  />
+                </div>
+
                 <p className="mt-3 text-sm text-muted-foreground">
                   {labels.paymentMethodNotice}
                 </p>
@@ -440,11 +461,16 @@ export default function CheckoutPage() {
       {isCouponDialogOpen && (
         <CouponDialog
           coupons={activeCoupons}
+          couponType={couponDialogType}
           isLoading={isCouponLoading}
           value={couponDialogCode}
           labels={labels}
           subtotal={subtotal}
-          selectedCode={formData.couponCode}
+          selectedCode={
+            couponDialogType === 'BOOK'
+              ? formData.bookCouponCode
+              : formData.shippingCouponCode
+          }
           formatCurrency={formatCurrency}
           onValueChange={setCouponDialogCode}
           onApply={handleApplyCouponCode}
@@ -771,6 +797,65 @@ function SummaryLine({
   )
 }
 
+function CouponInputRow({
+  title,
+  inputId,
+  inputName,
+  value,
+  selectedCode,
+  selectedLabel,
+  placeholder,
+  buttonLabel,
+  onChange,
+  onOpenDialog,
+}: {
+  title: string
+  inputId: string
+  inputName: string
+  value: string
+  selectedCode: string
+  selectedLabel: string
+  placeholder: string
+  buttonLabel: string
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onOpenDialog: () => void
+}) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-background/45 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold">{title}</p>
+          {selectedCode ? (
+            <p className="mt-1 text-sm text-primary">
+              {selectedLabel} {selectedCode}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+        <Input
+          id={inputId}
+          name={inputName}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="h-11 flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onOpenDialog}
+          className="h-11 sm:w-32"
+        >
+          <Tag className="size-4" />
+          {buttonLabel}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function formatDiscountValue(
   amount: number,
   formatCurrency: (value: number) => string,
@@ -784,6 +869,7 @@ function formatDiscountValue(
 
 function CouponDialog({
   coupons,
+  couponType,
   isLoading,
   value,
   labels,
@@ -795,6 +881,7 @@ function CouponDialog({
   onClose,
 }: {
   coupons: CouponResponse[]
+  couponType: CouponType
   isLoading: boolean
   value: string
   labels: CheckoutLabels
@@ -805,8 +892,9 @@ function CouponDialog({
   onApply: (value: string) => void
   onClose: () => void
 }) {
-  const shippingCoupons = coupons.filter(isShippingCoupon)
-  const bookCoupons = coupons.filter((coupon) => !isShippingCoupon(coupon))
+  const couponsByType = filterCouponsByType(coupons, couponType)
+  const sectionTitle =
+    couponType === 'BOOK' ? labels.bookCoupons : labels.shippingCoupons
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center px-4 py-6">
@@ -868,26 +956,15 @@ function CouponDialog({
               {labels.couponLoading}
             </p>
           ) : (
-            <>
-              <CouponListSection
-                title={labels.shippingCoupons}
-                coupons={shippingCoupons}
-                subtotal={subtotal}
-                selectedCode={selectedCode}
-                labels={labels}
-                formatCurrency={formatCurrency}
-                onApply={onApply}
-              />
-              <CouponListSection
-                title={labels.bookCoupons}
-                coupons={bookCoupons}
-                subtotal={subtotal}
-                selectedCode={selectedCode}
-                labels={labels}
-                formatCurrency={formatCurrency}
-                onApply={onApply}
-              />
-            </>
+            <CouponListSection
+              title={sectionTitle}
+              coupons={couponsByType}
+              subtotal={subtotal}
+              selectedCode={selectedCode}
+              labels={labels}
+              formatCurrency={formatCurrency}
+              onApply={onApply}
+            />
           )}
         </div>
       </div>
@@ -1023,21 +1100,6 @@ function CouponCard({
       </Button>
     </div>
   )
-}
-
-function isShippingCoupon(coupon: CouponResponse) {
-  const text = normalizeCouponText(`${coupon.code} ${coupon.description ?? ''}`)
-  return ['ship', 'shipping', 'freeship', 'free ship', 'giao hang', 'van chuyen'].some(
-    (keyword) => text.includes(keyword),
-  )
-}
-
-function normalizeCouponText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
 }
 
 function formatCouponValue(

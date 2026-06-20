@@ -119,6 +119,14 @@ public class PersistenceDataInitializer implements ApplicationRunner {
                         PermissionCode.REVIEW_CREATE
                 )
         );
+        seedRole(
+                "SHIPPER",
+                "Default shipper role",
+                EnumSet.of(
+                        PermissionCode.SHIPMENT_VIEW_OWN,
+                        PermissionCode.SHIPMENT_UPDATE_OWN
+                )
+        );
     }
 
     private void seedRole(String name, String description, Set<PermissionCode> permissionCodes) {

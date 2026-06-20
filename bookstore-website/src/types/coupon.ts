@@ -1,9 +1,12 @@
+export type CouponType = 'BOOK' | 'SHIPPING'
+
 export type CouponDiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT'
 
 export type CouponResponse = {
   id: string
   code: string
   description: string | null
+  couponType: CouponType
   discountType: CouponDiscountType
   discountValue: number
   minOrderAmount: number

@@ -7,11 +7,13 @@ import type { UserRole } from '@/types/auth'
 type ProtectedRouteProps = {
   children: ReactNode
   requiredRole?: UserRole
+  requiredRoles?: UserRole[]
 }
 
 export function ProtectedRoute({
   children,
   requiredRole,
+  requiredRoles,
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth()
   const { t } = useLanguage()
@@ -28,6 +30,14 @@ export function ProtectedRoute({
 
   if (!user) {
     return <Navigate to="/login" replace />
+  }
+
+  if (
+    requiredRoles &&
+    requiredRoles.length > 0 &&
+    !requiredRoles.some((role) => user.roles.includes(role))
+  ) {
+    return <Navigate to="/" replace />
   }
 
   if (requiredRole && !user.roles.includes(requiredRole)) {

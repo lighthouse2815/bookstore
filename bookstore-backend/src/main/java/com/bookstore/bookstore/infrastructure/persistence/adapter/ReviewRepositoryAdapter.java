@@ -11,6 +11,7 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepo
 import com.bookstore.bookstore.infrastructure.persistence.repository.OrderItemJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.ReviewJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,11 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
     @Override
     public boolean existsByOrderItemIdIncludingDeleted(UUID orderItemId) {
         return reviewJpaRepository.existsByOrderItemId(orderItemId);
+    }
+
+    @Override
+    public long countNewReviewsBetween(Instant fromInclusive, Instant toExclusive) {
+        return reviewJpaRepository.countNewReviewsBetween(fromInclusive, toExclusive);
     }
 
     @Override

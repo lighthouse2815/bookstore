@@ -1,6 +1,8 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { getBookPageDetail, getBookReviews } from '@/services/book-service'
+import { getPublishedDigitalAssetsByBookId } from '@/services/digital-library-service'
+import type { PublishedDigitalAssetResponse } from '@/types/digital-library'
 import type {
   AuthorResponse,
   Book,
@@ -19,6 +21,7 @@ type UseBookDetailResult = {
   promotions: BookPromotion[]
   ratingSummary: BookRatingSummary | null
   reviews: BookReview[]
+  digitalAssets: PublishedDigitalAssetResponse[]
   isLoading: boolean
   error: string | null
   notFound: boolean
@@ -32,6 +35,7 @@ const initialState: UseBookDetailResult = {
   promotions: [],
   ratingSummary: null,
   reviews: [],
+  digitalAssets: [],
   isLoading: true,
   error: null,
   notFound: false,
@@ -55,9 +59,10 @@ export function useBookDetail(id?: string) {
 
     async function loadBookDetail() {
       try {
-        const [pageDetail, reviews] = await Promise.all([
+        const [pageDetail, reviews, digitalAssets] = await Promise.all([
           getBookPageDetail(bookId),
           getBookReviews(bookId).catch(() => []),
+          getPublishedDigitalAssetsByBookId(bookId).catch(() => []),
         ])
 
         if (isCancelled) {
@@ -72,6 +77,7 @@ export function useBookDetail(id?: string) {
           promotions: pageDetail.promotions,
           ratingSummary: pageDetail.ratingSummary,
           reviews,
+          digitalAssets,
           isLoading: false,
           error: null,
           notFound: false,

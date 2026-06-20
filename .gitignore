@@ -5,3 +5,5 @@ CLAUDE.md
 .cursor/
 .codex/
 .opencode/
+.mimocode/
+.codegraph/

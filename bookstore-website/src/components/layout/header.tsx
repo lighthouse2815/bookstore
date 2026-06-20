@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { ThemeSwitch } from '@/components/common/theme-switch'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
+import { NotificationBell } from '@/components/layout/notification-bell'
 import { useHeaderState } from '@/hooks/use-header-state'
 import { cn } from '@/utils'
 
@@ -37,6 +38,10 @@ export function Header() {
     handleSearchQueryChange,
     submitSearch,
   } = useHeaderState()
+  const canOpenAdminArea =
+    Boolean(user) &&
+    (user.roles.includes('ADMIN') || user.roles.includes('STAFF'))
+  const adminLinkTarget = user?.roles.includes('ADMIN') ? '/admin' : '/admin/chat'
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">
@@ -118,6 +123,8 @@ export function Header() {
             }
           />
 
+          {user && <NotificationBell />}
+
           {user && (
             <Link
               to="/cart"
@@ -178,9 +185,17 @@ export function Header() {
                       <User className="h-4 w-4" />
                       {t('header.myProfile')}
                     </Link>
-                    {user.role === 'ADMIN' && (
+                    <Link
+                      to="/library"
+                      onClick={closeProfileMenu}
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      {t('header.myLibrary')}
+                    </Link>
+                    {canOpenAdminArea && (
                       <Link
-                        to="/admin"
+                        to={adminLinkTarget}
                         onClick={closeProfileMenu}
                         className="flex items-center gap-2 px-4 py-3 text-sm text-primary transition-colors hover:bg-muted"
                       >

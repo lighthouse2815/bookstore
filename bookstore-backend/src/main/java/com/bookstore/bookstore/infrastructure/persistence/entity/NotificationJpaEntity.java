@@ -34,6 +34,18 @@ public class NotificationJpaEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "notification_type")
+    private String type;
+
+    @Column(name = "target_type")
+    private String targetType;
+
+    @Column(name = "target_id")
+    private UUID targetId;
+
+    @Column(name = "link")
+    private String link;
+
     @Column(name = "read_flag", nullable = false)
     private boolean read;
 

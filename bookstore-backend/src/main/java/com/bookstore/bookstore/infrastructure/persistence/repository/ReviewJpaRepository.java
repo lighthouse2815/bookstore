@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.ReviewJpaEntity;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -41,4 +42,18 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, UUID
     Optional<ReviewJpaEntity> findById(UUID reviewId);
 
     boolean existsByOrderItemId(UUID orderItemId);
+
+    @Query("""
+            select count(r)
+            from ReviewJpaEntity r
+            where r.deletedAt is null
+              and r.book.deletedAt is null
+              and r.user.deletedAt is null
+              and r.createdAt >= :fromInclusive
+              and r.createdAt < :toExclusive
+            """)
+    long countNewReviewsBetween(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
 }

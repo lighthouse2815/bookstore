@@ -9,6 +9,10 @@ import {
   updateCurrentProfile,
 } from '@/services/profile-service'
 import type { ProfileResponse } from '@/types/profile'
+import {
+  compressAvatarFile,
+  getAvatarFileErrorMessage,
+} from '@/utils/avatar-image'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -77,6 +81,7 @@ export function useAdminSettingsPage() {
       languageDescription: isVietnamese
         ? 'Ap dung ngay cho toan bo giao dien quan tri.'
         : 'Applies immediately across the admin interface.',
+      avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
       accountSaved: isVietnamese
         ? 'Da cap nhat thong tin tai khoan'
         : 'Account information updated',
@@ -165,6 +170,24 @@ export function useAdminSettingsPage() {
     }))
   }
 
+  async function handleProfileAvatarFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    try {
+      const avatarUrl = await compressAvatarFile(file)
+      setProfileForm((currentForm) => ({
+        ...currentForm,
+        avatarUrl,
+      }))
+    } catch (error) {
+      toast.error(
+        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
+      )
+    }
+  }
+
   async function handleLogout() {
     await logout()
   }
@@ -226,6 +249,7 @@ export function useAdminSettingsPage() {
     toggleTheme,
     handleAccountChange,
     handleProfileChange,
+    handleProfileAvatarFileChange,
     handleProfileGenderChange,
     handleLogout,
     handleSaveAccount,

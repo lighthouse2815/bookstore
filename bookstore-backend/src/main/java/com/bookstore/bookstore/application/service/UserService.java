@@ -37,6 +37,7 @@ public class UserService implements IUserService {
 
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String STAFF_ROLE = "STAFF";
+    private static final String SHIPPER_ROLE = "SHIPPER";
     private static final String USER_ROLE = "USER";
 
     private final IUserRepository userRepository;
@@ -63,6 +64,11 @@ public class UserService implements IUserService {
     @Override
     public List<User> getAdmins() {
         return getActiveUsersByRole(ADMIN_ROLE);
+    }
+
+    @Override
+    public List<User> getShippers() {
+        return getActiveUsersByRole(SHIPPER_ROLE);
     }
 
     @Override
@@ -207,7 +213,7 @@ public class UserService implements IUserService {
         User currentUser = userRepository.findByIdIncludingDeleted(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND));
 
-        if (!currentUser.hasRole(STAFF_ROLE)) {
+        if (!currentUser.hasRole(STAFF_ROLE) && !currentUser.hasRole(ADMIN_ROLE)) {
             throw new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND);
         }
 
@@ -306,7 +312,9 @@ public class UserService implements IUserService {
         }
 
         String upperRoleName = normalizedRoleName.toUpperCase(Locale.ROOT);
-        if (!STAFF_ROLE.equals(upperRoleName) && !ADMIN_ROLE.equals(upperRoleName)) {
+        if (!STAFF_ROLE.equals(upperRoleName)
+                && !ADMIN_ROLE.equals(upperRoleName)
+                && !SHIPPER_ROLE.equals(upperRoleName)) {
             throw new ApplicationException(ApplicationErrorCode.USER_ROLE_NOT_ALLOWED);
         }
 

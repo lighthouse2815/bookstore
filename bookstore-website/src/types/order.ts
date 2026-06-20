@@ -9,6 +9,7 @@ export type PaymentMethod = 'BANK_TRANSFER_QR' | 'COD'
 
 export type OrderPaymentMethod =
   | PaymentMethod
+  | 'CASH'
   | 'BANK_TRANSFER'
   | 'VNPAY'
   | 'MOMO'

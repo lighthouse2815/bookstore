@@ -11,6 +11,10 @@ import {
 } from '@/services/profile-service'
 import type { OrderResponse } from '@/types/order'
 import type { ProfileResponse } from '@/types/profile'
+import {
+  compressAvatarFile,
+  getAvatarFileErrorMessage,
+} from '@/utils/avatar-image'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -29,7 +33,8 @@ type ProfileFormState = {
 
 export function useProfilePage() {
   const { user, logout, refreshUser } = useAuth()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const isVietnamese = language === 'vi'
   const navigate = useNavigate()
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
@@ -129,6 +134,24 @@ export function useProfilePage() {
     }))
   }
 
+  async function handleProfileAvatarFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    try {
+      const avatarUrl = await compressAvatarFile(file)
+      setProfileForm((currentForm) => ({
+        ...currentForm,
+        avatarUrl,
+      }))
+    } catch (error) {
+      toast.error(
+        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
+      )
+    }
+  }
+
   async function handleLogout() {
     await logout()
     navigate('/')
@@ -182,9 +205,11 @@ export function useProfilePage() {
     profileForm,
     handleAccountChange,
     handleProfileInputChange,
+    handleProfileAvatarFileChange,
     handleProfileGenderChange,
     handleLogout,
     handleSaveAccount,
     handleSaveProfile,
+    avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
   }
 }

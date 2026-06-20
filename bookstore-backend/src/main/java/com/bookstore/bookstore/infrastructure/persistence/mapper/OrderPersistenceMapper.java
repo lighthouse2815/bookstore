@@ -96,6 +96,54 @@ public class OrderPersistenceMapper {
         entity.getItems().addAll(mappedItems);
     }
 
+    public void copyToEntityWithBooks(
+            Order order,
+            OrderJpaEntity entity,
+            UserJpaEntity user,
+            CouponJpaEntity bookCoupon,
+            CouponJpaEntity shippingCoupon,
+            Map<UUID, BookJpaEntity> bookMap
+    ) {
+        entity.setId(order.getId());
+        entity.setOrderCode(order.getOrderCode());
+        entity.setUser(user);
+        entity.setProductTotal(order.getProductTotal());
+        entity.setTotalAmount(order.getTotalAmount());
+        entity.setDiscountAmount(order.getDiscountAmount());
+        entity.setShippingFee(order.getShippingFee());
+        entity.setShippingDiscount(order.getShippingDiscount());
+        entity.setCouponDiscount(order.getCouponDiscount());
+        entity.setFinalAmount(order.getFinalAmount());
+        entity.setBookCoupon(bookCoupon);
+        entity.setBookCouponCode(order.getBookCouponCode());
+        entity.setShippingCoupon(shippingCoupon);
+        entity.setShippingCouponCode(order.getShippingCouponCode());
+        entity.setPaymentMethod(order.getPaymentMethod());
+        entity.setPaymentStatus(order.getPaymentStatus());
+        entity.setStatus(order.getStatus());
+        entity.setReceiverName(order.getReceiverName());
+        entity.setReceiverPhone(order.getReceiverPhone());
+        entity.setReceiverAddress(order.getReceiverAddress());
+        entity.setCreatedAt(order.getCreatedAt());
+        entity.setUpdatedAt(order.getUpdatedAt());
+        entity.setCancelledAt(order.getCancelledAt());
+
+        Map<UUID, OrderItemJpaEntity> currentItems = entity.getItems().stream()
+                .collect(Collectors.toMap(OrderItemJpaEntity::getId, Function.identity()));
+
+        var mappedItems = order.getItems().stream()
+                .map(item -> {
+                    OrderItemJpaEntity itemEntity = currentItems.getOrDefault(item.getId(), new OrderItemJpaEntity());
+                    BookJpaEntity book = bookMap.get(item.getBookId());
+                    copyItemToEntity(item, itemEntity, entity, book);
+                    return itemEntity;
+                })
+                .toList();
+
+        entity.getItems().clear();
+        entity.getItems().addAll(mappedItems);
+    }
+
     private OrderItem toDomain(OrderItemJpaEntity entity) {
         return new OrderItem(
                 entity.getId(),

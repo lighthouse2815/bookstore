@@ -48,6 +48,7 @@ export const messages = {
       login: 'Đăng nhập',
       logout: 'Đăng xuất',
       myProfile: 'Hồ sơ của tôi',
+      myLibrary: 'Thư viện số',
       adminDashboard: 'Trang quản trị',
       profileMenu: 'Menu tài khoản',
       switchToLight: 'Chuyển sang giao diện sáng',
@@ -725,6 +726,7 @@ export const messages = {
       CANCELLED: 'Đã hủy',
     },
     paymentMethods: {
+      CASH: 'Tiền mặt',
       COD: 'Thanh toán khi nhận hàng',
       BANK_TRANSFER: 'Chuyển khoản ngân hàng',
       VNPAY: 'Ví VNPAY',
@@ -794,6 +796,7 @@ export const messages = {
       login: 'Login',
       logout: 'Logout',
       myProfile: 'My profile',
+      myLibrary: 'Digital library',
       adminDashboard: 'Admin dashboard',
       profileMenu: 'Profile menu',
       switchToLight: 'Switch to light theme',
@@ -1471,6 +1474,7 @@ export const messages = {
       CANCELLED: 'Cancelled',
     },
     paymentMethods: {
+      CASH: 'Cash',
       COD: 'Cash on delivery',
       BANK_TRANSFER: 'Bank transfer',
       VNPAY: 'VNPAY wallet',

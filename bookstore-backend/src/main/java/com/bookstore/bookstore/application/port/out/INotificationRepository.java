@@ -9,7 +9,23 @@ public interface INotificationRepository {
 
     List<Notification> findAllActive();
 
+    List<Notification> findAllActive(Boolean read);
+
+    List<Notification> findPageActive(int page, int size);
+
+    long countActive();
+
     List<Notification> findAllByUserIdActive(UUID userId);
+
+    List<Notification> findAllByUserIdActive(UUID userId, Boolean read);
+
+    List<Notification> findPageByUserIdActive(UUID userId, Boolean read, int page, int size);
+
+    long countByUserIdActive(UUID userId, Boolean read);
+
+    long countUnreadByUserIdActive(UUID userId);
+
+    List<Notification> findAllUnreadByUserIdActive(UUID userId);
 
     Optional<Notification> findByIdActive(UUID notificationId);
 
@@ -18,4 +34,6 @@ public interface INotificationRepository {
     Optional<Notification> findByIdIncludingDeleted(UUID notificationId);
 
     Notification save(Notification notification);
+
+    List<Notification> saveAll(List<Notification> notifications);
 }

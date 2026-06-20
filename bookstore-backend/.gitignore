@@ -1,4 +1,5 @@
 HELP.md
+AGENTS.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -45,3 +46,5 @@ src/test/
 
 .codex-logs/
 *.log
+
+.codegraph/

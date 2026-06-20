@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.port.out;
 
+import com.bookstore.bookstore.application.result.dashboard.LowStockBookResult;
 import com.bookstore.bookstore.domain.model.Book;
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +24,10 @@ public interface IBookRepository {
     List<Book> findRelatedActiveByCategoryId(UUID categoryId, UUID excludedBookId, int limit);
 
     List<Book> searchByKeywordActive(String keyword);
+
+    long countLowStockBooks(int threshold);
+
+    List<LowStockBookResult> findLowStockBooks(int threshold);
 
     Book save(Book book);
 

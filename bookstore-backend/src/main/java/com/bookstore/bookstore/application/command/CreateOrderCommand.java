@@ -15,7 +15,8 @@ public record CreateOrderCommand(
         UUID addressId,
         ShippingMethod shippingMethod,
         PaymentMethod paymentMethod,
-        String couponCode,
+        String bookCouponCode,
+        String shippingCouponCode,
         String note
 ) {
     public CreateOrderCommand {
@@ -41,7 +42,8 @@ public record CreateOrderCommand(
                     .distinct()
                     .toList();
         }
-        couponCode = StringUtils.trimToNull(couponCode);
+        bookCouponCode = StringUtils.trimToNull(bookCouponCode);
+        shippingCouponCode = StringUtils.trimToNull(shippingCouponCode);
         note = StringUtils.trimToNull(note);
     }
 }

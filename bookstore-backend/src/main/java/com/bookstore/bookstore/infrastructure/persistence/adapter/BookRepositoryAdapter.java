@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IBookRepository;
+import com.bookstore.bookstore.application.result.dashboard.LowStockBookResult;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.BookPersistenceMapper;
@@ -83,6 +84,22 @@ public class BookRepositoryAdapter implements IBookRepository {
     public List<Book> searchByKeywordActive(String keyword) {
         return bookJpaRepository.searchByKeywordActive(keyword).stream()
                 .map(bookPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countLowStockBooks(int threshold) {
+        return bookJpaRepository.countByDeletedAtIsNullAndStockQuantityLessThanEqual(threshold);
+    }
+
+    @Override
+    public List<LowStockBookResult> findLowStockBooks(int threshold) {
+        return bookJpaRepository.findLowStockBooks(threshold).stream()
+                .map(row -> new LowStockBookResult(
+                        row.getBookId(),
+                        row.getTitle(),
+                        row.getStockQuantity() == null ? 0 : row.getStockQuantity()
+                ))
                 .toList();
     }
 

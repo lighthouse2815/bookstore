@@ -23,7 +23,8 @@ public class OrderWebMapper {
                 request.addressId(),
                 request.shippingMethod(),
                 request.paymentMethod(),
-                request.couponCode(),
+                request.bookCouponCode(),
+                request.shippingCouponCode(),
                 request.note()
         );
     }
@@ -46,6 +47,7 @@ public class OrderWebMapper {
     public OrderResponse toResponse(OrderResult result) {
         return new OrderResponse(
                 result.orderId(),
+                result.orderCode(),
                 result.userId(),
                 result.items().stream()
                         .map(this::toItemResponse)

@@ -21,6 +21,10 @@ import type {
   ManagedAdminUserRole,
 } from '@/types/admin-access'
 import type { Gender } from '@/types/auth'
+import {
+  compressAvatarFile,
+  getAvatarFileErrorMessage,
+} from '@/utils/avatar-image'
 import { getErrorMessage } from '@/utils'
 
 export type AdminUserManagementMode = 'customer' | 'staff'
@@ -311,6 +315,24 @@ export function useAdminUserManagementPage({
     }))
   }
 
+  async function handleCreateAvatarFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    try {
+      const avatarUrl = await compressAvatarFile(file)
+      setCreateForm((currentForm) => ({
+        ...currentForm,
+        avatarUrl,
+      }))
+    } catch (error) {
+      toast.error(
+        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
+      )
+    }
+  }
+
   function handleEditFormChange(field: keyof EditStaffFormState, value: string) {
     setEditForm((currentForm) => ({
       ...currentForm,
@@ -459,6 +481,7 @@ export function useAdminUserManagementPage({
     createForm,
     editForm,
     labels,
+    avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
     genderOptions,
     roleOptions,
     createDialogDescription: isVietnamese
@@ -479,6 +502,7 @@ export function useAdminUserManagementPage({
     handleAttemptLock,
     handleAttemptDelete,
     handleCreateFormChange,
+    handleCreateAvatarFileChange,
     handleEditFormChange,
     handleCreateSubmit,
     handleEditSubmit,
@@ -577,7 +601,9 @@ function getAdminUserManagementLabels({
 }
 
 function canEditUser(currentUser: AdminUserResponse) {
-  return currentUser.roles.includes('STAFF')
+  return (
+    currentUser.roles.includes('STAFF') || currentUser.roles.includes('ADMIN')
+  )
 }
 
 function getManagedRole(currentUser: AdminUserResponse): ManagedAdminUserRole {

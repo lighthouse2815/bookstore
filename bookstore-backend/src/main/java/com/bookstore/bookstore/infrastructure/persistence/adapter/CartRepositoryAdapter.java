@@ -27,7 +27,7 @@ public class CartRepositoryAdapter implements ICartRepository {
 
     @Override
     public Optional<Cart> findByUserId(UUID userId) {
-        return cartJpaRepository.findById(userId)
+        return cartJpaRepository.findByUser_Id(userId)
                 .map(cartPersistenceMapper::toDomain);
     }
 

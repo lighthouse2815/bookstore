@@ -6,6 +6,7 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom'
+import { CustomerChatWidget } from '@/components/chat/customer-chat-widget'
 import { useLanguage } from '@/contexts/language-context'
 import { ProtectedRoute } from './protected-route'
 
@@ -24,6 +25,11 @@ const OrderConfirmationPage = lazy(
 )
 const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
 const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
+const NotificationsPage = lazy(() => import('@/pages/notifications/notifications'))
+const DigitalLibraryPage = lazy(() => import('@/pages/library/digital-library'))
+const DigitalLibraryDetailPage = lazy(
+  () => import('@/pages/library/digital-library-detail'),
+)
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
@@ -51,6 +57,7 @@ const AdminPermissionsPage = lazy(() => import('@/pages/admin/permissions'))
 const AdminPromotionsPage = lazy(() => import('@/pages/admin/promotions'))
 const AdminReferencesPage = lazy(() => import('@/pages/admin/references'))
 const AdminSettingsPage = lazy(() => import('@/pages/admin/settings'))
+const AdminChatPage = lazy(() => import('@/pages/admin/admin-chat-page'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -213,11 +220,41 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <NotificationsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/profile"
           element={
             <ProtectedRoute>
               <LazyPage>
                 <ProfilePage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/library"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <DigitalLibraryPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/library/:digitalAssetId"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <DigitalLibraryDetailPage />
               </LazyPage>
             </ProtectedRoute>
           }
@@ -323,6 +360,16 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/admin/chat"
+          element={
+            <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+              <LazyPage>
+                <AdminChatPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/notifications"
           element={
             <ProtectedRoute requiredRole="ADMIN">
@@ -419,6 +466,7 @@ function AppRouteContent() {
           }
         />
       </Routes>
+      <CustomerChatWidget />
     </>
   )
 }

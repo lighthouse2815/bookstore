@@ -11,6 +11,10 @@ public record NotificationResult(
         boolean read,
         Instant createdAt,
         Instant updatedAt,
-        Instant readAt
+        Instant readAt,
+        String type,
+        String targetType,
+        UUID targetId,
+        String link
 ) {
 }

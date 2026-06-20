@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Edit2,
   Eye,
+  ExternalLink,
   Package2,
   Plus,
   RefreshCw,
@@ -31,10 +32,20 @@ import {
   SelectValue,
 } from '@/components/common/select'
 import { Textarea } from '@/components/common/textarea'
+import { useLanguage } from '@/contexts/language-context'
+import { useAdminBookDigitalAssets } from '@/hooks/use-admin-book-digital-assets'
 import { useAdminBooksPage } from '@/hooks/use-admin-books-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import type { Book } from '@/types/book'
+import type {
+  DigitalAssetFormat,
+  DigitalAssetResponse,
+} from '@/types/digital-library'
 import { getBookCoverUrl } from '@/utils/book-cover'
+import {
+  formatDigitalFileSize,
+  resolveDigitalAssetUrl,
+} from '@/utils/digital-asset'
 import { cn } from '@/utils'
 import { getCategoryLabel } from '@/utils/i18n'
 
@@ -736,6 +747,12 @@ function BookDetailDialogContent({
         </p>
       </div>
 
+      <BookDigitalAssetManager
+        book={book}
+        formatCurrency={formatCurrency}
+        formatDate={formatDate}
+      />
+
       <div className="flex flex-wrap justify-end gap-3">
         <Button type="button" variant="outline" onClick={onClose} className="rounded-2xl">
           {t('common.close')}
@@ -826,6 +843,543 @@ function BookDeleteDialogContent({
       </div>
     </div>
   )
+}
+
+function BookDigitalAssetManager({
+  book,
+  formatCurrency,
+  formatDate,
+}: {
+  book: Book
+  formatCurrency: (value: number) => string
+  formatDate: (value: string | number | Date) => string
+}) {
+  const { language } = useLanguage()
+  const copy = getAdminDigitalAssetCopy(language)
+  const {
+    assets,
+    isLoading,
+    error,
+    actionMode,
+    selectedAsset,
+    form,
+    isSubmitting,
+    isDeleting,
+    openCreateForm,
+    openEditForm,
+    openDeleteDialog,
+    closeAction,
+    handleFormChange,
+    submitForm,
+    confirmDelete,
+  } = useAdminBookDigitalAssets(book.id)
+
+  return (
+    <section className="rounded-[24px] border border-border/60 bg-background/55 p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-primary">{copy.sectionLabel}</p>
+          <h3 className="mt-1 font-heading text-2xl font-bold text-foreground">
+            {copy.title}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {copy.description}
+          </p>
+        </div>
+        <Button type="button" onClick={openCreateForm} className="rounded-2xl">
+          <Plus className="mr-2 h-4 w-4" />
+          {copy.addAsset}
+        </Button>
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className="mt-5 rounded-2xl border border-border/60 bg-background/70 px-4 py-6 text-sm text-muted-foreground">
+          {copy.loading}
+        </div>
+      ) : assets.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-border/60 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
+          {copy.empty}
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-4">
+          {assets.map((asset) => {
+            const sampleUrl = resolveDigitalAssetUrl(asset.sampleStorageKey)
+            const storageUrl = resolveDigitalAssetUrl(asset.storageKey)
+
+            return (
+              <article
+                key={asset.id}
+                className="rounded-[22px] border border-border/60 bg-background/70 p-4"
+              >
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {asset.format}
+                      </span>
+                      <span
+                        className={cn(
+                          'rounded-full px-3 py-1 text-xs font-semibold',
+                          asset.published
+                            ? 'bg-emerald-500/10 text-emerald-600'
+                            : 'bg-amber-500/10 text-amber-700',
+                        )}
+                      >
+                        {asset.published ? copy.published : copy.unpublished}
+                      </span>
+                      {asset.downloadAllowed ? (
+                        <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-700">
+                          {copy.downloadAllowed}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <h4 className="mt-3 text-xl font-bold text-foreground">
+                      {asset.title}
+                    </h4>
+                    <p className="mt-1 break-all text-sm text-muted-foreground">
+                      {asset.fileName}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => openEditForm(asset)}
+                      className="rounded-2xl"
+                    >
+                      <Edit2 className="mr-2 h-4 w-4" />
+                      {copy.editAsset}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => openDeleteDialog(asset)}
+                      className="rounded-2xl"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {copy.deleteAsset}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <AssetMetaItem
+                    label={copy.priceLabel}
+                    value={formatCurrency(asset.price)}
+                  />
+                  <AssetMetaItem
+                    label={copy.mimeTypeLabel}
+                    value={asset.mimeType}
+                  />
+                  <AssetMetaItem
+                    label={copy.fileSizeLabel}
+                    value={formatDigitalFileSize(asset.fileSize)}
+                  />
+                  <AssetMetaItem
+                    label={copy.updatedAtLabel}
+                    value={formatDate(asset.updatedAt)}
+                  />
+                </div>
+
+                <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                  <AssetMetaItem
+                    label={copy.storageKeyLabel}
+                    value={asset.storageKey}
+                  />
+                  <AssetMetaItem
+                    label={copy.sampleStorageKeyLabel}
+                    value={asset.sampleStorageKey ?? copy.noSampleStorageKey}
+                  />
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {storageUrl ? (
+                    <a href={storageUrl} target="_blank" rel="noreferrer">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {copy.openStorageUrl}
+                      </Button>
+                    </a>
+                  ) : null}
+                  {sampleUrl ? (
+                    <a href={sampleUrl} target="_blank" rel="noreferrer">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {copy.openSampleUrl}
+                      </Button>
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      )}
+
+      {(actionMode === 'create' || actionMode === 'edit') && (
+        <div className="mt-5 rounded-[24px] border border-primary/15 bg-primary/4 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-primary">{copy.sectionLabel}</p>
+              <h4 className="mt-1 text-xl font-bold text-foreground">
+                {actionMode === 'create' ? copy.createTitle : copy.editTitle}
+              </h4>
+            </div>
+            <Button type="button" variant="outline" onClick={closeAction} className="rounded-2xl">
+              {copy.cancel}
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <DigitalAssetSelectField
+              id="digitalAssetFormat"
+              label={copy.formatLabel}
+              value={form.format}
+              options={['PDF', 'EPUB', 'AUDIO']}
+              onValueChange={(value) =>
+                handleFormChange('format', value as DigitalAssetFormat)
+              }
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetTitle"
+              label={copy.titleLabel}
+              value={form.title}
+              onChange={(value) => handleFormChange('title', value)}
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetFileName"
+              label={copy.fileNameLabel}
+              value={form.fileName}
+              onChange={(value) => handleFormChange('fileName', value)}
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetMimeType"
+              label={copy.mimeTypeLabel}
+              value={form.mimeType}
+              onChange={(value) => handleFormChange('mimeType', value)}
+            />
+
+            <div className="lg:col-span-2">
+              <DigitalAssetInputField
+                id="digitalAssetStorageKey"
+                label={copy.storageKeyLabel}
+                value={form.storageKey}
+                onChange={(value) => handleFormChange('storageKey', value)}
+              />
+            </div>
+
+            <DigitalAssetInputField
+              id="digitalAssetSampleStorageKey"
+              label={copy.sampleStorageKeyLabel}
+              value={form.sampleStorageKey}
+              onChange={(value) => handleFormChange('sampleStorageKey', value)}
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetChecksum"
+              label={copy.checksumLabel}
+              value={form.checksum}
+              onChange={(value) => handleFormChange('checksum', value)}
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetFileSize"
+              label={copy.fileSizeBytesLabel}
+              type="number"
+              min="0"
+              step="1"
+              value={form.fileSize}
+              onChange={(value) => handleFormChange('fileSize', value)}
+            />
+
+            <DigitalAssetInputField
+              id="digitalAssetPrice"
+              label={copy.priceLabel}
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.price}
+              onChange={(value) => handleFormChange('price', value)}
+            />
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-5">
+            <DigitalAssetToggle
+              id="digitalAssetDownloadAllowed"
+              label={copy.downloadAllowed}
+              checked={form.downloadAllowed}
+              onCheckedChange={(checked) =>
+                handleFormChange('downloadAllowed', checked)
+              }
+            />
+            <DigitalAssetToggle
+              id="digitalAssetPublished"
+              label={copy.published}
+              checked={form.published}
+              onCheckedChange={(checked) => handleFormChange('published', checked)}
+            />
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeAction}
+              className="rounded-2xl"
+            >
+              {copy.cancel}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void submitForm()}
+              disabled={isSubmitting}
+              className="rounded-2xl"
+            >
+              {isSubmitting ? copy.processing : copy.save}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {actionMode === 'delete' && selectedAsset && (
+        <div className="mt-5 rounded-[24px] border border-destructive/20 bg-destructive/5 p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
+            <div>
+              <h4 className="text-lg font-bold text-foreground">
+                {copy.deleteTitle}
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {copy.confirmDelete.replace('{title}', selectedAsset.title)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeAction}
+              disabled={isDeleting}
+              className="rounded-2xl"
+            >
+              {copy.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={isDeleting}
+              className="rounded-2xl"
+            >
+              {isDeleting ? copy.processing : copy.deleteAsset}
+            </Button>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function AssetMetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-border/50 bg-background/80 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 break-words text-sm font-semibold text-foreground">
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function DigitalAssetInputField({
+  id,
+  label,
+  value,
+  onChange,
+  type = 'text',
+  min,
+  step,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: string
+  min?: string
+  step?: string
+}) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type={type}
+        min={min}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+        className="mt-2 h-11 rounded-2xl bg-background/80"
+      />
+    </div>
+  )
+}
+
+function DigitalAssetSelectField({
+  id,
+  label,
+  value,
+  options,
+  onValueChange,
+}: {
+  id: string
+  label: string
+  value: string
+  options: string[]
+  onValueChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value} onValueChange={(nextValue) => onValueChange(nextValue ?? '')}>
+        <SelectTrigger id={id} className="mt-2 h-11 rounded-2xl bg-background/80">
+          <SelectValue placeholder={label} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+function DigitalAssetToggle({
+  id,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  id: string
+  label: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm font-medium text-foreground"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onCheckedChange(event.currentTarget.checked)}
+        className="size-4 rounded border-border text-primary focus:ring-primary"
+      />
+      {label}
+    </label>
+  )
+}
+
+function getAdminDigitalAssetCopy(language: 'vi' | 'en') {
+  if (language === 'en') {
+    return {
+      addAsset: 'Add asset',
+      cancel: 'Cancel',
+      checksumLabel: 'Checksum',
+      confirmDelete: 'Delete digital asset "{title}"?',
+      createTitle: 'Create digital asset',
+      deleteAsset: 'Delete asset',
+      deleteTitle: 'Confirm digital asset deletion',
+      description:
+        'Manage the backend digital assets attached to this book without leaving the current admin book flow.',
+      downloadAllowed: 'Download allowed',
+      editAsset: 'Edit asset',
+      editTitle: 'Edit digital asset',
+      empty: 'No digital asset is attached to this book yet.',
+      fileNameLabel: 'File name',
+      fileSizeBytesLabel: 'File size (bytes)',
+      fileSizeLabel: 'File size',
+      formatLabel: 'Format',
+      loading: 'Loading digital assets...',
+      mimeTypeLabel: 'MIME type',
+      noSampleStorageKey: 'No sample storage key',
+      openSampleUrl: 'Open sample URL',
+      openStorageUrl: 'Open storage URL',
+      priceLabel: 'Price',
+      processing: 'Processing...',
+      published: 'Published',
+      sampleStorageKeyLabel: 'Sample storage key',
+      save: 'Save asset',
+      sectionLabel: 'Digital asset',
+      storageKeyLabel: 'Storage key',
+      title: 'Digital assets for this book',
+      titleLabel: 'Title',
+      unpublished: 'Draft',
+      updatedAtLabel: 'Updated at',
+    }
+  }
+
+  return {
+    addAsset: 'Thêm tài sản',
+    cancel: 'Hủy',
+    checksumLabel: 'Checksum',
+    confirmDelete: 'Xóa digital asset "{title}"?',
+    createTitle: 'Tạo digital asset',
+    deleteAsset: 'Xóa tài sản',
+    deleteTitle: 'Xác nhận xóa digital asset',
+    description:
+      'Quản lý các digital asset mà backend đang gắn với cuốn sách này ngay trong flow admin books hiện tại.',
+    downloadAllowed: 'Cho phép tải',
+    editAsset: 'Sửa tài sản',
+    editTitle: 'Cập nhật digital asset',
+    empty: 'Cuốn sách này chưa có digital asset nào.',
+    fileNameLabel: 'Tên tệp',
+    fileSizeBytesLabel: 'Dung lượng (bytes)',
+    fileSizeLabel: 'Dung lượng',
+    formatLabel: 'Định dạng',
+    loading: 'Đang tải digital assets...',
+    mimeTypeLabel: 'MIME type',
+    noSampleStorageKey: 'Không có sample storage key',
+    openSampleUrl: 'Mở sample URL',
+    openStorageUrl: 'Mở storage URL',
+    priceLabel: 'Giá',
+    processing: 'Đang xử lý...',
+    published: 'Đã publish',
+    sampleStorageKeyLabel: 'Sample storage key',
+    save: 'Lưu tài sản',
+    sectionLabel: 'Digital asset',
+    storageKeyLabel: 'Storage key',
+    title: 'Digital assets của cuốn sách',
+    titleLabel: 'Tiêu đề',
+    unpublished: 'Chưa publish',
+    updatedAtLabel: 'Cập nhật lúc',
+  }
 }
 
 function BookMetaCard({

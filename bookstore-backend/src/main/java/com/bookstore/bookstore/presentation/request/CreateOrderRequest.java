@@ -16,7 +16,9 @@ public record CreateOrderRequest(
         @NotNull(message = "paymentMethod khong duoc null")
         PaymentMethod paymentMethod,
 
-        String couponCode,
+        String bookCouponCode,
+
+        String shippingCouponCode,
 
         String note
 ) {

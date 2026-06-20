@@ -1,13 +1,16 @@
 import { createPortal } from 'react-dom'
+import type { ReactNode } from 'react'
 import {
   BellRing,
   CalendarDays,
   Eye,
+  Globe,
+  Link2,
   MailPlus,
-  MessageSquareMore,
   Plus,
   Search,
   Send,
+  Trash2,
   UserRound,
   X,
 } from 'lucide-react'
@@ -18,7 +21,7 @@ import { Label } from '@/components/common/label'
 import { Textarea } from '@/components/common/textarea'
 import { useAdminNotificationsPage } from '@/hooks/use-admin-notifications-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
-import type { AdminNotificationResponse } from '@/types/admin-access'
+import type { NotificationResponse } from '@/types/notification'
 
 type UserLookup = {
   id: string
@@ -32,14 +35,16 @@ export default function AdminNotificationsPage() {
     formatDate,
     formatNumber,
     labels,
-    notifications,
     recipients,
     searchTerm,
     isLoading,
+    isLoadingMore,
     error,
     dialogMode,
     selectedNotification,
     form,
+    totalCount,
+    hasNext,
     isSubmitting,
     recipientLookup,
     filteredNotifications,
@@ -49,9 +54,15 @@ export default function AdminNotificationsPage() {
     handleFormChange,
     closeDialog,
     openCreateDialog,
+    openBroadcastDialog,
     openViewDialog,
+    handleLoadMore,
+    handleDelete,
     handleSubmit,
   } = useAdminNotificationsPage()
+
+  const isCreateDialog = dialogMode === 'create'
+  const isBroadcastDialog = dialogMode === 'broadcast'
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[160] flex items-center justify-center px-4 py-6">
@@ -62,56 +73,111 @@ export default function AdminNotificationsPage() {
         onClick={closeDialog}
         disabled={isSubmitting}
       />
-      <div className="relative z-10 w-full max-w-3xl">
-        {dialogMode === 'create' ? (
+      <div className="relative z-10 w-full max-w-4xl">
+        {isCreateDialog || isBroadcastDialog ? (
           <DialogShell
-            title={labels.add}
+            title={isBroadcastDialog ? labels.broadcast : labels.add}
             onClose={closeDialog}
             canClose={!isSubmitting}
           >
-            <form className="space-y-5" onSubmit={(event) => void handleSubmit(event)}>
-              <div className="space-y-2">
-                <Label>{labels.recipient}</Label>
-                <select
-                  value={form.userId}
-                  onChange={(event) =>
-                    handleFormChange('userId', event.currentTarget.value)
-                  }
-                  className="h-11 w-full rounded-2xl border border-input bg-background px-3 text-sm"
-                  required
-                >
-                  <option value="" disabled>
-                    {labels.chooseRecipient}
-                  </option>
-                  {recipients.map((recipient) => (
-                    <option key={recipient.id} value={recipient.id}>
-                      {recipient.name} - {recipient.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <form className="space-y-6" onSubmit={(event) => void handleSubmit(event)}>
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                <div className="space-y-5">
+                  {isCreateDialog ? (
+                    <div className="space-y-2">
+                      <Label>{labels.recipient}</Label>
+                      <select
+                        value={form.userId}
+                        onChange={(event) =>
+                          handleFormChange('userId', event.currentTarget.value)
+                        }
+                        className="h-11 w-full rounded-2xl border border-input bg-background px-3 text-sm"
+                        required
+                      >
+                        <option value="" disabled>
+                          {labels.chooseRecipient}
+                        </option>
+                        {recipients.map((recipient) => (
+                          <option key={recipient.id} value={recipient.id}>
+                            {recipient.name} - {recipient.email}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
 
-              <div className="space-y-2">
-                <Label>{labels.subject}</Label>
-                <Input
-                  value={form.title}
-                  onChange={(event) =>
-                    handleFormChange('title', event.currentTarget.value)
-                  }
-                  className="h-11 rounded-2xl"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>{labels.subject}</Label>
+                    <Input
+                      value={form.title}
+                      onChange={(event) =>
+                        handleFormChange('title', event.currentTarget.value)
+                      }
+                      className="h-11 rounded-2xl"
+                      required
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>{labels.content}</Label>
-                <Textarea
-                  value={form.content}
-                  onChange={(event) =>
-                    handleFormChange('content', event.currentTarget.value)
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>
+                        {labels.type}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {labels.optional}
+                        </span>
+                      </Label>
+                      <Input
+                        value={form.type}
+                        onChange={(event) =>
+                          handleFormChange('type', event.currentTarget.value)
+                        }
+                        className="h-11 rounded-2xl"
+                        placeholder="SYSTEM"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>
+                        {labels.link}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {labels.optional}
+                        </span>
+                      </Label>
+                      <Input
+                        value={form.link}
+                        onChange={(event) =>
+                          handleFormChange('link', event.currentTarget.value)
+                        }
+                        className="h-11 rounded-2xl"
+                        placeholder="/orders/..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{labels.content}</Label>
+                    <Textarea
+                      value={form.content}
+                      onChange={(event) =>
+                        handleFormChange('content', event.currentTarget.value)
+                      }
+                      className="min-h-40 rounded-2xl"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <NotificationPreviewCard
+                  labels={labels}
+                  recipientLabel={
+                    isBroadcastDialog
+                      ? labels.allRecipients
+                      : getRecipientPreview(recipientLookup[form.userId], form.userId)
                   }
-                  className="min-h-36 rounded-2xl"
-                  required
+                  title={form.title}
+                  content={form.content}
+                  type={form.type}
+                  link={form.link}
                 />
               </div>
 
@@ -128,10 +194,14 @@ export default function AdminNotificationsPage() {
                 <Button
                   type="submit"
                   className="rounded-2xl"
-                  disabled={isSubmitting || !form.userId}
+                  disabled={isSubmitting || (!isBroadcastDialog && !form.userId)}
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {isSubmitting ? t('common.processing') : labels.add}
+                  {isSubmitting
+                    ? t('common.processing')
+                    : isBroadcastDialog
+                      ? labels.broadcast
+                      : labels.add}
                 </Button>
               </div>
             </form>
@@ -171,7 +241,7 @@ export default function AdminNotificationsPage() {
                   >
                     <BellRing className="mr-2 h-4 w-4" />
                     {interpolateLabel(labels.total, {
-                      count: formatNumber(notifications.length),
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -180,14 +250,25 @@ export default function AdminNotificationsPage() {
                 </p>
               </div>
 
-              <Button
-                size="lg"
-                onClick={openCreateDialog}
-                className="h-14 rounded-2xl px-6 text-base shadow-[0_18px_40px_rgba(99,102,241,0.35)]"
-              >
-                <Plus className="mr-2 h-5 w-5" />
-                {labels.add}
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={openBroadcastDialog}
+                  className="h-14 rounded-2xl px-6 text-base"
+                >
+                  <Globe className="mr-2 h-5 w-5" />
+                  {labels.broadcast}
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={openCreateDialog}
+                  className="h-14 rounded-2xl px-6 text-base shadow-[0_18px_40px_rgba(99,102,241,0.35)]"
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  {labels.add}
+                </Button>
+              </div>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -219,16 +300,16 @@ export default function AdminNotificationsPage() {
 
             <section className="mt-8 overflow-hidden rounded-[28px] border border-primary/30 bg-background/20 shadow-[0_24px_80px_rgba(15,23,42,0.24)] backdrop-blur">
               <div className="space-y-4 p-4">
-                <div className="hidden rounded-[24px] border border-border/60 bg-background/55 text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_10rem_12rem]">
+                <div className="hidden rounded-[24px] border border-border/60 bg-background/55 text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_10rem_14rem]">
                   <div className="px-8 py-6">{labels.subject}</div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
                     {labels.recipient}
                   </div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
-                    {t('orders.status')}
+                    {labels.status}
                   </div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
-                    {t('common.actions')}
+                    {labels.actions}
                   </div>
                 </div>
 
@@ -247,19 +328,37 @@ export default function AdminNotificationsPage() {
                     return (
                       <article
                         key={notification.notificationId}
-                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_10rem_12rem] xl:gap-0 xl:p-0"
+                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_10rem_14rem] xl:gap-0 xl:p-0"
                       >
                         <div className="min-w-0 xl:px-8 xl:py-6">
-                          <p className="truncate text-lg font-semibold text-foreground">
-                            {notification.title}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-lg font-semibold text-foreground">
+                              {notification.title}
+                            </p>
+                            {notification.type ? (
+                              <Badge
+                                variant="outline"
+                                className="rounded-full border-primary/20 bg-primary/10 text-xs font-semibold text-primary"
+                              >
+                                {notification.type}
+                              </Badge>
+                            ) : null}
+                          </div>
                           <p className="mt-2 truncate text-sm text-muted-foreground">
                             {notification.content || labels.noContent}
                           </p>
-                          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                            <CalendarDays className="h-3.5 w-3.5" />
-                            {formatDate(notification.createdAt)}
-                          </p>
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-2">
+                              <CalendarDays className="h-3.5 w-3.5" />
+                              {formatDate(notification.createdAt)}
+                            </span>
+                            {notification.link ? (
+                              <span className="flex items-center gap-1 text-primary">
+                                <Link2 className="h-3.5 w-3.5" />
+                                <span className="truncate">{notification.link}</span>
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
 
                         <div className="flex items-center justify-start border-border/40 text-sm font-medium text-foreground xl:justify-center xl:border-l">
@@ -281,7 +380,7 @@ export default function AdminNotificationsPage() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
+                        <div className="flex items-center justify-start gap-2 border-border/40 xl:justify-center xl:border-l">
                           <Button
                             type="button"
                             variant="outline"
@@ -291,11 +390,34 @@ export default function AdminNotificationsPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             {t('common.view')}
                           </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => void handleDelete(notification.notificationId)}
+                            className="rounded-2xl text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {labels.delete}
+                          </Button>
                         </div>
                       </article>
                     )
                   })
                 )}
+
+                {hasNext ? (
+                  <div className="pt-2 text-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleLoadMore()}
+                      className="rounded-2xl"
+                      disabled={isLoadingMore}
+                    >
+                      {isLoadingMore ? t('common.processing') : labels.loadMore}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </section>
           </div>
@@ -309,6 +431,68 @@ export default function AdminNotificationsPage() {
   )
 }
 
+function NotificationPreviewCard({
+  labels,
+  recipientLabel,
+  title,
+  content,
+  type,
+  link,
+}: {
+  labels: {
+    content: string
+    link: string
+    noContent: string
+    noLink: string
+    noType: string
+    previewTitle: string
+    recipient: string
+    subject: string
+    type: string
+  }
+  recipientLabel: string
+  title: string
+  content: string
+  type: string
+  link: string
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/60 bg-background/50 p-5">
+      <p className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {labels.previewTitle}
+      </p>
+
+      <div className="mt-5 grid gap-4">
+        <DetailCard
+          icon={UserRound}
+          label={labels.recipient}
+          value={recipientLabel}
+        />
+        <DetailCard
+          icon={BellRing}
+          label={labels.subject}
+          value={title.trim() || '...'}
+        />
+        <DetailCard
+          icon={MailPlus}
+          label={labels.content}
+          value={content.trim() || labels.noContent}
+        />
+        <DetailCard
+          icon={BellRing}
+          label={labels.type}
+          value={type.trim() || labels.noType}
+        />
+        <DetailCard
+          icon={Link2}
+          label={labels.link}
+          value={link.trim() || labels.noLink}
+        />
+      </div>
+    </div>
+  )
+}
+
 function NotificationDetail({
   formatDate,
   labels,
@@ -319,16 +503,20 @@ function NotificationDetail({
   labels: {
     content: string
     createdAt: string
+    link: string
     noContent: string
+    noLink: string
     noReadAt: string
+    noType: string
     read: string
     readAt: string
     recipient: string
     subject: string
+    type: string
     unread: string
     unknownUser: string
   }
-  notification: AdminNotificationResponse
+  notification: NotificationResponse
   recipient: UserLookup | undefined
 }) {
   return (
@@ -367,6 +555,19 @@ function NotificationDetail({
         />
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <DetailCard
+          icon={BellRing}
+          label={labels.type}
+          value={notification.type ?? labels.noType}
+        />
+        <DetailCard
+          icon={Link2}
+          label={labels.link}
+          value={notification.link ?? labels.noLink}
+        />
+      </div>
+
       <div className="rounded-[22px] border border-border/60 bg-background/55 p-5">
         <p className="text-sm text-muted-foreground">{labels.content}</p>
         <p className="mt-3 whitespace-pre-wrap text-base font-medium text-foreground">
@@ -384,7 +585,7 @@ function DialogShell({
   title,
 }: {
   canClose?: boolean
-  children: React.ReactNode
+  children: ReactNode
   onClose: () => void
   title: string
 }) {
@@ -442,7 +643,9 @@ function DetailCard({
         <Icon className="h-4 w-4" />
         <span>{label}</span>
       </div>
-      <p className="mt-3 text-base font-semibold text-foreground">{value}</p>
+      <p className="mt-3 break-words text-base font-semibold text-foreground">
+        {value}
+      </p>
       {secondary ? (
         <p className="mt-2 break-all text-xs text-muted-foreground">{secondary}</p>
       ) : null}
@@ -478,4 +681,16 @@ function interpolateLabel(
   return template.replace(/\{(\w+)\}/g, (_, key: string) =>
     String(params[key] ?? `{${key}}`),
   )
+}
+
+function getRecipientPreview(recipient: UserLookup | undefined, userId: string) {
+  if (recipient) {
+    return `${recipient.name} - ${recipient.email}`
+  }
+
+  if (userId.trim() !== '') {
+    return userId
+  }
+
+  return '...'
 }

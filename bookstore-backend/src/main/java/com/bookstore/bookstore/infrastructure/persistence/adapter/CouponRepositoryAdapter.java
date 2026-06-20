@@ -5,6 +5,7 @@ import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.CouponPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CouponJpaRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +49,11 @@ public class CouponRepositoryAdapter implements ICouponRepository {
     @Override
     public boolean existsByCodeIncludingDeleted(String code) {
         return couponJpaRepository.existsByCode(code);
+    }
+
+    @Override
+    public long countActiveCouponsAt(Instant at) {
+        return couponJpaRepository.countActiveCouponsAt(at);
     }
 
     @Override

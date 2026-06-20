@@ -1,8 +1,10 @@
 package com.bookstore.bookstore.application.port.in;
 
 import com.bookstore.bookstore.application.command.CreateOrderCommand;
+import com.bookstore.bookstore.application.command.CreatePosOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
+import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +12,8 @@ import java.util.UUID;
 public interface IOrderService {
 
     CreateOrderResult checkout(CreateOrderCommand command);
+
+    CreatePosOrderResult createPosOrder(CreatePosOrderCommand command);
 
     List<OrderResult> getMyOrders(UUID userId);
 

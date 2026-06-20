@@ -18,6 +18,10 @@ public class NotificationPersistenceMapper {
                 entity.getUser().getId(),
                 entity.getTitle(),
                 entity.getContent(),
+                entity.getType(),
+                entity.getTargetType(),
+                entity.getTargetId(),
+                entity.getLink(),
                 entity.isRead(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
@@ -31,6 +35,10 @@ public class NotificationPersistenceMapper {
         entity.setUser(user);
         entity.setTitle(notification.getTitle());
         entity.setContent(notification.getContent());
+        entity.setType(notification.getType());
+        entity.setTargetType(notification.getTargetType());
+        entity.setTargetId(notification.getTargetId());
+        entity.setLink(notification.getLink());
         entity.setRead(notification.isRead());
         entity.setCreatedAt(notification.getCreatedAt());
         entity.setUpdatedAt(notification.getUpdatedAt());

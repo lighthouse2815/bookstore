@@ -2,22 +2,27 @@ package com.bookstore.bookstore.application.service;
 
 import com.bookstore.bookstore.application.assembler.OrderAssembler;
 import com.bookstore.bookstore.application.command.CreateOrderCommand;
+import com.bookstore.bookstore.application.command.CreateNotificationCommand;
+import com.bookstore.bookstore.application.command.CreatePosOrderCommand;
+import com.bookstore.bookstore.application.command.CreatePosOrderItemCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
-import com.bookstore.bookstore.application.port.out.INotificationRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
+import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
+import com.bookstore.bookstore.domain.enums.CouponType;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
@@ -28,7 +33,6 @@ import com.bookstore.bookstore.domain.model.Cart;
 import com.bookstore.bookstore.domain.model.CartItem;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.domain.model.CouponUsage;
-import com.bookstore.bookstore.domain.model.Notification;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -53,6 +57,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
 
+    private static final BigDecimal DELIVERY_SHIPPING_FEE = BigDecimal.valueOf(30_000L);
+    private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(200_000L);
+
     private final IOrderRepository orderRepository;
     private final ICartRepository cartRepository;
     private final IBookRepository bookRepository;
@@ -61,8 +68,9 @@ public class OrderService implements IOrderService {
     private final ICouponRepository couponRepository;
     private final ICouponUsageRepository couponUsageRepository;
     private final IStockMovementRepository stockMovementRepository;
-    private final INotificationRepository notificationRepository;
+    private final INotificationService notificationService;
     private final OrderAssembler orderAssembler;
+    private final com.bookstore.bookstore.application.port.in.IDigitalLibraryService digitalLibraryService;
     private final SepayProperties sepayProperties;
 
     @Override
@@ -120,7 +128,8 @@ public class OrderService implements IOrderService {
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shippingFee = calculateShippingFee(command.shippingMethod(), productTotal);
-        Coupon appliedCoupon = resolveCoupon(command.couponCode());
+        Coupon appliedBookCoupon = resolveCoupon(command.bookCouponCode(), CouponType.BOOK);
+        Coupon appliedShippingCoupon = resolveCoupon(command.shippingCouponCode(), CouponType.SHIPPING);
         BigDecimal couponDiscount = BigDecimal.ZERO;
         BigDecimal shippingDiscount = BigDecimal.ZERO;
         UUID bookCouponId = null;
@@ -128,19 +137,16 @@ public class OrderService implements IOrderService {
         UUID shippingCouponId = null;
         String shippingCouponCode = null;
 
-        if (appliedCoupon != null) {
-            switch (appliedCoupon.getCouponType()) {
-                case BOOK -> {
-                    couponDiscount = appliedCoupon.applyTo(productTotal, productTotal, now);
-                    bookCouponId = appliedCoupon.getId();
-                    bookCouponCode = appliedCoupon.getCode();
-                }
-                case SHIPPING -> {
-                    shippingDiscount = appliedCoupon.applyTo(productTotal, shippingFee, now);
-                    shippingCouponId = appliedCoupon.getId();
-                    shippingCouponCode = appliedCoupon.getCode();
-                }
-            }
+        if (appliedBookCoupon != null) {
+            couponDiscount = appliedBookCoupon.applyTo(productTotal, productTotal, now);
+            bookCouponId = appliedBookCoupon.getId();
+            bookCouponCode = appliedBookCoupon.getCode();
+        }
+
+        if (appliedShippingCoupon != null) {
+            shippingDiscount = appliedShippingCoupon.applyTo(productTotal, shippingFee, now);
+            shippingCouponId = appliedShippingCoupon.getId();
+            shippingCouponCode = appliedShippingCoupon.getCode();
         }
 
         BigDecimal totalAmount = productTotal
@@ -174,27 +180,14 @@ public class OrderService implements IOrderService {
         );
 
         Order savedOrder = orderRepository.save(order);
-        Payment savedPayment = paymentRepository.save(new Payment(
-                UUID.randomUUID(),
-                savedOrder.getId(),
-                PaymentProvider.SEPAY,
-                PaymentStatus.PENDING,
-                savedOrder.getTotalAmount(),
-                StringUtils.trimToNull(sepayProperties.merchantId()),
-                null,
-                savedOrder.getOrderCode(),
-                savedOrder.getOrderCode(),
-                null,
-                null,
-                now,
-                now
-        ));
-        saveAppliedCoupon(appliedCoupon, command.userId(), orderId, now);
+        Payment savedPayment = createCheckoutPayment(savedOrder, now);
+        saveAppliedCoupon(appliedBookCoupon, command.userId(), orderId, now);
+        saveAppliedCoupon(appliedShippingCoupon, command.userId(), orderId, now);
         stockMovements.forEach(stockMovementRepository::save);
         booksById.values().forEach(bookRepository::save);
         checkoutItems.forEach(item -> cart.removeItem(item.getBookId()));
         cartRepository.save(cart);
-        notificationRepository.save(newOrderNotification(savedOrder, now));
+        notificationService.create(newOrderNotification(savedOrder));
         return new CreateOrderResult(
                 savedOrder.getId(),
                 savedOrder.getOrderCode(),
@@ -202,6 +195,139 @@ public class OrderService implements IOrderService {
                 savedPayment.getStatus(),
                 savedOrder.getTotalAmount(),
                 savedPayment.getTransferContent()
+        );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CreatePosOrderResult createPosOrder(CreatePosOrderCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+
+        List<CreatePosOrderItemCommand> posItems = mergePosItems(command.items());
+        Map<UUID, Book> booksById = loadPosOrderBooks(posItems);
+        UUID orderId = UUID.randomUUID();
+        Instant now = Instant.now();
+        String orderCode = generatePosOrderCode(now);
+        List<OrderItem> orderItems = new ArrayList<>();
+        List<StockMovement> stockMovements = new ArrayList<>();
+
+        for (var item : posItems) {
+            Book book = booksById.get(item.bookId());
+            int beforeQuantity = book.getStockQuantity();
+            book.decreaseStock(item.quantity());
+            int afterQuantity = book.getStockQuantity();
+
+            BigDecimal lineTotal = book.getPrice().multiply(BigDecimal.valueOf(item.quantity()));
+            orderItems.add(new OrderItem(
+                    UUID.randomUUID(),
+                    book.getId(),
+                    book.getTitle(),
+                    book.getPrice(),
+                    item.quantity(),
+                    lineTotal
+            ));
+            stockMovements.add(new StockMovement(
+                    UUID.randomUUID(),
+                    book.getId(),
+                    StockMovementType.SALE,
+                    item.quantity(),
+                    beforeQuantity,
+                    afterQuantity,
+                    orderId,
+                    "POS_ORDER",
+                    null,
+                    now,
+                    command.staffUserId()
+            ));
+        }
+
+        BigDecimal productTotal = orderItems.stream()
+                .map(OrderItem::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Coupon requestedCoupon = resolveCoupon(command.couponCode());
+        Coupon appliedBookCoupon = null;
+        BigDecimal couponDiscount = BigDecimal.ZERO;
+        UUID bookCouponId = null;
+        String bookCouponCode = null;
+
+        if (requestedCoupon != null) {
+            switch (requestedCoupon.getCouponType()) {
+                case BOOK -> {
+                    couponDiscount = requestedCoupon.applyTo(productTotal, productTotal, now);
+                    bookCouponId = requestedCoupon.getId();
+                    bookCouponCode = requestedCoupon.getCode();
+                    appliedBookCoupon = requestedCoupon;
+                }
+                case SHIPPING -> {
+                    couponDiscount = BigDecimal.ZERO;
+                }
+            }
+        }
+
+        BigDecimal finalAmount = productTotal.subtract(couponDiscount);
+        PaymentStatus paymentStatus = resolvePosPaymentStatus(command.paymentMethod());
+        OrderStatus orderStatus = paymentStatus == PaymentStatus.PAID ? OrderStatus.DELIVERED : OrderStatus.PENDING;
+
+        Order order = new Order(
+                orderId,
+                orderCode,
+                command.staffUserId(),
+                orderItems,
+                productTotal,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                couponDiscount,
+                finalAmount,
+                bookCouponId,
+                bookCouponCode,
+                null,
+                null,
+                command.paymentMethod(),
+                paymentStatus,
+                orderStatus,
+                resolvePosCustomerName(command.customerName()),
+                resolvePosCustomerPhone(command.customerPhone()),
+                "Tai quay",
+                now,
+                now,
+                null
+        );
+
+        Order savedOrder = orderRepository.save(order);
+        Payment savedPayment = paymentRepository.save(new Payment(
+                UUID.randomUUID(),
+                savedOrder.getId(),
+                PaymentProvider.POS,
+                paymentStatus,
+                savedOrder.getTotalAmount(),
+                null,
+                paymentStatus == PaymentStatus.PAID ? "POS-" + savedOrder.getOrderCode() : null,
+                savedOrder.getOrderCode(),
+                savedOrder.getOrderCode(),
+                "POS",
+                paymentStatus == PaymentStatus.PAID ? now : null,
+                now,
+                now
+        ));
+        saveAppliedCoupon(appliedBookCoupon, command.staffUserId(), savedOrder.getId(), now);
+        stockMovements.forEach(stockMovementRepository::save);
+        booksById.values().forEach(bookRepository::save);
+        notificationService.create(newOrderNotification(savedOrder));
+        if (paymentStatus == PaymentStatus.PAID) {
+            digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
+        }
+
+        return new CreatePosOrderResult(
+                savedOrder.getId(),
+                savedOrder.getOrderCode(),
+                savedOrder.getTotalAmount(),
+                savedOrder.getDiscountAmount(),
+                savedOrder.getFinalAmount(),
+                savedOrder.getPaymentMethod(),
+                savedPayment.getStatus(),
+                savedOrder.getStatus()
         );
     }
 
@@ -257,7 +383,13 @@ public class OrderService implements IOrderService {
             rollbackCancelledOrder(currentOrder);
         }
         Order savedOrder = orderRepository.save(currentOrder);
-        notificationRepository.save(newOrderStatusNotification(savedOrder));
+        if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
+            digitalLibraryService.revokePurchasedAccessForOrder(savedOrder.getId());
+        }
+        if (savedOrder.getStatus() == OrderStatus.DELIVERED && savedOrder.getPaymentMethod() == PaymentMethod.COD) {
+            digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
+        }
+        notificationService.create(newOrderStatusNotification(savedOrder));
         return orderAssembler.toResult(savedOrder);
     }
 
@@ -285,6 +417,17 @@ public class OrderService implements IOrderService {
         return checkoutItems;
     }
 
+    private List<CreatePosOrderItemCommand> mergePosItems(List<CreatePosOrderItemCommand> items) {
+        Map<UUID, Integer> quantitiesByBookId = new LinkedHashMap<>();
+        for (CreatePosOrderItemCommand item : items) {
+            quantitiesByBookId.merge(item.bookId(), item.quantity(), Integer::sum);
+        }
+
+        return quantitiesByBookId.entrySet().stream()
+                .map(entry -> new CreatePosOrderItemCommand(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
     private Map<UUID, Book> loadCheckoutBooks(List<CartItem> checkoutItems) {
         Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
                         checkoutItems.stream()
@@ -307,6 +450,28 @@ public class OrderService implements IOrderService {
         return booksById;
     }
 
+    private Map<UUID, Book> loadPosOrderBooks(List<CreatePosOrderItemCommand> items) {
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
+                        items.stream()
+                                .map(CreatePosOrderItemCommand::bookId)
+                                .toList()
+                ).stream()
+                .collect(
+                        LinkedHashMap::new,
+                        (map, book) -> map.put(book.getId(), book),
+                        Map::putAll
+                );
+
+        for (var item : items) {
+            Book book = booksById.get(item.bookId());
+            if (book == null || book.getDeletedAt() != null) {
+                throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+            }
+        }
+
+        return booksById;
+    }
+
     private Coupon resolveCoupon(String couponCode) {
         String normalizedCouponCode = StringUtils.trimToNull(couponCode);
         if (normalizedCouponCode == null) {
@@ -315,6 +480,19 @@ public class OrderService implements IOrderService {
 
         return couponRepository.findByCodeActive(normalizedCouponCode.toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
+    }
+
+    private Coupon resolveCoupon(String couponCode, CouponType expectedType) {
+        Coupon coupon = resolveCoupon(couponCode);
+        if (coupon == null) {
+            return null;
+        }
+
+        if (coupon.getCouponType() != expectedType) {
+            throw new ApplicationException(ApplicationErrorCode.COUPON_TYPE_NOT_MATCH);
+        }
+
+        return coupon;
     }
 
     private void saveAppliedCoupon(Coupon coupon, UUID userId, UUID orderId, Instant usedAt) {
@@ -373,7 +551,8 @@ public class OrderService implements IOrderService {
     }
 
     private void validatePaymentMethod(PaymentMethod paymentMethod) {
-        if (paymentMethod != PaymentMethod.BANK_TRANSFER_QR) {
+        if (paymentMethod != PaymentMethod.BANK_TRANSFER_QR
+                && paymentMethod != PaymentMethod.COD) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "paymentMethod");
         }
     }
@@ -396,13 +575,59 @@ public class OrderService implements IOrderService {
 
     private BigDecimal calculateShippingFee(ShippingMethod shippingMethod, BigDecimal productTotal) {
         return switch (shippingMethod) {
-            case DELIVERY -> BigDecimal.ZERO;
+            case DELIVERY -> productTotal.compareTo(FREE_SHIPPING_THRESHOLD) < 0
+                    ? DELIVERY_SHIPPING_FEE
+                    : BigDecimal.ZERO;
             case PICKUP -> BigDecimal.ZERO;
         };
     }
 
+    private Payment createCheckoutPayment(Order order, Instant createdAt) {
+        PaymentProvider provider = order.getPaymentMethod() == PaymentMethod.COD
+                ? PaymentProvider.COD
+                : PaymentProvider.SEPAY;
+        String merchantId = provider == PaymentProvider.SEPAY
+                ? StringUtils.trimToNull(sepayProperties.merchantId())
+                : null;
+
+        return paymentRepository.save(new Payment(
+                UUID.randomUUID(),
+                order.getId(),
+                provider,
+                PaymentStatus.PENDING,
+                order.getTotalAmount(),
+                merchantId,
+                null,
+                order.getOrderCode(),
+                order.getOrderCode(),
+                null,
+                null,
+                createdAt,
+                createdAt
+        ));
+    }
+
     private String generateOrderCode(Instant now) {
         return "DH" + now.toEpochMilli() + ThreadLocalRandom.current().nextInt(100_000, 1_000_000);
+    }
+
+    private String generatePosOrderCode(Instant now) {
+        return "POS" + now.toEpochMilli() + ThreadLocalRandom.current().nextInt(10_000, 100_000);
+    }
+
+    private PaymentStatus resolvePosPaymentStatus(PaymentMethod paymentMethod) {
+        return switch (paymentMethod) {
+            case CASH, BANK_TRANSFER -> PaymentStatus.PAID;
+            case COD, BANK_TRANSFER_QR -> PaymentStatus.PENDING;
+        };
+    }
+
+    private String resolvePosCustomerName(String customerName) {
+        return StringUtils.trimToNull(customerName) == null ? "Khach le" : customerName;
+    }
+
+    private String resolvePosCustomerPhone(String customerPhone) {
+        return StringUtils.trimToNull(customerPhone) == null ? "0900000000" : customerPhone;
     }
 
     private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {
@@ -433,32 +658,27 @@ public class OrderService implements IOrderService {
         return booksById;
     }
 
-    private Notification newOrderNotification(Order order, Instant now) {
-        return new Notification(
-                UUID.randomUUID(),
+    private CreateNotificationCommand newOrderNotification(Order order) {
+        return new CreateNotificationCommand(
                 order.getUserId(),
                 "Dat hang thanh cong",
-                "Don hang " + order.getId() + " da duoc tao thanh cong.",
-                false,
-                now,
-                now,
-                null,
-                null
+                "Don hang " + order.getOrderCode() + " da duoc tao thanh cong.",
+                "ORDER",
+                "ORDER",
+                order.getId(),
+                "/orders/" + order.getId()
         );
     }
 
-    private Notification newOrderStatusNotification(Order order) {
-        Instant now = Instant.now();
-        return new Notification(
-                UUID.randomUUID(),
+    private CreateNotificationCommand newOrderStatusNotification(Order order) {
+        return new CreateNotificationCommand(
                 order.getUserId(),
                 "Cap nhat trang thai don hang",
-                "Don hang " + order.getId() + " da chuyen sang " + order.getStatus().name() + ".",
-                false,
-                now,
-                now,
-                null,
-                null
+                "Don hang " + order.getOrderCode() + " da chuyen sang " + order.getStatus().name() + ".",
+                "ORDER",
+                "ORDER",
+                order.getId(),
+                "/orders/" + order.getId()
         );
     }
 }

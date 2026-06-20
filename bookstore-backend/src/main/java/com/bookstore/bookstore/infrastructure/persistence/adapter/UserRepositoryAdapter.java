@@ -8,6 +8,7 @@ import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.UserPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.RoleJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -86,6 +87,11 @@ public class UserRepositoryAdapter implements IUserRepository {
     @Override
     public boolean existsByEmailIncludingDeleted(String email) {
         return userJpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive) {
+        return userJpaRepository.countNewCustomersBetween(fromInclusive, toExclusive);
     }
 
     @Override
