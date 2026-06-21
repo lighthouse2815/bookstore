@@ -1,6 +1,4 @@
-import bookDefaultCover from '@/assets/book-img/book-default.png'
-
-export const BOOK_DEFAULT_COVER = bookDefaultCover
+export const BOOK_DEFAULT_COVER = '/placeholder.jpg'
 
 export function getBookCoverUrl(cover?: string | null) {
   const normalizedCover = cover?.trim()

@@ -6,6 +6,7 @@ import {
   Clock3,
   Copy,
   Landmark,
+  PackageCheck,
   QrCode,
   RefreshCcw,
   XCircle,
@@ -27,6 +28,7 @@ import {
 export default function OrderConfirmationPage() {
   const { t, language, formatCurrency } = useLanguage()
   const labels = getPaymentWaitingLabels(language)
+  const cashOnDeliveryLabels = getCashOnDeliveryLabels(language)
   const {
     order,
     orderId,
@@ -39,6 +41,7 @@ export default function OrderConfirmationPage() {
     isPolling,
     error,
   } = useOrderConfirmationPage()
+  const isBankTransferOrder = paymentMethod === 'BANK_TRANSFER_QR'
   const [hasQrImageError, setHasQrImageError] = useState(false)
   const bankInfo = useMemo(() => {
     const bankName = readConfiguredValue(
@@ -101,7 +104,12 @@ export default function OrderConfirmationPage() {
       url: null,
     }
   }, [bankInfo.dynamicQrUrl, bankInfo.fallbackQrUrl])
-  const statusMeta = getStatusMeta(paymentStatus, labels)
+  const statusMeta = getStatusMeta(
+    paymentStatus,
+    labels,
+    cashOnDeliveryLabels,
+    paymentMethod,
+  )
 
   useEffect(() => {
     setHasQrImageError(false)
@@ -152,7 +160,7 @@ export default function OrderConfirmationPage() {
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                     {statusMeta.description}
                   </p>
-                  {isPolling && paymentStatus === 'PENDING' && (
+                  {isBankTransferOrder && isPolling && paymentStatus === 'PENDING' && (
                     <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-amber-800">
                       <RefreshCcw className="size-4 animate-spin" />
                       {labels.pollingNotice}
@@ -178,109 +186,163 @@ export default function OrderConfirmationPage() {
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
             <section className="space-y-6">
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="font-heading text-2xl font-bold">
-                      {labels.transferInstructionTitle}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {labels.transferInstructionDescription}
-                    </p>
-                  </div>
-                  <Button type="button" variant="outline" onClick={handleCopyTransferContent}>
-                    <Copy className="size-4" />
-                    {labels.copyButton}
-                  </Button>
-                </div>
+              {isBankTransferOrder ? (
+                <>
+                  <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h2 className="font-heading text-2xl font-bold">
+                          {labels.transferInstructionTitle}
+                        </h2>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {labels.transferInstructionDescription}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCopyTransferContent}
+                      >
+                        <Copy className="size-4" />
+                        {labels.copyButton}
+                      </Button>
+                    </div>
 
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  <DetailCard
-                    label={labels.bankNameLabel}
-                    value={bankInfo.bankName}
-                  />
-                  <DetailCard
-                    label={labels.accountNumberLabel}
-                    value={bankInfo.accountNumber}
-                  />
-                  <DetailCard
-                    label={labels.accountNameLabel}
-                    value={bankInfo.accountName}
-                  />
-                </div>
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                      <DetailCard
+                        label={labels.bankNameLabel}
+                        value={bankInfo.bankName}
+                      />
+                      <DetailCard
+                        label={labels.accountNumberLabel}
+                        value={bankInfo.accountNumber}
+                      />
+                      <DetailCard
+                        label={labels.accountNameLabel}
+                        value={bankInfo.accountName}
+                      />
+                    </div>
 
-                <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {labels.transferContentLabel}
-                  </p>
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <code className="rounded-xl bg-background px-4 py-3 font-mono text-base font-semibold text-primary">
-                      {transferContent || labels.emptyValue}
-                    </code>
-                    <p className="text-sm text-muted-foreground">
-                      {labels.transferContentHint}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <QrCode className="size-5" />
-                  </span>
-                  <div>
-                    <h2 className="font-heading text-xl font-bold">{labels.qrTitle}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {labels.qrDescription}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-muted/30">
-                  {qrDisplay.url && !hasQrImageError ? (
-                    <img
-                      key={qrDisplay.url}
-                      src={qrDisplay.url}
-                      alt={labels.qrTitle}
-                      onError={() => setHasQrImageError(true)}
-                      className="h-[320px] w-full object-contain p-6"
-                    />
-                  ) : (
-                    <div className="flex h-[320px] flex-col items-center justify-center gap-3 px-6 text-center">
-                      <AlertTriangle className="size-14 text-amber-600" />
-                      <p className="font-semibold">
-                        {hasQrImageError
-                          ? labels.qrImageErrorTitle
-                          : labels.qrUnavailableTitle}
+                    <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {labels.transferContentLabel}
                       </p>
-                      <p className="max-w-md text-sm leading-6 text-muted-foreground">
-                        {hasQrImageError
-                          ? labels.qrImageErrorDescription
-                          : labels.qrUnavailableDescription}
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <code className="rounded-xl bg-background px-4 py-3 font-mono text-base font-semibold text-primary">
+                          {transferContent || labels.emptyValue}
+                        </code>
+                        <p className="text-sm text-muted-foreground">
+                          {labels.transferContentHint}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        <QrCode className="size-5" />
+                      </span>
+                      <div>
+                        <h2 className="font-heading text-xl font-bold">
+                          {labels.qrTitle}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          {labels.qrDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-muted/30">
+                      {qrDisplay.url && !hasQrImageError ? (
+                        <img
+                          key={qrDisplay.url}
+                          src={qrDisplay.url}
+                          alt={labels.qrTitle}
+                          onError={() => setHasQrImageError(true)}
+                          className="h-[320px] w-full object-contain p-6"
+                        />
+                      ) : (
+                        <div className="flex h-[320px] flex-col items-center justify-center gap-3 px-6 text-center">
+                          <AlertTriangle className="size-14 text-amber-600" />
+                          <p className="font-semibold">
+                            {hasQrImageError
+                              ? labels.qrImageErrorTitle
+                              : labels.qrUnavailableTitle}
+                          </p>
+                          <p className="max-w-md text-sm leading-6 text-muted-foreground">
+                            {hasQrImageError
+                              ? labels.qrImageErrorDescription
+                              : labels.qrUnavailableDescription}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {qrDisplay.kind === 'fallback' && !hasQrImageError && (
+                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                        <p className="font-semibold">
+                          {labels.qrFallbackNoticeTitle}
+                        </p>
+                        <p className="mt-1 leading-6">
+                          {labels.qrFallbackNoticeDescription}
+                        </p>
+                      </div>
+                    )}
+
+                    {(qrDisplay.kind === 'none' || hasQrImageError) && (
+                      <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-4">
+                        <p className="font-semibold">
+                          {labels.manualTransferTitle}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                          {labels.manualTransferDescription}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <PackageCheck className="size-5" />
+                    </span>
+                    <div>
+                      <h2 className="font-heading text-2xl font-bold">
+                        {cashOnDeliveryLabels.instructionTitle}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {cashOnDeliveryLabels.instructionDescription}
                       </p>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-3">
+                    <DetailCard
+                      label={cashOnDeliveryLabels.paymentLabel}
+                      value={cashOnDeliveryLabels.paymentValue}
+                    />
+                    <DetailCard
+                      label={cashOnDeliveryLabels.deliveryFeeLabel}
+                      value={cashOnDeliveryLabels.deliveryFeeValue}
+                    />
+                    <DetailCard
+                      label={cashOnDeliveryLabels.nextStepLabel}
+                      value={cashOnDeliveryLabels.nextStepValue}
+                    />
+                  </div>
+
+                  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                    <p className="font-semibold">
+                      {cashOnDeliveryLabels.noteTitle}
+                    </p>
+                    <p className="mt-2 leading-6">
+                      {cashOnDeliveryLabels.noteDescription}
+                    </p>
+                  </div>
                 </div>
-
-                {qrDisplay.kind === 'fallback' && !hasQrImageError && (
-                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                    <p className="font-semibold">{labels.qrFallbackNoticeTitle}</p>
-                    <p className="mt-1 leading-6">
-                      {labels.qrFallbackNoticeDescription}
-                    </p>
-                  </div>
-                )}
-
-                {(qrDisplay.kind === 'none' || hasQrImageError) && (
-                  <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-4">
-                    <p className="font-semibold">{labels.manualTransferTitle}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {labels.manualTransferDescription}
-                    </p>
-                  </div>
-                )}
-              </div>
+              )}
 
               {error && (
                 <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-4 text-sm text-destructive">
@@ -298,7 +360,9 @@ export default function OrderConfirmationPage() {
                   <div>
                     <h2 className="font-heading text-xl font-bold">{labels.orderSummaryTitle}</h2>
                     <p className="text-sm text-muted-foreground">
-                      {labels.summaryDescription}
+                      {isBankTransferOrder
+                        ? labels.summaryDescription
+                        : cashOnDeliveryLabels.summaryDescription}
                     </p>
                   </div>
                 </div>
@@ -306,10 +370,12 @@ export default function OrderConfirmationPage() {
                 <div className="mt-5 space-y-3">
                   <SummaryRow label={labels.orderIdLabel} value={orderId || labels.emptyValue} />
                   <SummaryRow label={labels.orderCodeLabel} value={orderCode || labels.emptyValue} />
-                  <SummaryRow
-                    label={labels.transferContentLabel}
-                    value={transferContent || labels.emptyValue}
-                  />
+                  {isBankTransferOrder ? (
+                    <SummaryRow
+                      label={labels.transferContentLabel}
+                      value={transferContent || labels.emptyValue}
+                    />
+                  ) : null}
                   <SummaryRow
                     label={labels.paymentStatusLabel}
                     value={getPaymentStatusLabel(paymentStatus, t)}
@@ -401,6 +467,8 @@ function SummaryRow({
 function getStatusMeta(
   paymentStatus: PaymentStatus,
   labels: ReturnType<typeof getPaymentWaitingLabels>,
+  cashOnDeliveryLabels: ReturnType<typeof getCashOnDeliveryLabels>,
+  paymentMethod: 'BANK_TRANSFER_QR' | 'COD',
 ) {
   const config: Record<
     PaymentStatus,
@@ -415,8 +483,14 @@ function getStatusMeta(
     }
   > = {
     PENDING: {
-      title: labels.waitingTitle,
-      description: labels.waitingDescription,
+      title:
+        paymentMethod === 'COD'
+          ? cashOnDeliveryLabels.waitingTitle
+          : labels.waitingTitle,
+      description:
+        paymentMethod === 'COD'
+          ? cashOnDeliveryLabels.waitingDescription
+          : labels.waitingDescription,
       icon: Clock3,
       containerClassName: 'border-amber-200 bg-amber-50/80',
       iconContainerClassName: 'bg-amber-100',
@@ -641,5 +715,51 @@ function getPaymentWaitingLabels(language: 'vi' | 'en') {
     bankFallback: 'Cap nhat VITE_BANK_TRANSFER_BANK_NAME',
     accountNumberFallback: 'Cap nhat VITE_BANK_TRANSFER_ACCOUNT_NUMBER',
     accountNameFallback: 'Cap nhat VITE_BANK_TRANSFER_ACCOUNT_NAME',
+  }
+}
+
+function getCashOnDeliveryLabels(language: 'vi' | 'en') {
+  if (language === 'en') {
+    return {
+      waitingTitle: 'Order created with cash on delivery',
+      waitingDescription:
+        'Your order has been created successfully. Pay the carrier when the parcel arrives, so no SePay transfer flow is generated for this order.',
+      instructionTitle: 'Cash on delivery instructions',
+      instructionDescription:
+        'Keep your phone available because the store or carrier may contact you before delivery.',
+      paymentLabel: 'Payment timing',
+      paymentValue: 'Pay when you receive the parcel.',
+      deliveryFeeLabel: 'Delivery fee policy',
+      deliveryFeeValue:
+        'Home delivery costs 30,000 VND and becomes free from 200,000 VND. Store pickup remains free.',
+      nextStepLabel: 'Next update',
+      nextStepValue:
+        'Track confirmation and shipping updates from your order history.',
+      noteTitle: 'Before the parcel arrives',
+      noteDescription:
+        'Prepare the payment amount if possible and inspect the package before completing payment with the carrier.',
+      summaryDescription: 'This order will be paid in cash when it is delivered.',
+    }
+  }
+
+  return {
+    waitingTitle: 'Don hang da tao voi thanh toan khi nhan hang',
+    waitingDescription:
+      'Don hang cua ban da duoc tao thanh cong. Ban se thanh toan khi nhan hang, vi vay he thong khong tao buoc chuyen khoan SePay cho don nay.',
+    instructionTitle: 'Huong dan thanh toan khi nhan hang',
+    instructionDescription:
+      'Hay giu dien thoai san sang vi cua hang hoac don vi giao hang co the lien he truoc khi giao.',
+    paymentLabel: 'Thoi diem thanh toan',
+    paymentValue: 'Thanh toan khi nhan duoc kien hang.',
+    deliveryFeeLabel: 'Chinh sach phi giao hang',
+    deliveryFeeValue:
+      'Giao tan noi tinh phi 30.000đ va mien phi tu 200.000đ. Nhan tai cua hang van mien phi.',
+    nextStepLabel: 'Cap nhat tiep theo',
+    nextStepValue:
+      'Theo doi trang thai xac nhan va giao hang trong lich su don hang.',
+    noteTitle: 'Truoc khi nhan hang',
+    noteDescription:
+      'Nen chuan bi truoc so tien can thanh toan neu co the va kiem tra tinh trang kien hang truoc khi tra tien cho shipper.',
+    summaryDescription: 'Don hang nay se duoc thanh toan bang tien mat khi giao den.',
   }
 }

@@ -19,6 +19,8 @@ public interface IUserService {
 
     List<User> getAdmins();
 
+    List<User> getShippers();
+
     List<User> getAllIncludingDeleted();
 
     User create(User user);

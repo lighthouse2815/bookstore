@@ -95,6 +95,7 @@ export function AdminUserManagementPage({
     createForm,
     editForm,
     labels,
+    avatarLabel,
     genderOptions,
     roleOptions,
     createDialogDescription,
@@ -108,6 +109,7 @@ export function AdminUserManagementPage({
     handleAttemptLock,
     handleAttemptDelete,
     handleCreateFormChange,
+    handleCreateAvatarFileChange,
     handleEditFormChange,
     handleCreateSubmit,
     handleEditSubmit,
@@ -300,12 +302,15 @@ export function AdminUserManagementPage({
                   }
                 />
                 <FormField
-                  label={t('auth.register.avatarUrl')}
+                  label={avatarLabel}
                   input={
                     <Input
-                      value={createForm.avatarUrl}
+                      type="file"
+                      accept="image/*"
                       onChange={(event) =>
-                        handleCreateFormChange('avatarUrl', event.currentTarget.value)
+                        void handleCreateAvatarFileChange(
+                          event.currentTarget.files?.[0] ?? null,
+                        )
                       }
                       className="h-11 rounded-2xl"
                     />

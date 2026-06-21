@@ -14,6 +14,10 @@ public class Notification {
     private UUID userId;
     private String title;
     private String content;
+    private String type;
+    private String targetType;
+    private UUID targetId;
+    private String link;
     private boolean read;
     private Instant createdAt;
     private Instant updatedAt;
@@ -31,10 +35,46 @@ public class Notification {
             Instant readAt,
             Instant deletedAt
     ) {
+        this(
+                id,
+                userId,
+                title,
+                content,
+                null,
+                null,
+                null,
+                null,
+                read,
+                createdAt,
+                updatedAt,
+                readAt,
+                deletedAt
+        );
+    }
+
+    public Notification(
+            UUID id,
+            UUID userId,
+            String title,
+            String content,
+            String type,
+            String targetType,
+            UUID targetId,
+            String link,
+            boolean read,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant readAt,
+            Instant deletedAt
+    ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_NOTIFICATION_ID, "id");
         setUserId(userId);
         setTitle(title);
         setContent(content);
+        setType(type);
+        setTargetType(targetType);
+        setTargetId(targetId);
+        setLink(link);
         setRead(read);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
@@ -69,6 +109,22 @@ public class Notification {
 
     private void setContent(String content) {
         this.content = Guard.notBlank(content, DomainErrorCode.INVALID_NOTIFICATION_CONTENT, "content");
+    }
+
+    private void setType(String type) {
+        this.type = normalizeOptionalText(type);
+    }
+
+    private void setTargetType(String targetType) {
+        this.targetType = normalizeOptionalText(targetType);
+    }
+
+    private void setTargetId(UUID targetId) {
+        this.targetId = targetId;
+    }
+
+    private void setLink(String link) {
+        this.link = normalizeOptionalText(link);
     }
 
     private void setRead(boolean read) {
@@ -139,5 +195,14 @@ public class Notification {
         );
         this.deletedAt = validDeletedAt;
         NotificationRule.requireAuditTimeline(this.createdAt, this.updatedAt, this.readAt, this.deletedAt);
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

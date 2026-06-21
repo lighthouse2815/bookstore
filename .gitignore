@@ -1,0 +1,9 @@
+# AI agent instruction files (local only)
+AGENTS.md
+CLAUDE.md
+.cursorrules
+.cursor/
+.codex/
+.opencode/
+.mimocode/
+.codegraph/

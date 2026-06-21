@@ -7,13 +7,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.CascadeType;
+import java.util.List;
 
 @Entity
 @Table(name = "coupons")
@@ -25,6 +29,9 @@ public class CouponJpaEntity {
     @Id
     @Column(nullable = false, updatable = false)
     private UUID id;
+
+    @OneToMany(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CouponTargetJpaEntity> targets = new ArrayList<>();
 
     @Column(nullable = false, unique = true, length = 100)
     private String code;

@@ -26,9 +26,6 @@ public class CategoryJpaEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "parent_id")
-    private UUID parentId;
-
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

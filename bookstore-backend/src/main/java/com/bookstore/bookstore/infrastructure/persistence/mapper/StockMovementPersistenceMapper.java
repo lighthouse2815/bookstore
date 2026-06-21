@@ -1,7 +1,9 @@
 package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.StockMovement;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.StockMovementJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +16,7 @@ public class StockMovementPersistenceMapper {
 
         return new StockMovement(
                 entity.getId(),
-                entity.getBookId(),
+                entity.getBook().getId(),
                 entity.getType(),
                 entity.getQuantity(),
                 entity.getBeforeQuantity(),
@@ -23,13 +25,13 @@ public class StockMovementPersistenceMapper {
                 entity.getReferenceType(),
                 entity.getNote(),
                 entity.getCreatedAt(),
-                entity.getCreatedBy()
+                entity.getCreatedBy().getId()
         );
     }
 
-    public void copyToEntity(StockMovement stockMovement, StockMovementJpaEntity entity) {
+    public void copyToEntity(StockMovement stockMovement, StockMovementJpaEntity entity, BookJpaEntity book, UserJpaEntity createdBy) {
         entity.setId(stockMovement.getId());
-        entity.setBookId(stockMovement.getBookId());
+        entity.setBook(book);
         entity.setType(stockMovement.getType());
         entity.setQuantity(stockMovement.getQuantity());
         entity.setBeforeQuantity(stockMovement.getBeforeQuantity());
@@ -38,6 +40,6 @@ public class StockMovementPersistenceMapper {
         entity.setReferenceType(stockMovement.getReferenceType());
         entity.setNote(stockMovement.getNote());
         entity.setCreatedAt(stockMovement.getCreatedAt());
-        entity.setCreatedBy(stockMovement.getCreatedBy());
+        entity.setCreatedBy(createdBy);
     }
 }

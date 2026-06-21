@@ -3,7 +3,10 @@ package com.bookstore.bookstore.infrastructure.persistence.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
@@ -27,8 +30,9 @@ public class ImportReceiptJpaEntity {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "supplier_id", nullable = false)
-    private UUID supplierId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id", nullable = false)
+    private SupplierJpaEntity supplier;
 
     @OneToMany(mappedBy = "importReceipt", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "item_order")

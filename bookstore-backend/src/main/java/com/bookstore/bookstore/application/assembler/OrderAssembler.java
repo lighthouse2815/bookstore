@@ -12,6 +12,7 @@ public class OrderAssembler {
     public OrderResult toResult(Order order) {
         return new OrderResult(
                 order.getId(),
+                order.getOrderCode(),
                 order.getUserId(),
                 order.getItems().stream()
                         .map(this::toItemResult)

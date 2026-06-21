@@ -7,6 +7,7 @@ import {
   Building2,
   Key,
   LogOut,
+  MessageSquareMore,
   PackagePlus,
   Percent,
   Settings2,
@@ -31,94 +32,108 @@ export function AdminSidebar() {
   const { language, t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
   const isVietnamese = language === 'vi'
+  const isAdmin = user?.roles.includes('ADMIN') ?? false
 
-  const menuItems = [
-    {
-      label: t('common.dashboard'),
-      href: '/admin',
-      icon: BarChart3,
-    },
-    {
-      label: t('admin.sidebar.books'),
-      href: '/admin/books',
-      icon: BookOpen,
-    },
-    {
-      label: isVietnamese ? 'Quan ly nhap kho' : 'Import receipts',
-      href: '/admin/import-receipts',
-      icon: PackagePlus,
-    },
-    {
-      label: isVietnamese ? 'Quan ly ton kho' : 'Inventory',
-      href: '/admin/inventory',
-      icon: Boxes,
-    },
-    {
-      label: t('admin.sidebar.orders'),
-      href: '/admin/orders',
-      icon: ShoppingCart,
-    },
-    {
-      label: isVietnamese ? 'Quan ly danh gia' : 'Reviews',
-      href: '/admin/reviews',
-      icon: Star,
-    },
-    {
-      label: isVietnamese ? 'Quan ly thong bao' : 'Notifications',
-      href: '/admin/notifications',
-      icon: BellRing,
-    },
-    {
-      label: t('admin.sidebar.categories'),
-      href: '/admin/categories',
-      icon: Tags,
-    },
-    {
-      label: t('admin.sidebar.authors'),
-      href: '/admin/authors',
-      icon: User,
-    },
-    {
-      label: t('admin.sidebar.publishers'),
-      href: '/admin/publishers',
-      icon: Building2,
-    },
-    {
-      label: isVietnamese ? 'Quan ly nha cung cap' : 'Manage suppliers',
-      href: '/admin/suppliers',
-      icon: Truck,
-    },
-    {
-      label: isVietnamese ? 'Quan ly khach hang' : 'Manage customers',
-      href: '/admin/customers',
-      icon: Users,
-    },
-    {
-      label: isVietnamese ? 'Quan ly nhan vien' : 'Manage staff',
-      href: '/admin/staff',
-      icon: User,
-    },
-    {
-      label: t('admin.sidebar.roles'),
-      href: '/admin/roles',
-      icon: Shield,
-    },
-    {
-      label: t('admin.sidebar.permissions'),
-      href: '/admin/permissions',
-      icon: Key,
-    },
-    {
-      label: t('admin.sidebar.promotions'),
-      href: '/admin/promotions',
-      icon: Percent,
-    },
-    {
-      label: isVietnamese ? 'Cai dat tai khoan' : 'Account settings',
-      href: '/admin/settings',
-      icon: Settings2,
-    },
-  ]
+  const menuItems = isAdmin
+    ? [
+        {
+          label: t('common.dashboard'),
+          href: '/admin',
+          icon: BarChart3,
+        },
+        {
+          label: t('admin.sidebar.books'),
+          href: '/admin/books',
+          icon: BookOpen,
+        },
+        {
+          label: isVietnamese ? 'Quan ly nhap kho' : 'Import receipts',
+          href: '/admin/import-receipts',
+          icon: PackagePlus,
+        },
+        {
+          label: isVietnamese ? 'Quan ly ton kho' : 'Inventory',
+          href: '/admin/inventory',
+          icon: Boxes,
+        },
+        {
+          label: t('admin.sidebar.orders'),
+          href: '/admin/orders',
+          icon: ShoppingCart,
+        },
+        {
+          label: isVietnamese ? 'Quan ly danh gia' : 'Reviews',
+          href: '/admin/reviews',
+          icon: Star,
+        },
+        {
+          label: isVietnamese ? 'Quan ly thong bao' : 'Notifications',
+          href: '/admin/notifications',
+          icon: BellRing,
+        },
+        {
+          label: isVietnamese ? 'Chat ho tro' : 'Support chat',
+          href: '/admin/chat',
+          icon: MessageSquareMore,
+        },
+        {
+          label: t('admin.sidebar.categories'),
+          href: '/admin/categories',
+          icon: Tags,
+        },
+        {
+          label: t('admin.sidebar.authors'),
+          href: '/admin/authors',
+          icon: User,
+        },
+        {
+          label: t('admin.sidebar.publishers'),
+          href: '/admin/publishers',
+          icon: Building2,
+        },
+        {
+          label: isVietnamese ? 'Quan ly nha cung cap' : 'Manage suppliers',
+          href: '/admin/suppliers',
+          icon: Truck,
+        },
+        {
+          label: isVietnamese ? 'Quan ly khach hang' : 'Manage customers',
+          href: '/admin/customers',
+          icon: Users,
+        },
+        {
+          label: isVietnamese ? 'Quan ly nhan vien' : 'Manage staff',
+          href: '/admin/staff',
+          icon: User,
+        },
+        {
+          label: t('admin.sidebar.roles'),
+          href: '/admin/roles',
+          icon: Shield,
+        },
+        {
+          label: t('admin.sidebar.permissions'),
+          href: '/admin/permissions',
+          icon: Key,
+        },
+        {
+          label: t('admin.sidebar.promotions'),
+          href: '/admin/promotions',
+          icon: Percent,
+        },
+        {
+          label: isVietnamese ? 'Cai dat tai khoan' : 'Account settings',
+          href: '/admin/settings',
+          icon: Settings2,
+        },
+      ]
+    : [
+        {
+          label: isVietnamese ? 'Chat ho tro' : 'Support chat',
+          href: '/admin/chat',
+          icon: MessageSquareMore,
+        },
+      ]
 
   return (
     <div className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-card">
@@ -175,12 +190,14 @@ export function AdminSidebar() {
       </nav>
 
       <div className="border-t border-border px-3 py-4">
-        <Link to="/admin/settings" className="mb-3 block">
-          <Button variant="outline" size="sm" className="w-full">
-            <Settings2 className="mr-2 h-4 w-4" />
-            {isVietnamese ? 'Tai khoan quan tri' : 'Admin account'}
-          </Button>
-        </Link>
+        {isAdmin ? (
+          <Link to="/admin/settings" className="mb-3 block">
+            <Button variant="outline" size="sm" className="w-full">
+              <Settings2 className="mr-2 h-4 w-4" />
+              {isVietnamese ? 'Tai khoan quan tri' : 'Admin account'}
+            </Button>
+          </Link>
+        ) : null}
         <Button
           onClick={logout}
           variant="outline"

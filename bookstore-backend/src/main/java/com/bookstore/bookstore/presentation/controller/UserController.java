@@ -102,6 +102,14 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/api/admin/users/shippers")
+    public ApiResponse<List<UserResponse>> getShippers() {
+        return ApiResponse.success(userService.getShippers().stream()
+                .map(userWebMapper::toUserResponse)
+                .toList());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/users/{id}")
     public ApiResponse<Void> deleteByAdmin(
             @AuthenticationPrincipal Jwt jwt,

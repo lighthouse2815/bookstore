@@ -65,8 +65,10 @@ public class SecurityConfig {
                                 "/api/test",
                                 "/api/auth/**",
                                 "/api/otp/**",
-                                "/api/payments/sepay/ipn"
+                                "/api/payments/sepay/ipn",
+                                "/ws/**"
                         ).permitAll()
+                        .requestMatchers("/api/admin/chat/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/books/**",
                                 "/api/categories/**",
@@ -111,7 +113,13 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(corsProperties.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setExposedHeaders(List.of(
+                "Authorization",
+                "X-Total-Count",
+                "X-Page",
+                "X-Size",
+                "X-Has-Next"
+        ));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 

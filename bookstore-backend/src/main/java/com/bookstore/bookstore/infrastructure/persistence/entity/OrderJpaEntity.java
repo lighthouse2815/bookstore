@@ -8,7 +8,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
@@ -35,8 +38,9 @@ public class OrderJpaEntity {
     @Column(name = "order_code", nullable = false, unique = true, length = 50)
     private String orderCode;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserJpaEntity user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "item_order")
@@ -63,20 +67,16 @@ public class OrderJpaEntity {
     @Column(name = "final_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal finalAmount;
 
-    @Column(name = "coupon_id")
-    private UUID couponId;
-
-    @Column(name = "coupon_code", length = 100)
-    private String couponCode;
-
-    @Column(name = "book_coupon_id")
-    private UUID bookCouponId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_coupon_id")
+    private CouponJpaEntity bookCoupon;
 
     @Column(name = "book_coupon_code", length = 100)
     private String bookCouponCode;
 
-    @Column(name = "shipping_coupon_id")
-    private UUID shippingCouponId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_coupon_id")
+    private CouponJpaEntity shippingCoupon;
 
     @Column(name = "shipping_coupon_code", length = 100)
     private String shippingCouponCode;

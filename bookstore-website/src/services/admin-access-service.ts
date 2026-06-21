@@ -8,6 +8,7 @@ import type {
   AdminNotificationResponse,
   AdminPermissionResponse,
   AdminPromotionResponse,
+  AdminPromotionMutationRequest,
   AdminReviewResponse,
   AdminRoleMutationRequest,
   AdminRoleResponse,
@@ -235,9 +236,34 @@ export async function createAdminNotification(
 
 export async function getAdminPromotions(): Promise<AdminPromotionResponse[]> {
   const response = await api.get<ApiResponse<AdminPromotionResponse[]>>(
-    '/admin/promotions',
+    '/admin/coupons',
   )
   return unwrapResponse(response)
+}
+
+export async function createAdminPromotion(
+  data: AdminPromotionMutationRequest,
+): Promise<AdminPromotionResponse> {
+  const response = await api.post<ApiResponse<AdminPromotionResponse>>(
+    '/admin/coupons',
+    data,
+  )
+  return unwrapResponse(response)
+}
+
+export async function updateAdminPromotion(
+  promotionId: string,
+  data: AdminPromotionMutationRequest,
+): Promise<AdminPromotionResponse> {
+  const response = await api.put<ApiResponse<AdminPromotionResponse>>(
+    `/admin/coupons/${promotionId}`,
+    data,
+  )
+  return unwrapResponse(response)
+}
+
+export async function deleteAdminPromotion(promotionId: string): Promise<void> {
+  await api.delete<ApiResponse<null>>(`/admin/coupons/${promotionId}`)
 }
 
 export async function getAdminStockMovements(): Promise<

@@ -13,14 +13,21 @@ import { createAddress, getMyAddresses } from '@/services/address-service'
 import { getActiveCoupons } from '@/services/coupon-service'
 import { createOrder } from '@/services/order-service'
 import type { UserAddressResponse } from '@/types/address'
-import type { CouponResponse } from '@/types/coupon'
+import type { CouponResponse, CouponType } from '@/types/coupon'
 import type { PaymentMethod, ShippingMethod } from '@/types/order'
+import {
+  calculateCouponDiscount,
+  findCouponByCode,
+  normalizeCouponCode,
+} from '@/utils/checkout-coupon'
 import { getErrorMessage } from '@/utils'
 
 export const NEW_ADDRESS_VALUE = '__new__'
 const NO_ADDRESS_VALUE = ''
 const DEFAULT_SHIPPING_METHOD: ShippingMethod = 'DELIVERY'
 const DEFAULT_PAYMENT_METHOD: PaymentMethod = 'BANK_TRANSFER_QR'
+const DELIVERY_SHIPPING_FEE = 30_000
+const FREE_SHIPPING_THRESHOLD = 200_000
 
 type CheckoutFormState = {
   fullName: string
@@ -29,7 +36,8 @@ type CheckoutFormState = {
   city: string
   district: string
   ward: string
-  couponCode: string
+  bookCouponCode: string
+  shippingCouponCode: string
   note: string
 }
 
@@ -40,7 +48,8 @@ const initialFormData: CheckoutFormState = {
   city: '',
   district: '',
   ward: '',
-  couponCode: '',
+  bookCouponCode: '',
+  shippingCouponCode: '',
   note: '',
 }
 
@@ -87,22 +96,25 @@ export function useCheckoutFlow() {
   }, [cartItems, selectedCartItemIds])
 
   const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0)
-  const shippingFee = items.length > 0 ? getShippingFee(shippingMethod) : 0
-  const selectedCoupon = useMemo(
+  const shippingFee =
+    items.length > 0 ? getShippingFee(shippingMethod, subtotal) : 0
+  const selectedBookCoupon = useMemo(
     () =>
-      activeCoupons.find(
-        (coupon) =>
-          coupon.code.toUpperCase() === formData.couponCode.trim().toUpperCase(),
-      ) ?? null,
-    [activeCoupons, formData.couponCode],
+      findCouponByCode(activeCoupons, formData.bookCouponCode, 'BOOK'),
+    [activeCoupons, formData.bookCouponCode],
+  )
+  const selectedShippingCoupon = useMemo(
+    () =>
+      findCouponByCode(activeCoupons, formData.shippingCouponCode, 'SHIPPING'),
+    [activeCoupons, formData.shippingCouponCode],
   )
   const shippingDiscount =
-    selectedCoupon && isShippingCoupon(selectedCoupon)
-      ? calculateCouponDiscount(selectedCoupon, subtotal, shippingFee)
+    selectedShippingCoupon
+      ? calculateCouponDiscount(selectedShippingCoupon, subtotal, shippingFee)
       : 0
   const couponDiscount =
-    selectedCoupon && !isShippingCoupon(selectedCoupon)
-      ? calculateCouponDiscount(selectedCoupon, subtotal, subtotal)
+    selectedBookCoupon
+      ? calculateCouponDiscount(selectedBookCoupon, subtotal, subtotal)
       : 0
   const finalTotal = Math.max(
     0,
@@ -133,7 +145,8 @@ export function useCheckoutFlow() {
           setSelectedAddressId(defaultAddress.id)
           setFormData((previousValue) => ({
             ...prefillAddressForm(defaultAddress),
-            couponCode: previousValue.couponCode,
+            bookCouponCode: previousValue.bookCouponCode,
+            shippingCouponCode: previousValue.shippingCouponCode,
             note: previousValue.note,
           }))
         }
@@ -193,10 +206,14 @@ export function useCheckoutFlow() {
     setFormData((previousValue) => ({ ...previousValue, [name]: value }))
   }
 
-  function handleCouponCodeChange(nextCouponCode: string) {
+  function handleCouponCodeChange(
+    couponType: CouponType,
+    nextCouponCode: string,
+  ) {
     setFormData((previousValue) => ({
       ...previousValue,
-      couponCode: nextCouponCode,
+      [couponType === 'BOOK' ? 'bookCouponCode' : 'shippingCouponCode']:
+        nextCouponCode,
     }))
   }
 
@@ -206,7 +223,8 @@ export function useCheckoutFlow() {
     if (nextValue === NEW_ADDRESS_VALUE) {
       setFormData((previousValue) => ({
         ...initialFormData,
-        couponCode: previousValue.couponCode,
+        bookCouponCode: previousValue.bookCouponCode,
+        shippingCouponCode: previousValue.shippingCouponCode,
         note: previousValue.note,
       }))
       return
@@ -217,7 +235,8 @@ export function useCheckoutFlow() {
     if (nextAddress) {
       setFormData((previousValue) => ({
         ...prefillAddressForm(nextAddress),
-        couponCode: previousValue.couponCode,
+        bookCouponCode: previousValue.bookCouponCode,
+        shippingCouponCode: previousValue.shippingCouponCode,
         note: previousValue.note,
       }))
     }
@@ -262,11 +281,10 @@ export function useCheckoutFlow() {
             })
           ).id
         : selectedAddressId
-      const normalizedCouponCode = formData.couponCode.trim().toUpperCase() || null
-      const usesShippingCoupon =
-        normalizedCouponCode !== null &&
-        selectedCoupon !== null &&
-        isShippingCoupon(selectedCoupon)
+      const normalizedBookCouponCode =
+        normalizeCouponCode(formData.bookCouponCode) || null
+      const normalizedShippingCouponCode =
+        normalizeCouponCode(formData.shippingCouponCode) || null
       const orderCartItemIds = items.map((item) => item.id)
 
       if (orderCartItemIds.length === 0) {
@@ -279,11 +297,8 @@ export function useCheckoutFlow() {
         addressId,
         shippingMethod,
         paymentMethod,
-        bookCouponCode:
-          normalizedCouponCode !== null && !usesShippingCoupon
-            ? normalizedCouponCode
-            : null,
-        shippingCouponCode: usesShippingCoupon ? normalizedCouponCode : null,
+        bookCouponCode: normalizedBookCouponCode,
+        shippingCouponCode: normalizedShippingCouponCode,
         note: formData.note.trim() || null,
       })
 
@@ -293,6 +308,7 @@ export function useCheckoutFlow() {
       const nextSearchParams = new URLSearchParams({
         orderId: order.orderId,
         orderCode: order.orderCode,
+        paymentMethod: order.paymentMethod,
         transferContent: order.transferContent,
         totalAmount: String(order.totalAmount),
       })
@@ -322,7 +338,8 @@ export function useCheckoutFlow() {
     isCouponLoading,
     savedAddresses,
     activeCoupons,
-    selectedCoupon,
+    selectedBookCoupon,
+    selectedShippingCoupon,
     selectedAddress,
     selectedAddressId,
     formData,
@@ -333,27 +350,6 @@ export function useCheckoutFlow() {
     handlePaymentMethodChange,
     handleSubmit,
   }
-}
-
-function calculateCouponDiscount(
-  coupon: CouponResponse,
-  orderSubtotal: number,
-  applicableAmount: number,
-) {
-  if (orderSubtotal < coupon.minOrderAmount || applicableAmount <= 0) {
-    return 0
-  }
-
-  const rawDiscount =
-    coupon.discountType === 'PERCENTAGE'
-      ? (applicableAmount * coupon.discountValue) / 100
-      : coupon.discountValue
-  const cappedDiscount =
-    coupon.maxDiscountAmount === null
-      ? rawDiscount
-      : Math.min(rawDiscount, coupon.maxDiscountAmount)
-
-  return Math.min(Math.max(0, cappedDiscount), applicableAmount)
 }
 
 function buildReceiverAddress(formData: CheckoutFormState) {
@@ -376,34 +372,16 @@ function prefillAddressForm(address: UserAddressResponse): CheckoutFormState {
     city: '',
     district: '',
     ward: '',
-    couponCode: '',
+    bookCouponCode: '',
+    shippingCouponCode: '',
     note: '',
   }
 }
 
-function isShippingCoupon(coupon: CouponResponse) {
-  const text = normalizeCouponText(`${coupon.code} ${coupon.description ?? ''}`)
-  return [
-    'ship',
-    'shipping',
-    'freeship',
-    'free ship',
-    'giao hang',
-    'van chuyen',
-  ].some((keyword) => text.includes(keyword))
-}
-
-function normalizeCouponText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-}
-
-function getShippingFee(shippingMethod: ShippingMethod) {
+function getShippingFee(shippingMethod: ShippingMethod, subtotal: number) {
   switch (shippingMethod) {
     case 'DELIVERY':
+      return subtotal < FREE_SHIPPING_THRESHOLD ? DELIVERY_SHIPPING_FEE : 0
     case 'PICKUP':
       return 0
   }

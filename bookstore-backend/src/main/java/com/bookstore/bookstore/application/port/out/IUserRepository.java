@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.domain.model.User;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,8 @@ public interface IUserRepository {
     boolean existsByPhoneNumberIncludingDeleted(String phoneNumber);
 
     boolean existsByEmailIncludingDeleted(String email);
+
+    long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive);
 
     void deleteById(UUID userId);
 

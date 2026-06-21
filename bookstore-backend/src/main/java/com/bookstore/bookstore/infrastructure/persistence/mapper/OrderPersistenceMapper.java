@@ -2,8 +2,11 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderItemJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
@@ -22,7 +25,7 @@ public class OrderPersistenceMapper {
         return new Order(
                 entity.getId(),
                 resolveOrderCode(entity),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getItems().stream()
                         .map(this::toDomain)
                         .toList(),
@@ -32,8 +35,8 @@ public class OrderPersistenceMapper {
                 resolveCouponDiscount(entity),
                 resolveTotalAmount(entity),
                 resolveBookCouponId(entity),
-                resolveBookCouponCode(entity),
-                entity.getShippingCouponId(),
+                entity.getBookCouponCode(),
+                resolveShippingCouponId(entity),
                 entity.getShippingCouponCode(),
                 entity.getPaymentMethod(),
                 entity.getPaymentStatus(),
@@ -47,10 +50,16 @@ public class OrderPersistenceMapper {
         );
     }
 
-    public void copyToEntity(Order order, OrderJpaEntity entity) {
+    public void copyToEntity(
+            Order order,
+            OrderJpaEntity entity,
+            UserJpaEntity user,
+            CouponJpaEntity bookCoupon,
+            CouponJpaEntity shippingCoupon
+    ) {
         entity.setId(order.getId());
         entity.setOrderCode(order.getOrderCode());
-        entity.setUserId(order.getUserId());
+        entity.setUser(user);
         entity.setProductTotal(order.getProductTotal());
         entity.setTotalAmount(order.getTotalAmount());
         entity.setDiscountAmount(order.getDiscountAmount());
@@ -58,11 +67,9 @@ public class OrderPersistenceMapper {
         entity.setShippingDiscount(order.getShippingDiscount());
         entity.setCouponDiscount(order.getCouponDiscount());
         entity.setFinalAmount(order.getFinalAmount());
-        entity.setCouponId(order.getCouponId());
-        entity.setCouponCode(order.getCouponCode());
-        entity.setBookCouponId(order.getBookCouponId());
+        entity.setBookCoupon(bookCoupon);
         entity.setBookCouponCode(order.getBookCouponCode());
-        entity.setShippingCouponId(order.getShippingCouponId());
+        entity.setShippingCoupon(shippingCoupon);
         entity.setShippingCouponCode(order.getShippingCouponCode());
         entity.setPaymentMethod(order.getPaymentMethod());
         entity.setPaymentStatus(order.getPaymentStatus());
@@ -80,7 +87,55 @@ public class OrderPersistenceMapper {
         var mappedItems = order.getItems().stream()
                 .map(item -> {
                     OrderItemJpaEntity itemEntity = currentItems.getOrDefault(item.getId(), new OrderItemJpaEntity());
-                    copyItemToEntity(item, itemEntity, entity);
+                    // copyItemToEntity will be called by adapter with book reference
+                    return itemEntity;
+                })
+                .toList();
+
+        entity.getItems().clear();
+        entity.getItems().addAll(mappedItems);
+    }
+
+    public void copyToEntityWithBooks(
+            Order order,
+            OrderJpaEntity entity,
+            UserJpaEntity user,
+            CouponJpaEntity bookCoupon,
+            CouponJpaEntity shippingCoupon,
+            Map<UUID, BookJpaEntity> bookMap
+    ) {
+        entity.setId(order.getId());
+        entity.setOrderCode(order.getOrderCode());
+        entity.setUser(user);
+        entity.setProductTotal(order.getProductTotal());
+        entity.setTotalAmount(order.getTotalAmount());
+        entity.setDiscountAmount(order.getDiscountAmount());
+        entity.setShippingFee(order.getShippingFee());
+        entity.setShippingDiscount(order.getShippingDiscount());
+        entity.setCouponDiscount(order.getCouponDiscount());
+        entity.setFinalAmount(order.getFinalAmount());
+        entity.setBookCoupon(bookCoupon);
+        entity.setBookCouponCode(order.getBookCouponCode());
+        entity.setShippingCoupon(shippingCoupon);
+        entity.setShippingCouponCode(order.getShippingCouponCode());
+        entity.setPaymentMethod(order.getPaymentMethod());
+        entity.setPaymentStatus(order.getPaymentStatus());
+        entity.setStatus(order.getStatus());
+        entity.setReceiverName(order.getReceiverName());
+        entity.setReceiverPhone(order.getReceiverPhone());
+        entity.setReceiverAddress(order.getReceiverAddress());
+        entity.setCreatedAt(order.getCreatedAt());
+        entity.setUpdatedAt(order.getUpdatedAt());
+        entity.setCancelledAt(order.getCancelledAt());
+
+        Map<UUID, OrderItemJpaEntity> currentItems = entity.getItems().stream()
+                .collect(Collectors.toMap(OrderItemJpaEntity::getId, Function.identity()));
+
+        var mappedItems = order.getItems().stream()
+                .map(item -> {
+                    OrderItemJpaEntity itemEntity = currentItems.getOrDefault(item.getId(), new OrderItemJpaEntity());
+                    BookJpaEntity book = bookMap.get(item.getBookId());
+                    copyItemToEntity(item, itemEntity, entity, book);
                     return itemEntity;
                 })
                 .toList();
@@ -92,7 +147,7 @@ public class OrderPersistenceMapper {
     private OrderItem toDomain(OrderItemJpaEntity entity) {
         return new OrderItem(
                 entity.getId(),
-                entity.getBookId(),
+                entity.getBook().getId(),
                 entity.getBookTitle(),
                 entity.getUnitPrice(),
                 entity.getQuantity(),
@@ -100,10 +155,15 @@ public class OrderPersistenceMapper {
         );
     }
 
-    private void copyItemToEntity(OrderItem item, OrderItemJpaEntity entity, OrderJpaEntity orderEntity) {
+    public void copyItemToEntity(
+            OrderItem item,
+            OrderItemJpaEntity entity,
+            OrderJpaEntity orderEntity,
+            BookJpaEntity book
+    ) {
         entity.setId(item.getId());
         entity.setOrder(orderEntity);
-        entity.setBookId(item.getBookId());
+        entity.setBook(book);
         entity.setBookTitle(item.getBookTitle());
         entity.setUnitPrice(item.getUnitPrice());
         entity.setQuantity(item.getQuantity());
@@ -134,10 +194,10 @@ public class OrderPersistenceMapper {
     }
 
     private UUID resolveBookCouponId(OrderJpaEntity entity) {
-        return entity.getBookCouponId() == null ? entity.getCouponId() : entity.getBookCouponId();
+        return entity.getBookCoupon() == null ? null : entity.getBookCoupon().getId();
     }
 
-    private String resolveBookCouponCode(OrderJpaEntity entity) {
-        return entity.getBookCouponCode() == null ? entity.getCouponCode() : entity.getBookCouponCode();
+    private UUID resolveShippingCouponId(OrderJpaEntity entity) {
+        return entity.getShippingCoupon() == null ? null : entity.getShippingCoupon().getId();
     }
 }

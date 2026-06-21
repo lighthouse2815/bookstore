@@ -3,17 +3,22 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookDetail;
 import com.bookstore.bookstore.domain.model.BookImage;
+import com.bookstore.bookstore.infrastructure.persistence.entity.AuthorJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookDetailJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookImageJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.PublisherJpaEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class BookPersistenceMapper {
 
     public Book toDomain(BookJpaEntity entity) {
@@ -30,22 +35,21 @@ public class BookPersistenceMapper {
                 entity.getStockQuantity(),
                 toDomainImages(entity),
                 toDomainDetail(entity.getDetail()),
-                entity.getCategoryId(),
-                entity.getAuthorId(),
-                entity.getPublisherId(),
+                entity.getCategory() != null ? entity.getCategory().getId() : null,
+                entity.getAuthor() != null ? entity.getAuthor().getId() : null,
+                entity.getPublisher() != null ? entity.getPublisher().getId() : null,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
         );
     }
 
-    public BookJpaEntity toEntity(Book book) {
-        BookJpaEntity entity = new BookJpaEntity();
-        copyToEntity(entity, book);
-        return entity;
-    }
-
-    public void copyToEntity(BookJpaEntity entity, Book book) {
+    public void copyToEntity(
+            BookJpaEntity entity,
+            Book book,
+            CategoryJpaEntity category,
+            AuthorJpaEntity author,
+            PublisherJpaEntity publisher) {
         entity.setId(book.getId());
         entity.setTitle(book.getTitle());
         entity.setIsbn(book.getIsbn());
@@ -53,9 +57,11 @@ public class BookPersistenceMapper {
         entity.setPrice(book.getPrice());
         entity.setStockQuantity(book.getStockQuantity());
         entity.setImageUrl(book.getPrimaryImageUrl());
-        entity.setCategoryId(book.getCategoryId());
-        entity.setAuthorId(book.getAuthorId());
-        entity.setPublisherId(book.getPublisherId());
+
+        entity.setCategory(category);
+        entity.setAuthor(author);
+        entity.setPublisher(publisher);
+
         entity.setCreatedAt(book.getCreatedAt());
         entity.setUpdatedAt(book.getUpdatedAt());
         entity.setDeletedAt(book.getDeletedAt());

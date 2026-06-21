@@ -3,6 +3,7 @@ package com.bookstore.bookstore.application.service;
 import com.bookstore.bookstore.application.command.HandleSepayIpnCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.IPaymentService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
@@ -28,6 +29,7 @@ public class PaymentService implements IPaymentService {
 
     private final IPaymentRepository paymentRepository;
     private final IOrderRepository orderRepository;
+    private final IDigitalLibraryService digitalLibraryService;
     private final SepayProperties sepayProperties;
 
     @Override
@@ -104,6 +106,7 @@ public class PaymentService implements IPaymentService {
 
         paymentRepository.save(payment);
         orderRepository.save(order.get());
+        digitalLibraryService.grantPurchasedAccessForOrder(order.get());
         log.info(
                 "Marked payment as paid from SePay IPN: transactionId={}, paymentId={}, orderId={}, paymentStatus={}",
                 command.transactionId(),

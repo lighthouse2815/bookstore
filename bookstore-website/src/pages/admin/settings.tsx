@@ -36,6 +36,7 @@ export default function AdminSettingsPage() {
     profileForm,
     toggleTheme,
     handleAccountChange,
+    handleProfileAvatarFileChange,
     handleProfileChange,
     handleProfileGenderChange,
     handleLogout,
@@ -85,9 +86,9 @@ export default function AdminSettingsPage() {
             <section className="rounded-[28px] border border-border/60 bg-background/45 p-6 shadow-[0_18px_50px_rgba(2,6,23,0.14)]">
               <div className="flex flex-col gap-5 md:flex-row md:items-center">
                 <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[28px] border border-border/60 bg-background/80 text-4xl font-semibold text-primary shadow-[0_16px_40px_rgba(2,6,23,0.16)]">
-                  {profile?.avatarUrl ? (
+                  {profileForm.avatarUrl || profile?.avatarUrl ? (
                     <img
-                      src={profile.avatarUrl}
+                      src={profileForm.avatarUrl || profile?.avatarUrl || ''}
                       alt={user?.name}
                       className="size-full object-cover"
                     />
@@ -294,11 +295,14 @@ export default function AdminSettingsPage() {
                   </FieldShell>
                 </div>
 
-                <FieldShell label={t('auth.profile.avatarUrl')}>
+                <FieldShell label={labels.avatarLabel}>
                   <Input
-                    value={profileForm.avatarUrl}
+                    type="file"
+                    accept="image/*"
                     onChange={(event) =>
-                      handleProfileChange('avatarUrl', event.currentTarget.value)
+                      void handleProfileAvatarFileChange(
+                        event.currentTarget.files?.[0] ?? null,
+                      )
                     }
                     className="mt-2 h-11 rounded-2xl"
                   />

@@ -21,49 +21,49 @@ public class PermissionRepositoryAdapter implements IPermissionRepository {
 
     @Override
     public List<Permission> findAllActive() {
-        return permissionJpaRepository.findAllActive().stream()
+        return permissionJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(permissionPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Permission> findAllIncludingDeleted() {
-        return permissionJpaRepository.findAllIncludingDeleted().stream()
+        return permissionJpaRepository.findAll().stream()
                 .map(permissionPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Permission> findByIdActive(UUID permissionId) {
-        return permissionJpaRepository.findByIdActive(permissionId)
+        return permissionJpaRepository.findByIdAndDeletedAtIsNull(permissionId)
                 .map(permissionPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Permission> findByIdIncludingDeleted(UUID permissionId) {
-        return permissionJpaRepository.findByIdIncludingDeleted(permissionId)
+        return permissionJpaRepository.findById(permissionId)
                 .map(permissionPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Permission> findByCodeActive(PermissionCode permissionCode) {
-        return permissionJpaRepository.findByCodeActive(permissionCode)
+        return permissionJpaRepository.findByCodeAndDeletedAtIsNull(permissionCode)
                 .map(permissionPersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID permissionId) {
-        return permissionJpaRepository.existsByIdIncludingDeleted(permissionId);
+        return permissionJpaRepository.existsById(permissionId);
     }
 
     @Override
     public boolean existsByCodeIncludingDeleted(PermissionCode permissionCode) {
-        return permissionJpaRepository.existsByCodeIncludingDeleted(permissionCode);
+        return permissionJpaRepository.existsByCode(permissionCode);
     }
 
     @Override
     public Permission save(Permission permission) {
-        PermissionJpaEntity entity = permissionJpaRepository.findByIdIncludingDeleted(permission.getId())
+        PermissionJpaEntity entity = permissionJpaRepository.findById(permission.getId())
                 .orElseGet(PermissionJpaEntity::new);
         permissionPersistenceMapper.copyToEntity(permission, entity);
         return permissionPersistenceMapper.toDomain(permissionJpaRepository.save(entity));

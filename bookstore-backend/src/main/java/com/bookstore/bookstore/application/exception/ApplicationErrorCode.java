@@ -29,9 +29,10 @@ public enum ApplicationErrorCode {
     USER_PHONE_ALREADY_EXISTS("APPLICATION_USER_004", "phoneNumber da ton tai"),
     USER_EMAIL_ALREADY_EXISTS("APPLICATION_USER_005", "email da ton tai"),
     USER_NOT_ADMIN("APPLICATION_USER_006", "khong co quyen xoa user nay"),
-    USER_ROLE_NOT_ALLOWED("APPLICATION_USER_007", "role chi duoc la STAFF hoac ADMIN"),
+    USER_ROLE_NOT_ALLOWED("APPLICATION_USER_007", "role chi duoc la STAFF, ADMIN hoac SHIPPER"),
     STAFF_NOT_FOUND("APPLICATION_USER_008", "khong tim thay nhan vien"),
     USER_SELF_MANAGEMENT_NOT_ALLOWED("APPLICATION_USER_009", "khong the thao tac tai khoan cua chinh minh"),
+    SHIPPER_NOT_FOUND("APPLICATION_USER_010", "khong tim thay shipper"),
 
     ROLE_ALREADY_EXISTS("APPLICATION_ROLE_001", "role da ton tai"),
     ROLE_NOT_FOUND("APPLICATION_ROLE_002", "khong tim thay role"),
@@ -57,17 +58,32 @@ public enum ApplicationErrorCode {
 
     BOOK_NOT_FOUND("APPLICATION_BOOK_001", "khong tim thay book"),
 
+    DIGITAL_ASSET_NOT_FOUND("APPLICATION_DIGITAL_ASSET_001", "khong tim thay tai nguyen so"),
+
     CART_NOT_FOUND("APPLICATION_CART_001", "khong tim thay gio hang"),
     CART_EMPTY("APPLICATION_CART_002", "gio hang dang trong"),
     CART_ITEM_NOT_FOUND("APPLICATION_CART_003", "khong tim thay san pham trong gio hang"),
 
     ORDER_NOT_FOUND("APPLICATION_ORDER_001", "khong tim thay don hang"),
 
+    SHIPMENT_NOT_FOUND("APPLICATION_SHIPMENT_001", "khong tim thay phieu giao hang"),
+    SHIPMENT_ORDER_NOT_READY("APPLICATION_SHIPMENT_002", "don hang khong o trang thai san sang giao"),
+    SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT("APPLICATION_SHIPMENT_003", "don hang dang co phieu giao hang chua ket thuc"),
+
     PAYMENT_WEBHOOK_UNAUTHORIZED("APPLICATION_PAYMENT_001", "sepay webhook khong hop le"),
+    PAYMENT_NOT_FOUND("APPLICATION_PAYMENT_002", "khong tim thay thanh toan"),
 
     USER_ADDRESS_NOT_FOUND("APPLICATION_USER_ADDRESS_001", "khong tim thay dia chi nhan hang"),
 
     NOTIFICATION_NOT_FOUND("APPLICATION_NOTIFICATION_001", "khong tim thay thong bao"),
+    CHAT_CONVERSATION_NOT_FOUND("APPLICATION_CHAT_001", "khong tim thay cuoc tro chuyen"),
+    CHAT_MESSAGE_NOT_FOUND("APPLICATION_CHAT_002", "khong tim thay tin nhan"),
+    CHAT_CONVERSATION_FORBIDDEN("APPLICATION_CHAT_003", "khong co quyen truy cap cuoc tro chuyen nay"),
+    CHAT_CONVERSATION_CLOSED("APPLICATION_CHAT_004", "cuoc tro chuyen da dong"),
+    CHAT_ASSIGNEE_NOT_FOUND("APPLICATION_CHAT_005", "khong tim thay nhan vien phu trach"),
+    CHAT_ASSIGNEE_ROLE_INVALID("APPLICATION_CHAT_006", "tai khoan duoc phan cong phai la ADMIN hoac STAFF"),
+    CHAT_ADMIN_ROLE_REQUIRED("APPLICATION_CHAT_007", "chi ADMIN hoac STAFF moi duoc thao tac chat quan tri"),
+    CHAT_CUSTOMER_ROLE_REQUIRED("APPLICATION_CHAT_008", "chi USER moi duoc su dung chat ho tro"),
 
     REVIEW_NOT_FOUND("APPLICATION_REVIEW_001", "khong tim thay danh gia"),
     REVIEW_ALREADY_EXISTS("APPLICATION_REVIEW_002", "order item da duoc danh gia"),

@@ -27,54 +27,54 @@ public class RoleRepositoryAdapter implements IRoleRepository {
 
     @Override
     public List<Role> findAllActive() {
-        return roleJpaRepository.findAllActive().stream()
+        return roleJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(rolePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Role> findAllIncludingDeleted() {
-        return roleJpaRepository.findAllIncludingDeleted().stream()
+        return roleJpaRepository.findAll().stream()
                 .map(rolePersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Role> findByIdActive(UUID roleId) {
-        return roleJpaRepository.findByIdActive(roleId)
+        return roleJpaRepository.findByIdAndDeletedAtIsNull(roleId)
                 .map(rolePersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Role> findByIdIncludingDeleted(UUID roleId) {
-        return roleJpaRepository.findByIdIncludingDeleted(roleId)
+        return roleJpaRepository.findById(roleId)
                 .map(rolePersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Role> findByNameActive(String roleName) {
-        return roleJpaRepository.findByNameActive(roleName)
+        return roleJpaRepository.findByNameAndDeletedAtIsNull(roleName)
                 .map(rolePersistenceMapper::toDomain);
     }
 
     @Override
     public boolean existsByIdIncludingDeleted(UUID roleId) {
-        return roleJpaRepository.existsByIdIncludingDeleted(roleId);
+        return roleJpaRepository.existsById(roleId);
     }
 
     @Override
     public boolean existsByNameIncludingDeleted(String roleName) {
-        return roleJpaRepository.existsByNameIncludingDeleted(roleName);
+        return roleJpaRepository.existsByName(roleName);
     }
 
     @Override
     public boolean existsByPermissionCodeIncludingDeleted(PermissionCode permissionCode) {
-        return roleJpaRepository.existsByPermissionsCodeIncludingDeleted(permissionCode);
+        return roleJpaRepository.existsByPermissions_Code(permissionCode);
     }
 
     @Override
     public Role save(Role role) {
-        RoleJpaEntity entity = roleJpaRepository.findByIdIncludingDeleted(role.getId())
+        RoleJpaEntity entity = roleJpaRepository.findById(role.getId())
                 .orElseGet(RoleJpaEntity::new);
         rolePersistenceMapper.copyToEntity(role, entity, resolvePermissions(role.getPermissions()));
         return rolePersistenceMapper.toDomain(roleJpaRepository.save(entity));
@@ -88,7 +88,7 @@ public class RoleRepositoryAdapter implements IRoleRepository {
     private Set<PermissionJpaEntity> resolvePermissions(Set<Permission> permissions) {
         Set<PermissionJpaEntity> resolved = new LinkedHashSet<>();
         for (Permission permission : permissions) {
-            PermissionJpaEntity entity = permissionJpaRepository.findByIdIncludingDeleted(permission.getId())
+            PermissionJpaEntity entity = permissionJpaRepository.findById(permission.getId())
                     .orElseThrow(() -> new IllegalStateException("Permission not found: " + permission.getId()));
             resolved.add(entity);
         }

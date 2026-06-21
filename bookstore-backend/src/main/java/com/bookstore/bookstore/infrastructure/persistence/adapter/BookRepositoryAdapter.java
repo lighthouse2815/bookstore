@@ -1,10 +1,14 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IBookRepository;
+import com.bookstore.bookstore.application.result.dashboard.LowStockBookResult;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.BookPersistenceMapper;
+import com.bookstore.bookstore.infrastructure.persistence.repository.AuthorJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.CategoryJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.PublisherJpaRepository;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -19,31 +23,39 @@ public class BookRepositoryAdapter implements IBookRepository {
 
     private final BookJpaRepository bookJpaRepository;
     private final BookPersistenceMapper bookPersistenceMapper;
+    private final CategoryJpaRepository categoryJpaRepository;
+    private final AuthorJpaRepository authorJpaRepository;
+    private final PublisherJpaRepository publisherJpaRepository;
 
     @Override
     public List<Book> findAllActive() {
-        return bookJpaRepository.findAllActive().stream()
+        return bookJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(bookPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Book> findAllIncludingDeleted() {
-        return bookJpaRepository.findAllIncludingDeleted().stream()
+        return bookJpaRepository.findAll().stream()
                 .map(bookPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Book> findByIdActive(UUID bookId) {
-        return bookJpaRepository.findByIdActive(bookId)
+        return bookJpaRepository.findByIdAndDeletedAtIsNull(bookId)
                 .map(bookPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Book> findByIdIncludingDeleted(UUID bookId) {
-        return bookJpaRepository.findByIdIncludingDeleted(bookId)
+        return bookJpaRepository.findById(bookId)
                 .map(bookPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public boolean existsByIdIncludingDeleted(UUID bookId) {
+        return bookJpaRepository.existsById(bookId);
     }
 
     @Override
@@ -52,7 +64,7 @@ public class BookRepositoryAdapter implements IBookRepository {
             return List.of();
         }
 
-        return bookJpaRepository.findAllByIdsIncludingDeleted(bookIds).stream()
+        return bookJpaRepository.findAllByIdIn(bookIds).stream()
                 .map(bookPersistenceMapper::toDomain)
                 .toList();
     }
@@ -76,10 +88,31 @@ public class BookRepositoryAdapter implements IBookRepository {
     }
 
     @Override
+    public long countLowStockBooks(int threshold) {
+        return bookJpaRepository.countByDeletedAtIsNullAndStockQuantityLessThanEqual(threshold);
+    }
+
+    @Override
+    public List<LowStockBookResult> findLowStockBooks(int threshold) {
+        return bookJpaRepository.findLowStockBooks(threshold).stream()
+                .map(row -> new LowStockBookResult(
+                        row.getBookId(),
+                        row.getTitle(),
+                        row.getStockQuantity() == null ? 0 : row.getStockQuantity()
+                ))
+                .toList();
+    }
+
+    @Override
     public Book save(Book book) {
-        BookJpaEntity entity = bookJpaRepository.findByIdIncludingDeleted(book.getId())
+        BookJpaEntity entity = bookJpaRepository.findById(book.getId())
                 .orElseGet(BookJpaEntity::new);
-        bookPersistenceMapper.copyToEntity(entity, book);
+
+        var category = categoryJpaRepository.getReferenceById(book.getCategoryId());
+        var author = authorJpaRepository.getReferenceById(book.getAuthorId());
+        var publisher = publisherJpaRepository.getReferenceById(book.getPublisherId());
+
+        bookPersistenceMapper.copyToEntity(entity, book, category, author, publisher);
         return bookPersistenceMapper.toDomain(bookJpaRepository.save(entity));
     }
 

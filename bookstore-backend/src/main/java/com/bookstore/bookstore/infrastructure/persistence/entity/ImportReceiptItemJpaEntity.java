@@ -28,8 +28,9 @@ public class ImportReceiptItemJpaEntity {
     @JoinColumn(name = "import_receipt_id", nullable = false)
     private ImportReceiptJpaEntity importReceipt;
 
-    @Column(name = "book_id", nullable = false)
-    private UUID bookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
+    private BookJpaEntity book;
 
     @Column(name = "book_title", nullable = false, length = 255)
     private String bookTitle;

@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+out/
+publish/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET tooling
+TestResults/
+*.nupkg
+*.snupkg
+
+# Logs and local files
+*.log
+*.tmp
+*.cache
+
+# Local receipt exports if generated inside the project
+Receipts/

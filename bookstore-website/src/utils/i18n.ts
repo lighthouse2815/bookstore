@@ -46,6 +46,7 @@ const orderStatusKeys: Record<string, string> = {
 const paymentMethodKeys: Record<OrderPaymentMethod, string> = {
   BANK_TRANSFER_QR: 'paymentMethods.BANK_TRANSFER_QR',
   COD: 'paymentMethods.COD',
+  CASH: 'paymentMethods.CASH',
   BANK_TRANSFER: 'paymentMethods.BANK_TRANSFER',
   VNPAY: 'paymentMethods.VNPAY',
   MOMO: 'paymentMethods.MOMO',

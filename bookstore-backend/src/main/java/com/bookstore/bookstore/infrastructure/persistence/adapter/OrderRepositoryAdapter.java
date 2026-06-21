@@ -1,10 +1,23 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
+import com.bookstore.bookstore.application.result.dashboard.OrderStatusStatsResult;
+import com.bookstore.bookstore.application.result.dashboard.RecentOrderResult;
+import com.bookstore.bookstore.application.result.dashboard.RevenueChartResult;
+import com.bookstore.bookstore.application.result.dashboard.TopBookStatsResult;
+import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.model.Order;
+import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.OrderPersistenceMapper;
+import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.CouponJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.OrderJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -19,19 +33,24 @@ import org.springframework.stereotype.Repository;
 public class OrderRepositoryAdapter implements IOrderRepository {
 
     private final OrderJpaRepository orderJpaRepository;
+    private final UserJpaRepository userJpaRepository;
+    private final BookJpaRepository bookJpaRepository;
+    private final CouponJpaRepository couponJpaRepository;
     private final OrderPersistenceMapper orderPersistenceMapper;
 
     @Override
     public Optional<Order> findById(UUID orderId) {
-        return orderJpaRepository.findDetailedById(orderId)
+        return orderJpaRepository.findByIdAndUser_DeletedAtIsNull(orderId)
                 .map(orderPersistenceMapper::toDomain);
+
     }
 
     @Override
     public List<Order> findByUserId(UUID userId) {
-        return orderJpaRepository.findAllByUserId(userId).stream()
+        return orderJpaRepository.findAllByUserIdAndUser_DeletedAtIsNull(userId).stream()
                 .map(orderPersistenceMapper::toDomain)
                 .toList();
+
     }
 
     @Override
@@ -48,17 +67,111 @@ public class OrderRepositoryAdapter implements IOrderRepository {
     }
 
     @Override
-    public List<Order> findAll() {
-        return orderJpaRepository.findAllDetailed().stream()
-                .map(orderPersistenceMapper::toDomain)
+    public BigDecimal sumDeliveredRevenueBetween(Instant fromInclusive, Instant toExclusive) {
+        return orderJpaRepository.sumDeliveredRevenueBetween(fromInclusive, toExclusive);
+    }
+
+    @Override
+    public long countCreatedBetween(Instant fromInclusive, Instant toExclusive) {
+        return orderJpaRepository.countCreatedBetween(fromInclusive, toExclusive);
+    }
+
+    @Override
+    public long countByStatus(OrderStatus status) {
+        return orderJpaRepository.countByStatus(status);
+    }
+
+    @Override
+    public List<RevenueChartResult> findRevenueStatsGroupByDay(Instant fromInclusive, Instant toExclusive) {
+        return orderJpaRepository.findRevenueStatsGroupByDay(fromInclusive, toExclusive).stream()
+                .map(row -> new RevenueChartResult(
+                        row.getPeriodKey(),
+                        row.getRevenue(),
+                        defaultLong(row.getOrderCount())
+                ))
                 .toList();
     }
 
     @Override
+    public List<RevenueChartResult> findRevenueStatsGroupByMonth(Instant fromInclusive, Instant toExclusive) {
+        return orderJpaRepository.findRevenueStatsGroupByMonth(fromInclusive, toExclusive).stream()
+                .map(row -> new RevenueChartResult(
+                        row.getPeriodKey(),
+                        row.getRevenue(),
+                        defaultLong(row.getOrderCount())
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<TopBookStatsResult> findTopSellingBooks(int limit) {
+        return orderJpaRepository.findTopSellingBooks(PageRequest.of(0, limit)).stream()
+                .map(row -> new TopBookStatsResult(
+                        row.getBookId(),
+                        row.getTitle(),
+                        defaultLong(row.getSoldQuantity()),
+                        row.getRevenue()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<OrderStatusStatsResult> countOrdersByStatus() {
+        return orderJpaRepository.countOrdersByStatus().stream()
+                .map(row -> new OrderStatusStatsResult(
+                        row.getStatus(),
+                        defaultLong(row.getCount())
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<RecentOrderResult> findRecentOrders(int limit) {
+        return orderJpaRepository.findRecentOrders(PageRequest.of(0, limit)).stream()
+                .map(row -> new RecentOrderResult(
+                        row.getOrderId(),
+                        row.getOrderCode(),
+                        row.getCustomerName(),
+                        row.getFinalAmount(),
+                        row.getStatus(),
+                        row.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<Order> findAll() {
+        return orderJpaRepository.findAllByUser_DeletedAtIsNull().stream()
+                .map(orderPersistenceMapper::toDomain)
+                .toList();
+
+    }
+
+    @Override
     public Order save(Order order) {
-        OrderJpaEntity entity = orderJpaRepository.findDetailedById(order.getId())
+        OrderJpaEntity entity = orderJpaRepository.findByIdAndUser_DeletedAtIsNull(order.getId())
                 .orElseGet(OrderJpaEntity::new);
-        orderPersistenceMapper.copyToEntity(order, entity);
+        
+        UserJpaEntity user = userJpaRepository.getReferenceById(order.getUserId());
+        CouponJpaEntity bookCoupon = order.getBookCouponId() != null 
+                ? couponJpaRepository.getReferenceById(order.getBookCouponId()) 
+                : null;
+        CouponJpaEntity shippingCoupon = order.getShippingCouponId() != null 
+                ? couponJpaRepository.getReferenceById(order.getShippingCouponId()) 
+                : null;
+        Map<UUID, BookJpaEntity> bookMap = order.getItems().stream()
+                .map(item -> item.getBookId())
+                .distinct()
+                .collect(Collectors.toMap(
+                        bookId -> bookId,
+                        bookJpaRepository::getReferenceById
+                ));
+        
+        orderPersistenceMapper.copyToEntityWithBooks(order, entity, user, bookCoupon, shippingCoupon, bookMap);
         return orderPersistenceMapper.toDomain(orderJpaRepository.save(entity));
+    }
+
+    private long defaultLong(Long value) {
+        return value == null ? 0L : value;
     }
 }

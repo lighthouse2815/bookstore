@@ -16,7 +16,11 @@ public class NotificationAssembler {
                 notification.isRead(),
                 notification.getCreatedAt(),
                 notification.getUpdatedAt(),
-                notification.getReadAt()
+                notification.getReadAt(),
+                notification.getType(),
+                notification.getTargetType(),
+                notification.getTargetId(),
+                notification.getLink()
         );
     }
 }

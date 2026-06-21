@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Review;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.OrderItemJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ReviewJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,9 +17,9 @@ public class ReviewPersistenceMapper {
 
         return new Review(
                 entity.getId(),
-                entity.getUserId(),
-                entity.getBookId(),
-                entity.getOrderItemId(),
+                entity.getUser().getId(),
+                entity.getBook().getId(),
+                entity.getOrderItem().getId(),
                 entity.getRating(),
                 entity.getComment(),
                 entity.getCreatedAt(),
@@ -25,11 +28,17 @@ public class ReviewPersistenceMapper {
         );
     }
 
-    public void copyToEntity(Review review, ReviewJpaEntity entity) {
+    public void copyToEntity(
+            Review review,
+            ReviewJpaEntity entity,
+            UserJpaEntity user,
+            BookJpaEntity book,
+            OrderItemJpaEntity orderItem
+    ) {
         entity.setId(review.getId());
-        entity.setUserId(review.getUserId());
-        entity.setBookId(review.getBookId());
-        entity.setOrderItemId(review.getOrderItemId());
+        entity.setUser(user);
+        entity.setBook(book);
+        entity.setOrderItem(orderItem);
         entity.setRating(review.getRating());
         entity.setComment(review.getComment());
         entity.setCreatedAt(review.getCreatedAt());

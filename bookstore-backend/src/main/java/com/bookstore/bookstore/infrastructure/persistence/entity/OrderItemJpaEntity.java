@@ -28,8 +28,9 @@ public class OrderItemJpaEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private OrderJpaEntity order;
 
-    @Column(name = "book_id", nullable = false)
-    private UUID bookId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
+    private BookJpaEntity book;
 
     @Column(name = "book_title", nullable = false, length = 255)
     private String bookTitle;

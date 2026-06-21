@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.RefreshToken;
 import com.bookstore.bookstore.infrastructure.persistence.entity.RefreshTokenJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class RefreshTokenPersistenceMapper {
 
         return new RefreshToken(
                 entity.getId(),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getToken(),
                 entity.getExpiresAt(),
                 entity.isRevoked(),
@@ -22,9 +23,9 @@ public class RefreshTokenPersistenceMapper {
         );
     }
 
-    public void copyToEntity(RefreshToken refreshToken, RefreshTokenJpaEntity entity) {
+    public void copyToEntity(RefreshToken refreshToken, RefreshTokenJpaEntity entity, UserJpaEntity user) {
         entity.setId(refreshToken.getId());
-        entity.setUserId(refreshToken.getUserId());
+        entity.setUser(user);
         entity.setToken(refreshToken.getToken());
         entity.setExpiresAt(refreshToken.getExpiresAt());
         entity.setRevoked(refreshToken.isRevoked());

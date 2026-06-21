@@ -13,7 +13,8 @@ type BackendCreateOrderRequest = {
   addressId: string | null
   shippingMethod: CreateOrderRequest['shippingMethod']
   paymentMethod: CreateOrderRequest['paymentMethod']
-  couponCode: string | null
+  bookCouponCode: string | null
+  shippingCouponCode: string | null
   note: string | null
 }
 
@@ -25,10 +26,8 @@ export async function createOrder(
     addressId: payload.addressId,
     shippingMethod: payload.shippingMethod,
     paymentMethod: payload.paymentMethod,
-    couponCode:
-      payload.bookCouponCode?.trim() ||
-      payload.shippingCouponCode?.trim() ||
-      null,
+    bookCouponCode: payload.bookCouponCode?.trim() || null,
+    shippingCouponCode: payload.shippingCouponCode?.trim() || null,
     note: payload.note?.trim() || null,
   }
 

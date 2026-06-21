@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.bookstore.bookstore.domain.enums.PaymentProvider;
+import com.bookstore.bookstore.domain.enums.PaymentStatus;
 
 public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
 
@@ -18,18 +20,22 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UU
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = com.bookstore.bookstore.domain.enums.PaymentProvider.SEPAY
-              and p.status = com.bookstore.bookstore.domain.enums.PaymentStatus.PENDING
+            where p.provider = PaymentProvider.SEPAY
+              and p.status = PaymentStatus.PENDING
               and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
             order by p.createdAt asc
             """)
-    Optional<PaymentJpaEntity> findPendingSepayByOrderCode(@Param("orderCode") String orderCode);
+    Optional<PaymentJpaEntity> findPendingSepayByOrderCode(
+      @Param("orderCode") String orderCode,
+      @Param("provider") PaymentProvider provider,
+      @Param("status") PaymentStatus status
+    );
 
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = com.bookstore.bookstore.domain.enums.PaymentProvider.SEPAY
-              and p.status = com.bookstore.bookstore.domain.enums.PaymentStatus.PENDING
+            where p.provider = PaymentProvider.SEPAY
+              and p.status = PaymentStatus.PENDING
               and lower(:content) like concat('%', lower(p.transferContent), '%')
             order by p.createdAt asc
             """)

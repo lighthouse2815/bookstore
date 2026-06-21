@@ -1,13 +1,50 @@
+import type { ReactNode } from 'react'
 import {
-  BookOpen,
+  Activity,
+  AlertTriangle,
+  Clock3,
+  Package,
+  RefreshCw,
   ShoppingCart,
+  Star,
+  Ticket,
   TrendingUp,
   Users,
+  Wallet,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { Badge } from '@/components/common/badge'
+import { Button } from '@/components/common/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/common/select'
 import { useAdminDashboardPage } from '@/hooks/use-admin-dashboard-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
+import type {
+  AdminDashboardRevenueFilter,
+  DashboardSummary,
+} from '@/types/admin-dashboard'
 import type { OrderStatus } from '@/types/order'
+import { cn } from '@/utils'
 import { getOrderStatusLabel } from '@/utils/i18n'
 
 const statusVariants: Record<
@@ -21,117 +58,904 @@ const statusVariants: Record<
   CANCELLED: 'destructive',
 }
 
+const statusChartColors = [
+  'var(--color-chart-1)',
+  'var(--color-chart-2)',
+  'var(--color-chart-3)',
+  'var(--color-chart-4)',
+  'var(--color-chart-5)',
+]
+
+const tooltipStyle = {
+  borderRadius: '18px',
+  border: '1px solid var(--color-border)',
+  backgroundColor: 'var(--color-card)',
+  color: 'var(--color-foreground)',
+  boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+}
+
 export default function AdminDashboard() {
-  const { t, formatCurrency, formatDate, isLoading, error, stats, recentOrders } =
-    useAdminDashboardPage()
+  const {
+    language,
+    locale,
+    t,
+    formatCurrency,
+    formatNumber,
+    summary,
+    revenueChart,
+    topBooks,
+    orderStatusStats,
+    lowStockBooks,
+    recentOrders,
+    revenueFilter,
+    setRevenueFilter,
+    isLoading,
+    isRefreshing,
+    error,
+    hasData,
+    refresh,
+  } = useAdminDashboardPage()
+
+  const copy = dashboardCopy[language]
+  const summaryCards = getSummaryCards(summary, copy, {
+    formatCurrency,
+    formatNumber,
+  })
+  const totalOrdersByStatus = orderStatusStats.reduce(
+    (sum, currentItem) => sum + currentItem.count,
+    0,
+  )
+  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+
+  const revenueFilterOptions: Array<{
+    value: AdminDashboardRevenueFilter
+    label: string
+  }> = [
+    {
+      value: 'LAST_7_DAYS',
+      label: copy.filters.last7Days,
+    },
+    {
+      value: 'LAST_30_DAYS',
+      label: copy.filters.last30Days,
+    },
+    {
+      value: 'THIS_MONTH',
+      label: copy.filters.thisMonth,
+    },
+  ]
+
+  if (!isLoading && error && !hasData) {
+    return (
+      <AdminLayout>
+        <div className="flex min-h-full items-center justify-center">
+          <div className="w-full max-w-2xl rounded-[28px] border border-destructive/20 bg-card p-8 text-center shadow-sm">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <h1 className="mt-5 font-heading text-3xl font-bold text-foreground">
+              {t('common.dashboard')}
+            </h1>
+            <p className="mt-3 text-base text-muted-foreground">{error}</p>
+            <Button className="mt-6" onClick={() => void refresh()}>
+              <RefreshCw className="h-4 w-4" />
+              {copy.retry}
+            </Button>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>
-      <div>
-        <h1 className="font-heading text-3xl font-bold text-foreground">
-          {t('common.dashboard')}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {t('admin.dashboard.description')}
-        </p>
+      <div className="space-y-6">
+        <section className="rounded-[32px] border border-border/70 bg-card px-6 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-none lg:px-8">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-sm font-medium text-primary">
+                <Activity className="h-4 w-4" />
+                {copy.liveLabel}
+              </div>
+              <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                {t('common.dashboard')}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                {copy.description}
+              </p>
+            </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon
-            return (
-              <div
-                key={stat.label}
-                className="rounded-lg border border-border bg-card p-6"
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                variant="outline"
+                className="h-11 rounded-2xl px-4"
+                onClick={() => void refresh()}
+                disabled={isRefreshing}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <p className="mt-2 text-3xl font-bold text-foreground">
-                      {isLoading ? '...' : stat.value}
-                    </p>
-                  </div>
-                  <div className={`rounded-lg p-3 ${stat.color}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                <RefreshCw
+                  className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+                />
+                {copy.refresh}
+              </Button>
+            </div>
+          </div>
 
-        <div className="mt-12">
-          <h2 className="font-heading text-xl font-bold text-foreground">
-            {t('admin.dashboard.recentOrders')}
-          </h2>
+          {error ? (
+            <div className="mt-5 rounded-2xl border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div>
+          ) : null}
+        </section>
 
-          <div className="mt-6 rounded-lg border border-border bg-card">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+          {isLoading
+            ? Array.from({ length: 8 }).map((_, index) => (
+                <StatCardSkeleton key={index} />
+              ))
+            : summaryCards.map((card) => (
+                <StatCard
+                  key={card.label}
+                  label={card.label}
+                  value={card.value}
+                  accentClassName={card.accentClassName}
+                  icon={<card.icon className="h-5 w-5" />}
+                />
+              ))}
+        </section>
+
+        <DashboardSectionCard
+          title={copy.sections.revenue}
+          description={copy.revenueDescription}
+          action={
+            <Select
+              value={revenueFilter}
+              onValueChange={(nextValue) => {
+                if (nextValue) {
+                  setRevenueFilter(nextValue as AdminDashboardRevenueFilter)
+                }
+              }}
+            >
+              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/70 sm:w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {revenueFilterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        >
+          {isLoading ? (
+            <ChartSkeleton />
+          ) : revenueChart.length === 0 ? (
+            <EmptyState message={copy.emptyRevenue} />
+          ) : (
+            <div className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={revenueChart}
+                  margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    stroke="var(--color-border)"
+                    strokeOpacity={0.55}
+                  />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    yAxisId="revenue"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => formatCompactCurrency(locale, value)}
+                    tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                  />
+                  <YAxis yAxisId="orders" orientation="right" hide />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(value, name) =>
+                      name === copy.metrics.orders
+                        ? [formatNumber(Number(value)), name]
+                        : [formatCurrency(Number(value)), name]
+                    }
+                    labelStyle={{ color: 'var(--color-foreground)' }}
+                  />
+                  <Legend />
+                  <Line
+                    yAxisId="revenue"
+                    type="monotone"
+                    dataKey="revenue"
+                    name={copy.metrics.revenue}
+                    stroke="var(--color-chart-1)"
+                    strokeWidth={3}
+                    dot={{ fill: 'var(--color-chart-1)', r: 3 }}
+                    activeDot={{ r: 5 }}
+                  />
+                  <Line
+                    yAxisId="orders"
+                    type="monotone"
+                    dataKey="orders"
+                    name={copy.metrics.orders}
+                    stroke="var(--color-chart-2)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </DashboardSectionCard>
+
+        <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
+          <DashboardSectionCard
+            title={copy.sections.topBooks}
+            description={copy.topBooksDescription}
+          >
             {isLoading ? (
-              <div className="px-6 py-8 text-center">
-                <p className="text-muted-foreground">{t('common.loading')}</p>
-              </div>
-            ) : error ? (
-              <div className="px-6 py-8 text-center">
-                <p className="font-semibold text-foreground">{error}</p>
-              </div>
-            ) : recentOrders.length === 0 ? (
-              <div className="px-6 py-8 text-center">
-                <p className="text-muted-foreground">
-                  {t('admin.dashboard.emptyOrders')}
-                </p>
-              </div>
+              <ChartSkeleton />
+            ) : topBooks.length === 0 ? (
+              <EmptyState message={copy.emptyTopBooks} />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        {t('admin.dashboard.columns.orderId')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        {t('admin.dashboard.columns.customer')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        {t('admin.dashboard.columns.total')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        {t('admin.dashboard.columns.status')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        {t('admin.dashboard.columns.date')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map((order) => (
-                      <tr key={order.orderId} className="border-b border-border">
-                        <td className="px-6 py-4 text-sm font-medium text-foreground">
-                          {order.orderId}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-foreground">
-                          {order.receiverName}
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-foreground">
-                          {formatCurrency(order.finalAmount)}
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <Badge variant={statusVariants[order.status]}>
-                            {getOrderStatusLabel(order.status, t)}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-muted-foreground">
-                          {formatDate(order.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="h-[340px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={topBooks}
+                    layout="vertical"
+                    margin={{ top: 8, right: 8, left: 24, bottom: 8 }}
+                  >
+                    <CartesianGrid
+                      horizontal={false}
+                      stroke="var(--color-border)"
+                      strokeOpacity={0.4}
+                    />
+                    <XAxis
+                      type="number"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                    />
+                    <YAxis
+                      dataKey="title"
+                      type="category"
+                      width={138}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value: string) => truncateLabel(value, 18)}
+                      tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(value) => [
+                        formatNumber(Number(value)),
+                        copy.metrics.soldQuantity,
+                      ]}
+                    />
+                    <Bar
+                      dataKey="soldQuantity"
+                      name={copy.metrics.soldQuantity}
+                      fill="var(--color-chart-3)"
+                      radius={[0, 14, 14, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
-          </div>
-        </div>
+          </DashboardSectionCard>
+
+          <DashboardSectionCard
+            title={copy.sections.orderStatus}
+            description={copy.orderStatusDescription}
+          >
+            {isLoading ? (
+              <ChartSkeleton />
+            ) : orderStatusStats.length === 0 ? (
+              <EmptyState message={copy.emptyOrderStatus} />
+            ) : (
+              <>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={orderStatusStats}
+                        dataKey="count"
+                        nameKey="status"
+                        innerRadius={72}
+                        outerRadius={104}
+                        paddingAngle={4}
+                      >
+                        {orderStatusStats.map((item, index) => (
+                          <Cell
+                            key={`${item.status ?? 'unknown'}-${index}`}
+                            fill={statusChartColors[index % statusChartColors.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        formatter={(value) => formatNumber(Number(value))}
+                        labelFormatter={(value) =>
+                          typeof value === 'string'
+                            ? getOrderStatusLabel(value as OrderStatus, t)
+                            : ''
+                        }
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {orderStatusStats.map((item, index) => (
+                    <div
+                      key={`${item.status ?? 'unknown'}-${index}`}
+                      className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 px-4 py-3"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className="size-3 rounded-full"
+                          style={{
+                            backgroundColor:
+                              statusChartColors[index % statusChartColors.length],
+                          }}
+                        />
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {item.status
+                            ? getOrderStatusLabel(item.status, t)
+                            : copy.unknownStatus}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-foreground">
+                          {formatNumber(item.count)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {getStatusPercent(item.count, totalOrdersByStatus)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </DashboardSectionCard>
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <DashboardSectionCard
+            title={copy.sections.lowStock}
+            description={copy.lowStockDescription}
+          >
+            {isLoading ? (
+              <TableSkeleton rows={5} />
+            ) : lowStockBooks.length === 0 ? (
+              <EmptyState message={copy.emptyLowStock} />
+            ) : (
+              <div className="overflow-hidden rounded-[24px] border border-border/60">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className="bg-muted/45">
+                      <tr>
+                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.book}
+                        </th>
+                        <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.stockQuantity}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowStockBooks.map((book) => (
+                        <tr
+                          key={book.bookId}
+                          className="border-t border-border/60 bg-card"
+                        >
+                          <td className="px-5 py-4">
+                            <Link
+                              to={`/books/${book.bookId}`}
+                              className="block max-w-[320px] truncate text-sm font-semibold text-foreground transition hover:text-primary"
+                            >
+                              {book.title}
+                            </Link>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <Badge
+                              variant={
+                                book.stockQuantity <= 5 ? 'destructive' : 'secondary'
+                              }
+                              className="min-w-[68px] justify-center"
+                            >
+                              {formatNumber(book.stockQuantity)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </DashboardSectionCard>
+
+          <DashboardSectionCard
+            title={copy.sections.recentOrders}
+            description={copy.recentOrdersDescription}
+          >
+            {isLoading ? (
+              <TableSkeleton rows={5} />
+            ) : recentOrders.length === 0 ? (
+              <EmptyState message={copy.emptyOrders} />
+            ) : (
+              <div className="overflow-hidden rounded-[24px] border border-border/60">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className="bg-muted/45">
+                      <tr>
+                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.orderId}
+                        </th>
+                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.customer}
+                        </th>
+                        <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.total}
+                        </th>
+                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.status}
+                        </th>
+                        <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {copy.columns.date}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentOrders.map((order) => (
+                        <tr
+                          key={order.orderId}
+                          className="border-t border-border/60 bg-card"
+                        >
+                          <td className="px-5 py-4 align-top">
+                            <p className="max-w-[220px] truncate text-sm font-semibold text-foreground">
+                              {order.orderCode}
+                            </p>
+                            <p className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground">
+                              {order.orderId}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 text-sm text-foreground">
+                            {order.customerName}
+                          </td>
+                          <td className="px-5 py-4 text-right text-sm font-semibold text-foreground">
+                            {formatCurrency(order.finalAmount)}
+                          </td>
+                          <td className="px-5 py-4">
+                            <Badge
+                              variant={
+                                order.status
+                                  ? statusVariants[order.status]
+                                  : 'outline'
+                              }
+                            >
+                              {order.status
+                                ? getOrderStatusLabel(order.status, t)
+                                : copy.unknownStatus}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-4 text-sm text-muted-foreground">
+                            {dateTimeFormatter.format(new Date(order.createdAt))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </DashboardSectionCard>
+        </section>
       </div>
     </AdminLayout>
   )
+}
+
+function DashboardSectionCard({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string
+  description?: string
+  action?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <section className="rounded-[32px] border border-border/70 bg-card p-6 shadow-[0_16px_40px_rgba(15,23,42,0.05)] dark:shadow-none">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="font-heading text-2xl font-bold text-foreground">
+            {title}
+          </h2>
+          {description ? (
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+
+      <div className="mt-6">{children}</div>
+    </section>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  accentClassName,
+}: {
+  label: string
+  value: string
+  icon: ReactNode
+  accentClassName: string
+}) {
+  return (
+    <div className="rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_12px_32px_rgba(15,23,42,0.04)] dark:shadow-none">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="mt-4 truncate font-heading text-2xl font-bold text-foreground">
+            {value}
+          </p>
+        </div>
+        <div
+          className={cn(
+            'flex size-12 shrink-0 items-center justify-center rounded-2xl',
+            accentClassName,
+          )}
+        >
+          {icon}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-[220px] items-center justify-center rounded-[24px] border border-dashed border-border/70 bg-background/50 px-6 text-center text-sm text-muted-foreground">
+      {message}
+    </div>
+  )
+}
+
+function StatCardSkeleton() {
+  return (
+    <div className="rounded-[28px] border border-border/70 bg-card p-5">
+      <div className="animate-pulse space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-3">
+            <div className="h-3 w-28 rounded-full bg-muted" />
+            <div className="h-8 w-32 rounded-full bg-muted" />
+          </div>
+          <div className="size-12 rounded-2xl bg-muted" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="h-[340px] rounded-[24px] border border-border/60 bg-background/40 p-4">
+      <div className="flex h-full animate-pulse items-end gap-3">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex-1 rounded-t-2xl bg-muted"
+            style={{ height: `${30 + (index % 5) * 14}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TableSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="rounded-[24px] border border-border/60 bg-background/40 p-4">
+      <div className="animate-pulse space-y-3">
+        <div className="h-10 rounded-2xl bg-muted" />
+        {Array.from({ length: rows }).map((_, index) => (
+          <div key={index} className="h-14 rounded-2xl bg-muted/80" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function getSummaryCards(
+  summary: DashboardSummary | null,
+  copy: DashboardCopy,
+  helpers: {
+    formatCurrency: (value: number) => string
+    formatNumber: (value: number) => string
+  },
+) {
+  const safeSummary: DashboardSummary = summary ?? {
+    todayRevenue: 0,
+    monthRevenue: 0,
+    todayOrders: 0,
+    pendingOrders: 0,
+    lowStockBooks: 0,
+    newCustomers: 0,
+    newReviews: 0,
+    activeCoupons: 0,
+  }
+
+  return [
+    {
+      label: copy.stats.todayRevenue,
+      value: helpers.formatCurrency(safeSummary.todayRevenue),
+      icon: Wallet,
+      accentClassName: 'bg-primary/12 text-primary',
+    },
+    {
+      label: copy.stats.monthRevenue,
+      value: helpers.formatCurrency(safeSummary.monthRevenue),
+      icon: TrendingUp,
+      accentClassName:
+        'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/18 dark:text-emerald-300',
+    },
+    {
+      label: copy.stats.todayOrders,
+      value: helpers.formatNumber(safeSummary.todayOrders),
+      icon: ShoppingCart,
+      accentClassName:
+        'bg-sky-500/12 text-sky-600 dark:bg-sky-500/18 dark:text-sky-300',
+    },
+    {
+      label: copy.stats.pendingOrders,
+      value: helpers.formatNumber(safeSummary.pendingOrders),
+      icon: Clock3,
+      accentClassName:
+        'bg-amber-500/12 text-amber-600 dark:bg-amber-500/18 dark:text-amber-300',
+    },
+    {
+      label: copy.stats.lowStockBooks,
+      value: helpers.formatNumber(safeSummary.lowStockBooks),
+      icon: Package,
+      accentClassName:
+        'bg-rose-500/12 text-rose-600 dark:bg-rose-500/18 dark:text-rose-300',
+    },
+    {
+      label: copy.stats.newCustomers,
+      value: helpers.formatNumber(safeSummary.newCustomers),
+      icon: Users,
+      accentClassName:
+        'bg-indigo-500/12 text-indigo-600 dark:bg-indigo-500/18 dark:text-indigo-300',
+    },
+    {
+      label: copy.stats.newReviews,
+      value: helpers.formatNumber(safeSummary.newReviews),
+      icon: Star,
+      accentClassName:
+        'bg-fuchsia-500/12 text-fuchsia-600 dark:bg-fuchsia-500/18 dark:text-fuchsia-300',
+    },
+    {
+      label: copy.stats.activeCoupons,
+      value: helpers.formatNumber(safeSummary.activeCoupons),
+      icon: Ticket,
+      accentClassName:
+        'bg-cyan-500/12 text-cyan-600 dark:bg-cyan-500/18 dark:text-cyan-300',
+    },
+  ]
+}
+
+function formatCompactCurrency(locale: string, value: number) {
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
+function truncateLabel(label: string, maxLength: number) {
+  if (label.length <= maxLength) {
+    return label
+  }
+
+  return `${label.slice(0, maxLength - 1)}…`
+}
+
+function getStatusPercent(count: number, total: number) {
+  if (total === 0) {
+    return '0%'
+  }
+
+  return `${Math.round((count / total) * 100)}%`
+}
+
+type DashboardCopy = {
+  description: string
+  liveLabel: string
+  refresh: string
+  retry: string
+  revenueDescription: string
+  topBooksDescription: string
+  orderStatusDescription: string
+  lowStockDescription: string
+  recentOrdersDescription: string
+  emptyRevenue: string
+  emptyTopBooks: string
+  emptyOrderStatus: string
+  emptyLowStock: string
+  emptyOrders: string
+  unknownStatus: string
+  filters: {
+    last7Days: string
+    last30Days: string
+    thisMonth: string
+  }
+  metrics: {
+    revenue: string
+    orders: string
+    soldQuantity: string
+  }
+  sections: {
+    revenue: string
+    topBooks: string
+    orderStatus: string
+    lowStock: string
+    recentOrders: string
+  }
+  stats: {
+    todayRevenue: string
+    monthRevenue: string
+    todayOrders: string
+    pendingOrders: string
+    lowStockBooks: string
+    newCustomers: string
+    newReviews: string
+    activeCoupons: string
+  }
+  columns: {
+    orderId: string
+    customer: string
+    total: string
+    status: string
+    date: string
+    book: string
+    stockQuantity: string
+  }
+}
+
+const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
+  vi: {
+    description:
+      'Theo dõi doanh thu, đơn hàng và tồn kho từ hệ thống backend trong một màn hình tổng hợp.',
+    liveLabel: 'Dữ liệu realtime từ backend',
+    refresh: 'Làm mới',
+    retry: 'Thử lại',
+    revenueDescription:
+      'So sánh doanh thu và số đơn theo từng mốc thời gian để theo dõi nhịp bán hàng.',
+    topBooksDescription:
+      'Top sách bán chạy theo số lượng, ưu tiên hiển thị rõ các tựa sách dài.',
+    orderStatusDescription:
+      'Phân bổ trạng thái đơn hiện tại để nhìn nhanh áp lực vận hành.',
+    lowStockDescription:
+      'Các đầu sách sắp chạm ngưỡng tồn kho thấp cần được nhập thêm.',
+    recentOrdersDescription:
+      'Danh sách đơn hàng mới nhất phát sinh từ backend admin dashboard.',
+    emptyRevenue: 'Chưa có dữ liệu doanh thu cho khoảng thời gian này',
+    emptyTopBooks: 'Chưa có dữ liệu sách bán chạy',
+    emptyOrderStatus: 'Chưa có thống kê trạng thái đơn hàng',
+    emptyLowStock: 'Không có sách nào ở ngưỡng sắp hết hàng',
+    emptyOrders: 'Chưa có đơn hàng nào để hiển thị',
+    unknownStatus: 'Không xác định',
+    filters: {
+      last7Days: '7 ngày',
+      last30Days: '30 ngày',
+      thisMonth: 'Tháng này',
+    },
+    metrics: {
+      revenue: 'Doanh thu',
+      orders: 'Số đơn',
+      soldQuantity: 'Đã bán',
+    },
+    sections: {
+      revenue: 'Doanh thu theo thời gian',
+      topBooks: 'Top 10 sách bán chạy',
+      orderStatus: 'Tỷ lệ trạng thái đơn hàng',
+      lowStock: 'Sách sắp hết hàng',
+      recentOrders: 'Đơn hàng mới nhất',
+    },
+    stats: {
+      todayRevenue: 'Doanh thu hôm nay',
+      monthRevenue: 'Doanh thu tháng này',
+      todayOrders: 'Đơn hôm nay',
+      pendingOrders: 'Đơn chờ xử lý',
+      lowStockBooks: 'Sách sắp hết hàng',
+      newCustomers: 'Khách hàng mới',
+      newReviews: 'Đánh giá mới',
+      activeCoupons: 'Mã giảm giá hoạt động',
+    },
+    columns: {
+      orderId: 'Mã đơn',
+      customer: 'Khách hàng',
+      total: 'Tổng tiền',
+      status: 'Trạng thái',
+      date: 'Ngày tạo',
+      book: 'Tên sách',
+      stockQuantity: 'Tồn kho',
+    },
+  },
+  en: {
+    description:
+      'Track revenue, orders, and stock health from the backend in one consolidated view.',
+    liveLabel: 'Live backend data',
+    refresh: 'Refresh',
+    retry: 'Retry',
+    revenueDescription:
+      'Compare revenue and order volume across time windows to monitor sales pace.',
+    topBooksDescription:
+      'Best-selling books ranked by quantity while keeping long titles readable.',
+    orderStatusDescription:
+      'Current order-status split for a quick operational snapshot.',
+    lowStockDescription:
+      'Books approaching the low-stock threshold and likely needing replenishment.',
+    recentOrdersDescription:
+      'Most recent orders returned by the admin dashboard backend endpoints.',
+    emptyRevenue: 'No revenue data for this period',
+    emptyTopBooks: 'No top-selling books available yet',
+    emptyOrderStatus: 'No order-status statistics available yet',
+    emptyLowStock: 'No books are currently near the low-stock threshold',
+    emptyOrders: 'No recent orders to display yet',
+    unknownStatus: 'Unknown',
+    filters: {
+      last7Days: '7 days',
+      last30Days: '30 days',
+      thisMonth: 'This month',
+    },
+    metrics: {
+      revenue: 'Revenue',
+      orders: 'Orders',
+      soldQuantity: 'Sold',
+    },
+    sections: {
+      revenue: 'Revenue over time',
+      topBooks: 'Top 10 best-selling books',
+      orderStatus: 'Order status distribution',
+      lowStock: 'Low-stock books',
+      recentOrders: 'Recent orders',
+    },
+    stats: {
+      todayRevenue: 'Today revenue',
+      monthRevenue: 'This month revenue',
+      todayOrders: 'Orders today',
+      pendingOrders: 'Pending orders',
+      lowStockBooks: 'Low-stock books',
+      newCustomers: 'New customers',
+      newReviews: 'New reviews',
+      activeCoupons: 'Active coupons',
+    },
+    columns: {
+      orderId: 'Order ID',
+      customer: 'Customer',
+      total: 'Total',
+      status: 'Status',
+      date: 'Created at',
+      book: 'Book',
+      stockQuantity: 'Stock',
+    },
+  },
 }

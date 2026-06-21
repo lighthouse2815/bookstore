@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.LowStockBookProjection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -14,45 +15,20 @@ import org.springframework.data.repository.query.Param;
 public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"images", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.deletedAt is null
-            """)
-    List<BookJpaEntity> findAllActive();
+    List<BookJpaEntity> findAllByDeletedAtIsNull();
 
     @EntityGraph(attributePaths = {"images", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            """)
-    List<BookJpaEntity> findAllIncludingDeleted();
+    List<BookJpaEntity> findAll();
 
     @EntityGraph(attributePaths = {"images", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.deletedAt is null
-              and b.id = :id
-            """)
-    Optional<BookJpaEntity> findByIdActive(@Param("id") UUID id);
+    Optional<BookJpaEntity> findByIdAndDeletedAtIsNull(UUID id);
 
     @EntityGraph(attributePaths = {"images", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.id = :id
-            """)
-    Optional<BookJpaEntity> findByIdIncludingDeleted(@Param("id") UUID id);
+    Optional<BookJpaEntity> findById(UUID id);
 
     @EntityGraph(attributePaths = {"images", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.id in :bookIds
-            """)
-    List<BookJpaEntity> findAllByIdsIncludingDeleted(@Param("bookIds") Collection<UUID> bookIds);
-
+    List<BookJpaEntity> findAllByIdIn(Collection<UUID> bookIds);
+    
     @EntityGraph(attributePaths = {"images", "detail"})
     @Query("""
             select distinct b
@@ -70,7 +46,10 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
             select distinct b
             from BookJpaEntity b
             where b.deletedAt is null
-              and b.categoryId = :categoryId
+              and b.category.deletedAt is null
+              and b.author.deletedAt is null
+              and b.publisher.deletedAt is null
+              and b.category.id = :categoryId
               and b.id <> :excludedBookId
             order by b.createdAt desc
             """)
@@ -79,4 +58,17 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
             @Param("excludedBookId") UUID excludedBookId,
             Pageable pageable
     );
+
+    long countByDeletedAtIsNullAndStockQuantityLessThanEqual(int threshold);
+
+    @Query("""
+            select b.id as bookId,
+                   b.title as title,
+                   b.stockQuantity as stockQuantity
+            from BookJpaEntity b
+            where b.deletedAt is null
+              and b.stockQuantity <= :threshold
+            order by b.stockQuantity asc, b.createdAt asc
+            """)
+    List<LowStockBookProjection> findLowStockBooks(@Param("threshold") int threshold);
 }

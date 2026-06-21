@@ -1,4 +1,5 @@
 import type { Gender, UserRole, UserStatus } from '@/types/auth'
+import type { CouponDiscountType, CouponType } from '@/types/coupon'
 
 export type ManagedAdminUserRole = 'ADMIN' | 'STAFF'
 
@@ -138,17 +139,33 @@ export type AdminCreateNotificationRequest = {
 export type AdminPromotionResponse = {
   id: string
   code: string
-  name: string
   description: string | null
-  discountType: string
+  couponType: CouponType
+  discountType: CouponDiscountType
   discountValue: number
+  minOrderAmount: number
+  maxDiscountAmount: number | null
   active: boolean
-  startAt: string | null
-  endAt: string | null
-  usageLimit: number | null
+  startsAt: string
+  expiresAt: string
+  maxUsageCount: number | null
   usedCount: number
   createdAt: string
-  updatedAt: string
+  updatedAt: string | null
+}
+
+export type AdminPromotionMutationRequest = {
+  code: string
+  description: string | null
+  couponType: CouponType
+  discountType: CouponDiscountType
+  discountValue: number
+  minOrderAmount: number
+  maxDiscountAmount: number | null
+  maxUsageCount: number | null
+  startsAt: string
+  expiresAt: string
+  active: boolean
 }
 
 export type AdminStockMovementType =

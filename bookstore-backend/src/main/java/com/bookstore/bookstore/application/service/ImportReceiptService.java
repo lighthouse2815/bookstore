@@ -64,8 +64,7 @@ public class ImportReceiptService implements IImportReceiptService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        supplierRepository.findByIdActive(command.supplierId())
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SUPPLIER_NOT_FOUND));
+        requireActiveSupplier(command.supplierId());
 
         Map<UUID, Book> booksById = loadImportBooks(command);
         UUID receiptId = UUID.randomUUID();
@@ -144,5 +143,11 @@ public class ImportReceiptService implements IImportReceiptService {
         }
 
         return booksById;
+    }
+
+    private void requireActiveSupplier(UUID supplierId) {
+        if (!supplierRepository.existsByIdIncludingDeleted(supplierId)) {
+            throw new ApplicationException(ApplicationErrorCode.SUPPLIER_NOT_FOUND);
+        }
     }
 }

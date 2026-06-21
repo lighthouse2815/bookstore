@@ -20,31 +20,36 @@ public class SupplierRepositoryAdapter implements ISupplierRepository {
 
     @Override
     public List<Supplier> findAllActive() {
-        return supplierJpaRepository.findAllActive().stream()
+        return supplierJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(supplierPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Supplier> findByIdActive(UUID supplierId) {
-        return supplierJpaRepository.findByIdActive(supplierId)
+        return supplierJpaRepository.findByIdAndDeletedAtIsNull(supplierId)
                 .map(supplierPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Supplier> findByIdIncludingDeleted(UUID supplierId) {
-        return supplierJpaRepository.findByIdIncludingDeleted(supplierId)
+        return supplierJpaRepository.findById(supplierId)
                 .map(supplierPersistenceMapper::toDomain);
     }
 
     @Override
+    public boolean existsByIdIncludingDeleted(UUID supplierId) {
+        return supplierJpaRepository.existsById(supplierId);
+    }
+
+    @Override
     public boolean existsByNameIncludingDeleted(String name) {
-        return supplierJpaRepository.existsByNameIncludingDeleted(name);
+        return supplierJpaRepository.existsByName(name);
     }
 
     @Override
     public Supplier save(Supplier supplier) {
-        SupplierJpaEntity entity = supplierJpaRepository.findByIdIncludingDeleted(supplier.getId())
+        SupplierJpaEntity entity = supplierJpaRepository.findById(supplier.getId())
                 .orElseGet(SupplierJpaEntity::new);
         supplierPersistenceMapper.copyToEntity(entity, supplier);
         return supplierPersistenceMapper.toDomain(supplierJpaRepository.save(entity));

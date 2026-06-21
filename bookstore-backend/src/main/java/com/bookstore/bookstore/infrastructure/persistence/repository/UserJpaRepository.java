@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,87 +13,46 @@ import org.springframework.data.repository.query.Param;
 public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    List<UserJpaEntity> findAllByDeletedAtIsNull();
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    List<UserJpaEntity> findAll();
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<UserJpaEntity> findByIdAndDeletedAtIsNull(UUID userId);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<UserJpaEntity> findById(UUID userId);
+
+    boolean existsById(UUID userId);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<UserJpaEntity> findByUsernameAndDeletedAtIsNull(String username);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<UserJpaEntity> findByUsername(String username);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<UserJpaEntity> findByEmail(String email);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByPhoneNumber(String phoneNumber);
+
+    boolean existsByEmail(String email);
+
     @Query("""
-            select u
+            select count(distinct u)
             from UserJpaEntity u
+            join u.roles r
             where u.deletedAt is null
+              and r.deletedAt is null
+              and r.name = 'USER'
+              and u.createdAt >= :fromInclusive
+              and u.createdAt < :toExclusive
             """)
-    List<UserJpaEntity> findAllActive();
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            """)
-    List<UserJpaEntity> findAllIncludingDeleted();
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            where u.deletedAt is null
-              and u.id = :userId
-            """)
-    Optional<UserJpaEntity> findByIdActive(@Param("userId") UUID userId);
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            where u.id = :userId
-            """)
-    Optional<UserJpaEntity> findByIdIncludingDeleted(@Param("userId") UUID userId);
-
-    @Query("""
-            select case when count(u) > 0 then true else false end
-            from UserJpaEntity u
-            where u.id = :userId
-            """)
-    boolean existsByIdIncludingDeleted(@Param("userId") UUID userId);
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            where u.deletedAt is null
-              and u.username = :username
-            """)
-    Optional<UserJpaEntity> findByUsernameActive(@Param("username") String username);
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            where u.username = :username
-            """)
-    Optional<UserJpaEntity> findByUsernameIncludingDeleted(@Param("username") String username);
-
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @Query("""
-            select u
-            from UserJpaEntity u
-            where u.email = :email
-            """)
-    Optional<UserJpaEntity> findByEmailIncludingDeleted(@Param("email") String email);
-
-    @Query("""
-            select case when count(u) > 0 then true else false end
-            from UserJpaEntity u
-            where u.username = :username
-            """)
-    boolean existsByUsernameIncludingDeleted(@Param("username") String username);
-
-    @Query("""
-            select case when count(u) > 0 then true else false end
-            from UserJpaEntity u
-            where u.phoneNumber = :phoneNumber
-            """)
-    boolean existsByPhoneNumberIncludingDeleted(@Param("phoneNumber") String phoneNumber);
-
-    @Query("""
-            select case when count(u) > 0 then true else false end
-            from UserJpaEntity u
-            where u.email = :email
-            """)
-    boolean existsByEmailIncludingDeleted(@Param("email") String email);
+    long countNewCustomersBetween(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
 }

@@ -2,8 +2,10 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Cart;
 import com.bookstore.bookstore.domain.model.CartItem;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CartItemJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CartJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -20,7 +22,7 @@ public class CartPersistenceMapper {
 
         return new Cart(
                 entity.getId(),
-                entity.getUserId(),
+                entity.getUser().getId(),
                 entity.getItems().stream()
                         .map(this::toDomain)
                         .toList(),
@@ -29,9 +31,9 @@ public class CartPersistenceMapper {
         );
     }
 
-    public void copyToEntity(Cart cart, CartJpaEntity entity) {
+    public void copyToEntity(Cart cart, CartJpaEntity entity, UserJpaEntity user) {
         entity.setId(cart.getId());
-        entity.setUserId(cart.getUserId());
+        entity.setUser(user);
         entity.setCreatedAt(cart.getCreatedAt());
         entity.setUpdatedAt(cart.getUpdatedAt());
 
@@ -41,7 +43,29 @@ public class CartPersistenceMapper {
         var mappedItems = cart.getItems().stream()
                 .map(item -> {
                     CartItemJpaEntity itemEntity = currentItems.getOrDefault(item.getId(), new CartItemJpaEntity());
-                    copyItemToEntity(item, itemEntity, entity);
+                    // copyItemToEntity will be called by adapter with book reference
+                    return itemEntity;
+                })
+                .toList();
+
+        entity.getItems().clear();
+        entity.getItems().addAll(mappedItems);
+    }
+
+    public void copyToEntityWithBooks(Cart cart, CartJpaEntity entity, UserJpaEntity user, Map<UUID, BookJpaEntity> bookMap) {
+        entity.setId(cart.getId());
+        entity.setUser(user);
+        entity.setCreatedAt(cart.getCreatedAt());
+        entity.setUpdatedAt(cart.getUpdatedAt());
+
+        Map<UUID, CartItemJpaEntity> currentItems = entity.getItems().stream()
+                .collect(Collectors.toMap(CartItemJpaEntity::getId, Function.identity()));
+
+        var mappedItems = cart.getItems().stream()
+                .map(item -> {
+                    CartItemJpaEntity itemEntity = currentItems.getOrDefault(item.getId(), new CartItemJpaEntity());
+                    BookJpaEntity book = bookMap.get(item.getBookId());
+                    copyItemToEntity(item, itemEntity, entity, book);
                     return itemEntity;
                 })
                 .toList();
@@ -53,17 +77,17 @@ public class CartPersistenceMapper {
     private CartItem toDomain(CartItemJpaEntity entity) {
         return new CartItem(
                 entity.getId(),
-                entity.getBookId(),
+                entity.getBook().getId(),
                 entity.getQuantity(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
     }
 
-    private void copyItemToEntity(CartItem item, CartItemJpaEntity entity, CartJpaEntity cartEntity) {
+    private void copyItemToEntity(CartItem item, CartItemJpaEntity entity, CartJpaEntity cartEntity, BookJpaEntity book) {
         entity.setId(item.getId());
         entity.setCart(cartEntity);
-        entity.setBookId(item.getBookId());
+        entity.setBook(book);
         entity.setQuantity(item.getQuantity());
         entity.setCreatedAt(item.getCreatedAt());
         entity.setUpdatedAt(item.getUpdatedAt());

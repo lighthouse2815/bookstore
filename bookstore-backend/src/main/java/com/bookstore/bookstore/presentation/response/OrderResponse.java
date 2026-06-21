@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public record OrderResponse(
         UUID orderId,
+        String orderCode,
         UUID userId,
         List<OrderItemResponse> items,
         BigDecimal productTotal,
@@ -57,6 +58,7 @@ public record OrderResponse(
     ) {
         this(
                 orderId,
+                orderId == null ? null : orderId.toString(),
                 userId,
                 items,
                 totalAmount,

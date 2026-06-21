@@ -2,8 +2,10 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.ImportReceipt;
 import com.bookstore.bookstore.domain.model.ImportReceiptItem;
+import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ImportReceiptItemJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ImportReceiptJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.SupplierJpaEntity;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -20,7 +22,7 @@ public class ImportReceiptPersistenceMapper {
 
         return new ImportReceipt(
                 entity.getId(),
-                entity.getSupplierId(),
+                entity.getSupplier().getId(),
                 entity.getItems().stream()
                         .map(this::toDomain)
                         .toList(),
@@ -32,9 +34,9 @@ public class ImportReceiptPersistenceMapper {
         );
     }
 
-    public void copyToEntity(ImportReceipt importReceipt, ImportReceiptJpaEntity entity) {
+    public void copyToEntity(ImportReceipt importReceipt, ImportReceiptJpaEntity entity, SupplierJpaEntity supplier) {
         entity.setId(importReceipt.getId());
-        entity.setSupplierId(importReceipt.getSupplierId());
+        entity.setSupplier(supplier);
         entity.setTotalAmount(importReceipt.getTotalAmount());
         entity.setNote(importReceipt.getNote());
         entity.setCreatedAt(importReceipt.getCreatedAt());
@@ -50,7 +52,7 @@ public class ImportReceiptPersistenceMapper {
                             item.getId(),
                             new ImportReceiptItemJpaEntity()
                     );
-                    copyItemToEntity(item, itemEntity, entity);
+                    // copyItemToEntity will be called by adapter with book reference
                     return itemEntity;
                 })
                 .toList();
@@ -62,7 +64,7 @@ public class ImportReceiptPersistenceMapper {
     private ImportReceiptItem toDomain(ImportReceiptItemJpaEntity entity) {
         return new ImportReceiptItem(
                 entity.getId(),
-                entity.getBookId(),
+                entity.getBook().getId(),
                 entity.getBookTitle(),
                 entity.getUnitCost(),
                 entity.getQuantity(),
@@ -70,14 +72,15 @@ public class ImportReceiptPersistenceMapper {
         );
     }
 
-    private void copyItemToEntity(
+    public void copyItemToEntity(
             ImportReceiptItem item,
             ImportReceiptItemJpaEntity entity,
-            ImportReceiptJpaEntity importReceiptEntity
+            ImportReceiptJpaEntity importReceiptEntity,
+            BookJpaEntity book
     ) {
         entity.setId(item.getId());
         entity.setImportReceipt(importReceiptEntity);
-        entity.setBookId(item.getBookId());
+        entity.setBook(book);
         entity.setBookTitle(item.getBookTitle());
         entity.setUnitCost(item.getUnitCost());
         entity.setQuantity(item.getQuantity());
