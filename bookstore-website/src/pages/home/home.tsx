@@ -14,7 +14,7 @@ import { useBookCatalog } from '@/hooks/use-book-catalog'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
-export default function HomePage() {
+export function HomePage (){
   const { t } = useLanguage()
   const { books, categories, isLoading, error } = useBookCatalog()
   const hero = books[0]
