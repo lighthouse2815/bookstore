@@ -1,33 +1,52 @@
-# bookstore-website
+# Bookstore Website
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+React 19 + Vite 8 storefront/admin frontend for the bookstore project.
 
-## Built with v0
+## Tooling
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+- Node.js 20+
+- npm
+- React 19
+- TypeScript
+- Vite 8
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_hfvUA4087ucLnvqFyM5v5fgRFVJ2)
+This checkout currently has both `package-lock.json` and `pnpm-lock.yaml`, but the documented workflow here is `npm`.
 
-## Getting Started
+## Setup
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+```powershell
+cd D:\bookstore\bookstore-website
+Copy-Item .env.example .env
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+cd D:\bookstore\bookstore-website
+npm run dev
+```
 
-## Learn More
+Default URL:
 
-To learn more, take a look at the following resources:
+```txt
+http://localhost:5173
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+## Verification
+
+```powershell
+cd D:\bookstore\bookstore-website
+npm run build
+npm test
+```
+
+## Required env
+
+- `VITE_API_BASE_URL=http://localhost:8080/api`
+- `VITE_GOOGLE_CLIENT_ID=...` for Google login
+
+## Related docs
+
+- Monorepo run guide: `D:\bookstore\docs\RUN_PROJECT.md`
+- Backend production DB note: `D:\bookstore\bookstore-backend\docs\PRODUCTION_DATABASE_SETUP.md`

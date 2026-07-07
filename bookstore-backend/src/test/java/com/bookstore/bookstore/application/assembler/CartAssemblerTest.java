@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
+import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.result.CartResult;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookImage;
@@ -27,6 +28,9 @@ class CartAssemblerTest {
 
     @Mock
     private IBookRepository bookRepository;
+
+    @Mock
+    private IDigitalAssetRepository digitalAssetRepository;
 
     @InjectMocks
     private CartAssembler cartAssembler;
@@ -64,6 +68,7 @@ class CartAssemblerTest {
         assertEquals(0, result.totalQuantity());
         assertEquals(BigDecimal.ZERO, result.totalAmount());
         verifyNoInteractions(bookRepository);
+        verifyNoInteractions(digitalAssetRepository);
     }
 
     @Test
@@ -81,6 +86,7 @@ class CartAssemblerTest {
         cart.addItem(book.getId(), 2, book.getStockQuantity());
 
         when(bookRepository.findAllByIdsIncludingDeleted(List.of(book.getId()))).thenReturn(List.of(book));
+        when(digitalAssetRepository.findAllByIdsActive(List.of())).thenReturn(List.of());
 
         CartResult result = cartAssembler.toResult(cart);
 
@@ -113,6 +119,7 @@ class CartAssemblerTest {
         cart.addItem(book.getId(), 1, book.getStockQuantity());
 
         when(bookRepository.findAllByIdsIncludingDeleted(List.of(book.getId()))).thenReturn(List.of());
+        when(digitalAssetRepository.findAllByIdsActive(List.of())).thenReturn(List.of());
 
         ApplicationException exception = assertThrows(
                 ApplicationException.class,

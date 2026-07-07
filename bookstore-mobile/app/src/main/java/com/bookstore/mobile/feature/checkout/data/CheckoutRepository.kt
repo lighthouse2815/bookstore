@@ -35,13 +35,14 @@ class CheckoutRepository(
 
     suspend fun checkout(
         addressId: String,
-        couponCode: String?,
+        bookCouponCode: String?,
         note: String?,
     ): ResultState<CheckoutResult> = call("Dat hang that bai") {
         val dto = apiClient.service().checkout(
             CheckoutRequest(
                 addressId = addressId,
-                couponCode = couponCode?.trim()?.ifBlank { null },
+                bookCouponCode = bookCouponCode?.trim()?.ifBlank { null },
+                shippingCouponCode = null,
                 note = note?.trim()?.ifBlank { null },
             ),
         ).data ?: error("Phan hoi dat hang khong hop le")

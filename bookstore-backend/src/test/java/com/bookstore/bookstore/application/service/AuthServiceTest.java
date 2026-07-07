@@ -269,7 +269,7 @@ class AuthServiceTest {
         assertEquals("test@gmail.com", userCaptor.getValue().getEmail());
         assertEquals("First", profileCaptor.getValue().getFirstName());
         assertEquals("Last", profileCaptor.getValue().getLastName());
-        assertEquals("https://avatar.example.com/user.png", profileCaptor.getValue().getAvatarUrl());
+        assertNull(profileCaptor.getValue().getAvatarUrl());
         assertEquals(AuthProvider.GOOGLE, identityCaptor.getValue().getProvider());
         assertEquals("google-subject-123", identityCaptor.getValue().getProviderSubject());
     }

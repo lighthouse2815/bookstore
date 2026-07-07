@@ -63,7 +63,7 @@ app/build/outputs/apk/debug/app-debug.apk
 Mac dinh ban build hien tai dung may that:
 
 ```txt
-http://192.168.1.10:8080
+http://192.168.x.x:8080
 ```
 
 Ghi chu:
@@ -72,7 +72,7 @@ Ghi chu:
 - Neu doi Wi-Fi/IP LAN, vao link `Cai dat API cho may that` tren man Login hoac vao `Profile > Settings` sau khi dang nhap, doi base URL thanh IP LAN cua may chay backend, vi du:
 
 ```txt
-http://192.168.1.10:8080
+http://192.168.x.x:8080
 ```
 
 ## Luong demo
@@ -90,11 +90,16 @@ http://192.168.1.10:8080
 
 ## Tai khoan demo
 
-Repo backend hien tai khong khai bao san tai khoan khach hang demo trong mobile. De demo khach hang:
+Co 2 cach demo tai khoan customer tren mobile:
 
-1. Dang ky email moi trong app.
-2. Nhap OTP duoc backend gui qua email.
-3. Dang nhap bang email va mat khau vua tao.
+1. Dung seed dataset:
+   - Chay backend voi profile `seed`.
+   - Tai khoan customer dau tien: `minhanh.nguyen`
+   - Password dung gia tri `APP_SEED_DEFAULT_PASSWORD` trong `bookstore-backend/.env`
+2. Tu tao tai khoan moi trong app:
+   - Dang ky email moi trong app
+   - Nhap OTP duoc backend gui qua email
+   - Dang nhap bang email va mat khau vua tao
 
 Neu database chua co du lieu sach, tao toi thieu:
 
@@ -130,8 +135,8 @@ Cart:
 
 - `GET /api/cart`
 - `POST /api/cart/items`
-- `PUT /api/cart/items/{bookId}`
-- `DELETE /api/cart/items/{bookId}`
+- `PUT /api/cart/items/{itemId}`
+- `DELETE /api/cart/items/{itemId}`
 - `DELETE /api/cart/items`
 
 Checkout/address/order:
@@ -141,6 +146,11 @@ Checkout/address/order:
 - `POST /api/orders/checkout`
 - `GET /api/orders/my`
 - `GET /api/orders/{id}`
+
+Checkout note:
+
+- Backend checkout request uses `bookCouponCode` and `shippingCouponCode`
+- Mobile UI currently has one coupon box and maps that value to `bookCouponCode`
 
 Profile:
 

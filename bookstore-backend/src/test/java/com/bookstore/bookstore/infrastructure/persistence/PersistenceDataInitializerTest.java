@@ -11,7 +11,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "app.admin.seed-enabled=true",
+        "app.admin.username=test-admin",
+        "app.admin.password=TestAdmin@12345",
+        "app.admin.phone=0909999999",
+        "app.admin.email=test-admin@example.com",
+        "app.admin.last-name=Test",
+        "app.admin.first-name=Admin"
+})
 class PersistenceDataInitializerTest {
 
     @Autowired
@@ -22,7 +30,7 @@ class PersistenceDataInitializerTest {
 
     @Test
     void run_seedsDefaultAdminUserAndProfile() {
-        var adminUser = userJpaRepository.findByUsername("giamdocdang")
+        var adminUser = userJpaRepository.findByUsername("test-admin")
                 .orElseThrow();
 
         assertEquals(UserStatus.ACTIVE, adminUser.getStatus());
@@ -34,7 +42,7 @@ class PersistenceDataInitializerTest {
                 .orElseThrow();
 
         assertEquals(adminUser.getId(), profile.getUser().getId());
-        assertEquals("Dang", profile.getLastName());
-        assertEquals("Giam Doc", profile.getFirstName());
+        assertEquals("Test", profile.getLastName());
+        assertEquals("Admin", profile.getFirstName());
     }
 }

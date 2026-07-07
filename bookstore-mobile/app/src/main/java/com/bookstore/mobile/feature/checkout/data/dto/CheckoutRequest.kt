@@ -8,7 +8,8 @@ data class CheckoutRequest(
     val addressId: String,
     val shippingMethod: String = "DELIVERY",
     val paymentMethod: String = "BANK_TRANSFER_QR",
-    val couponCode: String? = null,
+    val bookCouponCode: String? = null,
+    val shippingCouponCode: String? = null,
     val note: String? = null,
 )
 

@@ -38,10 +38,10 @@ class CartViewModel(
         }
     }
 
-    fun updateQuantity(bookId: String, quantity: Int) {
+    fun updateQuantity(itemId: String, quantity: Int) {
         if (quantity <= 0) return
         viewModelScope.launch {
-            when (val result = cartRepository.updateItem(bookId, quantity)) {
+            when (val result = cartRepository.updateItem(itemId, quantity)) {
                 is ResultState.Success -> _uiState.update { it.copy(cart = result.data, errorMessage = null) }
                 is ResultState.Error -> _uiState.update { it.copy(errorMessage = result.message) }
                 else -> Unit
@@ -49,9 +49,9 @@ class CartViewModel(
         }
     }
 
-    fun remove(bookId: String) {
+    fun remove(itemId: String) {
         viewModelScope.launch {
-            when (val result = cartRepository.removeItem(bookId)) {
+            when (val result = cartRepository.removeItem(itemId)) {
                 is ResultState.Success -> load()
                 is ResultState.Error -> _uiState.update { it.copy(errorMessage = result.message) }
                 else -> Unit

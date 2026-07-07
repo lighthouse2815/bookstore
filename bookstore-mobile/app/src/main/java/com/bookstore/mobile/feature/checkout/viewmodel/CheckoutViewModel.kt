@@ -80,7 +80,7 @@ class CheckoutViewModel(
                 is ResultState.Success -> {
                     when (val checkoutResult = checkoutRepository.checkout(
                         addressId = addressResult.data.id,
-                        couponCode = current.couponCode,
+                        bookCouponCode = current.couponCode,
                         note = current.note,
                     )) {
                         is ResultState.Success -> {

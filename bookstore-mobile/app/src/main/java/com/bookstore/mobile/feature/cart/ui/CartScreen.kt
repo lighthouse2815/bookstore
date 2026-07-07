@@ -58,8 +58,8 @@ fun CartScreen(
                 items(state.cart?.items.orEmpty(), key = { it.id }) { item ->
                     CartItemRow(
                         item = item,
-                        onQuantityChange = { quantity -> viewModel.updateQuantity(item.bookId, quantity) },
-                        onRemove = { viewModel.remove(item.bookId) },
+                        onQuantityChange = { quantity -> viewModel.updateQuantity(item.id, quantity) },
+                        onRemove = { viewModel.remove(item.id) },
                     )
                 }
             }

@@ -58,7 +58,7 @@ class StockMovementServiceTest {
                 stockMovement.getCreatedBy()
         );
 
-        when(bookRepository.findByIdIncludingDeleted(book.getId())).thenReturn(Optional.of(book));
+        when(bookRepository.existsByIdIncludingDeleted(book.getId())).thenReturn(true);
         when(stockMovementRepository.findAllByBookId(book.getId())).thenReturn(List.of(stockMovement));
         when(stockMovementAssembler.toResult(stockMovement)).thenReturn(expected);
 
@@ -70,7 +70,7 @@ class StockMovementServiceTest {
     @Test
     void getByBookId_whenBookMissing_rejectsBookNotFound() {
         UUID bookId = UUID.randomUUID();
-        when(bookRepository.findByIdIncludingDeleted(bookId)).thenReturn(Optional.empty());
+        when(bookRepository.existsByIdIncludingDeleted(bookId)).thenReturn(false);
 
         ApplicationException exception = assertThrows(
                 ApplicationException.class,

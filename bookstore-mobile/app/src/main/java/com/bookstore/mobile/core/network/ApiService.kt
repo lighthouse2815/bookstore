@@ -92,14 +92,14 @@ interface ApiService {
     @POST("api/cart/items")
     suspend fun addToCart(@Body request: AddToCartRequest): ApiResponse<CartDto>
 
-    @PUT("api/cart/items/{bookId}")
+    @PUT("api/cart/items/{itemId}")
     suspend fun updateCartItem(
-        @Path("bookId") bookId: String,
+        @Path("itemId") itemId: String,
         @Body request: UpdateCartItemRequest,
     ): ApiResponse<CartDto>
 
-    @DELETE("api/cart/items/{bookId}")
-    suspend fun removeCartItem(@Path("bookId") bookId: String): ApiResponse<JsonElement>
+    @DELETE("api/cart/items/{itemId}")
+    suspend fun removeCartItem(@Path("itemId") itemId: String): ApiResponse<JsonElement>
 
     @DELETE("api/cart/items")
     suspend fun clearCart(): ApiResponse<JsonElement>

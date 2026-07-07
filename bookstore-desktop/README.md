@@ -1,71 +1,81 @@
 # Bookstore Desktop POS
 
-Desktop app demo bán hàng tại quầy cho nhân viên Bookstore.
+Desktop app ban hang tai quay cho nhan vien Bookstore.
 
-## Công nghệ
+## Cong nghe
 
 - C# .NET 8
 - WPF
 - MVVM
-- `HttpClient` gọi REST API backend Spring Boot
-- `System.Text.Json`
+- HttpClient goi REST API backend Spring Boot
 - `CommunityToolkit.Mvvm`
 
-Desktop app chỉ là client, không có database riêng và không gọi trực tiếp MySQL.
+Desktop app chi la client. Du lieu van nam tren backend/MySQL.
 
-## Cách chạy backend
+## Chay backend
 
-```bash
-cd ../bookstore-backend
+```powershell
+cd D:\bookstore\bookstore-backend
 docker-compose up -d
-./mvnw.cmd spring-boot:run
+.\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Backend mặc định chạy tại:
+Backend mac dinh:
 
 ```txt
 http://localhost:8080
 ```
 
-Backend đã có seed role `ADMIN`, `STAFF` và admin demo trong `PersistenceDataInitializer`. Không ghi password seed vào README; nếu cần tài khoản demo, kiểm tra file seed nội bộ hoặc tạo tài khoản staff/admin bằng API admin.
+## Chay desktop app
 
-## Cách chạy desktop app
+Can may Windows co .NET 8 SDK va WPF workload.
 
-Cần máy Windows có .NET 8 SDK và workload WPF.
-
-```bash
-cd Bookstore.Desktop
+```powershell
+cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
 dotnet restore
 dotnet build
 dotnet run
 ```
 
-Nếu `dotnet` không được nhận diện, cài .NET 8 SDK hoặc thêm `dotnet.exe` vào PATH.
+Publish helper:
 
-## Cấu hình Base URL
+```powershell
+cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
+.\run-publish.ps1
+```
 
-Mặc định desktop gọi backend:
+## Cau hinh backend base URL
+
+Desktop mac dinh goi backend:
 
 ```txt
 http://localhost:8080
 ```
 
-Sau khi login, vào màn hình `Cài đặt` để đổi Backend Base URL. Nhập URL gốc, không cần thêm `/api`.
+Sau khi login, vao man hinh `Cai dat` de doi Backend Base URL. Nhap URL goc, khong can them `/api`.
 
-## Luồng demo
+## Tai khoan demo
 
-1. Login bằng tài khoản có role `ADMIN` hoặc `STAFF`.
-2. Vào `POS bán hàng`.
-3. Search sách theo keyword.
-4. Thêm sách vào giỏ.
-5. Tăng/giảm/xóa item, xem tổng tiền cập nhật ngay.
-6. Chọn phương thức thanh toán `CASH`, `BANK_TRANSFER` hoặc `COD`.
-7. Bấm `Tạo đơn / Thanh toán`.
-8. Xem hóa đơn demo và bấm `In hóa đơn demo` để xuất file `.txt`.
-9. Vào `Tra cứu đơn` để tìm theo order id hoặc order code.
-10. Vào `Tồn kho` để search sách và xem tồn kho từ API.
+- Admin demo: duoc tao boi backend khi `ADMIN_SEED_ENABLED=true`. Username/password lay tu `ADMIN_USERNAME` va `ADMIN_PASSWORD`.
+- Staff demo cho POS: neu chay backend voi profile `seed`, tai khoan staff dau tien la `anhtuan.truong`.
+- Tat ca tai khoan customer/staff/shipper cua profile `seed` dung chung password tu `APP_SEED_DEFAULT_PASSWORD`.
 
-## API đang dùng
+Khong commit password that vao repo. Dat gia tri demo trong `.env` local.
+
+## Luong demo
+
+1. Login bang tai khoan co role `ADMIN` hoac `STAFF`.
+2. Vao `POS ban hang`.
+3. Search sach theo keyword.
+4. Them sach vao gio.
+5. Tang/giam/xoa item, xem tong tien cap nhat ngay.
+6. Chon phuong thuc thanh toan `CASH`, `BANK_TRANSFER` hoac `COD`.
+7. Bam `Tao don / Thanh toan`.
+8. Xem hoa don demo va bam `In hoa don demo` de xuat file `.txt`.
+9. Vao `Tra cuu don` de tim theo order id hoac order code.
+10. Vao `Ton kho` de search sach va xem ton kho tu API.
+
+## API dang dung
 
 - `POST /api/auth/login`
 - `GET /api/users/me`
@@ -75,39 +85,10 @@ Sau khi login, vào màn hình `Cài đặt` để đổi Backend Base URL. Nh�
 - `GET /api/staff/pos/orders`
 - `GET /api/staff/pos/orders/{id}`
 
-## Backend POS endpoint mới
+## Gioi han demo
 
-Desktop dùng endpoint POS tối thiểu:
-
-```http
-POST /api/staff/pos/orders
-```
-
-Request:
-
-```json
-{
-  "customerName": "Khách lẻ",
-  "customerPhone": null,
-  "paymentMethod": "CASH",
-  "couponCode": null,
-  "items": [
-    {
-      "bookId": "uuid",
-      "quantity": 2
-    }
-  ]
-}
-```
-
-Endpoint này dùng domain/backend hiện có để kiểm tra sách, trừ tồn kho, lưu order, payment và stock movement.
-
-## Giới hạn demo
-
-- Không có offline sync.
-- Không có database local.
-- Không tích hợp máy in nhiệt ESC/POS.
-- Hóa đơn demo xuất `.txt` trong `%LOCALAPPDATA%\BookstorePOS\Receipts`.
-- Search sách phụ thuộc API hiện có của backend.
-- POS dùng khách lẻ mặc định, chưa có quản lý ca bán hàng.
-- Checkout web cũ không bị đổi; POS dùng endpoint riêng.
+- Khong co offline sync.
+- Khong co database local.
+- Khong tich hop may in nhiet ESC/POS.
+- Hoa don demo xuat `.txt` trong `%LOCALAPPDATA%\BookstorePOS\Receipts`.
+- Chua co man hinh bao cao doanh thu rieng. Dung `Tra cuu don` va `Ton kho` de demo nghiep vu ho tro.

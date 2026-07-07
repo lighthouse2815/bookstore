@@ -21,6 +21,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     private final IPasswordEncoder passwordEncoder;
     private final TransactionTemplate transactionTemplate;
     private final ConfigurableApplicationContext applicationContext;
+    private final Environment environment;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -56,7 +58,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         validateSeedConfiguration();
         assertFreshDatabase();
 
-        String adminId = requiredId("SELECT BIN_TO_UUID(id) FROM users WHERE username = ?", "giamdocdang");
+        String adminId = requiredId("SELECT BIN_TO_UUID(id) FROM users WHERE username = ?", adminUsername());
         String userRoleId = requiredId("SELECT BIN_TO_UUID(id) FROM roles WHERE name = ?", "USER");
         String staffRoleId = requiredId("SELECT BIN_TO_UUID(id) FROM roles WHERE name = ?", "STAFF");
         String shipperRoleId = requiredId("SELECT BIN_TO_UUID(id) FROM roles WHERE name = ?", "SHIPPER");
@@ -84,7 +86,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         List<String> shipperIds = new ArrayList<>();
         userIds.add(adminId);
 
-        String passwordHash = passwordEncoder.encode("123456");
+        String passwordHash = passwordEncoder.encode(seedDefaultPassword());
         for (int i = 2; i <= seedSize; i++) {
             DevelopmentSeedCatalog.PersonSeed person = DevelopmentSeedCatalog.personAt(i - 2);
             String userId = id("user", i);
@@ -146,7 +148,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     ) VALUES (UUID_TO_BIN(?), ?, ?, NULL, ?, ?, ?, ?, UUID_TO_BIN(?))
                     """,
                     id("address", i), time(i), true, DevelopmentSeedCatalog.addressAt(i),
-                    i == 1 ? "Đăng Minh Quân" : person.fullName(),
+                    i == 1 ? adminFullName() : person.fullName(),
                     "09%d%07d".formatted(i % 8 + 1, 2_000_000 + i * 6_127), time(i + 1), userId);
 
             insert("INSERT INTO carts (id, created_at, updated_at, user_id) VALUES (UUID_TO_BIN(?), ?, ?, UUID_TO_BIN(?))",
@@ -159,7 +161,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     ) VALUES (UUID_TO_BIN(?), ?, ?, 'LOCAL', ?, ?, ?, UUID_TO_BIN(?))
                     """,
                     id("identity", i), time(i), true,
-                    i == 1 ? "giamdocdang@gmail.com" : person.email(),
+                    i == 1 ? adminEmail() : person.email(),
                     "local-seed-%02d".formatted(i), time(i + 1), userId);
 
             insert("""
@@ -620,6 +622,11 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     }
 
     private void validateSeedConfiguration() {
+        adminUsername();
+        adminEmail();
+        adminFullName();
+        seedDefaultPassword();
+
         if (seedSize < 15 || seedSize > DevelopmentSeedCatalog.BOOKS.size()) {
             throw new IllegalStateException(
                     "app.seed.size must be between 15 and %d".formatted(DevelopmentSeedCatalog.BOOKS.size()));
@@ -673,6 +680,30 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         if (count != null && count > 0) {
             throw new IllegalStateException(message + ": " + count);
         }
+    }
+
+    private String adminUsername() {
+        return requiredProperty("app.admin.username");
+    }
+
+    private String adminEmail() {
+        return requiredProperty("app.admin.email");
+    }
+
+    private String adminFullName() {
+        return requiredProperty("app.admin.last-name") + " " + requiredProperty("app.admin.first-name");
+    }
+
+    private String seedDefaultPassword() {
+        return requiredProperty("app.seed.default-password");
+    }
+
+    private String requiredProperty(String key) {
+        String value = environment.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing required seed config: " + key);
+        }
+        return value.trim();
     }
 
     private String requiredId(String query, String value) {

@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,18 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class PersistenceDataInitializer implements ApplicationRunner {
 
     private static final String ADMIN_ROLE = "ADMIN";
-    private static final String ADMIN_USERNAME = "giamdocdang";
-    private static final String ADMIN_PASSWORD = "123123aa";
-    private static final String ADMIN_PHONE = "0900000001";
-    private static final String ADMIN_EMAIL = "giamdocdang@gmail.com";
-    private static final String ADMIN_LAST_NAME = "Dang";
-    private static final String ADMIN_FIRST_NAME = "Giam Doc";
 
     private final PermissionJpaRepository permissionJpaRepository;
     private final RoleJpaRepository roleJpaRepository;
     private final UserJpaRepository userJpaRepository;
     private final ProfileJpaRepository profileJpaRepository;
     private final IPasswordEncoder passwordEncoder;
+    private final Environment environment;
 
     @Override
     @Transactional
@@ -152,39 +149,40 @@ public class PersistenceDataInitializer implements ApplicationRunner {
     }
 
     private void seedAdminAccount() {
+        if (!isAdminSeedEnabled() || hasActiveAdminUser()) {
+            return;
+        }
+
         RoleJpaEntity adminRole = roleJpaRepository.findByNameAndDeletedAtIsNull(ADMIN_ROLE)
                 .orElseThrow(() -> new IllegalStateException("Role not found: " + ADMIN_ROLE));
 
-        UserJpaEntity adminUser = userJpaRepository.findByUsername(ADMIN_USERNAME)
-                .map(existingUser -> ensureAdminUser(existingUser, adminRole))
-                .orElseGet(() -> createAdminUser(adminRole));
+        String adminUsername = requiredAdminProperty("app.admin.username");
+        String adminPassword = requiredAdminProperty("app.admin.password");
+        String adminPhone = requiredAdminProperty("app.admin.phone");
+        String adminEmail = requiredAdminProperty("app.admin.email");
+        String adminLastName = requiredAdminProperty("app.admin.last-name");
+        String adminFirstName = requiredAdminProperty("app.admin.first-name");
 
-        ensureAdminProfile(adminUser);
+        rejectConflictingAdminIdentity(adminUsername, adminEmail);
+
+        UserJpaEntity adminUser = createAdminUser(adminRole, adminUsername, adminPassword, adminPhone, adminEmail);
+        createAdminProfile(adminUser, adminLastName, adminFirstName);
     }
 
-    private UserJpaEntity ensureAdminUser(UserJpaEntity user, RoleJpaEntity adminRole) {
-        Instant now = Instant.now();
-        user.setPasswordHash(passwordEncoder.encode(ADMIN_PASSWORD));
-        user.setStatus(UserStatus.ACTIVE);
-        user.setLocked(false);
-        user.setUpdatedAt(now);
-        user.setDeletedAt(null);
-
-        if (user.getRoles().stream().noneMatch(role -> ADMIN_ROLE.equals(role.getName()))) {
-            user.getRoles().add(adminRole);
-        }
-
-        return userJpaRepository.save(user);
-    }
-
-    private UserJpaEntity createAdminUser(RoleJpaEntity adminRole) {
+    private UserJpaEntity createAdminUser(
+            RoleJpaEntity adminRole,
+            String adminUsername,
+            String adminPassword,
+            String adminPhone,
+            String adminEmail
+    ) {
         Instant now = Instant.now();
         UserJpaEntity entity = new UserJpaEntity();
         entity.setId(UUID.randomUUID());
-        entity.setUsername(ADMIN_USERNAME);
-        entity.setPasswordHash(passwordEncoder.encode(ADMIN_PASSWORD));
-        entity.setPhoneNumber(ADMIN_PHONE);
-        entity.setEmail(ADMIN_EMAIL);
+        entity.setUsername(adminUsername);
+        entity.setPasswordHash(passwordEncoder.encode(adminPassword));
+        entity.setPhoneNumber(adminPhone);
+        entity.setEmail(adminEmail);
         entity.setStatus(UserStatus.ACTIVE);
         entity.setLocked(false);
         entity.setRoles(new LinkedHashSet<>(Set.of(adminRole)));
@@ -194,32 +192,40 @@ public class PersistenceDataInitializer implements ApplicationRunner {
         return userJpaRepository.save(entity);
     }
 
-    private void ensureAdminProfile(UserJpaEntity adminUser) {
-        profileJpaRepository.findByUserId(adminUser.getId())
-                .ifPresentOrElse(
-                        existingProfile -> restoreProfileIfNeeded(existingProfile),
-                        () -> createAdminProfile(adminUser)
-                );
+    private boolean isAdminSeedEnabled() {
+        return environment.getProperty("app.admin.seed-enabled", Boolean.class, false);
     }
 
-    private void restoreProfileIfNeeded(ProfileJpaEntity profile) {
-        if (profile.getDeletedAt() == null) {
-            return;
+    private boolean hasActiveAdminUser() {
+        return userJpaRepository.findPageByRoleNameActive(ADMIN_ROLE, PageRequest.of(0, 1)).hasContent();
+    }
+
+    private void rejectConflictingAdminIdentity(String adminUsername, String adminEmail) {
+        if (userJpaRepository.findByUsername(adminUsername).isPresent()) {
+            throw new IllegalStateException("Configured admin username already exists: " + adminUsername);
         }
 
-        Instant now = Instant.now();
-        profile.setUpdatedAt(now);
-        profile.setDeletedAt(null);
-        profileJpaRepository.save(profile);
+        if (userJpaRepository.findByEmail(adminEmail).isPresent()) {
+            throw new IllegalStateException("Configured admin email already exists: " + adminEmail);
+        }
     }
 
-    private void createAdminProfile(UserJpaEntity adminUser) {
+    private String requiredAdminProperty(String key) {
+        String value = environment.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing required admin seed config: " + key);
+        }
+
+        return value.trim();
+    }
+
+    private void createAdminProfile(UserJpaEntity adminUser, String adminLastName, String adminFirstName) {
         Instant now = Instant.now();
         ProfileJpaEntity entity = new ProfileJpaEntity();
         entity.setId(UUID.randomUUID());
         entity.setUser(adminUser);
-        entity.setLastName(ADMIN_LAST_NAME);
-        entity.setFirstName(ADMIN_FIRST_NAME);
+        entity.setLastName(adminLastName);
+        entity.setFirstName(adminFirstName);
         entity.setAvatarUrl(null);
         entity.setGender(Gender.MALE);
         entity.setDateOfBirth(LocalDate.of(1990, 1, 1));
