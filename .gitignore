@@ -59,6 +59,8 @@ yarn-error.log*
 **/bin/
 **/obj/
 **/out/
+!bookstore-backend/src/main/java/com/bookstore/bookstore/application/port/out/
+!bookstore-backend/src/main/java/com/bookstore/bookstore/application/port/out/*.java
 **/publish/
 **/TestResults/
 **/*.nupkg

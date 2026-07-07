@@ -156,3 +156,9 @@ Ghi chu:
 - Ghi chu trung thuc:
   - Da gap mot vai lan thu `spring-boot:run` voi env override khong on dinh khi smoke seed; lan xac nhan cuoi cung duoc chay thanh cong bang `java -jar` tren artifact da build.
   - Chua co bang chung deploy smoke tren production database/managed service thuc te, nen release readiness hien tai moi duoc xac nhan o muc local build/test/smoke.
+
+## 8. 2026-07-07 Render compile fix
+
+- Nguyen nhan: missing outbound port interfaces for file asset/storage. Tren workspace local, `IFileAssetRepository` va `IFileStorage` da co san va dung package `com.bookstore.bookstore.application.port.out`, nhung bi Git ignore boi rule `out/` trong `bookstore-backend/.gitignore` va `**/out/` trong repo root `.gitignore`, nen Render/Linux clone repo se thieu 2 file nay va compile fail voi `cannot find symbol`.
+- Cach sua: restored `IFileAssetRepository` and `IFileStorage`, xac nhan method signatures khop voi cac service/adapter dang dung (`FileAssetPolicyService`, `DigitalLibraryService`, `FileAssetService`, `FileAssetRepositoryAdapter`, `S3CompatibleFileStorage`), dong thoi sua `.gitignore` de khong ignore package `src/main/java/com/bookstore/bookstore/application/port/out/`.
+- Verify: Maven package pass voi lenh `cd D:\bookstore\bookstore-backend && .\mvnw.cmd '-Dmaven.test.skip=true' package`.

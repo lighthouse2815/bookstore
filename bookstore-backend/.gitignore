@@ -3,7 +3,7 @@ HELP.md
 # Build output
 target/
 build/
-out/
+/out/
 
 # Local environment files
 .env
