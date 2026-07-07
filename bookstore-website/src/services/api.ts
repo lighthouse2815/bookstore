@@ -23,6 +23,18 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 
 let refreshPromise: Promise<string | null> | null = null
 
+function isLocalHostname(hostname: string) {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.endsWith('.local') ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+  )
+}
+
 function clearSession() {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -123,6 +135,33 @@ async function getFreshAccessToken() {
   }
 
   return refreshPromise
+}
+
+export function shouldUseDeployStartupGate() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  // Enable the cold-start screen on real deployed hosts only.
+  return import.meta.env.PROD && !isLocalHostname(window.location.hostname)
+}
+
+export async function probeBackendReady(signal?: AbortSignal) {
+  try {
+    const response = await axios.get<ApiResponse<unknown>>(`${apiBaseURL}/books`, {
+      params: {
+        page: 0,
+        size: 1,
+      },
+      signal,
+      timeout: 8000,
+      validateStatus: () => true,
+    })
+
+    return response.status >= 200 && response.status < 300
+  } catch {
+    return false
+  }
 }
 
 export default api

@@ -9,6 +9,26 @@ export const messages = {
       en: 'EN',
     },
     common: {
+      deployStartup: {
+        badge: 'Render cold start',
+        title: 'Đang đánh thức server',
+        description:
+          'Render free nên server khởi động hơi lâu một tý. Trang sẽ tự vào ngay khi backend sẵn sàng.',
+        hint:
+          'Bạn cứ giữ tab này mở, hệ thống đang tự thử kết nối lại để nạp dữ liệu nhà sách.',
+        waitedLabel: 'Thời gian chờ',
+        waitedSeconds: '{seconds} giây',
+        retryLabel: 'Số lần thử',
+        retryCount: '{count} lần',
+        retryNow: 'Thử lại ngay',
+        footer:
+          'Nếu phải chờ lâu hơn, Render có thể đang khởi động lại container từ đầu.',
+        phases: {
+          boot: 'Khởi động máy chủ',
+          warmup: 'Làm nóng backend',
+          catalog: 'Nạp dữ liệu nhà sách',
+        },
+      },
       brand: 'SáchVui',
       or: 'hoặc',
       loading: 'Đang tải...',
@@ -1444,6 +1464,26 @@ export const messages = {
       en: 'EN',
     },
     common: {
+      deployStartup: {
+        badge: 'Render cold start',
+        title: 'Waking the server up',
+        description:
+          'Render free spins the server up a bit slowly. The page will continue automatically as soon as the backend is ready.',
+        hint:
+          'Keep this tab open while the app retries in the background and prepares the bookstore data.',
+        waitedLabel: 'Wait time',
+        waitedSeconds: '{seconds}s',
+        retryLabel: 'Retry attempts',
+        retryCount: '{count}',
+        retryNow: 'Retry now',
+        footer:
+          'If this takes longer than usual, Render may still be starting the container from scratch.',
+        phases: {
+          boot: 'Booting the server',
+          warmup: 'Warming the backend',
+          catalog: 'Loading bookstore data',
+        },
+      },
       brand: 'SachVui',
       or: 'or',
       loading: 'Loading...',

@@ -123,7 +123,8 @@ public class PaymentService implements IPaymentService {
         boolean secretKeyConfigured = configuredSecretKey != null;
 
         if (!apiKeyConfigured && !secretKeyConfigured) {
-            return;
+            log.error("Rejected SePay IPN because webhook secrets are not configured");
+            throw new ApplicationException(ApplicationErrorCode.PAYMENT_WEBHOOK_UNAUTHORIZED);
         }
 
         boolean apiKeyMatched = apiKeyConfigured

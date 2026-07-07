@@ -1,12 +1,16 @@
 package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.command.HandleSepayIpnCommand;
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
@@ -53,13 +57,13 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
-                new SepayProperties("merchant-123", null, null)
+                new SepayProperties("merchant-123", null, "webhook-key")
         );
 
         Payment payment = payment();
         Order order = order(payment.getOrderId());
         HandleSepayIpnCommand command = new HandleSepayIpnCommand(
-                null,
+                "Apikey webhook-key",
                 null,
                 "TXN-001",
                 "SEPAY",
@@ -97,13 +101,13 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
-                new SepayProperties("merchant-123", null, null)
+                new SepayProperties("merchant-123", null, "webhook-key")
         );
 
         Payment existingPayment = payment();
         existingPayment.markPaid("merchant-123", "TXN-001", "REF-001", "SEPAY", Instant.EPOCH.plusSeconds(1));
         HandleSepayIpnCommand command = new HandleSepayIpnCommand(
-                null,
+                "Apikey webhook-key",
                 null,
                 "TXN-001",
                 "SEPAY",
@@ -127,6 +131,41 @@ class PaymentServiceTest {
         verify(paymentRepository, never()).save(any(Payment.class));
         verify(orderRepository, never()).save(any(Order.class));
         verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(any(Order.class));
+    }
+
+    @Test
+    void handleSepayIpn_whenWebhookSecretsMissing_rejectsFailClosed() {
+        paymentService = new PaymentService(
+                paymentRepository,
+                orderRepository,
+                digitalLibraryService,
+                new SepayProperties("merchant-123", null, null)
+        );
+
+        HandleSepayIpnCommand command = new HandleSepayIpnCommand(
+                null,
+                null,
+                "TXN-001",
+                "SEPAY",
+                null,
+                null,
+                null,
+                "DH123",
+                "DH123",
+                "in",
+                null,
+                new BigDecimal("10.00"),
+                "REF-001",
+                null
+        );
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> paymentService.handleSepayIpn(command)
+        );
+
+        assertEquals(ApplicationErrorCode.PAYMENT_WEBHOOK_UNAUTHORIZED, exception.getErrorCode());
+        verifyNoInteractions(paymentRepository, orderRepository, digitalLibraryService);
     }
 
     private static Payment payment() {
