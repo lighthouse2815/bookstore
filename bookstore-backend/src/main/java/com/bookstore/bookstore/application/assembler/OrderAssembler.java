@@ -45,7 +45,9 @@ public class OrderAssembler {
     private OrderItemResult toItemResult(OrderItem item) {
         return new OrderItemResult(
                 item.getId(),
+                item.getItemType(),
                 item.getBookId(),
+                item.getDigitalAssetId(),
                 item.getBookTitle(),
                 item.getUnitPrice(),
                 item.getQuantity(),

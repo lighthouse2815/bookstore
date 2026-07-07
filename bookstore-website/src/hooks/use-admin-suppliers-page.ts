@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/language-context'
 import {
   createAdminSupplier,
   deleteAdminSupplier,
-  getAdminSuppliers,
+  getAdminSuppliersPage,
   updateAdminSupplier,
 } from '@/services/admin-access-service'
 import type {
@@ -31,10 +31,13 @@ const initialFormState: SupplierFormState = {
   note: '',
 }
 
+const PAGE_SIZE = 10
+
 export function useAdminSuppliersPage() {
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const [suppliers, setSuppliers] = useState<AdminSupplierResponse[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,60 +50,34 @@ export function useAdminSuppliersPage() {
 
   const labels = useMemo(
     () => ({
-      pageTitle: isVietnamese ? 'Quản lý nhà cung cấp' : 'Manage suppliers',
-      pageDescription: isVietnamese
-        ? 'Theo dõi và cập nhật danh sách nhà cung cấp dùng cho nhập hàng.'
-        : 'Review and update suppliers used for inventory imports.',
-      totalSuppliers: isVietnamese
-        ? '{count} nhà cung cấp'
-        : '{count} suppliers',
-      addSupplier: isVietnamese ? 'Thêm nhà cung cấp' : 'Add supplier',
-      searchPlaceholder: isVietnamese
-        ? 'Tìm theo tên, email hoặc số điện thoại...'
-        : 'Search by name, email, or phone...',
-      loadError: isVietnamese
-        ? 'Không tải được danh sách nhà cung cấp'
-        : 'Unable to load the supplier list',
-      empty: isVietnamese ? 'Chưa có nhà cung cấp nào' : 'No suppliers found',
-      showingCount: isVietnamese
-        ? 'Hiển thị {count} trên {total} nhà cung cấp'
-        : 'Showing {count} of {total} suppliers',
-      nameColumn: isVietnamese ? 'Nhà cung cấp' : 'Supplier',
-      detailTitle: isVietnamese
-        ? 'Chi tiết nhà cung cấp'
-        : 'Supplier details',
-      editTitle: isVietnamese ? 'Sửa nhà cung cấp' : 'Edit supplier',
-      deleteTitle: isVietnamese
-        ? 'Xác nhận xóa nhà cung cấp'
-        : 'Confirm supplier deletion',
-      deleteDescription: isVietnamese
-        ? 'Hành động này sẽ xóa nhà cung cấp khỏi hệ thống và không thể hoàn tác.'
-        : 'This action removes the supplier from the system and cannot be undone.',
-      createSuccess: isVietnamese
-        ? 'Đã tạo nhà cung cấp'
-        : 'Supplier created successfully',
-      updateSuccess: isVietnamese
-        ? 'Đã cập nhật nhà cung cấp'
-        : 'Supplier updated successfully',
-      deleteSuccess: isVietnamese
-        ? 'Đã xóa nhà cung cấp'
-        : 'Supplier deleted successfully',
-      saveError: isVietnamese
-        ? 'Không lưu được nhà cung cấp'
-        : 'Unable to save supplier',
-      deleteError: isVietnamese
-        ? 'Không xóa được nhà cung cấp'
-        : 'Unable to delete supplier',
-      noPhone: isVietnamese ? 'Chưa có số điện thoại' : 'No phone number',
-      noEmail: isVietnamese ? 'Chưa có email' : 'No email',
-      noAddress: isVietnamese ? 'Chưa có địa chỉ' : 'No address',
-      noNote: isVietnamese ? 'Chưa có ghi chú' : 'No note',
-      phoneLabel: isVietnamese ? 'Số điện thoại' : 'Phone number',
-      emailLabel: isVietnamese ? 'Email' : 'Email',
-      addressLabel: isVietnamese ? 'Địa chỉ' : 'Address',
-      noteLabel: isVietnamese ? 'Ghi chú' : 'Note',
+      pageTitle: t('admin.suppliersPage.pageTitle'),
+      pageDescription: t('admin.suppliersPage.pageDescription'),
+      totalSuppliers: t('admin.suppliersPage.totalSuppliers'),
+      addSupplier: t('admin.suppliersPage.addSupplier'),
+      searchPlaceholder: t('admin.suppliersPage.searchPlaceholder'),
+      loadError: t('admin.suppliersPage.loadError'),
+      empty: t('admin.suppliersPage.empty'),
+      showingCount: t('admin.suppliersPage.showingCount'),
+      nameColumn: t('admin.suppliersPage.nameColumn'),
+      detailTitle: t('admin.suppliersPage.detailTitle'),
+      editTitle: t('admin.suppliersPage.editTitle'),
+      deleteTitle: t('admin.suppliersPage.deleteTitle'),
+      deleteDescription: t('admin.suppliersPage.deleteDescription'),
+      createSuccess: t('admin.suppliersPage.createSuccess'),
+      updateSuccess: t('admin.suppliersPage.updateSuccess'),
+      deleteSuccess: t('admin.suppliersPage.deleteSuccess'),
+      saveError: t('admin.suppliersPage.saveError'),
+      deleteError: t('admin.suppliersPage.deleteError'),
+      noPhone: t('admin.suppliersPage.noPhone'),
+      noEmail: t('admin.suppliersPage.noEmail'),
+      noAddress: t('admin.suppliersPage.noAddress'),
+      noNote: t('admin.suppliersPage.noNote'),
+      phoneLabel: t('admin.suppliersPage.phoneLabel'),
+      emailLabel: t('admin.suppliersPage.emailLabel'),
+      addressLabel: t('admin.suppliersPage.addressLabel'),
+      noteLabel: t('admin.suppliersPage.noteLabel'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   const filteredSuppliers = useMemo(() => {
@@ -131,13 +108,14 @@ export function useAdminSuppliersPage() {
       setIsLoading(true)
 
       try {
-        const response = await getAdminSuppliers()
+        const response = await getAdminSuppliersPage({ page, size: PAGE_SIZE })
 
         if (isCancelled) {
           return
         }
 
-        setSuppliers(response)
+        setSuppliers(response.items)
+        setTotalCount(response.totalCount)
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -157,7 +135,7 @@ export function useAdminSuppliersPage() {
     return () => {
       isCancelled = true
     }
-  }, [labels.loadError])
+  }, [labels.loadError, page])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -183,6 +161,11 @@ export function useAdminSuppliersPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function resetDialog() {
@@ -246,8 +229,9 @@ export function useAdminSuppliersPage() {
     setIsLoading(true)
 
     try {
-      const response = await getAdminSuppliers()
-      setSuppliers(response)
+      const response = await getAdminSuppliersPage({ page, size: PAGE_SIZE })
+      setSuppliers(response.items)
+      setTotalCount(response.totalCount)
       setError(null)
     } catch (currentError) {
       setError(getErrorMessage(currentError, labels.loadError))
@@ -311,6 +295,9 @@ export function useAdminSuppliersPage() {
     formatDate,
     formatNumber,
     suppliers,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     searchTerm,
     isLoading,
     error,
@@ -323,6 +310,7 @@ export function useAdminSuppliersPage() {
     filteredSuppliers,
     isDialogLocked: dialogMode === 'delete' && isDeleting,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,

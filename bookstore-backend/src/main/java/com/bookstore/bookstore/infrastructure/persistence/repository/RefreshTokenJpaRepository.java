@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenJpaEntity, UUID> {
 
-    Optional<RefreshTokenJpaEntity> findByToken(String token);
+    Optional<RefreshTokenJpaEntity> findByTokenHash(String tokenHash);
 
     @Modifying
     @Query("""

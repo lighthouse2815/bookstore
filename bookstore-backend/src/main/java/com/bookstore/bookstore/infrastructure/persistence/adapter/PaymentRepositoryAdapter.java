@@ -50,8 +50,20 @@ public class PaymentRepositoryAdapter implements IPaymentRepository {
     }
 
     @Override
+    public Optional<Payment> findPendingSepayByOrderCodeForUpdate(String orderCode) {
+        return paymentJpaRepository.findPendingSepayByOrderCodeForUpdate(orderCode)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
     public Optional<Payment> findPendingSepayByTransferContentInContent(String content) {
         return paymentJpaRepository.findPendingSepayByTransferContentInContent(content)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Payment> findPendingSepayByTransferContentInContentForUpdate(String content) {
+        return paymentJpaRepository.findPendingSepayByTransferContentInContentForUpdate(content)
                 .map(paymentPersistenceMapper::toDomain);
     }
 

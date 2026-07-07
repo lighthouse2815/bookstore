@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.ISupplierRepository;
 import com.bookstore.bookstore.domain.model.Supplier;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.infrastructure.persistence.entity.SupplierJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.SupplierPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.SupplierJpaRepository;
@@ -10,6 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,6 +26,19 @@ public class SupplierRepositoryAdapter implements ISupplierRepository {
         return supplierJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(supplierPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Supplier> findPageActive(int page, int size) {
+        var result = supplierJpaRepository.findAllByDeletedAtIsNull(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return new PageSliceResult<>(
+                result.getContent().stream().map(supplierPersistenceMapper::toDomain).toList(),
+                result.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

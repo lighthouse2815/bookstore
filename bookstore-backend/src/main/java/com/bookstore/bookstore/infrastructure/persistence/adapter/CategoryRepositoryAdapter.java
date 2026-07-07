@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.CategoryPersistenceMapper;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -23,6 +25,17 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
         return categoryJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(categoryPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Category> findPageActive(int page, int size) {
+        var resultPage = categoryJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream().map(categoryPersistenceMapper::toDomain).toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

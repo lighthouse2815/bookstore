@@ -1,11 +1,12 @@
 package com.bookstore.bookstore.application.port.in;
 
-import com.bookstore.bookstore.application.result.dashboard.DashboardSummaryResult;
-import com.bookstore.bookstore.application.result.dashboard.LowStockBookResult;
-import com.bookstore.bookstore.application.result.dashboard.OrderStatusStatsResult;
-import com.bookstore.bookstore.application.result.dashboard.RecentOrderResult;
-import com.bookstore.bookstore.application.result.dashboard.RevenueChartResult;
-import com.bookstore.bookstore.application.result.dashboard.TopBookStatsResult;
+import com.bookstore.bookstore.application.result.DashboardSummaryResult;
+import com.bookstore.bookstore.application.result.LowStockBookResult;
+import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
+import com.bookstore.bookstore.application.result.RecentOrderResult;
+import com.bookstore.bookstore.application.result.RevenueChartResult;
+import com.bookstore.bookstore.application.result.TopBookStatsResult;
+
 import java.time.LocalDate;
 import java.util.List;
 

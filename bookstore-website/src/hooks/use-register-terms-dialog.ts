@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState, type UIEvent } from 'react'
 import { useLanguage } from '@/contexts/language-context'
-import { getRegisterTermsCopy } from '@/utils/register-terms'
+import type { RegisterTermsCopy } from '@/utils/register-terms'
 
 const CLOSE_UNLOCK_OFFSET = 24
 
 export function useRegisterTermsDialog(open: boolean) {
-  const { language, t } = useLanguage()
+  const { getMessage, t } = useLanguage()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [hasReachedBottom, setHasReachedBottom] = useState(false)
-  const termsCopy = getRegisterTermsCopy(language)
+  const termsCopy = getMessage<RegisterTermsCopy>('auth.register.terms')
+
+  if (!termsCopy) {
+    throw new Error('Missing register terms copy')
+  }
 
   useEffect(() => {
     if (!open) {

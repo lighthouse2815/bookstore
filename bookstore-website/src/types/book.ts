@@ -1,6 +1,7 @@
 // Request types
 export type SearchBooksRequest = {
   keyword?: string
+  categoryId?: string
 }
 
 export type UpsertBookRequest = {
@@ -8,10 +9,18 @@ export type UpsertBookRequest = {
   description?: string | null
   price: number
   stockQuantity: number
-  imageUrl?: string | null
+  images: UpsertBookImageRequest[]
   categoryId: string
   authorId: string
   publisherId: string
+}
+
+export type UpsertBookImageRequest = {
+  id?: string
+  fileAssetId: string
+  primaryImage: boolean
+  sortOrder: number
+  altText?: string | null
 }
 
 export type UpsertCategoryRequest = {
@@ -22,6 +31,9 @@ export type UpsertCategoryRequest = {
 export type UpsertAuthorRequest = {
   name: string
   biography?: string | null
+  avatarFileAssetId?: string | null
+  birthYear?: number | null
+  deathYear?: number | null
 }
 
 export type UpsertPublisherRequest = {
@@ -54,6 +66,7 @@ export type BookResponse = {
 export type BookImageResponse = {
   id: string
   bookId: string
+  fileAssetId: string
   imageUrl: string
   primaryImage: boolean
   sortOrder: number
@@ -87,6 +100,7 @@ export type AuthorResponse = {
   id: string
   name: string
   biography: string | null
+  avatarFileAssetId: string | null
   avatarUrl: string | null
   birthYear: number | null
   deathYear: number | null
@@ -132,6 +146,7 @@ export type Book = {
 export type BookImage = {
   id: string
   bookId: string
+  fileAssetId: string
   imageUrl: string
   primaryImage: boolean
   sortOrder: number
@@ -155,6 +170,15 @@ export type BookDetail = {
 export type BookCatalog = {
   books: Book[]
   categories: string[]
+  categoryIds: Record<string, string>
+}
+
+export type BookCatalogPage = BookCatalog & {
+  totalCount: number
+  page: number
+  size: number
+  hasNext: boolean
+  totalPages: number
 }
 
 export type BookReferenceData = {

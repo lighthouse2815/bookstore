@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.port.out;
 
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.User;
 import java.time.Instant;
 import java.util.List;
@@ -9,6 +10,8 @@ import java.util.UUID;
 public interface IUserRepository {
 
     List<User> findAllActive();
+
+    PageSliceResult<User> findPageByRoleNameActive(String roleName, int page, int size);
 
     List<User> findAllIncludingDeleted();
 

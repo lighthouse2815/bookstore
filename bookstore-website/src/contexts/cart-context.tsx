@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   addCartItem,
+  addDigitalCartItem,
   clearMyCart,
   getMyCart,
   removeCartItem,
@@ -24,9 +25,10 @@ type CartContextType = {
   totalQuantity: number
   isLoading: boolean
   addItem: (bookId: string, quantity?: number) => Promise<void>
-  removeItem: (bookId: string) => Promise<void>
-  removeItems: (bookIds: string[]) => Promise<void>
-  updateQty: (bookId: string, quantity: number) => Promise<void>
+  addDigitalItem: (digitalAssetId: string) => Promise<void>
+  removeItem: (itemId: string) => Promise<void>
+  removeItems: (itemIds: string[]) => Promise<void>
+  updateQty: (itemId: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
   refreshCart: () => Promise<void>
 }
@@ -36,8 +38,12 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 function mapCartItems(response: CartResponse): CartItem[] {
   return response.items.map((item) => ({
     id: item.id,
+    itemType: item.itemType,
     bookId: item.bookId,
+    digitalAssetId: item.digitalAssetId,
     title: item.bookTitle,
+    assetTitle: item.assetTitle,
+    format: item.format,
     cover: item.imageUrl,
     price: item.price,
     qty: item.quantity,
@@ -102,49 +108,62 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function removeItem(bookId: string) {
+  async function addDigitalItem(digitalAssetId: string) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
     try {
-      await removeCartItem(bookId)
+      const cart = await addDigitalCartItem({ digitalAssetId })
+      applyCartResponse(cart)
+    } catch (error) {
+      throw new Error(getErrorMessage(error, t('cart.updateError')))
+    }
+  }
+
+  async function removeItem(itemId: string) {
+    if (!isAuthenticated) {
+      throw new Error(t('cart.loginRequired'))
+    }
+
+    try {
+      await removeCartItem(itemId)
       await refreshCart()
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
     }
   }
 
-  async function removeItems(bookIds: string[]) {
+  async function removeItems(itemIds: string[]) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
-    const uniqueBookIds = Array.from(new Set(bookIds))
-    if (uniqueBookIds.length === 0) {
+    const uniqueItemIds = Array.from(new Set(itemIds))
+    if (uniqueItemIds.length === 0) {
       return
     }
 
     try {
-      await Promise.all(uniqueBookIds.map((bookId) => removeCartItem(bookId)))
+      await Promise.all(uniqueItemIds.map((itemId) => removeCartItem(itemId)))
       await refreshCart()
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
     }
   }
 
-  async function updateQty(bookId: string, quantity: number) {
+  async function updateQty(itemId: string, quantity: number) {
     if (!isAuthenticated) {
       throw new Error(t('cart.loginRequired'))
     }
 
     if (quantity <= 0) {
-      await removeItem(bookId)
+      await removeItem(itemId)
       return
     }
 
     try {
-      const cart = await updateCartItem(bookId, { quantity })
+      const cart = await updateCartItem(itemId, { quantity })
       applyCartResponse(cart)
     } catch (error) {
       throw new Error(getErrorMessage(error, t('cart.updateError')))
@@ -182,6 +201,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       totalQuantity,
       isLoading,
       addItem,
+      addDigitalItem,
       removeItem,
       removeItems,
       updateQty,

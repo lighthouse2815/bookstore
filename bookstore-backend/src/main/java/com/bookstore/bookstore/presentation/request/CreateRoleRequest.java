@@ -5,12 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 
 public record CreateRoleRequest(
-        @NotBlank(message = "name khong duoc de trong")
+        @NotBlank(message = "name không được để trống")
         String name,
 
-        @NotBlank(message = "description khong duoc de trong")
+        @NotBlank(message = "description không được để trống")
         String description,
 
         Set<PermissionCode> permissionCodes
 ) {
 }
+

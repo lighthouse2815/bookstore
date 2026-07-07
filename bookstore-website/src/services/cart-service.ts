@@ -2,6 +2,7 @@ import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   AddCartItemRequest,
+  AddDigitalCartItemRequest,
   CartResponse,
   UpdateCartItemRequest,
 } from '@/types/cart'
@@ -19,19 +20,29 @@ export async function addCartItem(
   return unwrapResponse(response)
 }
 
-export async function updateCartItem(
-  bookId: string,
-  data: UpdateCartItemRequest,
+export async function addDigitalCartItem(
+  data: AddDigitalCartItemRequest,
 ): Promise<CartResponse> {
-  const response = await api.put<ApiResponse<CartResponse>>(
-    `/cart/items/${bookId}`,
+  const response = await api.post<ApiResponse<CartResponse>>(
+    '/cart/items/digital',
     data,
   )
   return unwrapResponse(response)
 }
 
-export async function removeCartItem(bookId: string): Promise<void> {
-  await api.delete<ApiResponse<null>>(`/cart/items/${bookId}`)
+export async function updateCartItem(
+  itemId: string,
+  data: UpdateCartItemRequest,
+): Promise<CartResponse> {
+  const response = await api.put<ApiResponse<CartResponse>>(
+    `/cart/items/${itemId}`,
+    data,
+  )
+  return unwrapResponse(response)
+}
+
+export async function removeCartItem(itemId: string): Promise<void> {
+  await api.delete<ApiResponse<null>>(`/cart/items/${itemId}`)
 }
 
 export async function clearMyCart(): Promise<void> {

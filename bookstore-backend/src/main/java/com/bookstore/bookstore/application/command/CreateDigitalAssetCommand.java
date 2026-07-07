@@ -10,14 +10,11 @@ public record CreateDigitalAssetCommand(
         UUID bookId,
         DigitalAssetFormat format,
         String title,
-        String fileName,
-        String storageKey,
-        String mimeType,
-        Long fileSize,
-        String checksum,
-        String sampleStorageKey,
+        UUID fileAssetId,
+        UUID sampleFileAssetId,
         BigDecimal price,
         boolean downloadAllowed,
+        boolean purchaseAllowed,
         boolean published
 ) {
     public CreateDigitalAssetCommand {
@@ -27,8 +24,8 @@ public record CreateDigitalAssetCommand(
         if (format == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "format");
         }
-        if (fileSize == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "fileSize");
+        if (fileAssetId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "fileAssetId");
         }
         if (price == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "price");

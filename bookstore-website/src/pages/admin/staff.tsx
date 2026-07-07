@@ -1,37 +1,24 @@
 import { User } from 'lucide-react'
 import { AdminUserManagementPage } from '@/components/admin/admin-user-management-page'
 import { useLanguage } from '@/contexts/language-context'
-import { getAdminEmployees } from '@/services/admin-access-service'
+import { getAdminManagedUsersPage } from '@/services/admin-access-service'
 
 export default function AdminStaffPage() {
-  const { language } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t } = useLanguage()
 
   return (
     <AdminUserManagementPage
       countIcon={User}
-      title={isVietnamese ? 'Quản lý nhân viên' : 'Manage staff'}
-      description={
-        isVietnamese
-          ? 'Xem chung các tài khoản staff và admin trong khu vực quản trị.'
-          : 'Review both staff and admin accounts from the backend.'
-      }
+      title={t('admin.staffPage.title')}
+      description={t('admin.staffPage.description')}
       totalUsersLabel={(countLabel) =>
-        isVietnamese ? `${countLabel} nhân viên` : `${countLabel} staff members`
+        t('admin.staffPage.totalUsers', { count: countLabel })
       }
-      searchPlaceholder={
-        isVietnamese
-          ? 'Tìm theo username hoặc vai trò...'
-          : 'Search by username or role...'
-      }
-      loadErrorLabel={
-        isVietnamese
-          ? 'Không tải được danh sách nhân viên'
-          : 'Unable to load the staff list'
-      }
+      searchPlaceholder={t('admin.staffPage.searchPlaceholder')}
+      loadErrorLabel={t('admin.staffPage.loadError')}
       mode="staff"
-      emptyLabel={isVietnamese ? 'Chưa có nhân viên nào' : 'No staff members found'}
-      fetchUsers={getAdminEmployees}
+      emptyLabel={t('admin.staffPage.empty')}
+      fetchUsers={getAdminManagedUsersPage}
     />
   )
 }

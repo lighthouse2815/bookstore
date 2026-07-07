@@ -4,41 +4,32 @@ import com.bookstore.bookstore.domain.enums.DigitalAssetFormat;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record UpdateDigitalAssetRequest(
-        @NotNull(message = "format khong duoc null")
+        @NotNull(message = "format không được null")
         DigitalAssetFormat format,
 
-        @NotBlank(message = "title khong duoc de trong")
+        @NotBlank(message = "title không được để trống")
         String title,
 
-        @NotBlank(message = "fileName khong duoc de trong")
-        String fileName,
+        @NotNull(message = "fileAssetId không được null")
+        UUID fileAssetId,
 
-        @NotBlank(message = "storageKey khong duoc de trong")
-        String storageKey,
+        UUID sampleFileAssetId,
 
-        @NotBlank(message = "mimeType khong duoc de trong")
-        String mimeType,
-
-        @NotNull(message = "fileSize khong duoc null")
-        @PositiveOrZero(message = "fileSize khong duoc am")
-        Long fileSize,
-
-        String checksum,
-
-        String sampleStorageKey,
-
-        @NotNull(message = "price khong duoc null")
-        @DecimalMin(value = "0.0", message = "price khong duoc am")
+        @NotNull(message = "price không được null")
+        @DecimalMin(value = "0.0", message = "price không được âm")
         BigDecimal price,
 
-        @NotNull(message = "downloadAllowed khong duoc null")
+        @NotNull(message = "downloadAllowed không được null")
         Boolean downloadAllowed,
 
-        @NotNull(message = "published khong duoc null")
+        @NotNull(message = "purchaseAllowed không được null")
+        Boolean purchaseAllowed,
+
+        @NotNull(message = "published không được null")
         Boolean published
 ) {
 }

@@ -92,7 +92,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const { language } = useLanguage()
+  const { t } = useLanguage()
   const [conversations, setConversations] = useState<ConversationResponse[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     null,
@@ -195,7 +195,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setError(getErrorMessage(currentError, getLoadErrorMessage(language)))
+        setError(
+          getErrorMessage(currentError, t('chat.errors.loadConversations')),
+        )
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -235,7 +237,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       disconnectChatRealtime()
       setIsRealtimeConnected(false)
     }
-  }, [canUseChat, handleRealtimeConversation, handleRealtimeMessage, isAuthLoading, language])
+  }, [canUseChat, isAuthLoading, t])
 
   useEffect(() => {
     if (!canUseChat || !activeConversationId) {
@@ -285,7 +287,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       )
       setError(null)
     } catch (currentError) {
-      setError(getErrorMessage(currentError, getLoadErrorMessage(language)))
+      setError(getErrorMessage(currentError, t('chat.errors.loadConversations')))
     } finally {
       setIsLoading(false)
     }
@@ -296,7 +298,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   ): Promise<ConversationResponse> {
     const nextConversation = await createConversationRequest({
       subject:
-        toNullableString(data.subject) ?? getDefaultConversationSubject(language),
+        toNullableString(data.subject) ?? t('chat.customer.defaultSubject'),
       priority: data.priority ?? 'NORMAL',
       targetType: data.targetType ?? 'GENERAL',
       targetId: data.targetId ?? null,
@@ -370,7 +372,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           isLoadingMore: false,
         },
       }))
-      throw new Error(getErrorMessage(currentError, getLoadMessagesError(language)))
+      throw new Error(getErrorMessage(currentError, t('chat.errors.loadMessages')))
     }
   }
 
@@ -590,22 +592,6 @@ function resolveNextActiveConversationId(
   }
 
   return nextConversations[0]?.conversationId ?? null
-}
-
-function getLoadErrorMessage(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong tai duoc cuoc tro chuyen ho tro'
-    : 'Unable to load support conversations'
-}
-
-function getLoadMessagesError(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong tai duoc lich su tin nhan'
-    : 'Unable to load chat history'
-}
-
-function getDefaultConversationSubject(language: 'en' | 'vi') {
-  return language === 'vi' ? 'Ho tro khach hang' : 'Customer support'
 }
 
 function toNullableString(value?: string | null) {

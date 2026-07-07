@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.port.in.IStockMovementService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.result.StockMovementResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,13 @@ public class StockMovementService implements IStockMovementService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageSliceResult<StockMovementResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return stockMovementRepository.findPage(page, size).map(stockMovementAssembler::toResult);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<StockMovementResult> getByBookId(UUID bookId) {
         if (bookId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
@@ -46,6 +54,12 @@ public class StockMovementService implements IStockMovementService {
     private void requireBookExists(UUID bookId) {
         if (!bookRepository.existsByIdIncludingDeleted(bookId)) {
             throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+        }
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
         }
     }
 }

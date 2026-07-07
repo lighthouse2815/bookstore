@@ -2,10 +2,15 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Author;
 import com.bookstore.bookstore.infrastructure.persistence.entity.AuthorJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.FileAssetJpaEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class AuthorPersistenceMapper {
+
+    private final FileAssetPersistenceMapper fileAssetPersistenceMapper;
 
     public Author toDomain(AuthorJpaEntity entity) {
         if (entity == null) {
@@ -16,7 +21,7 @@ public class AuthorPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getBiography(),
-                entity.getAvatarUrl(),
+                fileAssetPersistenceMapper.toDomain(entity.getAvatarFileAsset()),
                 entity.getBirthYear(),
                 entity.getDeathYear(),
                 entity.getCreatedAt(),
@@ -27,15 +32,16 @@ public class AuthorPersistenceMapper {
 
     public AuthorJpaEntity toEntity(Author author) {
         AuthorJpaEntity entity = new AuthorJpaEntity();
-        copyToEntity(entity, author);
+        copyToEntity(entity, author, null);
         return entity;
     }
 
-    public void copyToEntity(AuthorJpaEntity entity, Author author) {
+    public void copyToEntity(AuthorJpaEntity entity, Author author, FileAssetJpaEntity avatarFileAsset) {
         entity.setId(author.getId());
         entity.setName(author.getName());
         entity.setBiography(author.getBiography());
-        entity.setAvatarUrl(author.getAvatarUrl());
+        entity.setAvatarFileAsset(avatarFileAsset);
+        entity.setAvatarUrl(null);
         entity.setBirthYear(author.getBirthYear());
         entity.setDeathYear(author.getDeathYear());
         entity.setCreatedAt(author.getCreatedAt());

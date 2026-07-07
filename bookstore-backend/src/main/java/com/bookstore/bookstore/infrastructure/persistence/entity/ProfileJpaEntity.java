@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -40,6 +41,10 @@ public class ProfileJpaEntity {
 
     @Column(name = "avatar_url", length = 500, nullable = true)
     private String avatarUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "avatar_file_asset_id")
+    private FileAssetJpaEntity avatarFileAsset;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = true)

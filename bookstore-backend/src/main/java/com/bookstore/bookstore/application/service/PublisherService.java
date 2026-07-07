@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IPublisherService;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Publisher;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
@@ -25,6 +26,13 @@ public class PublisherService implements IPublisherService {
     @Override
     public List<Publisher> getAll() {
         return publisherRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<Publisher> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return publisherRepository.findPageActive(page, size);
     }
 
     @Override
@@ -112,5 +120,11 @@ public class PublisherService implements IPublisherService {
 
         currentPublisher.softDelete();
         publisherRepository.save(currentPublisher);
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
     }
 }

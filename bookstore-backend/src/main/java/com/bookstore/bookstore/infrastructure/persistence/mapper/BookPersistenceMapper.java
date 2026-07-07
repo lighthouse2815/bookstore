@@ -8,6 +8,7 @@ import com.bookstore.bookstore.infrastructure.persistence.entity.BookDetailJpaEn
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookImageJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.FileAssetJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.PublisherJpaEntity;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class BookPersistenceMapper {
+
+    private final FileAssetPersistenceMapper fileAssetPersistenceMapper;
 
     public Book toDomain(BookJpaEntity entity) {
         if (entity == null) {
@@ -49,14 +52,16 @@ public class BookPersistenceMapper {
             Book book,
             CategoryJpaEntity category,
             AuthorJpaEntity author,
-            PublisherJpaEntity publisher) {
+            PublisherJpaEntity publisher,
+            Map<UUID, FileAssetJpaEntity> fileAssetsById
+    ) {
         entity.setId(book.getId());
         entity.setTitle(book.getTitle());
         entity.setIsbn(book.getIsbn());
         entity.setDescription(book.getDescription());
         entity.setPrice(book.getPrice());
         entity.setStockQuantity(book.getStockQuantity());
-        entity.setImageUrl(book.getPrimaryImageUrl());
+        entity.setImageUrl(null);
 
         entity.setCategory(category);
         entity.setAuthor(author);
@@ -75,7 +80,12 @@ public class BookPersistenceMapper {
                             image.getId(),
                             new BookImageJpaEntity()
                     );
-                    copyImageToEntity(image, imageEntity, entity);
+                    copyImageToEntity(
+                            image,
+                            imageEntity,
+                            entity,
+                            fileAssetsById.get(image.getFileAssetId())
+                    );
                     return imageEntity;
                 })
                 .toList();
@@ -97,33 +107,17 @@ public class BookPersistenceMapper {
     }
 
     private List<BookImage> toDomainImages(BookJpaEntity entity) {
-        List<BookImage> images = entity.getImages().stream()
+        return entity.getImages().stream()
+                .filter(image -> image.getFileAsset() != null)
                 .map(this::toDomain)
                 .toList();
-        if (!images.isEmpty()) {
-            return images;
-        }
-
-        if (entity.getImageUrl() == null || entity.getImageUrl().isBlank()) {
-            return List.of();
-        }
-
-        return List.of(new BookImage(
-                entity.getId(),
-                entity.getId(),
-                entity.getImageUrl(),
-                true,
-                0,
-                null,
-                entity.getCreatedAt()
-        ));
     }
 
     private BookImage toDomain(BookImageJpaEntity entity) {
         return new BookImage(
                 entity.getId(),
                 entity.getBook().getId(),
-                entity.getImageUrl(),
+                fileAssetPersistenceMapper.toDomain(entity.getFileAsset()),
                 entity.getPrimaryImage(),
                 entity.getSortOrder(),
                 entity.getAltText(),
@@ -150,10 +144,16 @@ public class BookPersistenceMapper {
         );
     }
 
-    private void copyImageToEntity(BookImage image, BookImageJpaEntity entity, BookJpaEntity bookEntity) {
+    private void copyImageToEntity(
+            BookImage image,
+            BookImageJpaEntity entity,
+            BookJpaEntity bookEntity,
+            FileAssetJpaEntity fileAsset
+    ) {
         entity.setId(image.getId());
         entity.setBook(bookEntity);
-        entity.setImageUrl(image.getImageUrl());
+        entity.setFileAsset(fileAsset);
+        entity.setImageUrl(null);
         entity.setPrimaryImage(image.getPrimaryImage());
         entity.setSortOrder(image.getSortOrder());
         entity.setAltText(image.getAltText());

@@ -3,6 +3,7 @@ package com.bookstore.bookstore.presentation.controller;
 import com.bookstore.bookstore.application.port.in.ICartService;
 import com.bookstore.bookstore.presentation.mapper.CartWebMapper;
 import com.bookstore.bookstore.presentation.request.AddCartItemRequest;
+import com.bookstore.bookstore.presentation.request.AddDigitalCartItemRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCartItemRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CartResponse;
@@ -44,24 +45,34 @@ public class CartController {
         return ApiResponse.success(cartWebMapper.toResponse(result));
     }
 
-    @PutMapping("/items/{bookId}")
-    public ApiResponse<CartResponse> updateItem(
+    @PostMapping("/items/digital")
+    public ApiResponse<CartResponse> addDigitalItem(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID bookId,
-            @Valid @RequestBody UpdateCartItemRequest request
+            @Valid @RequestBody AddDigitalCartItemRequest request
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        var result = cartService.updateItem(cartWebMapper.toUpdateCommand(userId, bookId, request));
+        var result = cartService.addItem(cartWebMapper.toAddDigitalCommand(userId, request));
         return ApiResponse.success(cartWebMapper.toResponse(result));
     }
 
-    @DeleteMapping("/items/{bookId}")
-    public ApiResponse<Void> removeItem(
+    @PutMapping("/items/{itemId}")
+    public ApiResponse<CartResponse> updateItem(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID bookId
+            @PathVariable UUID itemId,
+            @Valid @RequestBody UpdateCartItemRequest request
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        cartService.removeItem(cartWebMapper.toRemoveCommand(userId, bookId));
+        var result = cartService.updateItem(cartWebMapper.toUpdateCommand(userId, itemId, request));
+        return ApiResponse.success(cartWebMapper.toResponse(result));
+    }
+
+    @DeleteMapping("/items/{itemId}")
+    public ApiResponse<Void> removeItem(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID itemId
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        cartService.removeItem(cartWebMapper.toRemoveCommand(userId, itemId));
         return ApiResponse.success("Deleted", null);
     }
 

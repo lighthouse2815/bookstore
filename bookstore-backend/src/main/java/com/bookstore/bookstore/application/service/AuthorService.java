@@ -7,7 +7,11 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAuthorService;
 import com.bookstore.bookstore.application.port.out.IAuthorRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Author;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
@@ -21,10 +25,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthorService implements IAuthorService {
 
     private final IAuthorRepository authorRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Author> getAll() {
         return authorRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<Author> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return authorRepository.findPageActive(page, size);
     }
 
     @Override
@@ -61,7 +73,7 @@ public class AuthorService implements IAuthorService {
 
         String name = StringUtils.trimToNull(command.name());
         String biography = StringUtils.trimToNull(command.biography());
-        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
+        FileAsset avatarFileAsset = resolveAvatarFileAsset(command.avatarFileAssetId());
 
         // bay gio khong cho trung ten, sau co the doi them 1 trường nhận biết
         if (authorRepository.existsByNameIncludingDeleted(name)) {
@@ -73,7 +85,7 @@ public class AuthorService implements IAuthorService {
                 UUID.randomUUID(),
                 name,
                 biography,
-                avatarUrl,
+                avatarFileAsset,
                 command.birthYear(),
                 command.deathYear(),
                 now,
@@ -96,7 +108,7 @@ public class AuthorService implements IAuthorService {
 
         String name = StringUtils.trimToNull(command.name());
         String biography = StringUtils.trimToNull(command.biography());
-        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
+        FileAsset avatarFileAsset = resolveAvatarFileAsset(command.avatarFileAssetId());
 
         if (!currentAuthor.getName().equals(name) && authorRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.AUTHOR_NAME_ALREADY_EXISTS);
@@ -105,7 +117,7 @@ public class AuthorService implements IAuthorService {
         currentAuthor.updateAuthor(
                 name,
                 biography,
-                avatarUrl,
+                avatarFileAsset,
                 command.birthYear(),
                 command.deathYear()
         );
@@ -124,5 +136,23 @@ public class AuthorService implements IAuthorService {
 
         currentAuthor.softDelete();
         authorRepository.save(currentAuthor);
+    }
+
+    private FileAsset resolveAvatarFileAsset(UUID avatarFileAssetId) {
+        if (avatarFileAssetId == null) {
+            return null;
+        }
+
+        return fileAssetPolicyService.requireActiveAsset(
+                avatarFileAssetId,
+                FilePurpose.AUTHOR_AVATAR,
+                FileVisibility.PUBLIC
+        );
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
     }
 }

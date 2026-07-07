@@ -6,15 +6,15 @@ import java.util.UUID;
 
 public record UpdateCartItemCommand(
         UUID userId,
-        UUID bookId,
+        UUID itemReferenceId,
         int quantity
 ) {
     public UpdateCartItemCommand {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
         }
-        if (bookId == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
+        if (itemReferenceId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "itemReferenceId");
         }
         if (quantity <= 0) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "quantity");

@@ -5,16 +5,17 @@ import java.util.UUID;
 
 public record BookDetailRequest(
         UUID id,
-        @Positive(message = "pageCount phai lon hon 0")
+        @Positive(message = "pageCount phải lớn hơn 0")
         Integer pageCount,
-        @Positive(message = "publicationYear phai lon hon 0")
+        @Positive(message = "publicationYear phải lớn hơn 0")
         Integer publicationYear,
         String language,
         String coverType,
         String dimensions,
-        @Positive(message = "weight phai lon hon 0")
+        @Positive(message = "weight phải lớn hơn 0")
         Integer weight,
         String translator,
         String edition
 ) {
 }
+

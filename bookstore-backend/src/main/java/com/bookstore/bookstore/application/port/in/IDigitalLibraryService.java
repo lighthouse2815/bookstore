@@ -2,6 +2,8 @@ package com.bookstore.bookstore.application.port.in;
 
 import com.bookstore.bookstore.application.command.UpdateReadingProgressCommand;
 import com.bookstore.bookstore.application.result.DigitalLibraryAssetResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.application.result.SignedUrlResult;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.ReadingProgress;
 import java.util.List;
@@ -11,7 +13,15 @@ public interface IDigitalLibraryService {
 
     List<DigitalLibraryAssetResult> getMyLibrary(UUID userId);
 
+    PageSliceResult<DigitalLibraryAssetResult> getMyLibrary(UUID userId, int page, int size);
+
     DigitalLibraryAssetResult getMyAsset(UUID userId, UUID digitalAssetId);
+
+    SignedUrlResult getPublishedSampleUrl(UUID bookId, UUID digitalAssetId);
+
+    SignedUrlResult getMyReadUrl(UUID userId, UUID digitalAssetId);
+
+    SignedUrlResult getMyDownloadUrl(UUID userId, UUID digitalAssetId);
 
     ReadingProgress updateMyProgress(UpdateReadingProgressCommand command);
 

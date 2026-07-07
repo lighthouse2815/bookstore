@@ -4,18 +4,18 @@ import {
   getAdminBookStockMovements,
   getAdminStockMovements,
 } from '@/services/admin-access-service'
-import { getBookCatalog } from '@/services/book-service'
-import type {
-  AdminStockMovementResponse,
-} from '@/types/admin-access'
+import { getBookCatalogPage } from '@/services/book-service'
+import type { AdminStockMovementResponse } from '@/types/admin-access'
 import type { Book } from '@/types/book'
 import { getErrorMessage } from '@/utils'
 
+const PAGE_SIZE = 10
+
 export function useAdminInventoryPage() {
-  const { language, t, formatCurrency, formatDate, formatNumber } =
-    useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const [books, setBooks] = useState<Book[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [movements, setMovements] = useState<AdminStockMovementResponse[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -29,37 +29,29 @@ export function useAdminInventoryPage() {
 
   const labels = useMemo(
     () => ({
-      title: isVietnamese ? 'Quan ly ton kho' : 'Inventory management',
-      description: isVietnamese
-        ? 'Theo doi ton hien tai va lich su bien dong kho cua tung dau sach.'
-        : 'Track current stock and movement history for each book title.',
-      totalBooks: isVietnamese ? '{count} dau sach' : '{count} books',
-      search: isVietnamese
-        ? 'Tim theo ten sach, tac gia, the loai...'
-        : 'Search by title, author, or category...',
-      empty: isVietnamese ? 'Khong co sach trong kho' : 'No inventory found',
-      lowStock: isVietnamese ? 'Sap het' : 'Low stock',
-      inStock: isVietnamese ? 'Con hang' : 'In stock',
-      outOfStock: isVietnamese ? 'Het hang' : 'Out of stock',
-      recentMovements: isVietnamese ? 'Bien dong gan day' : 'Recent movements',
-      movementHistory: isVietnamese ? 'Lich su bien dong' : 'Movement history',
-      latestMovement: isVietnamese ? 'Bien dong moi nhat' : 'Latest movement',
-      book: isVietnamese ? 'Sach' : 'Book',
-      price: isVietnamese ? 'Gia ban' : 'Price',
-      stock: isVietnamese ? 'Ton kho' : 'Stock',
-      loadError: isVietnamese
-        ? 'Khong tai duoc du lieu ton kho'
-        : 'Unable to load inventory',
-      historyError: isVietnamese
-        ? 'Khong tai duoc lich su ton kho'
-        : 'Unable to load stock history',
-      noMovement: isVietnamese ? 'Chua co bien dong kho' : 'No stock movement yet',
-      reference: isVietnamese ? 'Lien ket nghiep vu' : 'Reference',
-      beforeAfter: isVietnamese ? 'Truoc / Sau' : 'Before / After',
-      quantity: isVietnamese ? 'So luong' : 'Quantity',
-      unknownReference: isVietnamese ? 'Khong co tham chieu' : 'No reference',
+      title: t('admin.inventoryPage.title'),
+      description: t('admin.inventoryPage.description'),
+      totalBooks: t('admin.inventoryPage.totalBooks'),
+      search: t('admin.inventoryPage.search'),
+      empty: t('admin.inventoryPage.empty'),
+      lowStock: t('admin.inventoryPage.lowStock'),
+      inStock: t('admin.inventoryPage.inStock'),
+      outOfStock: t('admin.inventoryPage.outOfStock'),
+      recentMovements: t('admin.inventoryPage.recentMovements'),
+      movementHistory: t('admin.inventoryPage.movementHistory'),
+      latestMovement: t('admin.inventoryPage.latestMovement'),
+      book: t('admin.inventoryPage.book'),
+      price: t('admin.inventoryPage.price'),
+      stock: t('admin.inventoryPage.stock'),
+      loadError: t('admin.inventoryPage.loadError'),
+      historyError: t('admin.inventoryPage.historyError'),
+      noMovement: t('admin.inventoryPage.noMovement'),
+      reference: t('admin.inventoryPage.reference'),
+      beforeAfter: t('admin.inventoryPage.beforeAfter'),
+      quantity: t('admin.inventoryPage.quantity'),
+      unknownReference: t('admin.inventoryPage.unknownReference'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   const movementLookup = useMemo(() => {
@@ -110,7 +102,7 @@ export function useAdminInventoryPage() {
 
       try {
         const [bookResponse, movementResponse] = await Promise.all([
-          getBookCatalog(),
+          getBookCatalogPage({ page, size: PAGE_SIZE }),
           getAdminStockMovements(),
         ])
 
@@ -119,6 +111,7 @@ export function useAdminInventoryPage() {
         }
 
         setBooks(bookResponse.books)
+        setTotalCount(bookResponse.totalCount)
         setMovements(movementResponse)
         setError(null)
       } catch (currentError) {
@@ -139,7 +132,7 @@ export function useAdminInventoryPage() {
     return () => {
       isCancelled = true
     }
-  }, [labels.loadError])
+  }, [labels.loadError, page])
 
   useEffect(() => {
     if (!selectedBook) {
@@ -165,6 +158,11 @@ export function useAdminInventoryPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   async function openHistory(book: Book) {
@@ -199,8 +197,10 @@ export function useAdminInventoryPage() {
     formatDate,
     formatNumber,
     labels,
-    isVietnamese,
     books,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     movements,
     searchTerm,
     isLoading,
@@ -215,6 +215,7 @@ export function useAdminInventoryPage() {
     outOfStockCount,
     recentMovementCount,
     handleSearchTermChange,
+    handlePageChange,
     openHistory,
     closeHistory,
   }

@@ -30,8 +30,7 @@ const initialFormState: RoleFormState = {
 }
 
 export function useAdminRolesPage() {
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const [roles, setRoles] = useState<AdminRoleResponse[]>([])
   const [permissions, setPermissions] = useState<AdminPermissionResponse[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -60,36 +59,28 @@ export function useAdminRolesPage() {
 
   const labels = useMemo(
     () => ({
-      addRole: isVietnamese ? 'Thêm vai trò' : 'Add role',
-      detailTitle: isVietnamese ? 'Chi tiết vai trò' : 'Role details',
-      editTitle: isVietnamese ? 'Sửa vai trò' : 'Edit role',
-      deleteTitle: isVietnamese ? 'Xác nhận xóa vai trò' : 'Confirm role deletion',
-      deleteDescription: isVietnamese
-        ? 'Hành động này sẽ xóa vai trò khỏi hệ thống và không thể hoàn tác.'
-        : 'This action removes the role from the system and cannot be undone.',
-      createSuccess: isVietnamese ? 'Đã tạo vai trò' : 'Role created successfully',
-      updateSuccess: isVietnamese
-        ? 'Đã cập nhật vai trò'
-        : 'Role updated successfully',
-      deleteSuccess: isVietnamese ? 'Đã xóa vai trò' : 'Role deleted successfully',
-      loadError: isVietnamese
-        ? 'Không tải được danh sách vai trò'
-        : 'Unable to load the role list',
-      saveError: isVietnamese ? 'Không lưu được vai trò' : 'Unable to save role',
-      deleteError: isVietnamese ? 'Không xóa được vai trò' : 'Unable to delete role',
-      permissionList: isVietnamese ? 'Danh sách quyền' : 'Permission list',
-      noPermissions: isVietnamese ? 'Chưa có quyền nào' : 'No permissions assigned',
+      addRole: t('admin.rolesPage.addRole'),
+      detailTitle: t('admin.rolesPage.detailTitle'),
+      editTitle: t('admin.rolesPage.editTitle'),
+      deleteTitle: t('admin.rolesPage.deleteTitle'),
+      deleteDescription: t('admin.rolesPage.deleteDescription'),
+      createSuccess: t('admin.rolesPage.createSuccess'),
+      updateSuccess: t('admin.rolesPage.updateSuccess'),
+      deleteSuccess: t('admin.rolesPage.deleteSuccess'),
+      loadError: t('admin.rolesPage.loadError'),
+      saveError: t('admin.rolesPage.saveError'),
+      deleteError: t('admin.rolesPage.deleteError'),
+      permissionList: t('admin.rolesPage.permissionList'),
+      noPermissions: t('admin.rolesPage.noPermissions'),
       descriptionEmpty: t('admin.rolesPage.noDescription'),
-      showingCount: isVietnamese
-        ? 'Hiển thị {count} trên {total} vai trò'
-        : 'Showing {count} of {total} roles',
-      roleName: isVietnamese ? 'Tên vai trò' : 'Role name',
-      choosePermissions: isVietnamese ? 'Chọn quyền' : 'Choose permissions',
-      roleDescription: isVietnamese ? 'Mô tả' : 'Description',
+      showingCount: t('admin.rolesPage.showingCount'),
+      roleName: t('admin.rolesPage.roleName'),
+      choosePermissions: t('admin.rolesPage.choosePermissions'),
+      roleDescription: t('admin.rolesPage.roleDescription'),
       searchPlaceholder: t('admin.rolesPage.searchPlaceholder'),
       empty: t('admin.rolesPage.empty'),
     }),
-    [isVietnamese, t],
+    [t],
   )
 
   useEffect(() => {

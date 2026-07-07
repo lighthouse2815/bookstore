@@ -89,9 +89,8 @@ const PAYMENT_STATUS_TONES: Record<
 }
 
 export default function OrderDetailPage() {
-  const { t, formatCurrency, formatDate, formatNumber, language } = useLanguage()
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const { order, isLoading, error } = useOrderDetailPage()
-  const pageCopy = getOrderDetailCopy(language)
 
   return (
     <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)]">
@@ -117,7 +116,7 @@ export default function OrderDetailPage() {
                 className="h-11 rounded-2xl border-primary/15 px-5 text-primary hover:bg-primary/6"
               >
                 <Clock3 className="mr-2 h-4 w-4" />
-                {pageCopy.orderHistory}
+                {t('orderDetail.orderHistory')}
               </Button>
             </Link>
           </div>
@@ -140,7 +139,6 @@ export default function OrderDetailPage() {
               formatDate={formatDate}
               formatNumber={formatNumber}
               order={order}
-              pageCopy={pageCopy}
               t={t}
             />
           )}
@@ -157,14 +155,12 @@ function OrderDetailContent({
   formatDate,
   formatNumber,
   order,
-  pageCopy,
   t,
 }: {
   formatCurrency: (value: number) => string
   formatDate: (value: Date | number | string) => string
   formatNumber: (value: number) => string
   order: OrderResponse
-  pageCopy: OrderDetailCopy
   t: (key: string, params?: Record<string, number | string>) => string
 }) {
   const orderTone = ORDER_STATUS_TONES[order.status]
@@ -240,13 +236,13 @@ function OrderDetailContent({
         <SurfacePanel className="self-start">
           <SectionHeading
             icon={ReceiptText}
-            title={pageCopy.orderSummary}
+            title={t('orderDetail.orderSummary')}
             variant="solid"
           />
 
           <div className="mt-6 space-y-1">
             <SummaryRow
-              label={pageCopy.productTotal}
+              label={t('orderDetail.productTotal')}
               value={formatCurrency(order.productTotal)}
             />
             <SummaryRow
@@ -273,7 +269,7 @@ function OrderDetailContent({
       <SurfacePanel>
         <SectionHeading
           icon={Package2}
-          title={pageCopy.itemsTitle}
+          title={t('orderDetail.itemsTitle')}
           variant="plain"
         />
 
@@ -302,6 +298,23 @@ function OrderDetailContent({
                   >
                     {item.bookTitle}
                   </Link>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+                      {item.itemType === 'DIGITAL_ASSET'
+                        ? t('orderDetail.digitalItemLabel')
+                        : t('orderDetail.physicalItemLabel')}
+                    </Badge>
+                    {item.itemType === 'DIGITAL_ASSET' &&
+                    item.digitalAssetId &&
+                    (order.paymentStatus === 'PAID' || order.status === 'DELIVERED') ? (
+                      <Link
+                        to={`/library/${item.digitalAssetId}`}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        {t('orderDetail.openLibraryAsset')}
+                      </Link>
+                    ) : null}
+                  </div>
                   <p className="mt-2 text-[15px] text-slate-500">
                     {t('checkout.quantityShort', {
                       count: item.quantity,
@@ -450,27 +463,3 @@ function SummaryRow({
   )
 }
 
-type OrderDetailCopy = {
-  itemsTitle: string
-  orderHistory: string
-  orderSummary: string
-  productTotal: string
-}
-
-function getOrderDetailCopy(language: 'vi' | 'en'): OrderDetailCopy {
-  if (language === 'en') {
-    return {
-      itemsTitle: 'Items in this order',
-      orderHistory: 'Order history',
-      orderSummary: 'Order summary',
-      productTotal: 'Product total',
-    }
-  }
-
-  return {
-    itemsTitle: 'S\u1ea3n ph\u1ea9m trong \u0111\u01a1n',
-    orderHistory: 'L\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng',
-    orderSummary: 'T\u00f3m t\u1eaft \u0111\u01a1n h\u00e0ng',
-    productTotal: 'T\u1ed5ng ti\u1ec1n h\u00e0ng',
-  }
-}

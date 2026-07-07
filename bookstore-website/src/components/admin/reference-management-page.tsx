@@ -18,6 +18,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { Textarea } from '@/components/common/textarea'
 import {
   getReferenceDescription,
@@ -26,6 +27,7 @@ import {
   type ReferenceSectionKey,
 } from '@/hooks/use-admin-reference-management-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { cn } from '@/utils'
 
 type SectionVisual = {
@@ -119,7 +121,6 @@ export function AdminReferenceManagementPage({
     t,
     formatDate,
     formatNumber,
-    items,
     isLoading,
     error,
     form,
@@ -129,9 +130,15 @@ export function AdminReferenceManagementPage({
     isSubmitting,
     isDeleting,
     filteredItems,
+    paginatedItems,
+    totalCount,
+    page,
+    pageSize,
     isDialogLocked,
+    isUploadingAvatar,
     handleSearchTermChange,
     handleFormChange,
+    handleAuthorAvatarFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -140,6 +147,7 @@ export function AdminReferenceManagementPage({
     openDeleteDialog,
     handleSubmit,
     handleDeleteConfirm,
+    handlePageChange,
   } = useAdminReferenceManagementPage(sectionKey)
 
   const sectionLabel = t(sectionLabelKeys[sectionKey])
@@ -235,6 +243,80 @@ export function AdminReferenceManagementPage({
                 />
               </div>
 
+              {sectionKey === 'authors' ? (
+                <>
+                  <div>
+                    <Label htmlFor="author-avatar-upload">
+                      {t('auth.profile.avatarUrl')}
+                    </Label>
+                    <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background/70 text-lg font-semibold text-primary">
+                        {form.avatarPreviewUrl ? (
+                          <img
+                            src={getBookCoverUrl(form.avatarPreviewUrl)}
+                            alt={form.name || t('common.name')}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          id="author-avatar-upload"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={(event) =>
+                            void handleAuthorAvatarFileChange(
+                              event.currentTarget.files?.[0] ?? null,
+                            )
+                          }
+                          className="h-12 rounded-2xl bg-background/60"
+                        />
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {isUploadingAvatar
+                            ? t('common.processing')
+                            : t('admin.references.biography')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="author-birth-year">
+                        {t('admin.referencePages.authors.birthYear')}
+                      </Label>
+                      <Input
+                        id="author-birth-year"
+                        type="number"
+                        min="1"
+                        value={form.birthYear}
+                        onChange={(event) =>
+                          handleFormChange('birthYear', event.currentTarget.value)
+                        }
+                        className="mt-2 h-12 rounded-2xl bg-background/60"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="author-death-year">
+                        {t('admin.referencePages.authors.deathYear')}
+                      </Label>
+                      <Input
+                        id="author-death-year"
+                        type="number"
+                        min="1"
+                        value={form.deathYear}
+                        onChange={(event) =>
+                          handleFormChange('deathYear', event.currentTarget.value)
+                        }
+                        className="mt-2 h-12 rounded-2xl bg-background/60"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : null}
+
               <div>
                 <Label htmlFor={`${sectionKey}-description`}>
                   {descriptionLabel}
@@ -295,7 +377,7 @@ export function AdminReferenceManagementPage({
                     )}
                   >
                     {t(countLabelKeys[sectionKey], {
-                      count: formatNumber(items.length),
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -353,7 +435,7 @@ export function AdminReferenceManagementPage({
                     </p>
                   </div>
                 ) : (
-                  filteredItems.map((item) => {
+                  paginatedItems.map((item) => {
                     return (
                       <div
                         key={item.id}
@@ -412,6 +494,15 @@ export function AdminReferenceManagementPage({
                   })
                 )}
               </div>
+
+              {!isLoading && filteredItems.length > 0 ? (
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -447,6 +538,12 @@ function ReferenceDetailDialogContent({
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
   const description = getReferenceDescription(sectionKey, item)
+  const authorAvatarUrl =
+    sectionKey === 'authors' && 'avatarUrl' in item ? item.avatarUrl : null
+  const authorBirthYear =
+    sectionKey === 'authors' && 'birthYear' in item ? item.birthYear : null
+  const authorDeathYear =
+    sectionKey === 'authors' && 'deathYear' in item ? item.deathYear : null
 
   return (
     <div className="space-y-6">
@@ -485,6 +582,36 @@ function ReferenceDetailDialogContent({
           value={formatDate(item.updatedAt)}
         />
       </div>
+
+      {sectionKey === 'authors' ? (
+        <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
+          <div className="overflow-hidden rounded-[24px] border border-border/60 bg-background/55">
+            {authorAvatarUrl ? (
+              <img
+                src={getBookCoverUrl(authorAvatarUrl)}
+                alt={item.name}
+                className="aspect-square w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-square items-center justify-center text-muted-foreground">
+                <ItemIcon className={cn('h-8 w-8', visual.tileIconClassName)} />
+              </div>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DetailMetaCard
+              icon={CalendarDays}
+              label={t('admin.referencePages.authors.birthYear')}
+              value={authorBirthYear ? String(authorBirthYear) : '...'}
+            />
+            <DetailMetaCard
+              icon={CalendarDays}
+              label={t('admin.referencePages.authors.deathYear')}
+              value={authorDeathYear ? String(authorDeathYear) : '...'}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-[24px] border border-border/60 bg-background/55 p-5">
         <p className="text-sm font-semibold text-foreground">{descriptionLabel}</p>

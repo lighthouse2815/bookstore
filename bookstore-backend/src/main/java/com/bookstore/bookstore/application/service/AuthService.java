@@ -202,7 +202,7 @@ public class AuthService implements IAuthService {
         }
 
         String rawRefreshToken = StringUtils.trimToNull(command.refreshToken());
-        RefreshToken currentRefreshToken = refreshTokenRepository.findByToken(rawRefreshToken)
+        RefreshToken currentRefreshToken = refreshTokenRepository.findByTokenHash(hashRefreshToken(rawRefreshToken))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN));
 
         if (currentRefreshToken.isRevoked()) {
@@ -227,7 +227,7 @@ public class AuthService implements IAuthService {
         }
 
         String rawRefreshToken = StringUtils.trimToNull(command.refreshToken());
-        refreshTokenRepository.findByToken(rawRefreshToken).ifPresent(refreshToken -> {
+        refreshTokenRepository.findByTokenHash(hashRefreshToken(rawRefreshToken)).ifPresent(refreshToken -> {
             if (!refreshToken.isRevoked()) {
                 refreshToken.revoke();
                 refreshTokenRepository.save(refreshToken);
@@ -273,7 +273,7 @@ public class AuthService implements IAuthService {
         }
 
         String rawResetToken = StringUtils.trimToNull(command.resetToken());
-        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHash(hashToken(rawResetToken))
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHash(hashPasswordResetToken(rawResetToken))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN));
 
         if (passwordResetToken.isUsed()) {
@@ -295,14 +295,15 @@ public class AuthService implements IAuthService {
 
     private LoginResult issueTokens(User user) {
         String accessToken = jwtService.generateAccessToken(user);
-        RefreshToken refreshToken = createRefreshToken(user.getId());
+        String rawRefreshToken = generateSecureTokenValue();
+        RefreshToken refreshToken = createRefreshToken(user.getId(), rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
         return new LoginResult(
                 user.getId(),
                 user.getStatus(),
                 toRoleNames(user.getRoles()),
                 accessToken,
-                refreshToken.getToken()
+                rawRefreshToken
         );
     }
 
@@ -328,12 +329,12 @@ public class AuthService implements IAuthService {
         return user;
     }
 
-    private RefreshToken createRefreshToken(UUID userId) {
+    private RefreshToken createRefreshToken(UUID userId, String rawRefreshToken) {
         Instant now = Instant.now();
         return new RefreshToken(
                 UUID.randomUUID(),
                 userId,
-                generateSecureTokenValue(),
+                hashRefreshToken(rawRefreshToken),
                 jwtService.calculateRefreshTokenExpiresAt(now),
                 false,
                 now
@@ -347,7 +348,7 @@ public class AuthService implements IAuthService {
         PasswordResetToken passwordResetToken = new PasswordResetToken(
                 UUID.randomUUID(),
                 userId,
-                hashToken(rawToken),
+                hashPasswordResetToken(rawToken),
                 now.plusSeconds(PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES * 60),
                 null,
                 now
@@ -406,7 +407,7 @@ public class AuthService implements IAuthService {
                 savedUser.getId(),
                 googleIdToken.familyName(),
                 googleIdToken.givenName(),
-                googleIdToken.pictureUrl(),
+                null,
                 null,
                 null,
                 now,
@@ -456,9 +457,17 @@ public class AuthService implements IAuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private String hashToken(String rawToken) {
+    private String hashRefreshToken(String rawToken) {
+        return hashToken(rawToken, ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN, "refresh token");
+    }
+
+    private String hashPasswordResetToken(String rawToken) {
+        return hashToken(rawToken, ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN, "password reset token");
+    }
+
+    private String hashToken(String rawToken, ApplicationErrorCode errorCode, String tokenKind) {
         if (rawToken == null) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN);
+            throw new ApplicationException(errorCode);
         }
 
         try {
@@ -466,7 +475,7 @@ public class AuthService implements IAuthService {
             byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hashed);
         } catch (Exception exception) {
-            throw new IllegalStateException("Unable to hash password reset token", exception);
+            throw new IllegalStateException("Unable to hash " + tokenKind, exception);
         }
     }
 

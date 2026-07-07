@@ -7,6 +7,8 @@ import type {
   UpdateOrderStatusRequest,
 } from '@/types/order'
 import { unwrapResponse } from '@/utils'
+import { toPageResult } from '@/services/pagination'
+import type { PageRequest, PageResult } from '@/types/pagination'
 
 type BackendCreateOrderRequest = {
   cartItemIds: string[]
@@ -43,6 +45,16 @@ export async function getMyOrders(): Promise<OrderResponse[]> {
   return unwrapResponse(response)
 }
 
+export async function getMyOrdersPage(
+  params: PageRequest = {},
+): Promise<PageResult<OrderResponse>> {
+  const request = { page: params.page ?? 0, size: params.size ?? 10 }
+  const response = await api.get<ApiResponse<OrderResponse[]>>('/orders/my', {
+    params: request,
+  })
+  return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
 export async function getOrderById(orderId: string): Promise<OrderResponse> {
   const response = await api.get<ApiResponse<OrderResponse>>(`/orders/${orderId}`)
   return unwrapResponse(response)
@@ -55,6 +67,16 @@ export async function getMyOrder(id: string): Promise<OrderResponse> {
 export async function getAdminOrders(): Promise<OrderResponse[]> {
   const response = await api.get<ApiResponse<OrderResponse[]>>('/admin/orders')
   return unwrapResponse(response)
+}
+
+export async function getAdminOrdersPage(
+  params: PageRequest = {},
+): Promise<PageResult<OrderResponse>> {
+  const request = { page: params.page ?? 0, size: params.size ?? 10 }
+  const response = await api.get<ApiResponse<OrderResponse[]>>('/admin/orders', {
+    params: request,
+  })
+  return toPageResult(unwrapResponse(response), response.headers, request)
 }
 
 export async function getAdminOrder(id: string): Promise<OrderResponse> {

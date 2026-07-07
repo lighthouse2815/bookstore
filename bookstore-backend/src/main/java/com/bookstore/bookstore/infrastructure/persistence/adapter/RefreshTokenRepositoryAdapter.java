@@ -21,8 +21,8 @@ public class RefreshTokenRepositoryAdapter implements IRefreshTokenRepository {
     private final RefreshTokenPersistenceMapper refreshTokenPersistenceMapper;
 
     @Override
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenJpaRepository.findByToken(token)
+    public Optional<RefreshToken> findByTokenHash(String tokenHash) {
+        return refreshTokenJpaRepository.findByTokenHash(tokenHash)
                 .map(refreshTokenPersistenceMapper::toDomain);
     }
 

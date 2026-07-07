@@ -6,6 +6,9 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.shared.util.StringUtils;
 
@@ -22,6 +25,7 @@ public class ProfileService implements IProfileService {
 
     private final IProfileRepository profileRepository;
     private final IUserRepository userRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Profile> getAll() {
@@ -89,12 +93,16 @@ public class ProfileService implements IProfileService {
 
         String lastName = StringUtils.trimToNull(command.lastName());
         String firstName = StringUtils.trimToNull(command.firstName());
-        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
+        FileAsset avatarFileAsset = resolveAvatarFileAsset(
+                command.avatarFileAssetId(),
+                currentProfile,
+                userId
+        );
 
         currentProfile.updateProfileInfo(
                 lastName,
                 firstName,
-                avatarUrl,
+                avatarFileAsset,
                 command.gender(),
                 command.dateOfBirth()
         );
@@ -113,5 +121,22 @@ public class ProfileService implements IProfileService {
 
         currentProfile.softDelete();
         profileRepository.save(currentProfile);
+    }
+
+    private FileAsset resolveAvatarFileAsset(UUID avatarFileAssetId, Profile currentProfile, UUID ownerId) {
+        if (avatarFileAssetId == null) {
+            return null;
+        }
+
+        if (currentProfile != null && avatarFileAssetId.equals(currentProfile.getAvatarFileAssetId())) {
+            return currentProfile.getAvatarFileAsset();
+        }
+
+        return fileAssetPolicyService.requireActiveOwnedAsset(
+                avatarFileAssetId,
+                FilePurpose.USER_AVATAR,
+                FileVisibility.PUBLIC,
+                ownerId
+        );
     }
 }

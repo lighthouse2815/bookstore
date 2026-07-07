@@ -8,6 +8,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ISupplierService;
 import com.bookstore.bookstore.application.port.out.ISupplierRepository;
 import com.bookstore.bookstore.domain.model.Supplier;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
@@ -26,6 +27,13 @@ public class SupplierService implements ISupplierService {
     @Transactional(readOnly = true)
     public List<Supplier> getAll() {
         return supplierRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<Supplier> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return supplierRepository.findPageActive(page, size);
     }
 
     @Override
@@ -108,5 +116,11 @@ public class SupplierService implements ISupplierService {
 
         currentSupplier.softDelete();
         supplierRepository.save(currentSupplier);
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
     }
 }

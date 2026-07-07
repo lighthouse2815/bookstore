@@ -4,7 +4,7 @@ import type { Gender } from '@/types/auth'
 export type UpdateProfileRequest = {
   lastName: string
   firstName: string
-  avatarUrl?: string | null
+  avatarFileAssetId?: string | null
   gender: Gender
   dateOfBirth: string
 }
@@ -15,6 +15,7 @@ export type ProfileResponse = {
   userId: string
   lastName: string
   firstName: string
+  avatarFileAssetId: string | null
   avatarUrl: string | null
   gender: Gender
   dateOfBirth: string

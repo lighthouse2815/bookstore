@@ -7,13 +7,14 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record CreateImportReceiptItemRequest(
-        @NotNull(message = "bookId khong duoc null")
+        @NotNull(message = "bookId không được null")
         UUID bookId,
-        @NotNull(message = "unitCost khong duoc null")
-        @DecimalMin(value = "0.0", message = "unitCost khong duoc am")
+        @NotNull(message = "unitCost không được null")
+        @DecimalMin(value = "0.0", message = "unitCost không được âm")
         BigDecimal unitCost,
-        @NotNull(message = "quantity khong duoc null")
-        @Positive(message = "quantity phai lon hon 0")
+        @NotNull(message = "quantity không được null")
+        @Positive(message = "quantity phải lớn hơn 0")
         Integer quantity
 ) {
 }
+

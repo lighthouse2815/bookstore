@@ -10,25 +10,25 @@ import java.util.List;
 import java.util.UUID;
 
 public record UpdateBookRequest(
-        @NotBlank(message = "title khong duoc de trong")
+        @NotBlank(message = "title không được để trống")
         String title,
         String isbn,
         String description,
-        @NotNull(message = "price khong duoc null")
-        @DecimalMin(value = "0.0", inclusive = true, message = "price khong duoc am")
+        @NotNull(message = "price không được null")
+        @DecimalMin(value = "0.0", inclusive = true, message = "price không được âm")
         BigDecimal price,
-        @NotNull(message = "stockQuantity khong duoc null")
-        @Min(value = 0, message = "stockQuantity khong duoc am")
+        @NotNull(message = "stockQuantity không được null")
+        @Min(value = 0, message = "stockQuantity không được âm")
         Integer stockQuantity,
-        String imageUrl,
         List<@Valid BookImageRequest> images,
         @Valid
         BookDetailRequest detail,
-        @NotNull(message = "categoryId khong duoc null")
+        @NotNull(message = "categoryId không được null")
         UUID categoryId,
-        @NotNull(message = "authorId khong duoc null")
+        @NotNull(message = "authorId không được null")
         UUID authorId,
-        @NotNull(message = "publisherId khong duoc null")
+        @NotNull(message = "publisherId không được null")
         UUID publisherId
 ) {
 }
+

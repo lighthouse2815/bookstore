@@ -1,8 +1,9 @@
-import { Eye, Search } from 'lucide-react'
+import { Eye, Search, Truck } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { useLanguage } from '@/contexts/language-context'
 import {
@@ -10,10 +11,12 @@ import {
   useAdminOrdersPage,
 } from '@/hooks/use-admin-orders-page'
 import type { OrderStatus } from '@/types/order'
+import type { ShipmentStatus } from '@/types/shipment'
 import {
   getOrderStatusLabel,
   getPaymentMethodLabel,
   getPaymentStatusLabel,
+  getShipmentStatusLabel,
 } from '@/utils/i18n'
 
 const statusVariants: Record<
@@ -27,26 +30,50 @@ const statusVariants: Record<
   CANCELLED: 'destructive',
 }
 
+const shipmentStatusVariants: Record<
+  ShipmentStatus,
+  'default' | 'secondary' | 'outline' | 'destructive'
+> = {
+  ASSIGNED: 'secondary',
+  PICKED_UP: 'outline',
+  DELIVERING: 'default',
+  DELIVERED: 'default',
+  FAILED: 'destructive',
+}
+
 export default function AdminOrdersPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const {
     orders,
+    page,
+    pageSize,
+    totalCount,
     filteredOrders,
+    shippers,
     searchTerm,
     statusFilter,
     selectedOrderId,
     selectedOrder,
     selectedStatus,
+    selectedShipperId,
+    selectedOrderActiveShipment,
+    selectedOrderLatestShipment,
+    selectedOrderShipmentShipper,
+    canAssignShipment,
     isLoading,
     isDetailLoading,
     isUpdating,
+    isAssigningShipment,
     error,
     handleSearchTermChange,
     handleStatusFilterChange,
+    handlePageChange,
     handleSelectedStatusChange,
+    handleSelectedShipperChange,
     handleCloseDetail,
     handleViewOrder,
     handleUpdateStatus,
+    handleAssignShipment,
   } = useAdminOrdersPage()
 
   return (
@@ -58,7 +85,7 @@ export default function AdminOrdersPage() {
           </h1>
           <p className="mt-2 text-muted-foreground">
             {t('admin.orders.totalOrders', {
-              count: formatNumber(orders.length),
+              count: formatNumber(totalCount),
             })}
           </p>
         </div>
@@ -181,6 +208,15 @@ export default function AdminOrdersPage() {
               <p className="text-muted-foreground">{t('orders.emptyDescription')}</p>
             </div>
           )}
+
+          {!isLoading && !error && totalCount > 0 ? (
+            <PaginationControls
+              page={page}
+              size={pageSize}
+              totalCount={totalCount}
+              onPageChange={handlePageChange}
+            />
+          ) : null}
         </div>
 
         {selectedOrderId && (
@@ -259,57 +295,186 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-border p-5">
-                    <h3 className="font-semibold text-foreground">
-                      {t('admin.orders.detail.updateStatus')}
-                    </h3>
+                  <div className="space-y-5">
+                    <div className="rounded-2xl border border-border p-5">
+                      <h3 className="font-semibold text-foreground">
+                        {t('admin.orders.detail.updateStatus')}
+                      </h3>
 
-                    <div className="mt-4 space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="adminOrderStatus">
-                          {t('orders.status')}
-                        </Label>
-                        <select
-                          id="adminOrderStatus"
-                          value={selectedStatus}
-                          onChange={handleSelectedStatusChange}
-                          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                      <div className="mt-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="adminOrderStatus">
+                            {t('orders.status')}
+                          </Label>
+                          <select
+                            id="adminOrderStatus"
+                            value={selectedStatus}
+                            onChange={handleSelectedStatusChange}
+                            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                          >
+                            {adminOrderStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {getOrderStatusLabel(status, t)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <DetailCard
+                          label={t('admin.orders.detail.paymentMethod')}
+                          value={getPaymentMethodLabel(
+                            selectedOrder.paymentMethod,
+                            t,
+                          )}
+                        />
+                        <DetailCard
+                          label={t('admin.orders.detail.paymentStatus')}
+                          value={getPaymentStatusLabel(
+                            selectedOrder.paymentStatus,
+                            t,
+                          )}
+                        />
+                        <DetailCard
+                          label={t('orders.finalAmount')}
+                          value={formatCurrency(selectedOrder.finalAmount)}
+                        />
+
+                        <Button
+                          type="button"
+                          className="w-full"
+                          onClick={() => void handleUpdateStatus()}
+                          disabled={isUpdating}
                         >
-                          {adminOrderStatusOptions.map((status) => (
-                            <option key={status} value={status}>
-                              {getOrderStatusLabel(status, t)}
-                            </option>
-                          ))}
-                        </select>
+                          {isUpdating ? t('common.processing') : t('common.save')}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-border p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-primary/10 p-2 text-primary">
+                          <Truck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {t('admin.orders.shipmentAssignment.title')}
+                          </h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {t('admin.orders.shipmentAssignment.description')}
+                          </p>
+                        </div>
                       </div>
 
-                      <DetailCard
-                        label={t('admin.orders.detail.paymentMethod')}
-                        value={getPaymentMethodLabel(
-                          selectedOrder.paymentMethod,
-                          t,
-                        )}
-                      />
-                      <DetailCard
-                        label={t('admin.orders.detail.paymentStatus')}
-                        value={getPaymentStatusLabel(
-                          selectedOrder.paymentStatus,
-                          t,
-                        )}
-                      />
-                      <DetailCard
-                        label={t('orders.finalAmount')}
-                        value={formatCurrency(selectedOrder.finalAmount)}
-                      />
+                      <div className="mt-4 space-y-4">
+                        {selectedOrderActiveShipment ? (
+                          <>
+                            <div className="rounded-xl border border-border/70 bg-muted/30 p-4">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                    {t('admin.orders.shipmentAssignment.currentShipment')}
+                                  </p>
+                                  <p className="mt-1 font-medium text-foreground">
+                                    {selectedOrderActiveShipment.shipmentId}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant={
+                                    shipmentStatusVariants[
+                                      selectedOrderActiveShipment.shipmentStatus
+                                    ]
+                                  }
+                                >
+                                  {getShipmentStatusLabel(
+                                    selectedOrderActiveShipment.shipmentStatus,
+                                    t,
+                                  )}
+                                </Badge>
+                              </div>
+                              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                                <DetailCard
+                                  label={t('admin.orders.shipmentAssignment.shipper')}
+                                  value={
+                                    selectedOrderShipmentShipper?.username ??
+                                    selectedOrderActiveShipment.shipperId
+                                  }
+                                />
+                                <DetailCard
+                                  label={t('admin.orders.shipmentAssignment.assignedAt')}
+                                  value={formatDate(
+                                    selectedOrderActiveShipment.assignedAt,
+                                  )}
+                                />
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {t('admin.orders.shipmentAssignment.activeNotice')}
+                            </p>
+                          </>
+                        ) : canAssignShipment ? (
+                          <>
+                            {selectedOrderLatestShipment?.shipmentStatus ===
+                            'FAILED' ? (
+                              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+                                <p className="text-xs uppercase tracking-wide text-destructive">
+                                  {t('admin.orders.shipmentAssignment.latestFailed')}
+                                </p>
+                                <p className="mt-2 font-medium text-foreground">
+                                  {selectedOrderLatestShipment.shipmentId}
+                                </p>
+                                {selectedOrderLatestShipment.failureReason ? (
+                                  <p className="mt-2 text-sm text-foreground">
+                                    {selectedOrderLatestShipment.failureReason}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
 
-                      <Button
-                        type="button"
-                        className="w-full"
-                        onClick={() => void handleUpdateStatus()}
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? t('common.processing') : t('common.save')}
-                      </Button>
+                            <div className="space-y-2">
+                              <Label htmlFor="adminOrderShipper">
+                                {t('admin.orders.shipmentAssignment.chooseShipper')}
+                              </Label>
+                              <select
+                                id="adminOrderShipper"
+                                value={selectedShipperId}
+                                onChange={handleSelectedShipperChange}
+                                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                                disabled={shippers.length === 0}
+                              >
+                                {shippers.length === 0 ? (
+                                  <option value="">
+                                    {t('admin.orders.shipmentAssignment.noShippers')}
+                                  </option>
+                                ) : null}
+                                {shippers.map((shipper) => (
+                                  <option key={shipper.userId} value={shipper.userId}>
+                                    {`${shipper.username} - ${shipper.email}`}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <Button
+                              type="button"
+                              className="w-full"
+                              onClick={() => void handleAssignShipment()}
+                              disabled={
+                                isAssigningShipment ||
+                                shippers.length === 0 ||
+                                selectedShipperId === ''
+                              }
+                            >
+                              {isAssigningShipment
+                                ? t('admin.orders.shipmentAssignment.assigning')
+                                : t('admin.orders.shipmentAssignment.assign')}
+                            </Button>
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {t('admin.orders.shipmentAssignment.unavailable')}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

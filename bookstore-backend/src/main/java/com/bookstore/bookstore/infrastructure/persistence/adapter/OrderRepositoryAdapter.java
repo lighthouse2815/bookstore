@@ -1,19 +1,22 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
-import com.bookstore.bookstore.application.result.dashboard.OrderStatusStatsResult;
-import com.bookstore.bookstore.application.result.dashboard.RecentOrderResult;
-import com.bookstore.bookstore.application.result.dashboard.RevenueChartResult;
-import com.bookstore.bookstore.application.result.dashboard.TopBookStatsResult;
+import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.application.result.RecentOrderResult;
+import com.bookstore.bookstore.application.result.RevenueChartResult;
+import com.bookstore.bookstore.application.result.TopBookStatsResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.model.Order;
-import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.CouponJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.DigitalAssetJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.OrderPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CouponJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.DigitalAssetJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.OrderJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
 import java.math.BigDecimal;
@@ -35,6 +38,7 @@ public class OrderRepositoryAdapter implements IOrderRepository {
     private final OrderJpaRepository orderJpaRepository;
     private final UserJpaRepository userJpaRepository;
     private final BookJpaRepository bookJpaRepository;
+    private final DigitalAssetJpaRepository digitalAssetJpaRepository;
     private final CouponJpaRepository couponJpaRepository;
     private final OrderPersistenceMapper orderPersistenceMapper;
 
@@ -42,7 +46,12 @@ public class OrderRepositoryAdapter implements IOrderRepository {
     public Optional<Order> findById(UUID orderId) {
         return orderJpaRepository.findByIdAndUser_DeletedAtIsNull(orderId)
                 .map(orderPersistenceMapper::toDomain);
+    }
 
+    @Override
+    public Optional<Order> findByIdForUpdate(UUID orderId) {
+        return orderJpaRepository.findByIdAndUser_DeletedAtIsNullForUpdate(orderId)
+                .map(orderPersistenceMapper::toDomain);
     }
 
     @Override
@@ -50,7 +59,22 @@ public class OrderRepositoryAdapter implements IOrderRepository {
         return orderJpaRepository.findAllByUserIdAndUser_DeletedAtIsNull(userId).stream()
                 .map(orderPersistenceMapper::toDomain)
                 .toList();
+    }
 
+    @Override
+    public PageSliceResult<Order> findPageByUserId(UUID userId, int page, int size) {
+        var resultPage = orderJpaRepository.findAllByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
+                userId,
+                PageRequest.of(page, size)
+        );
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(orderPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
@@ -144,20 +168,32 @@ public class OrderRepositoryAdapter implements IOrderRepository {
         return orderJpaRepository.findAllByUser_DeletedAtIsNull().stream()
                 .map(orderPersistenceMapper::toDomain)
                 .toList();
+    }
 
+    @Override
+    public PageSliceResult<Order> findPageAll(int page, int size) {
+        var resultPage = orderJpaRepository.findAllByUser_DeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(orderPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
     public Order save(Order order) {
         OrderJpaEntity entity = orderJpaRepository.findByIdAndUser_DeletedAtIsNull(order.getId())
                 .orElseGet(OrderJpaEntity::new);
-        
+
         UserJpaEntity user = userJpaRepository.getReferenceById(order.getUserId());
-        CouponJpaEntity bookCoupon = order.getBookCouponId() != null 
-                ? couponJpaRepository.getReferenceById(order.getBookCouponId()) 
+        CouponJpaEntity bookCoupon = order.getBookCouponId() != null
+                ? couponJpaRepository.getReferenceById(order.getBookCouponId())
                 : null;
-        CouponJpaEntity shippingCoupon = order.getShippingCouponId() != null 
-                ? couponJpaRepository.getReferenceById(order.getShippingCouponId()) 
+        CouponJpaEntity shippingCoupon = order.getShippingCouponId() != null
+                ? couponJpaRepository.getReferenceById(order.getShippingCouponId())
                 : null;
         Map<UUID, BookJpaEntity> bookMap = order.getItems().stream()
                 .map(item -> item.getBookId())
@@ -166,8 +202,24 @@ public class OrderRepositoryAdapter implements IOrderRepository {
                         bookId -> bookId,
                         bookJpaRepository::getReferenceById
                 ));
-        
-        orderPersistenceMapper.copyToEntityWithBooks(order, entity, user, bookCoupon, shippingCoupon, bookMap);
+        Map<UUID, DigitalAssetJpaEntity> digitalAssetMap = order.getItems().stream()
+                .map(item -> item.getDigitalAssetId())
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toMap(
+                        digitalAssetId -> digitalAssetId,
+                        digitalAssetJpaRepository::getReferenceById
+                ));
+
+        orderPersistenceMapper.copyToEntityWithReferences(
+                order,
+                entity,
+                user,
+                bookCoupon,
+                shippingCoupon,
+                bookMap,
+                digitalAssetMap
+        );
         return orderPersistenceMapper.toDomain(orderJpaRepository.save(entity));
     }
 

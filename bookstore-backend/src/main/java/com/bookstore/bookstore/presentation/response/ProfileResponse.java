@@ -10,6 +10,7 @@ public record ProfileResponse(
         UUID userId,
         String lastName,
         String firstName,
+        UUID avatarFileAssetId,
         String avatarUrl,
         Gender gender,
         LocalDate dateOfBirth,

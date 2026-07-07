@@ -5,14 +5,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record UpdateUserRequest(
-        @NotBlank(message = "username khong duoc de trong")
+        @NotBlank(message = "username không được để trống")
         String username,
 
-        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber khong hop le")
+        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber không hợp lệ")
         String phoneNumber,
 
-        @NotBlank(message = "email khong duoc de trong")
-        @Email(message = "email khong hop le")
+        @NotBlank(message = "email không được để trống")
+        @Email(message = "email không hợp lệ")
         String email
 ) {
 }
+

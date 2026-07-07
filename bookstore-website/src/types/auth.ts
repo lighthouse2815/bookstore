@@ -1,7 +1,7 @@
 // Enum-like types
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
 
-export type UserRole = 'ADMIN' | 'STAFF' | 'USER'
+export type UserRole = 'ADMIN' | 'STAFF' | 'SHIPPER' | 'USER'
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE'
 

@@ -16,14 +16,11 @@ public class DigitalAsset {
     private UUID bookId;
     private DigitalAssetFormat format;
     private String title;
-    private String fileName;
-    private String storageKey;
-    private String mimeType;
-    private Long fileSize;
-    private String checksum;
-    private String sampleStorageKey;
+    private FileAsset fileAsset;
+    private FileAsset sampleFileAsset;
     private BigDecimal price;
     private boolean downloadAllowed;
+    private boolean purchaseAllowed;
     private boolean published;
     private Instant createdAt;
     private Instant updatedAt;
@@ -34,14 +31,11 @@ public class DigitalAsset {
             UUID bookId,
             DigitalAssetFormat format,
             String title,
-            String fileName,
-            String storageKey,
-            String mimeType,
-            Long fileSize,
-            String checksum,
-            String sampleStorageKey,
+            FileAsset fileAsset,
+            FileAsset sampleFileAsset,
             BigDecimal price,
             boolean downloadAllowed,
+            boolean purchaseAllowed,
             boolean published,
             Instant createdAt,
             Instant updatedAt,
@@ -51,14 +45,11 @@ public class DigitalAsset {
         setBookId(bookId);
         setFormat(format);
         setTitle(title);
-        setFileName(fileName);
-        setStorageKey(storageKey);
-        setMimeType(mimeType);
-        setFileSize(fileSize);
-        setChecksum(checksum);
-        setSampleStorageKey(sampleStorageKey);
+        setFileAsset(fileAsset);
+        setSampleFileAsset(sampleFileAsset);
         setPrice(price);
         setDownloadAllowed(downloadAllowed);
+        setPurchaseAllowed(purchaseAllowed);
         setPublished(published);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
@@ -79,26 +70,20 @@ public class DigitalAsset {
     public void updateAsset(
             DigitalAssetFormat format,
             String title,
-            String fileName,
-            String storageKey,
-            String mimeType,
-            Long fileSize,
-            String checksum,
-            String sampleStorageKey,
+            FileAsset fileAsset,
+            FileAsset sampleFileAsset,
             BigDecimal price,
             boolean downloadAllowed,
+            boolean purchaseAllowed,
             boolean published
     ) {
         setFormat(format);
         setTitle(title);
-        setFileName(fileName);
-        setStorageKey(storageKey);
-        setMimeType(mimeType);
-        setFileSize(fileSize);
-        setChecksum(checksum);
-        setSampleStorageKey(sampleStorageKey);
+        setFileAsset(fileAsset);
+        setSampleFileAsset(sampleFileAsset);
         setPrice(price);
         setDownloadAllowed(downloadAllowed);
+        setPurchaseAllowed(purchaseAllowed);
         setPublished(published);
         setUpdatedAt(Instant.now());
     }
@@ -115,35 +100,64 @@ public class DigitalAsset {
         this.title = Guard.notBlank(title, DomainErrorCode.INVALID_DIGITAL_ASSET_TITLE, "title");
     }
 
-    private void setFileName(String fileName) {
-        this.fileName = Guard.notBlank(fileName, DomainErrorCode.INVALID_DIGITAL_ASSET_FILE_NAME, "fileName");
+    public UUID getFileAssetId() {
+        return fileAsset.getId();
     }
 
-    private void setStorageKey(String storageKey) {
-        this.storageKey = Guard.notBlank(storageKey, DomainErrorCode.INVALID_DIGITAL_ASSET_STORAGE_KEY, "storageKey");
+    public UUID getSampleFileAssetId() {
+        return sampleFileAsset == null ? null : sampleFileAsset.getId();
     }
 
-    private void setMimeType(String mimeType) {
-        this.mimeType = Guard.notBlank(mimeType, DomainErrorCode.INVALID_DIGITAL_ASSET_MIME_TYPE, "mimeType");
+    public String getFileName() {
+        return fileAsset.getOriginalName();
     }
 
-    private void setFileSize(Long fileSize) {
-        Long validFileSize = Guard.notNull(fileSize, DomainErrorCode.INVALID_DIGITAL_ASSET_FILE_SIZE, "fileSize");
-        if (validFileSize < 0) {
-            throw new DomainException(DomainErrorCode.INVALID_DIGITAL_ASSET_FILE_SIZE, "fileSize");
+    public String getStorageKey() {
+        return fileAsset.getStorageKey();
+    }
+
+    public String getMimeType() {
+        return fileAsset.getContentType();
+    }
+
+    public Long getFileSize() {
+        return fileAsset.getSizeBytes();
+    }
+
+    public String getChecksum() {
+        return fileAsset.getChecksumSha256();
+    }
+
+    public String getSampleStorageKey() {
+        return sampleFileAsset == null ? null : sampleFileAsset.getStorageKey();
+    }
+
+    public String getFileUrl() {
+        return fileAsset.getPublicUrl();
+    }
+
+    public String getSampleFileUrl() {
+        return sampleFileAsset == null ? null : sampleFileAsset.getPublicUrl();
+    }
+
+    private void setFileAsset(FileAsset fileAsset) {
+        this.fileAsset = Guard.notNull(
+                fileAsset,
+                DomainErrorCode.INVALID_DIGITAL_ASSET_FILE_ASSET_ID,
+                "fileAssetId"
+        );
+    }
+
+    private void setSampleFileAsset(FileAsset sampleFileAsset) {
+        if (sampleFileAsset == null) {
+            this.sampleFileAsset = null;
+            return;
         }
-        this.fileSize = validFileSize;
-    }
 
-    private void setChecksum(String checksum) {
-        this.checksum = Guard.notBlankOrNull(checksum, DomainErrorCode.INVALID_DIGITAL_ASSET_CHECKSUM, "checksum");
-    }
-
-    private void setSampleStorageKey(String sampleStorageKey) {
-        this.sampleStorageKey = Guard.notBlankOrNull(
-                sampleStorageKey,
-                DomainErrorCode.INVALID_DIGITAL_ASSET_SAMPLE_STORAGE_KEY,
-                "sampleStorageKey"
+        this.sampleFileAsset = Guard.notNull(
+                sampleFileAsset,
+                DomainErrorCode.INVALID_DIGITAL_ASSET_SAMPLE_FILE_ASSET_ID,
+                "sampleFileAssetId"
         );
     }
 
@@ -157,6 +171,10 @@ public class DigitalAsset {
 
     private void setDownloadAllowed(boolean downloadAllowed) {
         this.downloadAllowed = downloadAllowed;
+    }
+
+    private void setPurchaseAllowed(boolean purchaseAllowed) {
+        this.purchaseAllowed = purchaseAllowed;
     }
 
     private void setPublished(boolean published) {

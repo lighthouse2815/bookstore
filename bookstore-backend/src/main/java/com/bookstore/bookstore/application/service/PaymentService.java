@@ -59,7 +59,7 @@ public class PaymentService implements IPaymentService {
             return;
         }
 
-        Optional<Payment> pendingPayment = resolvePendingPayment(command);
+        Optional<Payment> pendingPayment = resolvePendingPaymentForUpdate(command);
         if (pendingPayment.isEmpty()) {
             log.warn(
                     "No pending payment matched SePay IPN: transactionId={}, code={}, referenceCode={}, content={}",
@@ -83,7 +83,7 @@ public class PaymentService implements IPaymentService {
             return;
         }
 
-        Optional<Order> order = orderRepository.findById(payment.getOrderId());
+        Optional<Order> order = orderRepository.findByIdForUpdate(payment.getOrderId());
         if (order.isEmpty()) {
             log.warn(
                     "Matched payment but could not find order: transactionId={}, paymentId={}, orderId={}",
@@ -174,10 +174,10 @@ public class PaymentService implements IPaymentService {
                 .isPresent();
     }
 
-    private Optional<Payment> resolvePendingPayment(HandleSepayIpnCommand command) {
+    private Optional<Payment> resolvePendingPaymentForUpdate(HandleSepayIpnCommand command) {
         String code = command.code();
         if (code != null) {
-            Optional<Payment> byCode = paymentRepository.findPendingSepayByOrderCode(code);
+            Optional<Payment> byCode = paymentRepository.findPendingSepayByOrderCodeForUpdate(code);
             if (byCode.isPresent()) {
                 return byCode;
             }
@@ -188,7 +188,7 @@ public class PaymentService implements IPaymentService {
             return Optional.empty();
         }
 
-        return paymentRepository.findPendingSepayByTransferContentInContent(content);
+        return paymentRepository.findPendingSepayByTransferContentInContentForUpdate(content);
     }
 
     private String resolveMerchantId(Payment payment) {

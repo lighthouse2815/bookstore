@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public interface IRefreshTokenRepository {
 
-    Optional<RefreshToken> findByToken(String token);
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
 
     RefreshToken save(RefreshToken refreshToken);
 

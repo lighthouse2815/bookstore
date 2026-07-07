@@ -5,6 +5,7 @@ import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ProfileJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.ProfilePersistenceMapper;
+import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.ProfileJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
 import java.util.List;
@@ -19,6 +20,7 @@ public class ProfileRepositoryAdapter implements IProfileRepository {
 
     private final ProfileJpaRepository profileJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final FileAssetJpaRepository fileAssetJpaRepository;
     private final ProfilePersistenceMapper profilePersistenceMapper;
 
     @Override
@@ -79,7 +81,10 @@ public class ProfileRepositoryAdapter implements IProfileRepository {
         ProfileJpaEntity entity = profileJpaRepository.findById(profile.getId())
                 .orElseGet(ProfileJpaEntity::new);
         UserJpaEntity user = userJpaRepository.getReferenceById(profile.getUserId());
-        profilePersistenceMapper.copyToEntity(profile, entity, user);
+        var avatarFileAsset = profile.getAvatarFileAssetId() == null
+                ? null
+                : fileAssetJpaRepository.getReferenceById(profile.getAvatarFileAssetId());
+        profilePersistenceMapper.copyToEntity(profile, entity, user, avatarFileAsset);
         return profilePersistenceMapper.toDomain(profileJpaRepository.save(entity));
     }
 }

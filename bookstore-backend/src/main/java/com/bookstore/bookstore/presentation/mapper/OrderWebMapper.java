@@ -80,7 +80,9 @@ public class OrderWebMapper {
     private OrderItemResponse toItemResponse(OrderItemResult result) {
         return new OrderItemResponse(
                 result.id(),
+                result.itemType(),
                 result.bookId(),
+                result.digitalAssetId(),
                 result.bookTitle(),
                 result.unitPrice(),
                 result.quantity(),

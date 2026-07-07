@@ -20,6 +20,8 @@ export type OrderPaymentStatus = PaymentStatus | 'UNPAID' | 'REFUNDED'
 
 export type ShippingMethod = 'DELIVERY' | 'PICKUP'
 
+export type OrderItemType = 'PHYSICAL_BOOK' | 'DIGITAL_ASSET'
+
 export type CreateOrderRequest = {
   cartItemIds: string[]
   addressId: string | null
@@ -45,7 +47,9 @@ export type UpdateOrderStatusRequest = {
 
 export type OrderItemResponse = {
   id: string
+  itemType: OrderItemType
   bookId: string
+  digitalAssetId: string | null
   bookTitle: string
   unitPrice: number
   quantity: number
@@ -54,6 +58,7 @@ export type OrderItemResponse = {
 
 export type OrderResponse = {
   orderId: string
+  orderCode: string
   userId: string
   items: OrderItemResponse[]
   productTotal: number

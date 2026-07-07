@@ -3,16 +3,13 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { useTheme } from '@/contexts/theme-context'
+import { uploadManagedFile } from '@/services/file-service'
 import { updateCurrentUser } from '@/services/auth-service'
 import {
   getCurrentProfile,
   updateCurrentProfile,
 } from '@/services/profile-service'
 import type { ProfileResponse } from '@/types/profile'
-import {
-  compressAvatarFile,
-  getAvatarFileErrorMessage,
-} from '@/utils/avatar-image'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -24,6 +21,7 @@ type AccountFormState = {
 type ProfileFormState = {
   lastName: string
   firstName: string
+  avatarFileAssetId: string
   avatarUrl: string
   gender: ProfileResponse['gender']
   dateOfBirth: string
@@ -34,6 +32,7 @@ type ProfileTextFieldKey = keyof Omit<ProfileFormState, 'gender'>
 const initialProfileForm: ProfileFormState = {
   lastName: '',
   firstName: '',
+  avatarFileAssetId: '',
   avatarUrl: '',
   gender: 'OTHER',
   dateOfBirth: '',
@@ -43,9 +42,8 @@ export const adminSettingsGenderOptions = ['MALE', 'FEMALE', 'OTHER'] as const
 
 export function useAdminSettingsPage() {
   const { user, logout, refreshUser } = useAuth()
-  const { language, t, formatDate } = useLanguage()
+  const { t, formatDate } = useLanguage()
   const { theme, toggleTheme } = useTheme()
-  const isVietnamese = language === 'vi'
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingAccount, setIsSavingAccount] = useState(false)
@@ -61,37 +59,27 @@ export function useAdminSettingsPage() {
 
   const labels = useMemo(
     () => ({
-      title: isVietnamese ? 'Cai dat tai khoan quan tri' : 'Admin account settings',
-      description: isVietnamese
-        ? 'Xem thong tin tai khoan, cap nhat profile va tuy chinh khong gian lam viec quan tri.'
-        : 'Review account details, update your profile, and adjust your admin workspace preferences.',
-      overview: isVietnamese ? 'Tong quan tai khoan' : 'Account overview',
-      preferences: isVietnamese ? 'Tuy chon giao dien' : 'Workspace preferences',
-      role: isVietnamese ? 'Vai tro' : 'Role',
-      status: isVietnamese ? 'Trang thai' : 'Status',
-      active: isVietnamese ? 'Dang hoat dong' : 'Active',
-      inactive: isVietnamese ? 'Khong hoat dong' : 'Inactive',
-      accountCreated: isVietnamese ? 'Ngay tao tai khoan' : 'Account created',
-      accountUpdated: isVietnamese ? 'Cap nhat gan nhat' : 'Last updated',
-      theme: isVietnamese ? 'Che do sang toi' : 'Light and dark mode',
-      themeDescription: isVietnamese
-        ? 'Chuyen giao dien admin ma khong can roi khoi bang dieu khien.'
-        : 'Switch the admin interface theme without leaving the dashboard.',
-      language: isVietnamese ? 'Ngon ngu hien thi' : 'Display language',
-      languageDescription: isVietnamese
-        ? 'Ap dung ngay cho toan bo giao dien quan tri.'
-        : 'Applies immediately across the admin interface.',
-      avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
-      accountSaved: isVietnamese
-        ? 'Da cap nhat thong tin tai khoan'
-        : 'Account information updated',
-      profileSaved: isVietnamese ? 'Da cap nhat profile' : 'Profile updated',
-      profileLoadError: isVietnamese
-        ? 'Khong tai duoc thong tin profile'
-        : 'Unable to load profile information',
+      title: t('admin.settingsPage.title'),
+      description: t('admin.settingsPage.description'),
+      overview: t('admin.settingsPage.overview'),
+      preferences: t('admin.settingsPage.preferences'),
+      role: t('admin.settingsPage.role'),
+      status: t('admin.settingsPage.status'),
+      active: t('admin.settingsPage.active'),
+      inactive: t('admin.settingsPage.inactive'),
+      accountCreated: t('admin.settingsPage.accountCreated'),
+      accountUpdated: t('admin.settingsPage.accountUpdated'),
+      theme: t('admin.settingsPage.theme'),
+      themeDescription: t('admin.settingsPage.themeDescription'),
+      language: t('admin.settingsPage.language'),
+      languageDescription: t('admin.settingsPage.languageDescription'),
+      avatarLabel: t('admin.settingsPage.avatarLabel'),
+      accountSaved: t('admin.settingsPage.accountSaved'),
+      profileSaved: t('admin.settingsPage.profileSaved'),
+      profileLoadError: t('admin.settingsPage.profileLoadError'),
       logout: t('auth.profile.logout'),
     }),
-    [isVietnamese, t],
+    [t],
   )
 
   useEffect(() => {
@@ -121,6 +109,7 @@ export function useAdminSettingsPage() {
         setProfileForm({
           lastName: response.lastName,
           firstName: response.firstName,
+          avatarFileAssetId: response.avatarFileAssetId ?? '',
           avatarUrl: response.avatarUrl ?? '',
           gender: response.gender,
           dateOfBirth: response.dateOfBirth,
@@ -176,15 +165,17 @@ export function useAdminSettingsPage() {
     }
 
     try {
-      const avatarUrl = await compressAvatarFile(file)
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'USER_AVATAR',
+        visibility: 'PUBLIC',
+      })
       setProfileForm((currentForm) => ({
         ...currentForm,
-        avatarUrl,
+        avatarFileAssetId: uploadedFile.id,
+        avatarUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
       }))
     } catch (error) {
-      toast.error(
-        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
-      )
+      toast.error(getErrorMessage(error, t('checkout.error')))
     }
   }
 
@@ -219,7 +210,7 @@ export function useAdminSettingsPage() {
       const response = await updateCurrentProfile({
         lastName: profileForm.lastName.trim(),
         firstName: profileForm.firstName.trim(),
-        avatarUrl: profileForm.avatarUrl.trim() || null,
+        avatarFileAssetId: profileForm.avatarFileAssetId.trim() || null,
         gender: profileForm.gender,
         dateOfBirth: profileForm.dateOfBirth,
       })

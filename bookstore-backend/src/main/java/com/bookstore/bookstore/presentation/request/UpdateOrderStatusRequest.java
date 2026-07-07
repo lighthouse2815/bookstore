@@ -4,7 +4,8 @@ import com.bookstore.bookstore.domain.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateOrderStatusRequest(
-        @NotNull(message = "status khong duoc null")
+        @NotNull(message = "status không được null")
         OrderStatus status
 ) {
 }
+

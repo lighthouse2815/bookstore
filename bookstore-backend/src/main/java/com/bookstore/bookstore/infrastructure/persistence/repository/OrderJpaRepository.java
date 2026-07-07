@@ -2,21 +2,25 @@ package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
-import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.OrderStatusStatsProjection;
-import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.RecentOrderProjection;
-import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.RevenueStatsProjection;
-import com.bookstore.bookstore.infrastructure.persistence.projection.dashboard.TopBookStatsProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.OrderStatusStatsProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.RecentOrderProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.RevenueStatsProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.TopBookStatsProjection;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 
 public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> {
@@ -24,9 +28,22 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
     @EntityGraph(attributePaths = "items")
     Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNull(UUID id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "items")
+    @Query("""
+            select o
+            from OrderJpaEntity o
+            where o.id = :id
+              and o.user.deletedAt is null
+            """)
+    Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNullForUpdate(@Param("id") UUID id);
+
 
     @EntityGraph(attributePaths = "items")
     List<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNull(UUID userId);
+
+    @EntityGraph(attributePaths = "items")
+    Page<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
 
     @Query("""
@@ -154,6 +171,9 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
 
     @EntityGraph(attributePaths = "items")
     List<OrderJpaEntity> findAllByUser_DeletedAtIsNull();
+
+    @EntityGraph(attributePaths = "items")
+    Page<OrderJpaEntity> findAllByUser_DeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
 
 
 }

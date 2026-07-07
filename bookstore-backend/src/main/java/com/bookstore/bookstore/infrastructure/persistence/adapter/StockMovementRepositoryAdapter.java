@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.domain.model.StockMovement;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.StockMovementJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,6 +30,17 @@ public class StockMovementRepositoryAdapter implements IStockMovementRepository 
         return stockMovementJpaRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(stockMovementPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<StockMovement> findPage(int page, int size) {
+        var result = stockMovementJpaRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                result.getContent().stream().map(stockMovementPersistenceMapper::toDomain).toList(),
+                result.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

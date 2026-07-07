@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
 public interface ImportReceiptJpaRepository extends JpaRepository<ImportReceiptJpaEntity, UUID> {
@@ -16,6 +18,8 @@ public interface ImportReceiptJpaRepository extends JpaRepository<ImportReceiptJ
     @EntityGraph(attributePaths = "items")
     List<ImportReceiptJpaEntity> findAllByOrderByCreatedAtDesc();
 
+    Page<ImportReceiptJpaEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
     default Optional<ImportReceiptJpaEntity> findDetailedById(@Param("receiptId") UUID receiptId) {
         return findById(receiptId);
     }
@@ -24,6 +28,4 @@ public interface ImportReceiptJpaRepository extends JpaRepository<ImportReceiptJ
         return findAllByOrderByCreatedAtDesc();
     }
 }
-
-
 

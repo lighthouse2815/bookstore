@@ -65,14 +65,14 @@ public class AuthController {
     @PostMapping("/forgot-password/request-otp")
     public ApiResponse<Void> requestPasswordResetOtp(@Valid @RequestBody RequestPasswordResetOtpRequest request) {
         authService.requestPasswordResetOtp(authWebMapper.toRequestPasswordResetOtpCommand(request));
-        return ApiResponse.success("Neu email ton tai, OTP da duoc gui", null);
+        return ApiResponse.success("Nếu email tồn tại, OTP đã được gửi", null);
     }
 
     @PostMapping("/forgot-password/verify-otp")
     public ApiResponse<PasswordResetTokenResponse> verifyPasswordResetOtp(@Valid @RequestBody VerifyOtpRequest request) {
         var result = authService.verifyPasswordResetOtp(authWebMapper.toVerifyOtpCommand(request));
         return ApiResponse.success(
-                "Xac thuc OTP thanh cong",
+                "Xác thực OTP thành công",
                 authWebMapper.toPasswordResetTokenResponse(result)
         );
     }
@@ -80,6 +80,7 @@ public class AuthController {
     @PostMapping("/forgot-password/reset")
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(authWebMapper.toResetPasswordCommand(request));
-        return ApiResponse.success("Dat lai mat khau thanh cong", null);
+        return ApiResponse.success("Đặt lại mật khẩu thành công", null);
     }
 }
+

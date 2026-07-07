@@ -6,6 +6,7 @@ import com.bookstore.bookstore.presentation.request.CreateCouponRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCouponRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CouponResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/admin/coupons")
@@ -32,10 +34,20 @@ public class CouponController {
     private final CouponWebMapper couponWebMapper;
 
     @GetMapping
-    public ApiResponse<List<CouponResponse>> getAll() {
-        return ApiResponse.success(couponService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<CouponResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = couponService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(couponWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+        return ResponseEntity.ok(ApiResponse.success(couponService.getAll().stream()
                 .map(couponWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/{id}")

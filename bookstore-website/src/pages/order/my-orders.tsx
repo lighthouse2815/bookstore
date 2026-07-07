@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/common/button'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -74,17 +75,24 @@ const ORDER_TIMELINE_ICONS: LucideIcon[] = [
 ]
 
 export default function MyOrdersPage() {
-  const { t, formatCurrency, formatDate, formatNumber, language, locale } =
+  const { t, formatCurrency, formatDate, formatNumber, locale } =
     useLanguage()
-  const { orders, isLoading, error } = useMyOrdersPage()
-  const pageCopy = getMyOrdersPageCopy(language)
+  const {
+    orders,
+    isLoading,
+    error,
+    totalCount,
+    page,
+    pageSize,
+    handlePageChange,
+  } = useMyOrdersPage()
 
   async function handleCopyOrderId(orderId: string) {
     try {
       await navigator.clipboard.writeText(orderId)
-      toast.success(pageCopy.copySuccess)
+      toast.success(t('orderHistoryPage.copySuccess'))
     } catch {
-      toast.error(pageCopy.copyError)
+      toast.error(t('orderHistoryPage.copyError'))
     }
   }
 
@@ -96,7 +104,7 @@ export default function MyOrdersPage() {
         <div className="mx-auto flex w-full max-w-[1272px] flex-col gap-6 px-4 sm:px-6 lg:px-8">
           <OrdersHero
             countLabel={t('orders.totalCount', {
-              count: formatNumber(orders.length),
+              count: formatNumber(totalCount),
             })}
             title={t('orders.title')}
             continueShoppingLabel={t('common.continueShopping')}
@@ -114,7 +122,7 @@ export default function MyOrdersPage() {
             <EmptyOrdersPanel
               title={t('orders.emptyTitle')}
               description={t('orders.emptyDescription')}
-              ctaLabel={pageCopy.exploreNow}
+              ctaLabel={t('orderHistoryPage.exploreNow')}
             />
           ) : (
             <div className="space-y-5">
@@ -124,7 +132,6 @@ export default function MyOrdersPage() {
                   locale={locale}
                   onCopyOrderId={handleCopyOrderId}
                   order={order}
-                  pageCopy={pageCopy}
                   productCountLabel={t('admin.orders.productCount', {
                     count: formatNumber(order.items.length),
                   })}
@@ -140,13 +147,21 @@ export default function MyOrdersPage() {
                   formattedCreatedDate={formatDate(order.createdAt)}
                 />
               ))}
+              <div className="overflow-hidden rounded-[24px] border border-primary/10 bg-white/92 shadow-[0_14px_38px_rgba(137,92,255,0.08)]">
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           )}
 
           <DiscoverMorePanel
-            title={pageCopy.discoverTitle}
-            description={pageCopy.discoverDescription}
-            ctaLabel={pageCopy.exploreNow}
+            title={t('orderHistoryPage.discoverTitle')}
+            description={t('orderHistoryPage.discoverDescription')}
+            ctaLabel={t('orderHistoryPage.exploreNow')}
           />
         </div>
       </main>
@@ -204,7 +219,6 @@ function OrderHistoryCard({
   locale,
   onCopyOrderId,
   order,
-  pageCopy,
   productCountLabel,
   productsTitle,
   receiverTitle,
@@ -220,7 +234,6 @@ function OrderHistoryCard({
   locale: string
   onCopyOrderId: (orderId: string) => void
   order: OrderResponse
-  pageCopy: MyOrdersPageCopy
   productCountLabel: string
   productsTitle: string
   receiverTitle: string
@@ -233,6 +246,7 @@ function OrderHistoryCard({
   formattedFinalAmount: string
   formattedCreatedDate: string
 }) {
+  const { t } = useLanguage()
   const statusTone = ORDER_STATUS_TONES[order.status]
   const createdTimeLabel = formatTime(locale, order.createdAt)
 
@@ -254,7 +268,7 @@ function OrderHistoryCard({
               </h2>
               <button
                 type="button"
-                aria-label={pageCopy.copyOrderId}
+                aria-label={t('orderHistoryPage.copyOrderId')}
                 onClick={() => void onCopyOrderId(order.orderId)}
                 className="inline-flex size-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-primary/10 hover:bg-primary/6 hover:text-primary"
               >
@@ -319,7 +333,6 @@ function OrderHistoryCard({
         createdAt={order.createdAt}
         isCancelled={order.status === 'CANCELLED'}
         locale={locale}
-        pageCopy={pageCopy}
       />
     </SurfacePanel>
   )
@@ -366,19 +379,18 @@ function OrderTimeline({
   createdAt,
   isCancelled,
   locale,
-  pageCopy,
 }: {
   activeIndex: number
   createdAt: string
   isCancelled: boolean
   locale: string
-  pageCopy: MyOrdersPageCopy
 }) {
+  const { t } = useLanguage()
   const steps = [
-    pageCopy.pendingStep,
-    pageCopy.processingStep,
-    pageCopy.shippingStep,
-    pageCopy.completedStep,
+    t('orderHistoryPage.pendingStep'),
+    t('orderHistoryPage.processingStep'),
+    t('orderHistoryPage.shippingStep'),
+    t('orderHistoryPage.completedStep'),
   ]
   const activeTimestamp = formatCompactDateTime(locale, createdAt)
 
@@ -581,50 +593,6 @@ function PromoBookIllustration() {
       </div>
     </div>
   )
-}
-
-type MyOrdersPageCopy = {
-  completedStep: string
-  copyError: string
-  copyOrderId: string
-  copySuccess: string
-  discoverDescription: string
-  discoverTitle: string
-  exploreNow: string
-  pendingStep: string
-  processingStep: string
-  shippingStep: string
-}
-
-function getMyOrdersPageCopy(language: 'vi' | 'en'): MyOrdersPageCopy {
-  if (language === 'en') {
-    return {
-      completedStep: 'Completed',
-      copyError: 'Unable to copy the order ID.',
-      copyOrderId: 'Copy order ID',
-      copySuccess: 'Order ID copied.',
-      discoverDescription: 'Thousands of curated titles are waiting for you.',
-      discoverTitle: 'Discover more great books',
-      exploreNow: 'Explore now',
-      pendingStep: 'Pending confirmation',
-      processingStep: 'Processing',
-      shippingStep: 'Out for delivery',
-    }
-  }
-
-  return {
-    completedStep: 'Ho\u00e0n t\u1ea5t',
-    copyError: 'Kh\u00f4ng th\u1ec3 sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng.',
-    copyOrderId: 'Sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng',
-    copySuccess: '\u0110\u00e3 sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng.',
-    discoverDescription:
-      'H\u00e0ng ng\u00e0n t\u1ef1a s\u00e1ch ch\u1ea5t l\u01b0\u1ee3ng \u0111ang ch\u1edd b\u1ea1n kh\u00e1m ph\u00e1.',
-    discoverTitle: 'Kh\u00e1m ph\u00e1 th\u00eam s\u00e1ch hay',
-    exploreNow: 'Kh\u00e1m ph\u00e1 ngay',
-    pendingStep: 'Ch\u1edd x\u00e1c nh\u1eadn',
-    processingStep: '\u0110ang x\u1eed l\u00fd',
-    shippingStep: '\u0110ang giao h\u00e0ng',
-  }
 }
 
 function formatTime(locale: string, value: Date | number | string) {

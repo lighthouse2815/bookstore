@@ -71,7 +71,7 @@ export function GoogleAuthButton({
             if (!credential) {
               toast.error(
                 locale === 'vi'
-                  ? 'Khong lay duoc Google ID token.'
+                  ? 'Không lấy được Google ID token.'
                   : 'Unable to get a Google ID token.',
               )
               return
@@ -123,7 +123,7 @@ export function GoogleAuthButton({
         )}
       >
         {locale === 'vi'
-          ? 'Thieu cau hinh VITE_GOOGLE_CLIENT_ID de bat dang nhap Google.'
+          ? 'Thiếu cấu hình VITE_GOOGLE_CLIENT_ID để bật đăng nhập Google.'
           : 'Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.'}
       </div>
     )
@@ -138,7 +138,7 @@ export function GoogleAuthButton({
         )}
       >
         {locale === 'vi'
-          ? 'Khong tai duoc Google Identity Services. Hay thu lai sau.'
+          ? 'Không tải được Google Identity Services. Hãy thử lại sau.'
           : 'Google Identity Services could not be loaded. Please try again.'}
       </div>
     )

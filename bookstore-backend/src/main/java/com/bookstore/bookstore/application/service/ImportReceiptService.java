@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.out.IImportReceiptRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.ISupplierRepository;
 import com.bookstore.bookstore.application.result.ImportReceiptResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.StockMovementType;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.ImportReceipt;
@@ -43,6 +44,13 @@ public class ImportReceiptService implements IImportReceiptService {
         return importReceiptRepository.findAll().stream()
                 .map(importReceiptAssembler::toResult)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<ImportReceiptResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return importReceiptRepository.findPage(page, size).map(importReceiptAssembler::toResult);
     }
 
     @Override
@@ -124,7 +132,7 @@ public class ImportReceiptService implements IImportReceiptService {
     }
 
     private Map<UUID, Book> loadImportBooks(CreateImportReceiptCommand command) {
-        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeletedForUpdate(
                         command.items().stream()
                                 .map(item -> item.bookId())
                                 .toList()
@@ -148,6 +156,12 @@ public class ImportReceiptService implements IImportReceiptService {
     private void requireActiveSupplier(UUID supplierId) {
         if (!supplierRepository.existsByIdIncludingDeleted(supplierId)) {
             throw new ApplicationException(ApplicationErrorCode.SUPPLIER_NOT_FOUND);
+        }
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
         }
     }
 }

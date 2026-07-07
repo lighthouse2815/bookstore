@@ -4,8 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record RequestRegistrationOtpRequest(
-        @NotBlank(message = "email khong duoc de trong")
-        @Email(message = "email khong hop le")
+        @NotBlank(message = "email không được để trống")
+        @Email(message = "email không hợp lệ")
         String email
 ) {
 }
+

@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
+import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
@@ -21,11 +22,13 @@ import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.CouponType;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import com.bookstore.bookstore.domain.enums.ShippingMethod;
 import com.bookstore.bookstore.domain.enums.StockMovementType;
 import com.bookstore.bookstore.domain.model.Book;
@@ -33,6 +36,7 @@ import com.bookstore.bookstore.domain.model.Cart;
 import com.bookstore.bookstore.domain.model.CartItem;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.domain.model.CouponUsage;
+import com.bookstore.bookstore.domain.model.DigitalAsset;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -63,6 +67,7 @@ public class OrderService implements IOrderService {
     private final IOrderRepository orderRepository;
     private final ICartRepository cartRepository;
     private final IBookRepository bookRepository;
+    private final IDigitalAssetRepository digitalAssetRepository;
     private final IPaymentRepository paymentRepository;
     private final IUserAddressRepository userAddressRepository;
     private final ICouponRepository couponRepository;
@@ -85,9 +90,11 @@ public class OrderService implements IOrderService {
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_EMPTY));
 
         validatePaymentMethod(command.paymentMethod());
-        UserAddress userAddress = resolveOrderAddress(command);
         List<CartItem> checkoutItems = resolveCheckoutItems(cart, command.cartItemIds());
-        Map<UUID, Book> booksById = loadCheckoutBooks(checkoutItems);
+        boolean hasPhysicalItems = checkoutItems.stream().anyMatch(CartItem::isPhysicalBook);
+        UserAddress userAddress = resolveOrderAddress(command, hasPhysicalItems);
+        Map<UUID, DigitalAsset> digitalAssetsById = loadCheckoutDigitalAssets(checkoutItems);
+        Map<UUID, Book> booksById = loadCheckoutBooks(checkoutItems, digitalAssetsById);
         UUID orderId = UUID.randomUUID();
         Instant now = Instant.now();
         String orderCode = generateOrderCode(now);
@@ -95,6 +102,31 @@ public class OrderService implements IOrderService {
         List<StockMovement> stockMovements = new ArrayList<>();
 
         for (var cartItem : checkoutItems) {
+            if (cartItem.isDigitalAsset()) {
+                DigitalAsset digitalAsset = digitalAssetsById.get(cartItem.getDigitalAssetId());
+                if (digitalAsset == null) {
+                    throw new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND);
+                }
+
+                Book book = booksById.get(digitalAsset.getBookId());
+                if (book == null || book.getDeletedAt() != null) {
+                    throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+                }
+
+                BigDecimal lineTotal = digitalAsset.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                orderItems.add(new OrderItem(
+                        UUID.randomUUID(),
+                        PurchaseItemType.DIGITAL_ASSET,
+                        book.getId(),
+                        digitalAsset.getId(),
+                        book.getTitle(),
+                        digitalAsset.getPrice(),
+                        cartItem.getQuantity(),
+                        lineTotal
+                ));
+                continue;
+            }
+
             Book book = booksById.get(cartItem.getBookId());
             int beforeQuantity = book.getStockQuantity();
             book.decreaseStock(cartItem.getQuantity());
@@ -103,7 +135,9 @@ public class OrderService implements IOrderService {
             BigDecimal lineTotal = book.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             orderItems.add(new OrderItem(
                     UUID.randomUUID(),
+                    PurchaseItemType.PHYSICAL_BOOK,
                     book.getId(),
+                    null,
                     book.getTitle(),
                     book.getPrice(),
                     cartItem.getQuantity(),
@@ -127,7 +161,7 @@ public class OrderService implements IOrderService {
         BigDecimal productTotal = orderItems.stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal shippingFee = calculateShippingFee(command.shippingMethod(), productTotal);
+        BigDecimal shippingFee = calculateShippingFee(command.shippingMethod(), productTotal, hasPhysicalItems);
         Coupon appliedBookCoupon = resolveCoupon(command.bookCouponCode(), CouponType.BOOK);
         Coupon appliedShippingCoupon = resolveCoupon(command.shippingCouponCode(), CouponType.SHIPPING);
         BigDecimal couponDiscount = BigDecimal.ZERO;
@@ -184,8 +218,13 @@ public class OrderService implements IOrderService {
         saveAppliedCoupon(appliedBookCoupon, command.userId(), orderId, now);
         saveAppliedCoupon(appliedShippingCoupon, command.userId(), orderId, now);
         stockMovements.forEach(stockMovementRepository::save);
-        booksById.values().forEach(bookRepository::save);
-        checkoutItems.forEach(item -> cart.removeItem(item.getBookId()));
+        checkoutItems.stream()
+                .filter(CartItem::isPhysicalBook)
+                .map(CartItem::getBookId)
+                .distinct()
+                .map(booksById::get)
+                .forEach(bookRepository::save);
+        checkoutItems.forEach(item -> cart.removeItemById(item.getId()));
         cartRepository.save(cart);
         notificationService.create(newOrderNotification(savedOrder));
         return new CreateOrderResult(
@@ -341,6 +380,17 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageSliceResult<OrderResult> getMyOrders(UUID userId, int page, int size) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        validatePageRequest(page, size);
+        return orderRepository.findPageByUserId(userId, page, size).map(orderAssembler::toResult);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public OrderResult getMyOrder(UUID userId, UUID orderId) {
         return orderRepository.findById(orderId)
                 .filter(order -> order.getUserId().equals(userId))
@@ -354,6 +404,13 @@ public class OrderService implements IOrderService {
         return orderRepository.findAll().stream()
                 .map(orderAssembler::toResult)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<OrderResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return orderRepository.findPageAll(page, size).map(orderAssembler::toResult);
     }
 
     @Override
@@ -375,12 +432,16 @@ public class OrderService implements IOrderService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        Order currentOrder = orderRepository.findById(command.orderId())
+        Order currentOrder = orderRepository.findByIdForUpdate(command.orderId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
 
+        requirePaymentReadyForStatusUpdate(currentOrder, command.status());
         currentOrder.updateStatus(command.status());
         if (command.status() == OrderStatus.CANCELLED) {
             rollbackCancelledOrder(currentOrder);
+        }
+        if (command.status() == OrderStatus.DELIVERED && currentOrder.getPaymentMethod() == PaymentMethod.COD) {
+            settleCodPaymentOnDelivery(currentOrder);
         }
         Order savedOrder = orderRepository.save(currentOrder);
         if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
@@ -428,11 +489,24 @@ public class OrderService implements IOrderService {
                 .toList();
     }
 
-    private Map<UUID, Book> loadCheckoutBooks(List<CartItem> checkoutItems) {
-        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
-                        checkoutItems.stream()
-                                .map(item -> item.getBookId())
-                                .toList()
+    private Map<UUID, Book> loadCheckoutBooks(
+            List<CartItem> checkoutItems,
+            Map<UUID, DigitalAsset> digitalAssetsById
+    ) {
+        List<UUID> bookIds = new ArrayList<>(checkoutItems.stream()
+                .filter(CartItem::isPhysicalBook)
+                .map(CartItem::getBookId)
+                .toList());
+        digitalAssetsById.values().stream()
+                .map(DigitalAsset::getBookId)
+                .distinct()
+                .forEach(bookIds::add);
+        if (bookIds.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeletedForUpdate(
+                        bookIds
                 ).stream()
                 .collect(
                         LinkedHashMap::new,
@@ -440,8 +514,8 @@ public class OrderService implements IOrderService {
                         Map::putAll
                 );
 
-        for (var cartItem : checkoutItems) {
-            Book book = booksById.get(cartItem.getBookId());
+        for (UUID bookId : bookIds) {
+            Book book = booksById.get(bookId);
             if (book == null || book.getDeletedAt() != null) {
                 throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
             }
@@ -450,8 +524,54 @@ public class OrderService implements IOrderService {
         return booksById;
     }
 
+    private Map<UUID, DigitalAsset> loadCheckoutDigitalAssets(List<CartItem> checkoutItems) {
+        List<UUID> digitalAssetIds = checkoutItems.stream()
+                .filter(CartItem::isDigitalAsset)
+                .map(CartItem::getDigitalAssetId)
+                .toList();
+        if (digitalAssetIds.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        Map<UUID, DigitalAsset> digitalAssetsById = digitalAssetRepository.findAllByIdsActive(digitalAssetIds).stream()
+                .collect(
+                        LinkedHashMap::new,
+                        (map, asset) -> map.put(asset.getId(), asset),
+                        Map::putAll
+                );
+
+        for (UUID digitalAssetId : digitalAssetIds) {
+            DigitalAsset digitalAsset = digitalAssetsById.get(digitalAssetId);
+            if (digitalAsset == null || !digitalAsset.isPublished()) {
+                throw new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND);
+            }
+            if (!digitalAsset.isPurchaseAllowed()) {
+                throw new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_PURCHASE_NOT_ALLOWED);
+            }
+        }
+
+        List<UUID> relatedBookIds = digitalAssetsById.values().stream()
+                .map(DigitalAsset::getBookId)
+                .distinct()
+                .toList();
+        Map<UUID, Book> relatedBooksById = bookRepository.findAllByIdsIncludingDeleted(relatedBookIds).stream()
+                .collect(
+                        LinkedHashMap::new,
+                        (map, book) -> map.put(book.getId(), book),
+                        Map::putAll
+                );
+        for (DigitalAsset digitalAsset : digitalAssetsById.values()) {
+            Book book = relatedBooksById.get(digitalAsset.getBookId());
+            if (book == null || book.getDeletedAt() != null) {
+                throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
+            }
+        }
+
+        return digitalAssetsById;
+    }
+
     private Map<UUID, Book> loadPosOrderBooks(List<CreatePosOrderItemCommand> items) {
-        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeletedForUpdate(
                         items.stream()
                                 .map(CreatePosOrderItemCommand::bookId)
                                 .toList()
@@ -478,7 +598,7 @@ public class OrderService implements IOrderService {
             return null;
         }
 
-        return couponRepository.findByCodeActive(normalizedCouponCode.toUpperCase(Locale.ROOT))
+        return couponRepository.findByCodeActiveForUpdate(normalizedCouponCode.toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
     }
 
@@ -511,10 +631,10 @@ public class OrderService implements IOrderService {
     }
 
     private void rollbackCancelledOrder(Order order) {
-        Map<UUID, Book> booksById = loadOrderBooks(order);
+        Map<UUID, Book> booksById = loadPhysicalOrderBooks(order);
         Instant now = Instant.now();
 
-        for (OrderItem item : order.getItems()) {
+        for (OrderItem item : order.getItems().stream().filter(orderItem -> orderItem.getItemType() == PurchaseItemType.PHYSICAL_BOOK).toList()) {
             Book book = booksById.get(item.getBookId());
             int beforeQuantity = book.getStockQuantity();
             book.increaseStock(item.getQuantity());
@@ -550,6 +670,19 @@ public class OrderService implements IOrderService {
         }
     }
 
+    private void requirePaymentReadyForStatusUpdate(Order order, OrderStatus nextStatus) {
+        if (order.getPaymentMethod() != PaymentMethod.BANK_TRANSFER_QR) {
+            return;
+        }
+
+        if ((nextStatus == OrderStatus.CONFIRMED
+                || nextStatus == OrderStatus.SHIPPING
+                || nextStatus == OrderStatus.DELIVERED)
+                && order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new ApplicationException(ApplicationErrorCode.ORDER_PAYMENT_NOT_PAID);
+        }
+    }
+
     private void validatePaymentMethod(PaymentMethod paymentMethod) {
         if (paymentMethod != PaymentMethod.BANK_TRANSFER_QR
                 && paymentMethod != PaymentMethod.COD) {
@@ -557,8 +690,15 @@ public class OrderService implements IOrderService {
         }
     }
 
-    private UserAddress resolveOrderAddress(CreateOrderCommand command) {
+    private UserAddress resolveOrderAddress(CreateOrderCommand command, boolean hasPhysicalItems) {
+        if (!hasPhysicalItems && command.addressId() == null) {
+            return createDigitalOrderAddress(command.userId());
+        }
+
         if (command.shippingMethod() == ShippingMethod.DELIVERY) {
+            if (command.addressId() == null) {
+                throw new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND);
+            }
             return userAddressRepository.findByIdAndUserIdActive(command.addressId(), command.userId())
                     .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
         }
@@ -568,12 +708,20 @@ public class OrderService implements IOrderService {
                     .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
         }
 
+        if (!hasPhysicalItems) {
+            return createDigitalOrderAddress(command.userId());
+        }
+
         return userAddressRepository.findAllByUserIdActive(command.userId()).stream()
                 .findFirst()
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND));
     }
 
-    private BigDecimal calculateShippingFee(ShippingMethod shippingMethod, BigDecimal productTotal) {
+    private BigDecimal calculateShippingFee(ShippingMethod shippingMethod, BigDecimal productTotal, boolean hasPhysicalItems) {
+        if (!hasPhysicalItems) {
+            return BigDecimal.ZERO;
+        }
+
         return switch (shippingMethod) {
             case DELIVERY -> productTotal.compareTo(FREE_SHIPPING_THRESHOLD) < 0
                     ? DELIVERY_SHIPPING_FEE
@@ -630,18 +778,51 @@ public class OrderService implements IOrderService {
         return StringUtils.trimToNull(customerPhone) == null ? "0900000000" : customerPhone;
     }
 
+    private void settleCodPaymentOnDelivery(Order order) {
+        if (order.getPaymentMethod() != PaymentMethod.COD) {
+            return;
+        }
+
+        Payment payment = paymentRepository.findByOrderId(order.getId())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PAYMENT_NOT_FOUND));
+        Instant settledAt = payment.getPaidAt();
+        if (settledAt == null) {
+            settledAt = Instant.now();
+        }
+
+        if (payment.getStatus() != PaymentStatus.PAID) {
+            payment.markPaid(
+                    payment.getMerchantId(),
+                    null,
+                    payment.getReferenceCode(),
+                    null,
+                    settledAt
+            );
+            paymentRepository.save(payment);
+        }
+        if (order.getPaymentStatus() != PaymentStatus.PAID) {
+            order.markPaymentPaid(settledAt);
+        }
+    }
+
     private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {
-        Coupon coupon = couponRepository.findByIdIncludingDeleted(couponId)
+        Coupon coupon = couponRepository.findByIdIncludingDeletedForUpdate(couponId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
         coupon.rollbackUsage(rolledBackAt);
         couponRepository.save(coupon);
     }
 
-    private Map<UUID, Book> loadOrderBooks(Order order) {
-        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(
-                        order.getItems().stream()
-                                .map(OrderItem::getBookId)
-                                .toList()
+    private Map<UUID, Book> loadPhysicalOrderBooks(Order order) {
+        List<UUID> bookIds = order.getItems().stream()
+                .filter(item -> item.getItemType() == PurchaseItemType.PHYSICAL_BOOK)
+                .map(OrderItem::getBookId)
+                .toList();
+        if (bookIds.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeletedForUpdate(
+                        bookIds
                 ).stream()
                 .collect(
                         LinkedHashMap::new,
@@ -649,7 +830,7 @@ public class OrderService implements IOrderService {
                         Map::putAll
                 );
 
-        for (OrderItem item : order.getItems()) {
+        for (OrderItem item : order.getItems().stream().filter(currentItem -> currentItem.getItemType() == PurchaseItemType.PHYSICAL_BOOK).toList()) {
             if (!booksById.containsKey(item.getBookId())) {
                 throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
             }
@@ -658,11 +839,26 @@ public class OrderService implements IOrderService {
         return booksById;
     }
 
+    private UserAddress createDigitalOrderAddress(UUID userId) {
+        Instant now = Instant.now();
+        return new UserAddress(
+                UUID.randomUUID(),
+                userId,
+                "Khách mua thư viện số",
+                "0900000000",
+                "Đơn hàng thư viện số",
+                false,
+                now,
+                now,
+                null
+        );
+    }
+
     private CreateNotificationCommand newOrderNotification(Order order) {
         return new CreateNotificationCommand(
                 order.getUserId(),
-                "Dat hang thanh cong",
-                "Don hang " + order.getOrderCode() + " da duoc tao thanh cong.",
+                "Đặt hàng thành công",
+                "Đơn hàng " + order.getOrderCode() + " đã được tạo thành công.",
                 "ORDER",
                 "ORDER",
                 order.getId(),
@@ -673,12 +869,22 @@ public class OrderService implements IOrderService {
     private CreateNotificationCommand newOrderStatusNotification(Order order) {
         return new CreateNotificationCommand(
                 order.getUserId(),
-                "Cap nhat trang thai don hang",
-                "Don hang " + order.getOrderCode() + " da chuyen sang " + order.getStatus().name() + ".",
+                "Cập nhật trạng thái đơn hàng",
+                "Đơn hàng " + order.getOrderCode() + " đã chuyển sang " + order.getStatus().name() + ".",
                 "ORDER",
                 "ORDER",
                 order.getId(),
                 "/orders/" + order.getId()
         );
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

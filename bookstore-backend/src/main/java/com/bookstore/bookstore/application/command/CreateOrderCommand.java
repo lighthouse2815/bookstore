@@ -29,9 +29,6 @@ public record CreateOrderCommand(
         if (paymentMethod == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "paymentMethod");
         }
-        if (shippingMethod == ShippingMethod.DELIVERY && addressId == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "addressId");
-        }
         if (cartItemIds == null) {
             cartItemIds = List.of();
         } else {

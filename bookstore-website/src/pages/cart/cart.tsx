@@ -73,8 +73,11 @@ export default function CartPage() {
     (sum, item) => sum + item.qty,
     0,
   )
+  const hasPhysicalSelectedItems = selectedItems.some(
+    (item) => item.itemType === 'PHYSICAL_BOOK',
+  )
   const shipping =
-    selectedItems.length > 0 && selectedSubtotal < 200000 ? 30000 : 0
+    hasPhysicalSelectedItems && selectedSubtotal < 200000 ? 30000 : 0
   const finalTotal = selectedSubtotal + shipping
   const allSelected = items.length > 0 && selectedItems.length === items.length
   const partiallySelected = selectedItems.length > 0 && !allSelected
@@ -101,7 +104,7 @@ export default function CartPage() {
       setSelectedItemIds((currentIds) =>
         currentIds.filter((id) => !selectedItemIdSet.has(id)),
       )
-      await removeItems(selectedItems.map((item) => item.bookId))
+      await removeItems(selectedItems.map((item) => item.id))
     } finally {
       setIsRemovingSelected(false)
     }
@@ -190,16 +193,16 @@ export default function CartPage() {
                       checked={selectedItemIdSet.has(item.id)}
                       onToggle={() => toggleItem(item.id)}
                       onDecrease={() => {
-                        void updateQty(item.bookId, Math.max(1, item.qty - 1))
+                        void updateQty(item.id, Math.max(1, item.qty - 1))
                       }}
                       onIncrease={() => {
-                        void updateQty(item.bookId, item.qty + 1)
+                        void updateQty(item.id, item.qty + 1)
                       }}
                       onRemove={() => {
                         setSelectedItemIds((currentIds) =>
                           currentIds.filter((id) => id !== item.id),
                         )
-                        void removeItem(item.bookId)
+                        void removeItem(item.id)
                       }}
                       formatCurrency={formatCurrency}
                       t={t}
@@ -363,6 +366,11 @@ function CartLineItem({
   formatCurrency,
   t,
 }: CartLineItemProps) {
+  const itemTypeKey =
+    item.itemType === 'DIGITAL_ASSET'
+      ? 'cart.itemTypes.digitalAsset'
+      : 'cart.itemTypes.physicalBook'
+
   return (
     <article
       className={cn(
@@ -394,10 +402,25 @@ function CartLineItem({
               {item.title}
             </h3>
           </Link>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-green-600">
-            <CheckCircle2 className="size-4" />
-            {t('cart.inStock')}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+                item.itemType === 'DIGITAL_ASSET'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-emerald-500/10 text-emerald-600',
+              )}
+            >
+              <CheckCircle2 className="size-4" />
+              {t(`${itemTypeKey}.badge`)}
+            </span>
+            {item.assetTitle ? (
+              <span className="text-sm text-muted-foreground">
+                {item.assetTitle}
+                {item.format ? ` • ${item.format}` : ''}
+              </span>
+            ) : null}
+          </div>
         </div>
         <p className="font-heading text-lg font-bold text-primary sm:hidden">
           {formatCurrency(item.price)}
@@ -408,27 +431,33 @@ function CartLineItem({
         <p className="hidden font-heading text-lg font-bold text-primary sm:block">
           {formatCurrency(item.price)}
         </p>
-        <div className="grid h-10 w-32 grid-cols-3 overflow-hidden rounded-lg border border-border bg-background">
-          <button
-            type="button"
-            onClick={onDecrease}
-            className="flex items-center justify-center text-lg font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label={t('book.addToCart.decrease')}
-          >
-            -
-          </button>
-          <span className="flex items-center justify-center border-x border-border text-sm font-semibold">
-            {item.qty}
-          </span>
-          <button
-            type="button"
-            onClick={onIncrease}
-            className="flex items-center justify-center text-lg font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label={t('book.addToCart.increase')}
-          >
-            +
-          </button>
-        </div>
+        {item.itemType === 'DIGITAL_ASSET' ? (
+          <div className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-sm font-semibold text-primary">
+            {t(`${itemTypeKey}.quantity`)}
+          </div>
+        ) : (
+          <div className="grid h-10 w-32 grid-cols-3 overflow-hidden rounded-lg border border-border bg-background">
+            <button
+              type="button"
+              onClick={onDecrease}
+              className="flex items-center justify-center text-lg font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={t('book.addToCart.decrease')}
+            >
+              -
+            </button>
+            <span className="flex items-center justify-center border-x border-border text-sm font-semibold">
+              {item.qty}
+            </span>
+            <button
+              type="button"
+              onClick={onIncrease}
+              className="flex items-center justify-center text-lg font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={t('book.addToCart.increase')}
+            >
+              +
+            </button>
+          </div>
+        )}
         <button
           type="button"
           onClick={onRemove}
@@ -486,3 +515,4 @@ function readStoredSelectedItemIds() {
     return []
   }
 }
+

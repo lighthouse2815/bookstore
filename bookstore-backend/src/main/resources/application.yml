@@ -7,23 +7,14 @@ spring:
 
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bookstore_db}
-    username: ${DB_USER:bookstore_user}
-    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      "[hibernate.format_sql]": true
 
 server:
   port: ${SERVER_PORT:8080}
 
 app:
   jwt:
-    secret: ${JWT_SECRET:01234567890123456789012345678901}
+    secret: ${JWT_SECRET:}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:30}
   cors:
@@ -44,3 +35,15 @@ app:
     merchant-id: ${SEPAY_MERCHANT_ID:}
     secret-key: ${SEPAY_SECRET_KEY:}
     webhook-api-key: ${SEPAY_WEBHOOK_API_KEY:}
+  storage:
+    provider: ${STORAGE_PROVIDER:r2}
+    bucket: ${STORAGE_BUCKET:}
+    region: ${STORAGE_REGION:auto}
+    endpoint: ${STORAGE_ENDPOINT:}
+    access-key: ${STORAGE_ACCESS_KEY:}
+    secret-key: ${STORAGE_SECRET_KEY:}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
+    presign-upload-expire-minutes: ${STORAGE_PRESIGN_UPLOAD_EXPIRE_MINUTES:10}
+    presign-download-expire-minutes: ${STORAGE_PRESIGN_DOWNLOAD_EXPIRE_MINUTES:5}
+    max-image-size-mb: ${STORAGE_MAX_IMAGE_SIZE_MB:5}
+    max-digital-file-size-mb: ${STORAGE_MAX_DIGITAL_FILE_SIZE_MB:200}

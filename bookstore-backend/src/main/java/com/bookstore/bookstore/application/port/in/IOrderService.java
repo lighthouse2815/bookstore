@@ -6,6 +6,7 @@ import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,9 +18,13 @@ public interface IOrderService {
 
     List<OrderResult> getMyOrders(UUID userId);
 
+    PageSliceResult<OrderResult> getMyOrders(UUID userId, int page, int size);
+
     OrderResult getMyOrder(UUID userId, UUID orderId);
 
     List<OrderResult> getAll();
+
+    PageSliceResult<OrderResult> getAll(int page, int size);
 
     OrderResult getById(UUID orderId);
 

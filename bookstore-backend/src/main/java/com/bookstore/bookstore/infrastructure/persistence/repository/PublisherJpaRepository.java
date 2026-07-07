@@ -5,10 +5,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PublisherJpaRepository extends JpaRepository<PublisherJpaEntity, UUID> {
 
     List<PublisherJpaEntity> findAllByDeletedAtIsNull();
+
+    Page<PublisherJpaEntity> findAllByDeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
 
     Optional<PublisherJpaEntity> findByIdAndDeletedAtIsNull(UUID id);
 

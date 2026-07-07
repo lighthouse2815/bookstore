@@ -1,3 +1,5 @@
+import type { PageResult } from '@/types/pagination'
+
 export type DigitalAssetFormat = 'PDF' | 'EPUB' | 'AUDIO'
 
 export type DigitalAccessType = 'PURCHASED' | 'BORROWED' | 'SUBSCRIPTION'
@@ -25,7 +27,7 @@ export type DigitalLibraryItemResponse = {
   format: DigitalAssetFormat
   price: number
   downloadAllowed: boolean
-  sampleStorageKey: string | null
+  sampleAvailable: boolean
   accessType: DigitalAccessType
   accessStatus: DigitalAccessStatus
   sourceOrderId: string | null
@@ -43,13 +45,11 @@ export type DigitalLibraryAssetResponse = {
   assetTitle: string
   format: DigitalAssetFormat
   fileName: string
-  storageKey: string
-  sampleStorageKey: string | null
   mimeType: string
   fileSize: number
-  checksum: string | null
   price: number
   downloadAllowed: boolean
+  sampleAvailable: boolean
   accessType: DigitalAccessType
   accessStatus: DigitalAccessStatus
   sourceOrderId: string | null
@@ -65,24 +65,53 @@ export type PublishedDigitalAssetResponse = {
   format: DigitalAssetFormat
   title: string
   fileName: string
-  sampleStorageKey: string | null
   price: number
   downloadAllowed: boolean
+  purchaseAllowed: boolean
+  sampleAvailable: boolean
 }
+
+export type PublishedDigitalAssetCatalogItemResponse = {
+  id: string
+  bookId: string
+  categoryId: string
+  authorId: string
+  publisherId: string
+  format: DigitalAssetFormat
+  title: string
+  fileName: string
+  price: number
+  downloadAllowed: boolean
+  purchaseAllowed: boolean
+  sampleAvailable: boolean
+  bookTitle: string
+  bookDescription: string | null
+  bookImageUrl: string | null
+}
+
+export type PublishedDigitalAssetCatalogItem = PublishedDigitalAssetCatalogItemResponse & {
+  categoryName: string
+  authorName: string
+  publisherName: string
+}
+
+export type PublishedDigitalAssetCatalogPageResult =
+  PageResult<PublishedDigitalAssetCatalogItemResponse>
 
 export type DigitalAssetResponse = {
   id: string
   bookId: string
   format: DigitalAssetFormat
   title: string
+  fileAssetId: string
+  sampleFileAssetId: string | null
   fileName: string
-  storageKey: string
   mimeType: string
   fileSize: number
   checksum: string | null
-  sampleStorageKey: string | null
   price: number
   downloadAllowed: boolean
+  purchaseAllowed: boolean
   published: boolean
   createdAt: string
   updatedAt: string
@@ -92,14 +121,11 @@ export type DigitalAssetResponse = {
 export type UpsertDigitalAssetRequest = {
   format: DigitalAssetFormat
   title: string
-  fileName: string
-  storageKey: string
-  mimeType: string
-  fileSize: number
-  checksum?: string | null
-  sampleStorageKey?: string | null
+  fileAssetId: string
+  sampleFileAssetId?: string | null
   price: number
   downloadAllowed: boolean
+  purchaseAllowed: boolean
   published: boolean
 }
 
@@ -107,4 +133,12 @@ export type UpdateReadingProgressRequest = {
   currentPage?: number | null
   progressPercent: number
   positionData?: string | null
+}
+
+export type DigitalLibraryPageResult = {
+  items: DigitalLibraryItemResponse[]
+  page: number
+  size: number
+  totalCount: number
+  hasNext: boolean
 }

@@ -8,11 +8,20 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalAssetService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.application.result.PublicDigitalAssetCatalogItemResult;
+import com.bookstore.bookstore.domain.model.Book;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.DigitalAsset;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +32,7 @@ public class DigitalAssetService implements IDigitalAssetService {
 
     private final IDigitalAssetRepository digitalAssetRepository;
     private final IBookRepository bookRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,6 +41,44 @@ public class DigitalAssetService implements IDigitalAssetService {
         return digitalAssetRepository.findAllByBookIdActive(bookId).stream()
                 .filter(DigitalAsset::isPublished)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<PublicDigitalAssetCatalogItemResult> getPublishedCatalog(
+            String keyword,
+            UUID categoryId,
+            int page,
+            int size
+    ) {
+        validatePageRequest(page, size);
+        String normalizedKeyword = StringUtils.trimToNull(keyword);
+        PageSliceResult<DigitalAsset> assetPage = digitalAssetRepository.searchPublishedCatalog(
+                normalizedKeyword,
+                categoryId,
+                page,
+                size
+        );
+
+        List<UUID> bookIds = assetPage.items().stream()
+                .map(DigitalAsset::getBookId)
+                .distinct()
+                .toList();
+        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeleted(bookIds).stream()
+                .collect(Collectors.toMap(Book::getId, Function.identity()));
+
+        return new PageSliceResult<>(
+                assetPage.items().stream()
+                        .map(asset -> new PublicDigitalAssetCatalogItemResult(
+                                asset,
+                                booksById.get(asset.getBookId())
+                        ))
+                        .filter(result -> result.book() != null)
+                        .toList(),
+                assetPage.totalCount(),
+                assetPage.page(),
+                assetPage.size()
+        );
     }
 
     @Override
@@ -49,19 +97,22 @@ public class DigitalAssetService implements IDigitalAssetService {
 
         requireActiveBook(command.bookId());
         Instant now = Instant.now();
+        FileAsset mainFileAsset = fileAssetPolicyService.requireActiveAsset(
+                command.fileAssetId(),
+                FilePurpose.EBOOK_FILE,
+                FileVisibility.PRIVATE
+        );
+        FileAsset sampleFileAsset = resolveSampleFileAsset(command.sampleFileAssetId());
         DigitalAsset digitalAsset = new DigitalAsset(
                 UUID.randomUUID(),
                 command.bookId(),
                 command.format(),
                 StringUtils.trimToNull(command.title()),
-                StringUtils.trimToNull(command.fileName()),
-                StringUtils.trimToNull(command.storageKey()),
-                StringUtils.trimToNull(command.mimeType()),
-                command.fileSize(),
-                StringUtils.trimToNull(command.checksum()),
-                StringUtils.trimToNull(command.sampleStorageKey()),
+                mainFileAsset,
+                sampleFileAsset,
                 command.price(),
                 command.downloadAllowed(),
+                command.purchaseAllowed(),
                 command.published(),
                 now,
                 now,
@@ -80,18 +131,21 @@ public class DigitalAssetService implements IDigitalAssetService {
         DigitalAsset currentAsset = digitalAssetRepository.findByIdActive(command.digitalAssetId())
                 .filter(asset -> asset.getBookId().equals(command.bookId()))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND));
+        FileAsset mainFileAsset = fileAssetPolicyService.requireActiveAsset(
+                command.fileAssetId(),
+                FilePurpose.EBOOK_FILE,
+                FileVisibility.PRIVATE
+        );
+        FileAsset sampleFileAsset = resolveSampleFileAsset(command.sampleFileAssetId());
 
         currentAsset.updateAsset(
                 command.format(),
                 StringUtils.trimToNull(command.title()),
-                StringUtils.trimToNull(command.fileName()),
-                StringUtils.trimToNull(command.storageKey()),
-                StringUtils.trimToNull(command.mimeType()),
-                command.fileSize(),
-                StringUtils.trimToNull(command.checksum()),
-                StringUtils.trimToNull(command.sampleStorageKey()),
+                mainFileAsset,
+                sampleFileAsset,
                 command.price(),
                 command.downloadAllowed(),
+                command.purchaseAllowed(),
                 command.published()
         );
 
@@ -128,5 +182,27 @@ public class DigitalAssetService implements IDigitalAssetService {
         }
         bookRepository.findByIdActive(bookId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
+    }
+
+    private FileAsset resolveSampleFileAsset(UUID sampleFileAssetId) {
+        if (sampleFileAssetId == null) {
+            return null;
+        }
+
+        return fileAssetPolicyService.requireActiveAsset(
+                sampleFileAssetId,
+                FilePurpose.SAMPLE_FILE,
+                FileVisibility.PRIVATE
+        );
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

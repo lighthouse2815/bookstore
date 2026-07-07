@@ -14,7 +14,7 @@ public class Author {
     private UUID id;
     private String name;
     private String biography;
-    private String avatarUrl;
+    private FileAsset avatarFileAsset;
     private Integer birthYear;
     private Integer deathYear;
     private Instant createdAt;
@@ -25,7 +25,7 @@ public class Author {
             UUID id,
             String name,
             String biography,
-            String avatarUrl,
+            FileAsset avatarFileAsset,
             Integer birthYear,
             Integer deathYear,
             Instant createdAt,
@@ -35,7 +35,7 @@ public class Author {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_AUTHOR_ID, "id");
         setName(name);
         setBiography(biography);
-        setAvatarUrl(avatarUrl);
+        setAvatarFileAsset(avatarFileAsset);
         setBirthYear(birthYear);
         setDeathYear(deathYear);
         validateLifeSpan();
@@ -47,7 +47,7 @@ public class Author {
     public void updateAuthor(
             String name,
             String biography,
-            String avatarUrl,
+            FileAsset avatarFileAsset,
             Integer birthYear,
             Integer deathYear
     ) {
@@ -55,18 +55,18 @@ public class Author {
                 deletedAt,
                 this.name,
                 this.biography,
-                this.avatarUrl,
+                getAvatarFileAssetId(),
                 this.birthYear,
                 this.deathYear,
                 name,
                 biography,
-                avatarUrl,
+                avatarFileAsset == null ? null : avatarFileAsset.getId(),
                 birthYear,
                 deathYear
         );
         setName(name);
         setBiography(biography);
-        setAvatarUrl(avatarUrl);
+        setAvatarFileAsset(avatarFileAsset);
         setBirthYear(birthYear);
         setDeathYear(deathYear);
         validateLifeSpan();
@@ -88,8 +88,25 @@ public class Author {
         this.biography = biography;
     }
 
-    private void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = Guard.notBlankOrNull(avatarUrl, DomainErrorCode.INVALID_AUTHOR_AVATAR_URL, "avatarUrl");
+    public UUID getAvatarFileAssetId() {
+        return avatarFileAsset == null ? null : avatarFileAsset.getId();
+    }
+
+    public String getAvatarUrl() {
+        return avatarFileAsset == null ? null : avatarFileAsset.getPublicUrl();
+    }
+
+    private void setAvatarFileAsset(FileAsset avatarFileAsset) {
+        if (avatarFileAsset == null) {
+            this.avatarFileAsset = null;
+            return;
+        }
+
+        this.avatarFileAsset = Guard.notNull(
+                avatarFileAsset,
+                DomainErrorCode.INVALID_AUTHOR_AVATAR_FILE_ASSET_ID,
+                "avatarFileAssetId"
+        );
     }
 
     private void setBirthYear(Integer birthYear) {

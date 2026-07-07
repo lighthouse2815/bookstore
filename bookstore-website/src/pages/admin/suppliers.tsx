@@ -20,6 +20,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { Textarea } from '@/components/common/textarea'
 import {
   useAdminSuppliersPage,
@@ -34,6 +35,9 @@ export default function AdminSuppliersPage() {
     formatDate,
     formatNumber,
     suppliers,
+    page,
+    pageSize,
+    totalCount,
     searchTerm,
     isLoading,
     error,
@@ -46,6 +50,7 @@ export default function AdminSuppliersPage() {
     filteredSuppliers,
     isDialogLocked,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -124,8 +129,8 @@ export default function AdminSuppliersPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <Truck className="mr-2 h-4 w-4" />
-                    {interpolateLabel(labels.totalSuppliers, {
-                      count: formatNumber(suppliers.length),
+                    {t('admin.suppliersPage.totalSuppliers', {
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -251,11 +256,19 @@ export default function AdminSuppliersPage() {
               </div>
 
               {!isLoading && !error && filteredSuppliers.length > 0 ? (
-                <div className="border-t border-border/60 px-6 py-5 text-sm text-muted-foreground">
-                  {interpolateLabel(labels.showingCount, {
-                    count: formatNumber(filteredSuppliers.length),
-                    total: formatNumber(suppliers.length),
-                  })}
+                <div>
+                  <p className="px-6 pt-4 text-sm text-muted-foreground">
+                    {t('admin.suppliersPage.showingCount', {
+                      count: formatNumber(filteredSuppliers.length),
+                      total: formatNumber(totalCount),
+                    })}
+                  </p>
+                  <PaginationControls
+                    page={page}
+                    size={pageSize}
+                    totalCount={totalCount}
+                    onPageChange={handlePageChange}
+                  />
                 </div>
               ) : null}
             </section>
@@ -596,11 +609,3 @@ function DetailCard({
   )
 }
 
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
-}

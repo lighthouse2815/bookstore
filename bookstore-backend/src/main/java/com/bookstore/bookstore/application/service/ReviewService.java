@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.in.IReviewService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.model.Order;
@@ -47,6 +48,18 @@ public class ReviewService implements IReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<ReviewResult> getByBookId(UUID bookId, int page, int size) {
+        if (bookId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
+        }
+
+        validatePageRequest(page, size);
+        requireActiveBook(bookId);
+        return reviewRepository.findPageByBookIdActive(bookId, page, size).map(reviewAssembler::toResult);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ReviewResult create(CreateReviewCommand command) {
         if (command == null) {
@@ -78,7 +91,7 @@ public class ReviewService implements IReviewService {
     }
 
     private void requireActiveBook(UUID bookId) {
-        if (!bookRepository.existsByIdIncludingDeleted(bookId)) {
+        if (bookRepository.findByIdActive(bookId).isEmpty()) {
             throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
         }
     }
@@ -93,6 +106,7 @@ public class ReviewService implements IReviewService {
         Review currentReview = reviewRepository.findByIdAndUserIdActive(command.reviewId(), command.userId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.REVIEW_NOT_FOUND));
 
+        requireActiveBook(currentReview.getBookId());
         currentReview.updateReview(command.rating(), StringUtils.trimToNull(command.comment()));
         return reviewAssembler.toResult(reviewRepository.save(currentReview));
     }
@@ -117,6 +131,13 @@ public class ReviewService implements IReviewService {
         return reviewRepository.findAllActive().stream()
                 .map(reviewAssembler::toResult)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<ReviewResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return reviewRepository.findPageActive(page, size).map(reviewAssembler::toResult);
     }
 
     @Override
@@ -147,5 +168,15 @@ public class ReviewService implements IReviewService {
 
     private boolean orderItemMatches(OrderItem orderItem, UUID bookId, UUID orderItemId) {
         return orderItem.getId().equals(orderItemId) && orderItem.getBookId().equals(bookId);
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

@@ -16,7 +16,7 @@ public class RefreshTokenPersistenceMapper {
         return new RefreshToken(
                 entity.getId(),
                 entity.getUser().getId(),
-                entity.getToken(),
+                entity.getTokenHash(),
                 entity.getExpiresAt(),
                 entity.isRevoked(),
                 entity.getCreatedAt()
@@ -26,7 +26,7 @@ public class RefreshTokenPersistenceMapper {
     public void copyToEntity(RefreshToken refreshToken, RefreshTokenJpaEntity entity, UserJpaEntity user) {
         entity.setId(refreshToken.getId());
         entity.setUser(user);
-        entity.setToken(refreshToken.getToken());
+        entity.setTokenHash(refreshToken.getTokenHash());
         entity.setExpiresAt(refreshToken.getExpiresAt());
         entity.setRevoked(refreshToken.isRevoked());
         entity.setCreatedAt(refreshToken.getCreatedAt());

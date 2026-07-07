@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.port.out;
 
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Review;
 import java.time.Instant;
 import java.util.Collection;
@@ -12,9 +13,13 @@ public interface IReviewRepository {
 
     List<Review> findAllByBookIdActive(UUID bookId);
 
+    PageSliceResult<Review> findPageByBookIdActive(UUID bookId, int page, int size);
+
     Map<UUID, List<Integer>> findRatingsByBookIds(Collection<UUID> bookIds);
 
     List<Review> findAllActive();
+
+    PageSliceResult<Review> findPageActive(int page, int size);
 
     Optional<Review> findByIdActive(UUID reviewId);
 

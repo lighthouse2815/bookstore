@@ -41,6 +41,12 @@ export const messages = {
       description: 'Mô tả',
       createdAt: 'Tạo lúc',
       updatedAt: 'Cập nhật lúc',
+      pagination: {
+        previous: 'Trang trước',
+        next: 'Trang sau',
+        page: 'Trang {page}/{total}',
+        total: 'Tổng cộng {count} bản ghi',
+      },
     },
     header: {
       searchAria: 'Tìm kiếm sách',
@@ -56,6 +62,7 @@ export const messages = {
       nav: {
         home: 'Trang chủ',
         books: 'Sách',
+        digitalLibrary: 'Thư viện số',
         lifeSkills: 'Kỹ năng',
         novel: 'Tiểu thuyết',
       },
@@ -87,13 +94,13 @@ export const messages = {
       heroTitlePrefix: 'Đọc nhiều hơn,',
       heroTitleAccent: 'sống vui hơn',
       heroDescription:
-        'Khám phá hàng ngàn đầu sách hay từ tiểu thuyết, kỹ năng sống đến khoa học. Giao hàng nhanh, giá luôn tốt cho người trẻ.',
+        'Khám phá những đầu sách hay từ tiểu thuyết, kỹ năng sống đến khoa học. Giao hàng nhanh, giá luôn tốt cho người trẻ.',
       shopNow: 'Mua sắm ngay',
       lifeSkillsBooks: 'Sách kỹ năng',
       stats: {
         books: 'Đầu sách',
-        customers: 'Khách hàng',
-        reviews: 'Đánh giá',
+        sales: 'Lượt bán',
+        reviewsCount: '{count} đánh giá',
       },
       values: {
         fastDeliveryTitle: 'Giao hàng nhanh',
@@ -104,6 +111,8 @@ export const messages = {
         authenticDesc: '100% bản quyền từ NXB',
       },
       categoriesTitle: 'Khám phá theo thể loại',
+      categoriesCount: '{count} thể loại để bạn khám phá',
+      allCategories: 'Xem tất cả thể loại',
       featuredTitle: 'Sách nổi bật',
       emptyTitle: 'Chưa có sách nào trong hệ thống',
       emptyDescription:
@@ -135,6 +144,31 @@ export const messages = {
         submit: 'Đăng nhập',
         noAccount: 'Chưa có tài khoản?',
         registerNow: 'Đăng ký ngay',
+        restrictions: {
+          locked: {
+            title: 'Tài khoản đã bị khóa',
+            description:
+              'Tài khoản này hiện không thể đăng nhập. Vui lòng liên hệ quản trị viên để được mở khóa.',
+          },
+          inactive: {
+            title: 'Tài khoản chưa kích hoạt',
+            description:
+              'Tài khoản này cần xác thực OTP trước khi đăng nhập. Hãy hoàn tất bước kích hoạt rồi hệ thống sẽ đăng nhập lại cho bạn.',
+          },
+        },
+        flow: {
+          lockedActionLabel: 'Dùng tài khoản khác',
+          inactiveActionLabel: 'Gửi lại OTP',
+          inactiveOtpLead:
+            'Nhập mã OTP kích hoạt gần nhất trong email của bạn. Nếu chưa nhận được hoặc mã đã hết hạn, bạn có thể gửi lại ngay từ đây.',
+          inactiveOtpReadyHint:
+            'Nhập đúng mã OTP 6 chữ số rồi hệ thống sẽ tự đăng nhập lại bằng tài khoản bạn vừa nhập.',
+          inactiveBackLabel: 'Quay lại đăng nhập',
+          inactiveVerifyLabel: 'Xác thực và đăng nhập',
+          inactiveEmailRequiredMessage:
+            'Tài khoản chưa kích hoạt cần đăng nhập bằng email để xác thực OTP.',
+          inactiveRequestErrorFallback: 'Không thể gửi lại mã OTP kích hoạt',
+        },
       },
       forgotPassword: {
         title: 'Quên mật khẩu',
@@ -214,6 +248,74 @@ export const messages = {
         submit: 'Tạo tài khoản',
         haveAccount: 'Đã có tài khoản?',
         loginNow: 'Đăng nhập ngay',
+        verification: {
+          resendOtpLabel: 'Gửi lại mã OTP',
+          requestOtpErrorFallback: 'Không thể gửi lại mã OTP kích hoạt',
+        },
+        terms: {
+          badge: 'Điều khoản SáchVui',
+          agreementLabel: 'Tôi đồng ý với',
+          linkLabel: 'điều khoản sử dụng',
+          requiredMessage: 'Bạn cần đồng ý với điều khoản trước khi đăng ký.',
+          dialogTitle: 'Điều khoản sử dụng',
+          closeHint:
+            'Hãy cuộn xuống cuối nội dung để bật nút đóng ở góc phải.',
+          closeReady:
+            'Bạn đã đọc đến cuối. Có thể bấm dấu X để đóng cửa sổ.',
+          intro:
+            'Tài liệu này là nội dung minh hoạ cho trải nghiệm đăng ký tài khoản trên SáchVui. Bằng việc tiếp tục tạo tài khoản, bạn xác nhận đã đọc, hiểu và sẵn sàng tuân thủ các nguyên tắc vận hành dưới đây.',
+          sections: [
+            {
+              title: '1. Tài khoản và phạm vi sử dụng',
+              paragraphs: [
+                'Tài khoản được tạo ra để hỗ trợ mua sách, theo dõi đơn hàng, lưu lịch sử đánh giá và nhận thông báo từ hệ thống. Bạn có trách nhiệm cung cấp email còn hoạt động, bảo quản thông tin đăng nhập và không chia sẻ tài khoản cho người khác sử dụng chung.',
+                'Nếu hệ thống phát hiện tài khoản bị dùng cho mục đích giả mạo, thu thập dữ liệu, phá hoại trải nghiệm mua sắm hoặc gây nhầm lẫn cho người khác, SáchVui có thể tạm khóa tài khoản để kiểm tra mà không cần báo trước trong từng trường hợp riêng lẻ.',
+              ],
+            },
+            {
+              title: '2. Dữ liệu bạn cung cấp',
+              paragraphs: [
+                'Bạn đồng ý rằng email dùng để đăng ký có thể được sử dụng để gửi xác nhận tài khoản, hóa đơn điện tử, cập nhật đơn hàng và các thông báo vận hành quan trọng. Chúng tôi không khuyến khích dùng email dùng chung nếu bạn muốn giữ lịch sử mua sắm tách biệt.',
+                'Các thông tin được lưu trong hồ sơ cá nhân cần phản ánh đúng nhu cầu sử dụng thực tế. Khi phát hiện thông tin có dấu hiệu sai lệch nghiêm trọng hoặc được nhập tự động hàng loạt, hệ thống có quyền yêu cầu xác minh bổ sung trước khi mở các tính năng liên quan.',
+              ],
+            },
+            {
+              title: '3. Nội dung đánh giá và tương tác',
+              paragraphs: [
+                'Mọi đánh giá sách, bình luận hoặc phản hồi gửi qua tài khoản cần được trình bày văn minh, không chứa nội dung xúc phạm, kích động, bịa đặt hoặc quảng bá dịch vụ không liên quan. Những nội dung vi phạm có thể bị ẩn hoặc xóa để giữ môi trường đọc lành mạnh.',
+                'Khi bạn đăng nội dung lên hệ thống, bạn cho phép SáchVui hiển thị lại nội dung đó trong giao diện sản phẩm, trang tổng hợp đánh giá hoặc báo cáo quản trị nội bộ nhằm phục vụ cải thiện chất lượng dịch vụ và trải nghiệm người dùng.',
+              ],
+            },
+            {
+              title: '4. Quy tắc giao dịch',
+              paragraphs: [
+                'Giá bán, khuyến mãi, tồn kho và thời gian giao hàng có thể thay đổi theo từng thời điểm vận hành. Việc thêm sách vào giỏ không đồng nghĩa với việc giữ hàng tự động; đơn chỉ được xác nhận khi hệ thống ghi nhận thành công bước đặt hàng theo đúng quy trình.',
+                'Trong các tình huống phát sinh như lệch tồn kho, thay đổi chính sách vận chuyển, lỗi hiển thị giá hoặc giới hạn khu vực giao hàng, SáchVui sẽ chủ động liên hệ để đề xuất phương án thay thế, hoàn tiền hoặc điều chỉnh đơn theo cách hợp lý nhất.',
+              ],
+            },
+            {
+              title: '5. Bảo mật và ổn định hệ thống',
+              paragraphs: [
+                'Bạn không được thực hiện các hành vi dò quét, gửi yêu cầu quá mức, thử nghiệm trái phép, tự động hóa bất thường hoặc can thiệp vào luồng xử lý nhằm vượt qua giới hạn của website. Những hành vi này có thể ảnh hưởng trực tiếp đến độ ổn định của toàn hệ thống.',
+                'Nếu phát hiện lỗ hổng hoặc bất thường, cách xử lý phù hợp là báo lại cho đội ngũ vận hành thay vì khai thác tiếp. Việc hợp tác có trách nhiệm sẽ giúp hạn chế rủi ro cho cộng đồng người dùng và bảo vệ dữ liệu liên quan đến giao dịch.',
+              ],
+            },
+            {
+              title: '6. Chỉnh sửa, tạm ngừng và chấm dứt dịch vụ',
+              paragraphs: [
+                'SáchVui có thể cập nhật giao diện, tính năng, điều khoản vận hành hoặc luồng xử lý tài khoản theo nhu cầu thực tế. Với những thay đổi ảnh hưởng đáng kể đến cách sử dụng, thông tin sẽ được công bố trong giao diện hoặc gửi kèm theo thông báo phù hợp.',
+                'Bạn có thể ngừng sử dụng dịch vụ bất kỳ lúc nào. Tuy nhiên, các dữ liệu phát sinh từ giao dịch đã hoàn tất, yêu cầu hỗ trợ đang xử lý hoặc nghĩa vụ lưu trữ theo vận hành vẫn có thể được giữ lại trong phạm vi cần thiết để đối soát và chăm sóc khách hàng.',
+              ],
+            },
+            {
+              title: '7. Đồng thuận cuối cùng',
+              paragraphs: [
+                'Việc đánh dấu đồng ý thể hiện rằng bạn chấp nhận bộ điều khoản minh hoạ này như một phần của trải nghiệm đăng ký. Nếu bạn không đồng ý với bất kỳ nội dung nào, lựa chọn an toàn nhất là dừng thao tác tạo tài khoản cho đến khi bạn cảm thấy phù hợp hơn.',
+                'Cảm ơn bạn đã dành thời gian đọc đến cuối. Sự cẩn trọng của bạn giúp quá trình dùng thử giao diện đăng ký trở nên rõ ràng, có chủ đích và sát hơn với cách một website thương mại điện tử nên trao đổi trách nhiệm với người dùng.',
+              ],
+            },
+          ],
+        },
       },
       profile: {
         logout: 'Đăng xuất',
@@ -232,6 +334,28 @@ export const messages = {
         ordersTitle: 'Đơn hàng của bạn',
         emptyOrders: 'Bạn chưa có đơn hàng nào',
         orderTotal: 'Tổng cộng',
+        loginPanelTitle: 'Thông tin đăng nhập',
+        addressMenuTitle: 'Địa chỉ của tôi',
+        passwordMenuTitle: 'Đổi mật khẩu',
+        chooseImage: 'Chọn ảnh',
+        imageHint: 'JPG, PNG',
+        noOrdersDescription:
+          'Khám phá sách hay và đặt đơn đầu tiên của bạn.',
+        shopNow: 'Mua sách ngay',
+        addressTitle: 'Sổ địa chỉ của bạn',
+        addressDescription:
+          'Các địa chỉ giao hàng đã lưu sẽ hiển thị ở đây.',
+        noAddressesTitle: 'Bạn chưa có địa chỉ nào',
+        noAddressesDescription:
+          'Thêm địa chỉ khi thanh toán để lần sau chọn nhanh hơn.',
+        passwordTitle: 'Bảo mật tài khoản',
+        passwordDescription:
+          'Đổi mật khẩu bằng luồng xác thực hiện có của hệ thống.',
+        passwordAction: 'Đi tới đổi mật khẩu',
+        defaultAddress: 'Mặc định',
+        retry: 'Thử lại',
+        goCheckout: 'Đi tới thanh toán',
+        avatarLabel: 'Ảnh đại diện',
       },
     },
     book: {
@@ -259,6 +383,15 @@ export const messages = {
         resultCount: 'Tìm thấy {count} cuốn sách phù hợp',
         searchPlaceholder: 'Tìm sách, tác giả...',
         categoryTitle: 'Thể loại',
+        categoryCount: '{count} mục',
+        selectedCategoryLabel: 'Đang lọc theo',
+        clearCategory: 'Bỏ lọc',
+        categorySearchPlaceholder: 'Tìm thể loại...',
+        categoryShowingCount: 'Hiển thị {count}/{total} thể loại',
+        categoryEmptyTitle: 'Không có thể loại phù hợp',
+        categoryEmptyDescription: 'Thử từ khóa khác hoặc bỏ lọc để xem toàn bộ thể loại.',
+        showMoreCategories: 'Xem thêm {count} mục',
+        showFewerCategories: 'Thu gọn',
         sortPlaceholder: 'Sắp xếp',
         sortPopular: 'Phổ biến nhất',
         sortRating: 'Đánh giá cao',
@@ -317,6 +450,24 @@ export const messages = {
         stockValue: '{count} cuốn',
         pageCountValue: '{count} trang',
         weightValue: '{count} g',
+        digitalAssets: {
+          title: 'Phi\u00ean b\u1ea3n s\u1ed1',
+          description:
+            '\u0110\u00e2y l\u00e0 c\u00e1c phi\u00ean b\u1ea3n s\u1ed1 \u0111ang \u0111\u01b0\u1ee3c ph\u00e1t h\u00e0nh c\u00f4ng khai cho cu\u1ed1n s\u00e1ch n\u00e0y.',
+          addToCart: 'Th\u00eam ebook v\u00e0o gi\u1ecf',
+          addToCartError:
+            'Kh\u00f4ng th\u1ec3 th\u00eam phi\u00ean b\u1ea3n s\u1ed1 v\u00e0o gi\u1ecf h\u00e0ng.',
+          addedToCart: '\u0110\u00e3 th\u00eam phi\u00ean b\u1ea3n s\u1ed1 v\u00e0o gi\u1ecf h\u00e0ng.',
+          addingToCart: '\u0110ang th\u00eam...',
+          downloadAllowed: 'Cho ph\u00e9p t\u1ea3i',
+          downloadRestricted: 'Gi\u1edbi h\u1ea1n t\u1ea3i',
+          noSample: 'Kh\u00f4ng c\u00f3 b\u1ea3n m\u1eabu',
+          openSample: 'M\u1edf b\u1ea3n m\u1eabu',
+          purchaseAvailable: 'C\u00f3 th\u1ec3 mua',
+          purchaseDisabled: 'T\u1ea1m th\u1eddi kh\u00f4ng b\u00e1n',
+          purchaseUnavailable: 'Kh\u00f4ng h\u1ed7 tr\u1ee3 mua',
+          sampleAvailable: 'C\u00f3 b\u1ea3n m\u1eabu',
+        },
       },
     },
     cart: {
@@ -344,6 +495,16 @@ export const messages = {
       loginRequired: 'Vui lòng đăng nhập để sử dụng giỏ hàng',
       fetchError: 'Không tải được giỏ hàng',
       updateError: 'Không thể cập nhật giỏ hàng',
+      itemTypes: {
+        digitalAsset: {
+          badge: 'T\u00e0i s\u1ea3n s\u1ed1',
+          quantity: '1 quy\u1ec1n truy c\u1eadp',
+        },
+        physicalBook: {
+          badge: 'S\u00e1ch gi\u1ea5y',
+          quantity: 'S\u1ed1 l\u01b0\u1ee3ng v\u1eadt l\u00fd',
+        },
+      },
     },
     checkout: {
       title: 'Thanh toán',
@@ -425,6 +586,320 @@ export const messages = {
       paymentStatus: 'Tình trạng thanh toán',
       total: 'Tổng thanh toán',
     },
+    orderConfirmationBankTransfer: {
+      waitingTitle: 'Ch\u1edd thanh to\u00e1n chuy\u1ec3n kho\u1ea3n',
+      waitingDescription:
+        '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o. H\u00e3y chuy\u1ec3n kho\u1ea3n \u0111\u00fang n\u1ed9i dung b\u00ean d\u01b0\u1edbi \u0111\u1ec3 backend t\u1ef1 \u0111\u1ed1i chi\u1ebfu thanh to\u00e1n.',
+      paidTitle: 'Thanh to\u00e1n th\u00e0nh c\u00f4ng',
+      paidDescription:
+        'Backend \u0111\u00e3 c\u1eadp nh\u1eadt \u0111\u01a1n h\u00e0ng n\u00e0y l\u00e0 \u0111\u00e3 thanh to\u00e1n. Frontend kh\u00f4ng t\u1ef1 set PAID.',
+      failedTitle: 'Thanh to\u00e1n th\u1ea5t b\u1ea1i',
+      failedDescription:
+        'Backend \u0111\u00e3 \u0111\u00e1nh d\u1ea5u giao d\u1ecbch th\u1ea5t b\u1ea1i. H\u00e3y ki\u1ec3m tra l\u1ea1i chuy\u1ec3n kho\u1ea3n n\u1ebfu c\u1ea7n.',
+      cancelledTitle: 'Thanh to\u00e1n \u0111\u00e3 h\u1ee7y',
+      cancelledDescription:
+        'Backend \u0111\u00e3 \u0111\u00e1nh d\u1ea5u giao d\u1ecbch b\u1ecb h\u1ee7y. H\u00e3y t\u1ea1o checkout m\u1edbi n\u1ebfu b\u1ea1n v\u1eabn mu\u1ed1n \u0111\u1eb7t h\u00e0ng.',
+      pollingNotice:
+        '\u0110ang ki\u1ec3m tra tr\u1ea1ng th\u00e1i thanh to\u00e1n m\u1ed7i 4 gi\u00e2y.',
+      transferInstructionTitle: 'H\u01b0\u1edbng d\u1eabn chuy\u1ec3n kho\u1ea3n',
+      transferInstructionDescription:
+        'D\u00f9ng th\u00f4ng tin t\u00e0i kho\u1ea3n b\u00ean d\u01b0\u1edbi v\u00e0 gi\u1eef nguy\u00ean n\u1ed9i dung chuy\u1ec3n kho\u1ea3n.',
+      bankNameLabel: 'Ng\u00e2n h\u00e0ng',
+      accountNumberLabel: 'S\u1ed1 t\u00e0i kho\u1ea3n',
+      accountNameLabel: 'Ch\u1ee7 t\u00e0i kho\u1ea3n',
+      transferContentLabel: 'N\u1ed9i dung chuy\u1ec3n kho\u1ea3n',
+      transferContentHint:
+        'H\u00e3y copy \u0111\u00fang n\u1ed9i dung n\u00e0y \u0111\u1ec3 SePay \u0111\u1ed1i chi\u1ebfu ch\u00ednh x\u00e1c.',
+      copyButton: 'Copy n\u1ed9i dung',
+      copySuccess: '\u0110\u00e3 copy n\u1ed9i dung chuy\u1ec3n kho\u1ea3n.',
+      copyError: 'Kh\u00f4ng th\u1ec3 copy n\u1ed9i dung chuy\u1ec3n kho\u1ea3n.',
+      qrTitle: 'Khu v\u1ef1c QR thanh to\u00e1n',
+      qrDescription:
+        'QR \u0111\u01b0\u1ee3c t\u1ea1o \u0111\u1ed9ng theo s\u1ed1 ti\u1ec1n v\u00e0 n\u1ed9i dung chuy\u1ec3n kho\u1ea3n c\u1ee7a \u0111\u01a1n h\u00e0ng n\u1ebfu c\u1ea5u h\u00ecnh ng\u00e2n h\u00e0ng \u0111\u1ea7y \u0111\u1ee7.',
+      qrUnavailableTitle: 'Ch\u01b0a t\u1ea1o \u0111\u01b0\u1ee3c QR \u0111\u1ed9ng',
+      qrUnavailableDescription:
+        'C\u1ea5u h\u00ecnh ng\u00e2n h\u00e0ng \u0111ang thi\u1ebfu, vui l\u00f2ng chuy\u1ec3n kho\u1ea3n th\u1ee7 c\u00f4ng d\u00f9ng th\u00f4ng tin hi\u1ec3n th\u1ecb \u1edf tr\u00ean.',
+      qrImageErrorTitle: 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh QR',
+      qrImageErrorDescription:
+        'D\u1ecbch v\u1ee5 QR t\u1ea1m th\u1eddi kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c. Vui l\u00f2ng chuy\u1ec3n kho\u1ea3n th\u1ee7 c\u00f4ng d\u00f9ng \u0111\u00fang th\u00f4ng tin hi\u1ec3n th\u1ecb \u1edf tr\u00ean.',
+      qrFallbackNoticeTitle: '\u0110ang d\u00f9ng QR fallback',
+      qrFallbackNoticeDescription:
+        'H\u1ec7 th\u1ed1ng \u0111ang d\u00f9ng URL QR c\u0169 v\u00ec ch\u01b0a \u0111\u1ee7 c\u1ea5u h\u00ecnh \u0111\u1ec3 t\u1ea1o VietQR \u0111\u1ed9ng.',
+      manualTransferTitle: 'H\u01b0\u1edbng d\u1eabn chuy\u1ec3n kho\u1ea3n th\u1ee7 c\u00f4ng',
+      manualTransferDescription:
+        'H\u00e3y d\u00f9ng \u0111\u00fang ng\u00e2n h\u00e0ng, s\u1ed1 t\u00e0i kho\u1ea3n, ch\u1ee7 t\u00e0i kho\u1ea3n, s\u1ed1 ti\u1ec1n v\u00e0 n\u1ed9i dung chuy\u1ec3n kho\u1ea3n hi\u1ec7n tr\u00ean trang n\u00e0y.',
+      orderSummaryTitle: 'T\u00f3m t\u1eaft thanh to\u00e1n',
+      summaryDescription:
+        'M\u00e0n h\u00ecnh n\u00e0y ch\u1ec9 \u0111\u1ecdc tr\u1ea1ng th\u00e1i v\u00e0 d\u1eef li\u1ec7u thanh to\u00e1n t\u1eeb backend.',
+      orderIdLabel: 'M\u00e3 \u0111\u01a1n h\u00e0ng',
+      orderCodeLabel: 'M\u00e3 giao d\u1ecbch',
+      totalAmountLabel: 'T\u1ed5ng thanh to\u00e1n',
+      paymentMethodLabel: 'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n',
+      paymentStatusLabel: 'Tr\u1ea1ng th\u00e1i thanh to\u00e1n',
+      receiverInfoTitle: 'Th\u00f4ng tin ng\u01b0\u1eddi nh\u1eadn',
+      receiverNameLabel: 'Ng\u01b0\u1eddi nh\u1eadn',
+      receiverPhoneLabel: 'S\u1ed1 \u0111i\u1ec7n tho\u1ea1i',
+      receiverAddressLabel: '\u0110\u1ecba ch\u1ec9',
+      viewOrdersButton: 'Xem \u0111\u01a1n h\u00e0ng c\u1ee7a t\u00f4i',
+      continueShoppingButton: 'Ti\u1ebfp t\u1ee5c mua s\u1eafm',
+      loadingNotice: '\u0110ang t\u1ea3i tr\u1ea1ng th\u00e1i thanh to\u00e1n m\u1edbi nh\u1ea5t...',
+      emptyValue: 'Kh\u00f4ng c\u00f3',
+      bankFallback: 'C\u1eadp nh\u1eadt VITE_BANK_TRANSFER_BANK_NAME',
+      accountNumberFallback:
+        'C\u1eadp nh\u1eadt VITE_BANK_TRANSFER_ACCOUNT_NUMBER',
+      accountNameFallback: 'C\u1eadp nh\u1eadt VITE_BANK_TRANSFER_ACCOUNT_NAME',
+    },
+    orderConfirmationCashOnDelivery: {
+      waitingTitle:
+        '\u0110\u01a1n h\u00e0ng \u0111\u00e3 t\u1ea1o v\u1edbi thanh to\u00e1n khi nh\u1eadn h\u00e0ng',
+      waitingDescription:
+        '\u0110\u01a1n h\u00e0ng c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o th\u00e0nh c\u00f4ng. B\u1ea1n s\u1ebd thanh to\u00e1n khi nh\u1eadn h\u00e0ng, v\u00ec v\u1eady h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ea1o b\u01b0\u1edbc chuy\u1ec3n kho\u1ea3n SePay cho \u0111\u01a1n n\u00e0y.',
+      instructionTitle: 'H\u01b0\u1edbng d\u1eabn thanh to\u00e1n khi nh\u1eadn h\u00e0ng',
+      instructionDescription:
+        'H\u00e3y gi\u1eef \u0111i\u1ec7n tho\u1ea1i s\u1eb5n s\u00e0ng v\u00ec c\u1eeda h\u00e0ng ho\u1eb7c \u0111\u01a1n v\u1ecb giao h\u00e0ng c\u00f3 th\u1ec3 li\u00ean h\u1ec7 tr\u01b0\u1edbc khi giao.',
+      paymentLabel: 'Th\u1eddi \u0111i\u1ec3m thanh to\u00e1n',
+      paymentValue: 'Thanh to\u00e1n khi nh\u1eadn \u0111\u01b0\u1ee3c ki\u1ec7n h\u00e0ng.',
+      deliveryFeeLabel: 'Ch\u00ednh s\u00e1ch ph\u00ed giao h\u00e0ng',
+      deliveryFeeValue:
+        'Giao t\u1eadn n\u01a1i t\u00ednh ph\u00ed 30.000\u0111 v\u00e0 mi\u1ec5n ph\u00ed t\u1eeb 200.000\u0111. Nh\u1eadn t\u1ea1i c\u1eeda h\u00e0ng v\u1eabn mi\u1ec5n ph\u00ed.',
+      nextStepLabel: 'C\u1eadp nh\u1eadt ti\u1ebfp theo',
+      nextStepValue:
+        'Theo d\u00f5i tr\u1ea1ng th\u00e1i x\u00e1c nh\u1eadn v\u00e0 giao h\u00e0ng trong l\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng.',
+      noteTitle: 'Tr\u01b0\u1edbc khi nh\u1eadn h\u00e0ng',
+      noteDescription:
+        'N\u00ean chu\u1ea9n b\u1ecb tr\u01b0\u1edbc s\u1ed1 ti\u1ec1n c\u1ea7n thanh to\u00e1n n\u1ebfu c\u00f3 th\u1ec3 v\u00e0 ki\u1ec3m tra t\u00ecnh tr\u1ea1ng ki\u1ec7n h\u00e0ng tr\u01b0\u1edbc khi tr\u1ea3 ti\u1ec1n cho shipper.',
+      summaryDescription:
+        '\u0110\u01a1n h\u00e0ng n\u00e0y s\u1ebd \u0111\u01b0\u1ee3c thanh to\u00e1n b\u1eb1ng ti\u1ec1n m\u1eb7t khi giao \u0111\u1ebfn.',
+    },
+    library: {
+      page: {
+        acquiredAtLabel: 'Nh\u1eadn l\u00fac',
+        allFormats: 'T\u1ea5t c\u1ea3 \u0111\u1ecbnh d\u1ea1ng',
+        allStatuses: 'T\u1ea5t c\u1ea3 tr\u1ea1ng th\u00e1i',
+        bookLabel: 'S\u00e1ch',
+        countLabel: 'T\u00e0i s\u1ea3n \u0111ang hi\u1ec3n th\u1ecb',
+        description:
+          'Xem c\u00e1c t\u00e0i s\u1ea3n s\u1ed1 \u0111\u00e3 \u0111\u01b0\u1ee3c c\u1ea5p quy\u1ec1n t\u1eeb \u0111\u01a1n h\u00e0ng c\u1ee7a b\u1ea1n v\u00e0 ti\u1ebfp t\u1ee5c \u0111\u1ecdc an to\u00e0n t\u1eeb th\u01b0 vi\u1ec7n ri\u00eang.',
+        downloadAllowedLabel: 'Cho ph\u00e9p t\u1ea3i',
+        downloadReadyBadge: 'C\u00f3 th\u1ec3 t\u1ea3i trong trang chi ti\u1ebft',
+        emptyDescription:
+          'Kh\u00f4ng c\u00f3 t\u00e0i s\u1ea3n s\u1ed1 n\u00e0o kh\u1edbp b\u1ed9 l\u1ecdc hi\u1ec7n t\u1ea1i. Khi quy\u1ec1n truy c\u1eadp \u0111\u01b0\u1ee3c c\u1ea5p, t\u00e0i s\u1ea3n s\u1ebd xu\u1ea5t hi\u1ec7n \u1edf \u0111\u00e2y.',
+        emptyTitle: 'Ch\u01b0a t\u00ecm th\u1ea5y t\u00e0i s\u1ea3n s\u1ed1',
+        expiresAtLabel: 'H\u1ebft h\u1ea1n l\u00fac',
+        formatFilterLabel: 'L\u1ecdc theo \u0111\u1ecbnh d\u1ea1ng',
+        loadMore: 'T\u1ea3i th\u00eam',
+        loading: '\u0110ang t\u1ea3i th\u01b0 vi\u1ec7n s\u1ed1...',
+        loadingMore: '\u0110ang t\u1ea3i th\u00eam...',
+        noExpiry: 'Kh\u00f4ng gi\u1edbi h\u1ea1n',
+        noProgress: 'Ch\u01b0a c\u00f3 ti\u1ebfn \u0111\u1ed9',
+        openSampleLabel: 'M\u1edf b\u1ea3n m\u1eabu',
+        openingSampleLabel: '\u0110ang m\u1edf b\u1ea3n m\u1eabu...',
+        priceLabel: 'Gi\u00e1',
+        progressLabel: 'Ti\u1ebfn \u0111\u1ed9 \u0111\u1ecdc',
+        readNowLabel: '\u0110\u1ecdc ngay',
+        sampleAvailableLabel: 'C\u00f3 b\u1ea3n m\u1eabu',
+        sampleError: 'Kh\u00f4ng th\u1ec3 m\u1edf b\u1ea3n m\u1eabu.',
+        searchPlaceholder:
+          'T\u00ecm theo t\u00ean s\u00e1ch, t\u00ean t\u00e0i s\u1ea3n ho\u1eb7c \u0111\u1ecbnh d\u1ea1ng...',
+        statusFilterLabel: 'L\u1ecdc theo tr\u1ea1ng th\u00e1i',
+        title: 'Th\u01b0 vi\u1ec7n s\u1ed1 c\u1ee7a t\u00f4i',
+        totalOwnedLabel: '\u0110\u00e3 \u0111\u01b0\u1ee3c c\u1ea5p {count} t\u00e0i s\u1ea3n',
+        viewDetailLabel: 'Xem chi ti\u1ebft',
+      },
+      detail: {
+        accessDescription:
+          'M\u1edf tr\u00ecnh \u0111\u1ecdc ri\u00eang ho\u1eb7c y\u00eau c\u1ea7u URL t\u1ea3i t\u1ea1m th\u1eddi khi t\u00e0i s\u1ea3n \u0111\u00e3 \u0111\u01b0\u1ee3c c\u1ea5p quy\u1ec1n truy c\u1eadp.',
+        accessTitle: 'Truy c\u1eadp t\u00e0i s\u1ea3n',
+        acquiredAtLabel: 'Nh\u1eadn l\u00fac',
+        assetUpdatedAtLabel: 'T\u00e0i s\u1ea3n c\u1eadp nh\u1eadt l\u00fac',
+        backLabel: 'Quay l\u1ea1i th\u01b0 vi\u1ec7n s\u1ed1',
+        bookDescriptionLabel: 'M\u00f4 t\u1ea3 s\u00e1ch',
+        bookLabel: 'S\u00e1ch',
+        currentPageLabel: 'Trang hi\u1ec7n t\u1ea1i',
+        downloadAllowed: 'Cho ph\u00e9p t\u1ea3i',
+        downloadLabel: 'T\u1ea3i t\u00e0i s\u1ea3n',
+        expiresAtLabel: 'H\u1ebft h\u1ea1n l\u00fac',
+        fileNameLabel: 'T\u00ean t\u1ec7p',
+        fileSizeLabel: 'Dung l\u01b0\u1ee3ng',
+        loading: '\u0110ang t\u1ea3i chi ti\u1ebft t\u00e0i s\u1ea3n s\u1ed1...',
+        mimeTypeLabel: 'MIME type',
+        noDescription: 'M\u00f4 t\u1ea3 s\u00e1ch hi\u1ec7n ch\u01b0a c\u00f3 d\u1eef li\u1ec7u.',
+        noExpiry: 'Kh\u00f4ng gi\u1edbi h\u1ea1n',
+        noProgress: 'Ch\u01b0a c\u00f3 ti\u1ebfn \u0111\u1ed9',
+        noSourceOrder: 'Kh\u00f4ng c\u00f3 \u0111\u01a1n ngu\u1ed3n',
+        openReaderLabel: 'M\u1edf tr\u00ecnh \u0111\u1ecdc',
+        openSampleLabel: 'M\u1edf b\u1ea3n m\u1eabu',
+        openingDownloadLabel: '\u0110ang l\u1ea5y URL t\u1ea3i...',
+        openingSampleLabel: '\u0110ang m\u1edf b\u1ea3n m\u1eabu...',
+        positionDataLabel: 'Position data',
+        positionDataPlaceholder:
+          'JSON ho\u1eb7c chu\u1ed7i \u0111\u00e1nh d\u1ea5u v\u1ecb tr\u00ed n\u1ebfu reader c\u1ee7a b\u1ea1n c\u00f3 l\u01b0u tr\u1ea1ng th\u00e1i',
+        priceLabel: 'Gi\u00e1',
+        progressDescription:
+          'B\u1ea1n v\u1eabn c\u00f3 th\u1ec3 \u0111\u1ed3ng b\u1ed9 ti\u1ebfn \u0111\u1ed9 \u0111\u1ecdc th\u1ee7 c\u00f4ng t\u1eeb m\u00e0n h\u00ecnh n\u00e0y n\u1ebfu tr\u00ecnh \u0111\u1ecdc ch\u01b0a t\u1ef1 g\u1eedi tr\u1ea1ng th\u00e1i.',
+        progressPercentLabel: 'Ph\u1ea7n tr\u0103m ti\u1ebfn \u0111\u1ed9',
+        progressTitle: 'Ti\u1ebfn \u0111\u1ed9 \u0111\u1ecdc',
+        readOnlyBadge: 'Ch\u1ec9 cho ph\u00e9p \u0111\u1ecdc tr\u1ef1c tuy\u1ebfn',
+        sampleAvailable: 'C\u00f3 b\u1ea3n m\u1eabu',
+        saveProgressLabel: 'L\u01b0u ti\u1ebfn \u0111\u1ed9',
+        savingLabel: '\u0110ang l\u01b0u...',
+        sourceOrderIdLabel: 'M\u00e3 \u0111\u01a1n ngu\u1ed3n',
+      },
+      reader: {
+        acquiredAtLabel: 'Nh\u1eadn l\u00fac',
+        audioDescription:
+          'D\u00f9ng tr\u00ecnh ph\u00e1t m\u1eb7c \u0111\u1ecbnh \u0111\u1ec3 nghe s\u00e1ch n\u00f3i.',
+        audioFallback:
+          'Tr\u00ecnh duy\u1ec7t c\u1ee7a b\u1ea1n ch\u01b0a h\u1ed7 tr\u1ee3 ph\u00e1t \u00e2m thanh.',
+        audioTitle: 'Tr\u00ecnh ph\u00e1t \u00e2m thanh',
+        backLabel: 'Quay l\u1ea1i chi ti\u1ebft t\u00e0i s\u1ea3n',
+        bookLabel: 'S\u00e1ch',
+        expiresAtLabel: 'H\u1ebft h\u1ea1n l\u00fac',
+        fileNameLabel: 'T\u00ean t\u1ec7p',
+        loading: '\u0110ang t\u1ea3i tr\u00ecnh \u0111\u1ecdc...',
+        noExpiry: 'Kh\u00f4ng gi\u1edbi h\u1ea1n',
+        notFound: 'Kh\u00f4ng th\u1ec3 m\u1edf t\u00e0i s\u1ea3n s\u1ed1 n\u00e0y.',
+        openNewTab: 'M\u1edf tab m\u1edbi',
+        updatedAtLabel: 'T\u00e0i s\u1ea3n c\u1eadp nh\u1eadt l\u00fac',
+      },
+      progress: {
+        validation: {
+          progressPercentRange:
+            'Ti\u1ebfn \u0111\u1ed9 ph\u1ea3i n\u1eb1m trong kho\u1ea3ng t\u1eeb 0 \u0111\u1ebfn 100.',
+          currentPageNonNegativeInteger:
+            'Trang hi\u1ec7n t\u1ea1i ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean kh\u00f4ng \u00e2m.',
+        },
+        updateSuccess: '\u0110\u00e3 c\u1eadp nh\u1eadt ti\u1ebfn \u0111\u1ed9 \u0111\u1ecdc.',
+      },
+    },
+    orderDetail: {
+      orderHistory: 'L\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng',
+      orderSummary: 'T\u00f3m t\u1eaft \u0111\u01a1n h\u00e0ng',
+      productTotal: 'T\u1ed5ng ti\u1ec1n h\u00e0ng',
+      itemsTitle: 'S\u1ea3n ph\u1ea9m trong \u0111\u01a1n',
+      digitalItemLabel: 'T\u00e0i s\u1ea3n s\u1ed1',
+      physicalItemLabel: 'S\u00e1ch gi\u1ea5y',
+      openLibraryAsset: 'M\u1edf trong th\u01b0 vi\u1ec7n',
+    },
+    orderHistoryPage: {
+      completedStep: 'Ho\u00e0n t\u1ea5t',
+      copyError: 'Kh\u00f4ng th\u1ec3 sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng.',
+      copyOrderId: 'Sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng',
+      copySuccess: '\u0110\u00e3 sao ch\u00e9p m\u00e3 \u0111\u01a1n h\u00e0ng.',
+      discoverDescription:
+        'H\u00e0ng ng\u00e0n t\u1ef1a s\u00e1ch ch\u1ea5t l\u01b0\u1ee3ng \u0111ang ch\u1edd b\u1ea1n kh\u00e1m ph\u00e1.',
+      discoverTitle: 'Kh\u00e1m ph\u00e1 th\u00eam s\u00e1ch hay',
+      exploreNow: 'Kh\u00e1m ph\u00e1 ngay',
+      pendingStep: 'Ch\u1edd x\u00e1c nh\u1eadn',
+      processingStep: '\u0110ang x\u1eed l\u00fd',
+      shippingStep: '\u0110ang giao h\u00e0ng',
+    },
+    notifications: {
+      emptyContent: 'Không có nội dung',
+      realtimeConnected: 'Realtime đang bật',
+      realtimeFallback: 'Đang dùng REST fallback',
+      newNotificationFallback: 'Thông báo mới',
+      errors: {
+        fetch: 'Không tải được thông báo',
+        update: 'Không cập nhật được thông báo',
+        delete: 'Không xóa được thông báo',
+      },
+      bell: {
+        title: 'Thông báo',
+        empty: 'Chưa có thông báo nào',
+        viewAll: 'Xem tất cả',
+        delete: 'Xóa',
+        loading: 'Đang tải thông báo...',
+        openLabel: 'Mở thông báo',
+        deleteSuccess: 'Đã xóa thông báo',
+      },
+      page: {
+        title: 'Thông báo của bạn',
+        description:
+          'Theo dõi thông báo mới, cập nhật đơn hàng và giao hàng theo thời gian thực.',
+        all: 'Tất cả',
+        unread: 'Chưa đọc',
+        empty: 'Không có thông báo nào phù hợp',
+        markAll: 'Đánh dấu tất cả đã đọc',
+        markRead: 'Đánh dấu đã đọc',
+        loading: 'Đang tải thông báo...',
+        loadMore: 'Tải thêm',
+        delete: 'Xóa',
+        open: 'Mở thông báo',
+        deleteSuccess: 'Đã xóa thông báo',
+      },
+    },
+    chat: {
+      errors: {
+        loadConversations: 'Không tải được cuộc trò chuyện hỗ trợ',
+        loadMessages: 'Không tải được lịch sử tin nhắn',
+      },
+      customer: {
+        title: 'Hỗ trợ khách hàng',
+        subtitle: 'Nhận hồi đáp trực tiếp từ nhân viên',
+        defaultSubject: 'Hỗ trợ khách hàng',
+        newConversation: 'Cuộc trò chuyện mới',
+        subject: 'Chủ đề',
+        subjectPlaceholder: 'Ví dụ: Hỏi về đơn hàng #1234',
+        sendPlaceholder: 'Nhập nội dung cần hỗ trợ...',
+        send: 'Gửi tin nhắn',
+        loadingMessages: 'Đang tải tin nhắn...',
+        loadOlderMessages: 'Tải tin nhắn cũ hơn',
+        emptyMessages:
+          'Chưa có tin nhắn nào. Hãy mở đầu bằng vấn đề cần hỗ trợ.',
+        emptyConversations: 'Bạn chưa có cuộc trò chuyện nào.',
+        closedNotice:
+          'Cuộc trò chuyện này đã đóng. Tạo cuộc trò chuyện mới nếu bạn cần hỗ trợ tiếp.',
+        closeConversation: 'Đóng cuộc trò chuyện',
+        realtimeConnected: 'Đang kết nối realtime',
+        realtimeFallback: 'Đang dùng REST fallback',
+        refresh: 'Tải lại',
+        openChat: 'Mở chat hỗ trợ',
+        incomingTitle: 'Tin nhắn hỗ trợ mới',
+        viewAllNotifications: 'Xem thông báo',
+      },
+    },
+
+    adminChat: {
+      title: 'Chat hỗ trợ khách hàng',
+      description:
+        'Theo dõi hội thoại hỗ trợ theo thời gian thực, phân công nhân sự tự động hoặc mở lại cuộc trò chuyện từ một màn hình.',
+      totalConversations: 'Tổng hội thoại',
+      unreadCount: 'Chưa đọc',
+      openCount: 'Đang mở',
+      connected: 'Realtime đang bật',
+      fallback: 'Đang dùng REST fallback',
+      listTitle: 'Danh sách hội thoại',
+      searchPlaceholder: 'Tìm theo khách hàng, email, nội dung...',
+      statusLabel: 'Trạng thái',
+      statusAll: 'Tất cả',
+      statusOpen: 'Đang mở',
+      statusPending: 'Đang chờ',
+      statusClosed: 'Đã đóng',
+      emptyConversations: 'Không có hội thoại phù hợp bộ lọc hiện tại.',
+      loadMore: 'Tải thêm',
+      loadingList: 'Đang tải hội thoại...',
+      loadingMessages: 'Đang tải tin nhắn...',
+      messageEmpty: 'Chưa có tin nhắn trong hội thoại này.',
+      replyPlaceholder: 'Nhập nội dung phản hồi cho khách hàng...',
+      send: 'Gửi phản hồi',
+      closeConversation: 'Đóng hội thoại',
+      reopenConversation: 'Mở lại hội thoại',
+      customer: 'Khách hàng',
+      assignee: 'Phụ trách',
+      unassigned: 'Chưa phân công',
+      assignToSelf: 'Nhận xử lý',
+      assignButton: 'Phân công',
+      staffPlaceholder: 'Chọn nhân viên',
+      priority: 'Độ ưu tiên',
+      target: 'Nguồn liên quan',
+      createdAt: 'Tạo lúc',
+      updatedAt: 'Cập nhật lúc',
+      noConversationSelected: 'Chọn một hội thoại để bắt đầu xử lý.',
+      closedNotice: 'Hội thoại đã đóng. Mở lại nếu cần tiếp tục hỗ trợ.',
+      noMessagesYet: 'Khách hàng chưa gửi tin nhắn.',
+      loadError: 'Không tải được danh sách chat hỗ trợ',
+    },
     orders: {
       title: 'Lịch sử đơn hàng',
       totalCount: 'Tổng cộng {count} đơn hàng',
@@ -462,6 +937,17 @@ export const messages = {
         roles: 'Quản lý vai trò',
         permissions: 'Quản lý quyền',
         promotions: 'Quản lý khuyến mãi',
+        importReceipts: 'Quản lý nhập kho',
+        inventory: 'Quản lý tồn kho',
+        shipments: 'Quản lý giao hàng',
+        reviews: 'Quản lý đánh giá',
+        notifications: 'Quản lý thông báo',
+        chat: 'Chat hỗ trợ',
+        suppliers: 'Quản lý nhà cung cấp',
+        customers: 'Quản lý khách hàng',
+        staff: 'Quản lý nhân viên',
+        settings: 'Cài đặt tài khoản',
+        adminAccount: 'Tài khoản quản trị',
         references: 'Danh mục tham chiếu',
       },
       dashboard: {
@@ -539,6 +1025,49 @@ export const messages = {
         },
         empty: 'Không tìm thấy sách nào',
       },
+      digitalAssets: {
+        sectionLabel: 'T\u00e0i s\u1ea3n s\u1ed1',
+        title: 'T\u00e0i s\u1ea3n s\u1ed1 c\u1ee7a cu\u1ed1n s\u00e1ch',
+        description:
+          'Qu\u1ea3n l\u00fd c\u00e1c t\u00e0i s\u1ea3n s\u1ed1 m\u00e0 backend \u0111ang g\u1eafn v\u1edbi cu\u1ed1n s\u00e1ch n\u00e0y ngay trong flow admin books hi\u1ec7n t\u1ea1i.',
+        addAsset: 'Th\u00eam t\u00e0i s\u1ea3n',
+        loading: '\u0110ang t\u1ea3i t\u00e0i s\u1ea3n s\u1ed1...',
+        empty: 'Cu\u1ed1n s\u00e1ch n\u00e0y ch\u01b0a c\u00f3 t\u00e0i s\u1ea3n s\u1ed1 n\u00e0o.',
+        published: '\u0110\u00e3 ph\u00e1t h\u00e0nh',
+        unpublished: 'Nh\u00e1p',
+        downloadAllowed: 'Cho ph\u00e9p t\u1ea3i',
+        purchaseAllowed: 'Cho ph\u00e9p mua',
+        editAsset: 'S\u1eeda t\u00e0i s\u1ea3n',
+        deleteAsset: 'X\u00f3a t\u00e0i s\u1ea3n',
+        priceLabel: 'Gi\u00e1',
+        mimeTypeLabel: 'MIME type',
+        fileSizeLabel: 'Dung l\u01b0\u1ee3ng',
+        updatedAtLabel: 'C\u1eadp nh\u1eadt l\u00fac',
+        createTitle: 'T\u1ea1o t\u00e0i s\u1ea3n s\u1ed1',
+        editTitle: 'C\u1eadp nh\u1eadt t\u00e0i s\u1ea3n s\u1ed1',
+        formatLabel: '\u0110\u1ecbnh d\u1ea1ng',
+        titleLabel: 'Ti\u00eau \u0111\u1ec1',
+        mainFileLabel: 'File ch\u00ednh',
+        sampleFileLabel: 'File m\u1eabu',
+        mainFileHelp:
+          'T\u1ea3i file ch\u00ednh qua file service. Metadata s\u1ebd \u0111\u01b0\u1ee3c l\u1ea5y t\u1eeb file_assets.',
+        sampleFileHelp:
+          'T\u1ea3i file m\u1eabu n\u1ebfu c\u1ea7n preview. Kh\u00f4ng nh\u1eadp storage key th\u1ee7 c\u00f4ng.',
+        fileAssetIdLabel: 'ID file asset',
+        sampleFileAssetIdLabel: 'ID file asset m\u1eabu',
+        fileNameLabel: 'T\u00ean t\u1ec7p',
+        checksumLabel: 'Checksum',
+        save: 'L\u01b0u t\u00e0i s\u1ea3n',
+        deleteTitle: 'X\u00e1c nh\u1eadn x\u00f3a t\u00e0i s\u1ea3n s\u1ed1',
+        confirmDelete: 'X\u00f3a t\u00e0i s\u1ea3n s\u1ed1 "{title}"?',
+        notUploaded: 'Ch\u01b0a t\u1ea3i t\u1ec7p',
+        noSample: 'Kh\u00f4ng c\u00f3 file m\u1eabu',
+        validationError:
+          'Vui l\u00f2ng ki\u1ec3m tra ti\u00eau \u0111\u1ec1, gi\u00e1 b\u00e1n v\u00e0 t\u1ec7p \u0111\u00e3 t\u1ea3i l\u00ean.',
+        updatedSuccess: '\u0110\u00e3 c\u1eadp nh\u1eadt t\u00e0i s\u1ea3n s\u1ed1.',
+        createdSuccess: '\u0110\u00e3 t\u1ea1o t\u00e0i s\u1ea3n s\u1ed1.',
+        deletedSuccess: '\u0110\u00e3 x\u00f3a t\u00e0i s\u1ea3n s\u1ed1.',
+      },
       orders: {
         title: 'Quản lý đơn hàng',
         totalOrders: 'Tổng cộng {count} đơn hàng',
@@ -565,6 +1094,94 @@ export const messages = {
           paymentStatus: 'Tình trạng thanh toán',
           updateStatus: 'Cập nhật trạng thái',
         },
+        shipmentAssignment: {
+          title: 'Gán shipper',
+          description:
+            'Chỉ gán cho đơn CONFIRMED hoặc SHIPPING chưa có shipment active.',
+          currentShipment: 'Shipment hiện tại',
+          shipper: 'Shipper',
+          assignedAt: 'Ngày gán',
+          activeNotice:
+            'Đơn này đã có shipment đang hoạt động. Theo dõi tiếp trong trang Quản lý giao hàng.',
+          latestFailed: 'Shipment gần nhất thất bại',
+          chooseShipper: 'Chọn shipper',
+          noShippers: 'Không có tài khoản shipper',
+          assigning: 'Đang gán shipper...',
+          assign: 'Gán shipper',
+          unavailable:
+            'Chỉ hiển thị khu vực gán shipper khi đơn đang ở trạng thái CONFIRMED hoặc SHIPPING.',
+          ineligible:
+            'Đơn này chưa phù hợp để gán shipper hoặc đang có shipment active',
+          chooseShipperError: 'Hãy chọn shipper trước khi gán',
+          assignSuccess: 'Đã gán shipper cho đơn hàng',
+          assignError: 'Không gán được shipper cho đơn hàng',
+        },
+      },
+      shipmentsPage: {
+        title: 'Quản lý giao hàng',
+        totalShipments: '{count} shipment trong hệ thống',
+        assignTitle: 'Gán shipper cho đơn hàng',
+        assignDescription:
+          'Chỉ hiển thị các đơn CONFIRMED hoặc SHIPPING chưa có shipment active.',
+        ordersReady: '{count} đơn chờ gán',
+        orderLabel: 'Đơn hàng',
+        noEligibleOrders: 'Không còn đơn phù hợp để gán',
+        shipperLabel: 'Shipper',
+        noShippers: 'Không có tài khoản shipper',
+        assigning: 'Đang gán...',
+        assign: 'Gán shipper',
+        filterLabel: 'Lọc theo trạng thái',
+        allStatuses: 'Tất cả trạng thái',
+        metrics: {
+          delivering: 'Đang giao',
+          delivered: 'Hoàn tất',
+          failed: 'Thất bại',
+        },
+        loading: 'Đang tải shipment...',
+        empty: 'Không có shipment phù hợp bộ lọc',
+        detailLoading: 'Đang tải chi tiết...',
+        detailTitle: 'Chi tiết đơn giao',
+        deliveryInfoTitle: 'Thông tin giao hàng',
+        timelineTitle: 'Mốc thời gian',
+        confirmDelivered: 'Xác nhận đã giao',
+        confirming: 'Đang xác nhận...',
+        confirmHint:
+          'Nút này chỉ bật khi shipment đang ở trạng thái DELIVERING theo rule backend.',
+        loadError: 'Không tải được dữ liệu giao hàng',
+        detailError: 'Không tải được chi tiết đơn giao',
+        assignValidationError: 'Hãy chọn đơn hàng và shipper trước khi gán',
+        assignSuccess: 'Đã gán shipper cho đơn hàng',
+        assignError: 'Không gán được shipper',
+        invalidConfirmState:
+          'Chỉ có thể xác nhận giao thành công khi shipment đang DELIVERING',
+        confirmSuccess: 'Admin đã xác nhận giao hàng thành công',
+        confirmError: 'Không xác nhận được trạng thái đã giao',
+        columns: {
+          shipmentId: 'Mã shipment',
+          order: 'Đơn hàng',
+          receiver: 'Người nhận',
+          shipper: 'Shipper',
+          status: 'Trạng thái',
+          amount: 'Giá trị',
+          assignedAt: 'Ngày gán',
+          actions: 'Thao tác',
+        },
+        detail: {
+          orderCode: 'Mã đơn hàng',
+          shipper: 'Shipper',
+          payment: 'Thanh toán',
+          totalAmount: 'Tổng thanh toán',
+          receiver: 'Người nhận',
+          phone: 'Số điện thoại',
+          address: 'Địa chỉ',
+          orderStatus: 'Trạng thái đơn hàng',
+          failureReason: 'Lý do thất bại',
+          assigned: 'Gán shipper',
+          pickedUp: 'Lấy hàng',
+          delivering: 'Đang giao',
+          delivered: 'Hoàn tất',
+          updatedAt: 'Cập nhật cuối',
+        },
       },
       usersPage: {
         title: 'Quản lý người dùng',
@@ -588,6 +1205,68 @@ export const messages = {
           locked: 'Khóa',
           updatedAt: 'Cập nhật',
         },
+      },
+      userManagement: {
+        addEmployee: 'Thêm nhân viên',
+        avatarLabel: 'Ảnh đại diện',
+        createDialogDescription:
+          'Tạo tài khoản nhân viên hoặc admin trực tiếp từ khu vực quản trị.',
+        createError: 'Không tạo được nhân viên',
+        createSuccess: 'Đã tạo nhân viên',
+        deleteDescription:
+          'Hành động này sẽ xóa tài khoản khỏi hệ thống quản trị và không thể hoàn tác.',
+        deleteError: 'Không xóa được tài khoản',
+        deleteSuccess: 'Đã xóa tài khoản',
+        deleteTitle: 'Xác nhận xóa tài khoản',
+        detailsCustomer: 'Chi tiết khách hàng',
+        detailsStaff: 'Chi tiết nhân viên',
+        editDialogDescription:
+          'Chỉnh sửa thông tin backend hiện cho phép với tài khoản nhân viên.',
+        editError: 'Không cập nhật được nhân viên',
+        editLockedHint: 'API hiện tại chưa hỗ trợ sửa tài khoản admin thuần.',
+        editSuccess: 'Đã cập nhật nhân viên',
+        editTitle: 'Sửa nhân viên',
+        lockDescription: {
+          lock:
+            'Tài khoản này sẽ bị khóa và không thể đăng nhập cho đến khi được mở lại.',
+          unlock:
+            'Tài khoản này sẽ được mở lại để có thể đăng nhập và sử dụng hệ thống.',
+        },
+        lockError: 'Không cập nhật được trạng thái khóa',
+        lockSuccess: {
+          lock: 'Đã khóa tài khoản',
+          unlock: 'Đã mở khóa tài khoản',
+        },
+        lockTitle: {
+          lock: 'Khóa tài khoản',
+          unlock: 'Mở khóa tài khoản',
+        },
+        lockAction: {
+          lock: 'Khóa',
+          unlock: 'Mở khóa',
+        },
+        role: 'Vai trò',
+        selfManageBlocked:
+          'Không thể tự khóa hoặc xóa chính tài khoản đang đăng nhập.',
+        showingCount: 'Hiển thị {count} trên {total} tài khoản',
+      },
+      customersPage: {
+        title: 'Quản lý khách hàng',
+        description:
+          'Xem danh sách khách hàng đang hoạt động trong hệ thống.',
+        totalUsers: '{count} khách hàng',
+        searchPlaceholder: 'Tìm theo username hoặc vai trò...',
+        loadError: 'Không tải được danh sách khách hàng',
+        empty: 'Chưa có khách hàng nào',
+      },
+      staffPage: {
+        title: 'Quản lý nhân viên',
+        description:
+          'Xem chung các tài khoản staff và admin trong khu vực quản trị.',
+        totalUsers: '{count} nhân viên',
+        searchPlaceholder: 'Tìm theo username hoặc vai trò...',
+        loadError: 'Không tải được danh sách nhân viên',
+        empty: 'Chưa có nhân viên nào',
       },
       rolesPage: {
         title: 'Quản lý vai trò',
@@ -725,6 +1404,13 @@ export const messages = {
       DELIVERED: 'Đã giao',
       CANCELLED: 'Đã hủy',
     },
+    shipmentStatus: {
+      ASSIGNED: 'Đã gán shipper',
+      PICKED_UP: 'Đã lấy hàng',
+      DELIVERING: 'Đang giao',
+      DELIVERED: 'Đã giao',
+      FAILED: 'Giao thất bại',
+    },
     paymentMethods: {
       CASH: 'Tiền mặt',
       COD: 'Thanh toán khi nhận hàng',
@@ -741,6 +1427,7 @@ export const messages = {
     roles: {
       ADMIN: 'Quản trị viên',
       STAFF: 'Nhân viên',
+      SHIPPER: 'Nhân viên giao hàng',
       USER: 'Người dùng',
     },
     genders: {
@@ -789,6 +1476,12 @@ export const messages = {
       description: 'Description',
       createdAt: 'Created at',
       updatedAt: 'Updated at',
+      pagination: {
+        previous: 'Previous page',
+        next: 'Next page',
+        page: 'Page {page}/{total}',
+        total: '{count} records in total',
+      },
     },
     header: {
       searchAria: 'Search books',
@@ -804,6 +1497,7 @@ export const messages = {
       nav: {
         home: 'Home',
         books: 'Books',
+        digitalLibrary: 'Digital library',
         lifeSkills: 'Life skills',
         novel: 'Novels',
       },
@@ -835,13 +1529,13 @@ export const messages = {
       heroTitlePrefix: 'Read more,',
       heroTitleAccent: 'live brighter',
       heroDescription:
-        'Discover thousands of titles from novels and life skills to science. Fast delivery and great prices for young readers.',
+        'Discover standout titles from novels and life skills to science. Fast delivery and great prices for young readers.',
       shopNow: 'Shop now',
       lifeSkillsBooks: 'Life skills',
       stats: {
         books: 'Titles',
-        customers: 'Customers',
-        reviews: 'Reviews',
+        sales: 'Sales',
+        reviewsCount: '{count} reviews',
       },
       values: {
         fastDeliveryTitle: 'Fast delivery',
@@ -852,6 +1546,8 @@ export const messages = {
         authenticDesc: '100% licensed from publishers',
       },
       categoriesTitle: 'Browse by category',
+      categoriesCount: '{count} categories to explore',
+      allCategories: 'View all categories',
       featuredTitle: 'Featured books',
       emptyTitle: 'No books are available yet',
       emptyDescription:
@@ -882,6 +1578,31 @@ export const messages = {
         submit: 'Login',
         noAccount: "Don't have an account?",
         registerNow: 'Register now',
+        restrictions: {
+          locked: {
+            title: 'Account locked',
+            description:
+              'This account cannot sign in right now. Contact an administrator to unlock it.',
+          },
+          inactive: {
+            title: 'Account not activated',
+            description:
+              'This account must be verified with an OTP before it can sign in. Complete the activation step and the app will sign you in again.',
+          },
+        },
+        flow: {
+          lockedActionLabel: 'Use another account',
+          inactiveActionLabel: 'Resend OTP',
+          inactiveOtpLead:
+            'Enter the latest activation OTP from your email. If you did not receive one or it has expired, request a new code here.',
+          inactiveOtpReadyHint:
+            'Enter the correct 6-digit OTP and the app will sign you in again with the same account.',
+          inactiveBackLabel: 'Back to login',
+          inactiveVerifyLabel: 'Verify and sign in',
+          inactiveEmailRequiredMessage:
+            'Inactive accounts must sign in with an email address before OTP verification.',
+          inactiveRequestErrorFallback: 'Unable to send a new activation OTP',
+        },
       },
       forgotPassword: {
         title: 'Forgot password',
@@ -961,6 +1682,74 @@ export const messages = {
         submit: 'Create account',
         haveAccount: 'Already have an account?',
         loginNow: 'Login now',
+        verification: {
+          resendOtpLabel: 'Resend OTP',
+          requestOtpErrorFallback: 'Unable to send a new activation OTP',
+        },
+        terms: {
+          badge: 'SachVui Terms',
+          agreementLabel: 'I agree to the',
+          linkLabel: 'terms of use',
+          requiredMessage: 'You must agree to the terms before registering.',
+          dialogTitle: 'Terms of Use',
+          closeHint:
+            'Scroll to the bottom to unlock the close button in the top-right corner.',
+          closeReady:
+            'You have reached the end. The X button can now be used to close this dialog.',
+          intro:
+            'This document is a demo terms-of-use sheet for the SachVui registration flow. By continuing to create an account, you confirm that you have read, understood, and are willing to follow the operating principles below.',
+          sections: [
+            {
+              title: '1. Account scope and access',
+              paragraphs: [
+                'An account is provided so you can buy books, track orders, manage reviews, and receive system notifications. You are responsible for using a working email address, safeguarding your credentials, and avoiding shared access with other people.',
+                'If the platform detects impersonation, scraping, disruption attempts, or behavior that may mislead other customers, SachVui may temporarily restrict or suspend the account while an internal review is performed.',
+              ],
+            },
+            {
+              title: '2. Information you provide',
+              paragraphs: [
+                'You agree that the email used for registration may be used for account notices, transaction receipts, order updates, and other operational messages that are necessary to keep the service functioning correctly.',
+                'Profile information should reflect a legitimate usage intent. When obviously false, bulk-generated, or abusive information is detected, the system may request additional verification before related features are fully available.',
+              ],
+            },
+            {
+              title: '3. Reviews and community conduct',
+              paragraphs: [
+                'Any review, rating, or feedback posted through your account must remain respectful and relevant. Content containing harassment, fabrication, spam, or unrelated advertising may be hidden or removed to preserve a healthy reading community.',
+                'By publishing content on the platform, you allow SachVui to display that content in product pages, review summaries, and internal moderation views for service quality and operational improvement purposes.',
+              ],
+            },
+            {
+              title: '4. Transaction rules',
+              paragraphs: [
+                'Pricing, promotions, stock levels, and delivery windows may change during normal operations. Adding a book to your cart does not automatically reserve inventory; an order is only confirmed once the checkout flow completes successfully.',
+                'If stock conflicts, shipping policy changes, display-price issues, or delivery-area limitations occur, SachVui may contact you with a reasonable alternative such as replacement, refund, or order adjustment.',
+              ],
+            },
+            {
+              title: '5. Security and system stability',
+              paragraphs: [
+                'You must not perform scanning, abusive automation, unauthorized testing, or attempts to bypass technical limits on the website. These actions can directly affect service reliability for everyone else.',
+                'If you discover a vulnerability or unusual behavior, the responsible path is to report it to the team rather than continue exploiting it. Responsible handling helps protect the wider customer base and the data associated with transactions.',
+              ],
+            },
+            {
+              title: '6. Changes, interruption, and retention',
+              paragraphs: [
+                'SachVui may update the interface, features, terms, or account workflows when operational needs change. When a change materially affects the user experience, a visible in-product notice or another appropriate communication method may be used.',
+                'You may stop using the service at any time. However, data tied to completed transactions, active support requests, or operational retention obligations may remain stored for as long as reasonably necessary.',
+              ],
+            },
+            {
+              title: '7. Final acknowledgement',
+              paragraphs: [
+                'Checking the agreement box means you accept these demo terms as part of the registration experience. If you disagree with any part of the text, the safer option is to stop creating the account until you are comfortable proceeding.',
+                'Thank you for reading to the end. Your attention makes the signup flow feel intentional, transparent, and closer to how a production e-commerce experience should communicate responsibilities.',
+              ],
+            },
+          ],
+        },
       },
       profile: {
         logout: 'Logout',
@@ -979,6 +1768,26 @@ export const messages = {
         ordersTitle: 'Your orders',
         emptyOrders: 'You do not have any orders yet',
         orderTotal: 'Total',
+        loginPanelTitle: 'Login information',
+        addressMenuTitle: 'My addresses',
+        passwordMenuTitle: 'Change password',
+        chooseImage: 'Choose image',
+        imageHint: 'JPG, PNG',
+        noOrdersDescription: 'Explore the catalog and place your first order.',
+        shopNow: 'Shop now',
+        addressTitle: 'Your address book',
+        addressDescription: 'Your saved delivery addresses appear here.',
+        noAddressesTitle: 'You do not have any addresses yet',
+        noAddressesDescription:
+          'Add an address during checkout to use it faster next time.',
+        passwordTitle: 'Account security',
+        passwordDescription:
+          'Reset your password using the current verification flow.',
+        passwordAction: 'Go to password reset',
+        defaultAddress: 'Default',
+        retry: 'Retry',
+        goCheckout: 'Go to checkout',
+        avatarLabel: 'Avatar image',
       },
     },
     book: {
@@ -1006,6 +1815,15 @@ export const messages = {
         resultCount: 'Found {count} matching books',
         searchPlaceholder: 'Search books, authors...',
         categoryTitle: 'Category',
+        categoryCount: '{count} items',
+        selectedCategoryLabel: 'Filtering by',
+        clearCategory: 'Clear',
+        categorySearchPlaceholder: 'Search categories...',
+        categoryShowingCount: 'Showing {count}/{total} categories',
+        categoryEmptyTitle: 'No matching categories',
+        categoryEmptyDescription: 'Try another keyword or clear the filter to browse all categories.',
+        showMoreCategories: 'Show {count} more',
+        showFewerCategories: 'Show less',
         sortPlaceholder: 'Sort by',
         sortPopular: 'Most popular',
         sortRating: 'Highest rated',
@@ -1063,6 +1881,23 @@ export const messages = {
         stockValue: '{count} copies',
         pageCountValue: '{count} pages',
         weightValue: '{count} g',
+        digitalAssets: {
+          title: 'Digital editions',
+          description:
+            'These are the published digital editions currently exposed publicly for this book.',
+          addToCart: 'Add ebook to cart',
+          addToCartError: 'Could not add the digital edition to the cart.',
+          addedToCart: 'Digital edition added to cart.',
+          addingToCart: 'Adding...',
+          downloadAllowed: 'Download allowed',
+          downloadRestricted: 'Download restricted',
+          noSample: 'No sample',
+          openSample: 'Open sample',
+          purchaseAvailable: 'Can purchase',
+          purchaseDisabled: 'Currently unavailable',
+          purchaseUnavailable: 'Cannot purchase',
+          sampleAvailable: 'Sample available',
+        },
       },
     },
     cart: {
@@ -1090,6 +1925,16 @@ export const messages = {
       loginRequired: 'Please sign in to use the cart',
       fetchError: 'Unable to load cart',
       updateError: 'Unable to update cart',
+      itemTypes: {
+        digitalAsset: {
+          badge: 'Digital asset',
+          quantity: '1 access right',
+        },
+        physicalBook: {
+          badge: 'Physical book',
+          quantity: 'Physical quantity',
+        },
+      },
     },
     checkout: {
       title: 'Checkout',
@@ -1171,7 +2016,313 @@ export const messages = {
       paymentStatus: 'Payment status',
       total: 'Total paid',
     },
-    orders: {
+    orderConfirmationBankTransfer: {
+      waitingTitle: 'Waiting for your bank transfer',
+      waitingDescription:
+        'Your order has been created. Complete the transfer with the exact content below so the backend can match the payment automatically.',
+      paidTitle: 'Payment confirmed successfully',
+      paidDescription:
+        'The backend has marked this order as paid. No client-side status was forced.',
+      failedTitle: 'Payment failed',
+      failedDescription:
+        'The backend marked this payment as failed. Please review the transfer and try again if needed.',
+      cancelledTitle: 'Payment cancelled',
+      cancelledDescription:
+        'The backend marked this payment as cancelled. Start a new checkout if you still want to place the order.',
+      pollingNotice: 'Checking payment status every 4 seconds.',
+      transferInstructionTitle: 'Transfer instructions',
+      transferInstructionDescription:
+        'Use the bank account below and keep the transfer content exactly the same.',
+      bankNameLabel: 'Bank',
+      accountNumberLabel: 'Account number',
+      accountNameLabel: 'Account name',
+      transferContentLabel: 'Transfer content',
+      transferContentHint:
+        'Copy this content exactly so SePay can reconcile the payment.',
+      copyButton: 'Copy content',
+      copySuccess: 'Transfer content copied.',
+      copyError: 'Unable to copy transfer content.',
+      qrTitle: 'QR payment area',
+      qrDescription:
+        'The QR code is generated from the order amount and transfer content whenever the bank config is available.',
+      qrUnavailableTitle: 'Dynamic QR is unavailable',
+      qrUnavailableDescription:
+        'The bank config is incomplete, so please transfer manually with the exact account, amount, and transfer content shown above.',
+      qrImageErrorTitle: 'Unable to load the QR image',
+      qrImageErrorDescription:
+        'The QR service could not be loaded right now. Please transfer manually with the exact details shown above.',
+      qrFallbackNoticeTitle: 'Using fallback QR configuration',
+      qrFallbackNoticeDescription:
+        'A legacy QR URL is being used because dynamic VietQR config is incomplete.',
+      manualTransferTitle: 'Manual transfer instructions',
+      manualTransferDescription:
+        'Use the bank, account number, account name, amount, and transfer content exactly as shown on this page.',
+      orderSummaryTitle: 'Order summary',
+      summaryDescription:
+        'This screen only reflects payment data from the backend.',
+      orderIdLabel: 'Order ID',
+      orderCodeLabel: 'Order code',
+      totalAmountLabel: 'Total amount',
+      paymentMethodLabel: 'Payment method',
+      paymentStatusLabel: 'Payment status',
+      receiverInfoTitle: 'Receiver information',
+      receiverNameLabel: 'Receiver',
+      receiverPhoneLabel: 'Phone',
+      receiverAddressLabel: 'Address',
+      viewOrdersButton: 'View my orders',
+      continueShoppingButton: 'Continue shopping',
+      loadingNotice: 'Loading the latest payment status...',
+      emptyValue: 'N/A',
+      bankFallback: 'Update VITE_BANK_TRANSFER_BANK_NAME',
+      accountNumberFallback: 'Update VITE_BANK_TRANSFER_ACCOUNT_NUMBER',
+      accountNameFallback: 'Update VITE_BANK_TRANSFER_ACCOUNT_NAME',
+    },
+    orderConfirmationCashOnDelivery: {
+      waitingTitle: 'Order created with cash on delivery',
+      waitingDescription:
+        'Your order has been created successfully. Pay the carrier when the parcel arrives, so no SePay transfer flow is generated for this order.',
+      instructionTitle: 'Cash on delivery instructions',
+      instructionDescription:
+        'Keep your phone available because the store or carrier may contact you before delivery.',
+      paymentLabel: 'Payment timing',
+      paymentValue: 'Pay when you receive the parcel.',
+      deliveryFeeLabel: 'Delivery fee policy',
+      deliveryFeeValue:
+        'Home delivery costs 30,000 VND and becomes free from 200,000 VND. Store pickup remains free.',
+      nextStepLabel: 'Next update',
+      nextStepValue:
+        'Track confirmation and shipping updates from your order history.',
+      noteTitle: 'Before the parcel arrives',
+      noteDescription:
+        'Prepare the payment amount if possible and inspect the package before completing payment with the carrier.',
+      summaryDescription: 'This order will be paid in cash when it is delivered.',
+    },
+    library: {
+      page: {
+        acquiredAtLabel: 'Acquired at',
+        allFormats: 'All formats',
+        allStatuses: 'All statuses',
+        bookLabel: 'Book',
+        countLabel: 'Matching assets',
+        description:
+          'Review the digital assets already granted by your completed orders and continue reading safely from your private library.',
+        downloadAllowedLabel: 'Download enabled',
+        downloadReadyBadge: 'Download available in detail',
+        emptyDescription:
+          'No digital asset matches the current filters. Assets you own will appear here after access is granted.',
+        emptyTitle: 'No digital assets found',
+        expiresAtLabel: 'Expires at',
+        formatFilterLabel: 'Filter by format',
+        loadMore: 'Load more',
+        loading: 'Loading your digital library...',
+        loadingMore: 'Loading more...',
+        noExpiry: 'No expiry',
+        noProgress: 'No progress yet',
+        openSampleLabel: 'Open sample',
+        openingSampleLabel: 'Opening sample...',
+        priceLabel: 'Price',
+        progressLabel: 'Reading progress',
+        readNowLabel: 'Read now',
+        sampleAvailableLabel: 'Sample available',
+        sampleError: 'Could not open the sample file.',
+        searchPlaceholder: 'Search by book title, asset title, or format...',
+        statusFilterLabel: 'Filter by access status',
+        title: 'My digital library',
+        totalOwnedLabel: '{count} asset(s) granted',
+        viewDetailLabel: 'View details',
+      },
+      detail: {
+        accessDescription:
+          'Open the private reader or request a temporary download URL only when access has already been granted.',
+        accessTitle: 'Asset access',
+        acquiredAtLabel: 'Acquired at',
+        assetUpdatedAtLabel: 'Asset updated at',
+        backLabel: 'Back to digital library',
+        bookDescriptionLabel: 'Book description',
+        bookLabel: 'Book',
+        currentPageLabel: 'Current page',
+        downloadAllowed: 'Download enabled',
+        downloadLabel: 'Download asset',
+        expiresAtLabel: 'Expires at',
+        fileNameLabel: 'File name',
+        fileSizeLabel: 'File size',
+        loading: 'Loading digital asset details...',
+        mimeTypeLabel: 'MIME type',
+        noDescription: 'This book description is currently unavailable.',
+        noExpiry: 'No expiry',
+        noProgress: 'No progress yet',
+        noSourceOrder: 'No source order',
+        openReaderLabel: 'Open reader',
+        openSampleLabel: 'Open sample',
+        openingDownloadLabel: 'Resolving download...',
+        openingSampleLabel: 'Opening sample...',
+        positionDataLabel: 'Position data',
+        positionDataPlaceholder:
+          'Optional JSON or marker string returned by your reader state',
+        priceLabel: 'Price',
+        progressDescription:
+          'You can still sync reading progress manually from this screen if the reader does not report it automatically.',
+        progressPercentLabel: 'Progress percent',
+        progressTitle: 'Reading progress',
+        readOnlyBadge: 'Read-only access',
+        sampleAvailable: 'Sample available',
+        saveProgressLabel: 'Save progress',
+        savingLabel: 'Saving...',
+        sourceOrderIdLabel: 'Source order ID',
+      },
+      reader: {
+        acquiredAtLabel: 'Acquired at',
+        audioDescription: 'Use the native player for audiobook playback.',
+        audioFallback: 'Your browser does not support audio playback.',
+        audioTitle: 'Audio player',
+        backLabel: 'Back to asset details',
+        bookLabel: 'Book',
+        expiresAtLabel: 'Expires at',
+        fileNameLabel: 'File name',
+        loading: 'Loading reader...',
+        noExpiry: 'No expiry',
+        notFound: 'The digital asset could not be opened.',
+        openNewTab: 'Open in new tab',
+        updatedAtLabel: 'Asset updated at',
+      },
+      progress: {
+        validation: {
+          progressPercentRange:
+            'Progress percent must be between 0 and 100.',
+          currentPageNonNegativeInteger:
+            'Current page must be a non-negative integer.',
+        },
+        updateSuccess: 'Reading progress updated.',
+      },
+    },
+    orderDetail: {
+      orderHistory: 'Order history',
+      orderSummary: 'Order summary',
+      productTotal: 'Product total',
+      itemsTitle: 'Items in this order',
+      digitalItemLabel: 'Digital asset',
+      physicalItemLabel: 'Physical book',
+      openLibraryAsset: 'Open in library',
+    },
+    orderHistoryPage: {
+      completedStep: 'Completed',
+      copyError: 'Unable to copy the order ID.',
+      copyOrderId: 'Copy order ID',
+      copySuccess: 'Order ID copied.',
+      discoverDescription: 'Thousands of curated titles are waiting for you.',
+      discoverTitle: 'Discover more great books',
+      exploreNow: 'Explore now',
+      pendingStep: 'Pending confirmation',
+      processingStep: 'Processing',
+      shippingStep: 'Out for delivery',
+    },
+    notifications: {
+      emptyContent: 'No content',
+      realtimeConnected: 'Realtime connected',
+      realtimeFallback: 'Using REST fallback',
+      newNotificationFallback: 'New notification',
+      errors: {
+        fetch: 'Unable to load notifications',
+        update: 'Unable to update the notification',
+        delete: 'Unable to delete the notification',
+      },
+      bell: {
+        title: 'Notifications',
+        empty: 'No notifications yet',
+        viewAll: 'View all',
+        delete: 'Delete',
+        loading: 'Loading notifications...',
+        openLabel: 'Open notifications',
+        deleteSuccess: 'Notification deleted',
+      },
+      page: {
+        title: 'Your notifications',
+        description:
+          'Track new alerts, order updates, and shipment changes in real time.',
+        all: 'All',
+        unread: 'Unread',
+        empty: 'No notifications match this filter',
+        markAll: 'Mark all as read',
+        markRead: 'Mark as read',
+        loading: 'Loading notifications...',
+        loadMore: 'Load more',
+        delete: 'Delete',
+        open: 'Open notification',
+        deleteSuccess: 'Notification deleted',
+      },
+    },
+    chat: {
+      errors: {
+        loadConversations: 'Unable to load support conversations',
+        loadMessages: 'Unable to load chat history',
+      },
+      customer: {
+        title: 'Customer support',
+        subtitle: 'Get live help from the support team',
+        defaultSubject: 'Customer support',
+        newConversation: 'New conversation',
+        subject: 'Subject',
+        subjectPlaceholder: 'Example: Question about order #1234',
+        sendPlaceholder: 'Type your support message...',
+        send: 'Send message',
+        loadingMessages: 'Loading messages...',
+        loadOlderMessages: 'Load older messages',
+        emptyMessages:
+          'No messages yet. Start with the issue you need help with.',
+        emptyConversations: 'You do not have a support conversation yet.',
+        closedNotice:
+          'This conversation is closed. Start a new one if you still need help.',
+        closeConversation: 'Close conversation',
+        realtimeConnected: 'Realtime connected',
+        realtimeFallback: 'Using REST fallback',
+        refresh: 'Refresh',
+        openChat: 'Open support chat',
+        incomingTitle: 'New support reply',
+        viewAllNotifications: 'View notifications',
+      },
+    },
+
+    adminChat: {
+      title: 'Customer support chat',
+      description:
+        'Handle support conversations in realtime, assign staff, and close or reopen threads from one workspace.',
+      totalConversations: 'Total conversations',
+      unreadCount: 'Unread',
+      openCount: 'Open',
+      connected: 'Realtime connected',
+      fallback: 'Using REST fallback',
+      listTitle: 'Conversation list',
+      searchPlaceholder: 'Search by customer, email, or message...',
+      statusLabel: 'Status',
+      statusAll: 'All',
+      statusOpen: 'Open',
+      statusPending: 'Pending',
+      statusClosed: 'Closed',
+      emptyConversations: 'No conversations match the current filters.',
+      loadMore: 'Load more',
+      loadingList: 'Loading conversations...',
+      loadingMessages: 'Loading messages...',
+      messageEmpty: 'No messages in this conversation yet.',
+      replyPlaceholder: 'Write a reply to the customer...',
+      send: 'Send reply',
+      closeConversation: 'Close conversation',
+      reopenConversation: 'Reopen conversation',
+      customer: 'Customer',
+      assignee: 'Assignee',
+      unassigned: 'Unassigned',
+      assignToSelf: 'Assign to me',
+      assignButton: 'Assign',
+      staffPlaceholder: 'Choose staff',
+      priority: 'Priority',
+      target: 'Target',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      noConversationSelected: 'Select a conversation to start handling it.',
+      closedNotice: 'This conversation is closed. Reopen it if support should continue.',
+      noMessagesYet: 'The customer has not sent any messages yet.',
+      loadError: 'Unable to load support conversations',
+    },
+orders: {
       title: 'Order history',
       totalCount: 'Total {count} orders',
       emptyTitle: 'You do not have any orders yet',
@@ -1208,6 +2359,17 @@ export const messages = {
         roles: 'Manage roles',
         permissions: 'Manage permissions',
         promotions: 'Manage promotions',
+        importReceipts: 'Import receipts',
+        inventory: 'Inventory',
+        shipments: 'Shipment management',
+        reviews: 'Reviews',
+        notifications: 'Notifications',
+        chat: 'Support chat',
+        suppliers: 'Manage suppliers',
+        customers: 'Manage customers',
+        staff: 'Manage staff',
+        settings: 'Account settings',
+        adminAccount: 'Admin account',
         references: 'Reference data',
       },
       dashboard: {
@@ -1285,6 +2447,48 @@ export const messages = {
         },
         empty: 'No books found',
       },
+      digitalAssets: {
+        sectionLabel: 'Digital asset',
+        title: 'Digital assets for this book',
+        description:
+          'Manage the backend digital assets attached to this book without leaving the current admin book flow.',
+        addAsset: 'Add asset',
+        loading: 'Loading digital assets...',
+        empty: 'No digital asset is attached to this book yet.',
+        published: 'Published',
+        unpublished: 'Draft',
+        downloadAllowed: 'Download allowed',
+        purchaseAllowed: 'Purchase allowed',
+        editAsset: 'Edit asset',
+        deleteAsset: 'Delete asset',
+        priceLabel: 'Price',
+        mimeTypeLabel: 'MIME type',
+        fileSizeLabel: 'File size',
+        updatedAtLabel: 'Updated at',
+        createTitle: 'Create digital asset',
+        editTitle: 'Edit digital asset',
+        formatLabel: 'Format',
+        titleLabel: 'Title',
+        mainFileLabel: 'Main file',
+        sampleFileLabel: 'Sample file',
+        mainFileHelp:
+          'Upload the main file through the file service. Metadata is derived from file_assets.',
+        sampleFileHelp:
+          'Upload an optional sample file for preview. Do not enter storage keys manually.',
+        fileAssetIdLabel: 'File asset ID',
+        sampleFileAssetIdLabel: 'Sample file asset ID',
+        fileNameLabel: 'File name',
+        checksumLabel: 'Checksum',
+        save: 'Save asset',
+        deleteTitle: 'Confirm digital asset deletion',
+        confirmDelete: 'Delete digital asset "{title}"?',
+        notUploaded: 'No uploaded file yet',
+        noSample: 'No sample file',
+        validationError: 'Please check the title, price, and uploaded files.',
+        updatedSuccess: 'Digital asset updated.',
+        createdSuccess: 'Digital asset created.',
+        deletedSuccess: 'Digital asset deleted.',
+      },
       orders: {
         title: 'Manage orders',
         totalOrders: 'Total {count} orders',
@@ -1311,6 +2515,95 @@ export const messages = {
           paymentStatus: 'Payment status',
           updateStatus: 'Update status',
         },
+        shipmentAssignment: {
+          title: 'Assign shipper',
+          description:
+            'Only available for CONFIRMED or SHIPPING orders without an active shipment.',
+          currentShipment: 'Current shipment',
+          shipper: 'Shipper',
+          assignedAt: 'Assigned at',
+          activeNotice:
+            'This order already has an active shipment. Track it from the shipment management page.',
+          latestFailed: 'Latest shipment failed',
+          chooseShipper: 'Choose shipper',
+          noShippers: 'No shipper accounts found',
+          assigning: 'Assigning shipper...',
+          assign: 'Assign shipper',
+          unavailable:
+            'Shipment assignment is only available for CONFIRMED or SHIPPING orders.',
+          ineligible:
+            'This order is not eligible for shipment assignment right now',
+          chooseShipperError: 'Choose a shipper before assigning',
+          assignSuccess: 'Shipment assigned successfully',
+          assignError: 'Unable to assign shipment',
+        },
+      },
+      shipmentsPage: {
+        title: 'Shipment management',
+        totalShipments: '{count} shipments in the system',
+        assignTitle: 'Assign shipper',
+        assignDescription:
+          'Only CONFIRMED or SHIPPING orders without an active shipment are shown.',
+        ordersReady: '{count} orders ready',
+        orderLabel: 'Order',
+        noEligibleOrders: 'No eligible orders left',
+        shipperLabel: 'Shipper',
+        noShippers: 'No shipper accounts found',
+        assigning: 'Assigning...',
+        assign: 'Assign shipper',
+        filterLabel: 'Filter by status',
+        allStatuses: 'All statuses',
+        metrics: {
+          delivering: 'Delivering',
+          delivered: 'Delivered',
+          failed: 'Failed',
+        },
+        loading: 'Loading shipments...',
+        empty: 'No shipments match the current filter',
+        detailLoading: 'Loading detail...',
+        detailTitle: 'Shipment detail',
+        deliveryInfoTitle: 'Delivery info',
+        timelineTitle: 'Timeline',
+        confirmDelivered: 'Confirm delivered',
+        confirming: 'Confirming...',
+        confirmHint:
+          'This action is only available while the shipment is DELIVERING.',
+        loadError: 'Unable to load shipment data',
+        detailError: 'Unable to load shipment detail',
+        assignValidationError:
+          'Choose an order and a shipper before assigning',
+        assignSuccess: 'Shipment assigned successfully',
+        assignError: 'Unable to assign shipment',
+        invalidConfirmState:
+          'Delivery can only be confirmed when the shipment is DELIVERING',
+        confirmSuccess: 'Delivery confirmed successfully',
+        confirmError: 'Unable to confirm delivery',
+        columns: {
+          shipmentId: 'Shipment ID',
+          order: 'Order',
+          receiver: 'Receiver',
+          shipper: 'Shipper',
+          status: 'Status',
+          amount: 'Amount',
+          assignedAt: 'Assigned at',
+          actions: 'Actions',
+        },
+        detail: {
+          orderCode: 'Order code',
+          shipper: 'Shipper',
+          payment: 'Payment',
+          totalAmount: 'Total amount',
+          receiver: 'Receiver',
+          phone: 'Phone',
+          address: 'Address',
+          orderStatus: 'Order status',
+          failureReason: 'Failure reason',
+          assigned: 'Assigned',
+          pickedUp: 'Picked up',
+          delivering: 'Delivering',
+          delivered: 'Delivered',
+          updatedAt: 'Updated at',
+        },
       },
       usersPage: {
         title: 'Manage users',
@@ -1335,6 +2628,69 @@ export const messages = {
           locked: 'Lock',
           updatedAt: 'Updated',
         },
+      },
+      userManagement: {
+        addEmployee: 'Add employee',
+        avatarLabel: 'Avatar image',
+        createDialogDescription:
+          'Create a staff or admin account directly from the admin area.',
+        createError: 'Unable to create employee',
+        createSuccess: 'Employee created successfully',
+        deleteDescription:
+          'This action removes the account from the admin system and cannot be undone.',
+        deleteError: 'Unable to delete account',
+        deleteSuccess: 'Account deleted successfully',
+        deleteTitle: 'Confirm account deletion',
+        detailsCustomer: 'Customer details',
+        detailsStaff: 'Employee details',
+        editDialogDescription:
+          'Edit the fields currently supported by the backend for staff accounts.',
+        editError: 'Unable to update employee',
+        editLockedHint:
+          'The current API does not support editing admin-only accounts.',
+        editSuccess: 'Employee updated successfully',
+        editTitle: 'Edit employee',
+        lockDescription: {
+          lock:
+            'This account will be locked and cannot sign in until it is unlocked again.',
+          unlock:
+            'This account will be unlocked so it can sign in and use the system again.',
+        },
+        lockError: 'Unable to update lock status',
+        lockSuccess: {
+          lock: 'Account locked successfully',
+          unlock: 'Account unlocked successfully',
+        },
+        lockTitle: {
+          lock: 'Lock account',
+          unlock: 'Unlock account',
+        },
+        lockAction: {
+          lock: 'Lock',
+          unlock: 'Unlock',
+        },
+        role: 'Role',
+        selfManageBlocked:
+          'You cannot lock or delete the currently signed-in account.',
+        showingCount: 'Showing {count} of {total} accounts',
+      },
+      customersPage: {
+        title: 'Manage customers',
+        description:
+          'Review active customer accounts from the backend.',
+        totalUsers: '{count} customers',
+        searchPlaceholder: 'Search by username or role...',
+        loadError: 'Unable to load the customer list',
+        empty: 'No customers found',
+      },
+      staffPage: {
+        title: 'Manage staff',
+        description:
+          'Review both staff and admin accounts from the backend.',
+        totalUsers: '{count} staff members',
+        searchPlaceholder: 'Search by username or role...',
+        loadError: 'Unable to load the staff list',
+        empty: 'No staff members found',
       },
       rolesPage: {
         title: 'Manage roles',
@@ -1473,6 +2829,13 @@ export const messages = {
       DELIVERED: 'Delivered',
       CANCELLED: 'Cancelled',
     },
+    shipmentStatus: {
+      ASSIGNED: 'Assigned',
+      PICKED_UP: 'Picked up',
+      DELIVERING: 'Delivering',
+      DELIVERED: 'Delivered',
+      FAILED: 'Failed',
+    },
     paymentMethods: {
       CASH: 'Cash',
       COD: 'Cash on delivery',
@@ -1489,6 +2852,7 @@ export const messages = {
     roles: {
       ADMIN: 'Administrator',
       STAFF: 'Staff',
+      SHIPPER: 'Shipper',
       USER: 'User',
     },
     genders: {
@@ -1499,13 +2863,736 @@ export const messages = {
   },
 } as const
 
+Object.assign(messages.vi.admin.permissionsPage as Record<string, unknown>, {
+  showingCount: 'Hiển thị {count} trên {total} quyền',
+  details: {
+    title: 'Chi tiết quyền',
+    code: 'Mã quyền',
+    description: 'Mô tả',
+  },
+})
+
+Object.assign(messages.en.admin.permissionsPage as Record<string, unknown>, {
+  showingCount: 'Showing {count} of {total} permissions',
+  details: {
+    title: 'Permission details',
+    code: 'Permission code',
+    description: 'Description',
+  },
+})
+
+Object.assign(messages.vi.admin.rolesPage as Record<string, unknown>, {
+  addRole: 'Thêm vai trò',
+  detailTitle: 'Chi tiết vai trò',
+  editTitle: 'Sửa vai trò',
+  deleteTitle: 'Xác nhận xóa vai trò',
+  deleteDescription:
+    'Hành động này sẽ xóa vai trò khỏi hệ thống và không thể hoàn tác.',
+  createSuccess: 'Đã tạo vai trò',
+  updateSuccess: 'Đã cập nhật vai trò',
+  deleteSuccess: 'Đã xóa vai trò',
+  saveError: 'Không lưu được vai trò',
+  deleteError: 'Không xóa được vai trò',
+  permissionList: 'Danh sách quyền',
+  noPermissions: 'Chưa có quyền nào',
+  showingCount: 'Hiển thị {count} trên {total} vai trò',
+  roleName: 'Tên vai trò',
+  choosePermissions: 'Chọn quyền',
+  roleDescription: 'Mô tả',
+})
+
+Object.assign(messages.en.admin.rolesPage as Record<string, unknown>, {
+  addRole: 'Add role',
+  detailTitle: 'Role details',
+  editTitle: 'Edit role',
+  deleteTitle: 'Confirm role deletion',
+  deleteDescription:
+    'This action removes the role from the system and cannot be undone.',
+  createSuccess: 'Role created successfully',
+  updateSuccess: 'Role updated successfully',
+  deleteSuccess: 'Role deleted successfully',
+  saveError: 'Unable to save role',
+  deleteError: 'Unable to delete role',
+  permissionList: 'Permission list',
+  noPermissions: 'No permissions assigned',
+  showingCount: 'Showing {count} of {total} roles',
+  roleName: 'Role name',
+  choosePermissions: 'Choose permissions',
+  roleDescription: 'Description',
+})
+
+Object.assign(messages.vi.admin.promotionsPage as Record<string, unknown>, {
+  addPromotion: 'Tạo coupon',
+  detailTitle: 'Chi tiết coupon',
+  editTitle: 'Sửa coupon',
+  deleteTitle: 'Xác nhận xóa coupon',
+  deleteDescription:
+    'Coupon này sẽ bị xóa khỏi hệ thống và không thể hoàn tác.',
+  createSuccess: 'Đã tạo coupon',
+  updateSuccess: 'Đã cập nhật coupon',
+  deleteSuccess: 'Đã xóa coupon',
+  saveError: 'Không lưu được coupon',
+  deleteError: 'Không xóa được coupon',
+  showingCount: 'Hiển thị {count} trên {total} coupon',
+  codeLabel: 'Mã coupon',
+  descriptionLabel: 'Mô tả',
+  couponTypeLabel: 'Loại coupon',
+  discountTypeLabel: 'Kiểu giảm giá',
+  discountValueLabel: 'Giá trị giảm',
+  minOrderAmountLabel: 'Đơn tối thiểu',
+  maxDiscountAmountLabel: 'Giảm tối đa',
+  maxUsageCountLabel: 'Lượt dùng tối đa',
+  startsAtLabel: 'Bắt đầu lúc',
+  expiresAtLabel: 'Hết hạn lúc',
+  activeLabel: 'Đang kích hoạt',
+  noLimit: 'Không giới hạn',
+  noMaxDiscount: 'Không giới hạn',
+  codeHint: 'Tự động viết hoa và bỏ khoảng trắng.',
+  percentageHint: 'Coupon phần trăm chỉ nhận giá trị từ 0 đến 100.',
+  startsAtHint: 'Thời gian tính theo giờ máy hiện tại.',
+  expiresAtHint: 'Phải sau thời điểm bắt đầu.',
+  invalidForm: 'Vui lòng kiểm tra lại thông tin coupon.',
+  codeRequired: 'Vui lòng nhập mã coupon.',
+  discountValueRequired: 'Vui lòng nhập giá trị giảm.',
+  discountValuePositive: 'Giá trị giảm phải lớn hơn 0.',
+  discountValuePercentageMax:
+    'Giá trị giảm theo phần trăm không được vượt quá 100.',
+  minOrderAmountInvalid: 'Đơn tối thiểu phải từ 0 trở lên.',
+  maxDiscountAmountInvalid: 'Giảm tối đa phải lớn hơn 0 nếu được nhập.',
+  maxUsageCountInvalid: 'Lượt dùng tối đa phải là số nguyên dương.',
+  startsAtInvalid: 'Vui lòng chọn thời điểm bắt đầu hợp lệ.',
+  expiresAtInvalid: 'Vui lòng chọn thời điểm hết hạn hợp lệ.',
+  expiresAtAfterStartsAt:
+    'Thời điểm hết hạn phải sau thời điểm bắt đầu.',
+  deleteBlockedShort: 'Đã phát sinh lượt dùng',
+  deleteBlockedReason: 'Coupon đã có lượt sử dụng, không thể xóa.',
+  formDescription: 'Cập nhật thông tin mã giảm giá và lịch áp dụng.',
+})
+
+Object.assign(messages.en.admin.promotionsPage as Record<string, unknown>, {
+  addPromotion: 'Create coupon',
+  detailTitle: 'Coupon details',
+  editTitle: 'Edit coupon',
+  deleteTitle: 'Confirm coupon deletion',
+  deleteDescription:
+    'This coupon will be removed from the system and cannot be undone.',
+  createSuccess: 'Coupon created successfully',
+  updateSuccess: 'Coupon updated successfully',
+  deleteSuccess: 'Coupon deleted successfully',
+  saveError: 'Unable to save coupon',
+  deleteError: 'Unable to delete coupon',
+  showingCount: 'Showing {count} of {total} coupons',
+  codeLabel: 'Coupon code',
+  descriptionLabel: 'Description',
+  couponTypeLabel: 'Coupon type',
+  discountTypeLabel: 'Discount type',
+  discountValueLabel: 'Discount value',
+  minOrderAmountLabel: 'Minimum order amount',
+  maxDiscountAmountLabel: 'Maximum discount amount',
+  maxUsageCountLabel: 'Maximum usage count',
+  startsAtLabel: 'Starts at',
+  expiresAtLabel: 'Expires at',
+  activeLabel: 'Active',
+  noLimit: 'No limit',
+  noMaxDiscount: 'No cap',
+  codeHint: 'Automatically uppercased with spaces removed.',
+  percentageHint: 'Percentage coupons only accept values from 0 to 100.',
+  startsAtHint: 'Time is based on the current device timezone.',
+  expiresAtHint: 'Must be later than the start time.',
+  invalidForm: 'Please review the coupon details.',
+  codeRequired: 'Coupon code is required.',
+  discountValueRequired: 'Discount value is required.',
+  discountValuePositive: 'Discount value must be greater than 0.',
+  discountValuePercentageMax: 'Percentage discount cannot exceed 100.',
+  minOrderAmountInvalid: 'Minimum order amount must be 0 or greater.',
+  maxDiscountAmountInvalid:
+    'Maximum discount amount must be greater than 0 when provided.',
+  maxUsageCountInvalid: 'Maximum usage count must be a positive integer.',
+  startsAtInvalid: 'Please choose a valid start time.',
+  expiresAtInvalid: 'Please choose a valid expiration time.',
+  expiresAtAfterStartsAt:
+    'Expiration time must be later than the start time.',
+  deleteBlockedShort: 'Already used',
+  deleteBlockedReason:
+    'This coupon already has usage history and cannot be deleted.',
+  formDescription: 'Update the coupon information and active schedule.',
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  inventoryPage: {
+    title: 'Quản lý tồn kho',
+    description:
+      'Theo dõi tồn hiện tại và lịch sử biến động kho của từng đầu sách.',
+    totalBooks: '{count} đầu sách',
+    search: 'Tìm theo tên sách, tác giả, thể loại...',
+    empty: 'Không có sách trong kho',
+    lowStock: 'Sắp hết',
+    inStock: 'Còn hàng',
+    outOfStock: 'Hết hàng',
+    recentMovements: 'Biến động gần đây',
+    movementHistory: 'Lịch sử biến động',
+    latestMovement: 'Biến động mới nhất',
+    book: 'Sách',
+    price: 'Giá bán',
+    stock: 'Tồn kho',
+    loadError: 'Không tải được dữ liệu tồn kho',
+    historyError: 'Không tải được lịch sử tồn kho',
+    noMovement: 'Chưa có biến động kho',
+    reference: 'Liên kết nghiệp vụ',
+    beforeAfter: 'Trước / Sau',
+    quantity: 'Số lượng',
+    unknownReference: 'Không có tham chiếu',
+    movementTypes: {
+      IMPORT: 'Nhập kho',
+      SALE: 'Bán hàng',
+      CANCEL_ORDER: 'Hủy đơn',
+      ADJUSTMENT: 'Điều chỉnh',
+    },
+  },
+  reviewsPage: {
+    title: 'Quản lý đánh giá',
+    description:
+      'Theo dõi đánh giá sách từ khách hàng, xem chi tiết và gỡ bỏ nội dung không phù hợp.',
+    total: '{count} đánh giá',
+    search: 'Tìm theo tên sách, người dùng, nhận xét...',
+    empty: 'Chưa có đánh giá nào',
+    loadError: 'Không tải được danh sách đánh giá',
+    deleteError: 'Không xóa được đánh giá',
+    deleteSuccess: 'Đã xóa đánh giá',
+    reviewer: 'Người đánh giá',
+    book: 'Sách',
+    rating: 'Điểm số',
+    comment: 'Nhận xét',
+    noComment: 'Không có nhận xét',
+    detailTitle: 'Chi tiết đánh giá',
+    deleteTitle: 'Xác nhận xóa đánh giá',
+    deleteDescription:
+      'Đánh giá này sẽ bị xóa khỏi hệ thống và không thể khôi phục.',
+    average: 'Điểm trung bình',
+    withComment: 'Có nội dung',
+    updatedAt: 'Cập nhật',
+    unknownUser: 'Người dùng không xác định',
+    unknownBook: 'Sách không xác định',
+  },
+  notificationsPage: {
+    title: 'Quản lý thông báo',
+    description:
+      'Gửi thông báo cho từng tài khoản hoặc broadcast đến toàn bộ người dùng, vẫn giữ REST làm nguồn dữ liệu chính.',
+    total: '{count} thông báo',
+    search: 'Tìm theo tiêu đề, người nhận, nội dung...',
+    empty: 'Chưa có thông báo nào',
+    loadError: 'Không tải được danh sách thông báo',
+    createError: 'Không gửi được thông báo',
+    createSuccess: 'Đã gửi thông báo',
+    broadcastSuccess: 'Đã broadcast thông báo cho {count} tài khoản',
+    deleteError: 'Không xóa được thông báo',
+    deleteSuccess: 'Đã xóa thông báo',
+    add: 'Gửi cho 1 user',
+    broadcast: 'Broadcast tất cả',
+    detailTitle: 'Chi tiết thông báo',
+    previewTitle: 'Xem trước',
+    recipient: 'Người nhận',
+    allRecipients: 'Tất cả người dùng',
+    subject: 'Tiêu đề',
+    content: 'Nội dung',
+    type: 'Loại',
+    link: 'Liên kết',
+    chooseRecipient: 'Chọn người nhận',
+    unread: 'Chưa đọc',
+    read: 'Đã đọc',
+    readAt: 'Đọc lúc',
+    createdAt: 'Gửi lúc',
+    noReadAt: 'Chưa đọc',
+    noContent: 'Không có nội dung',
+    noType: 'Mặc định',
+    noLink: 'Không có',
+    optional: 'Tùy chọn',
+    loadMore: 'Tải thêm',
+    delete: 'Xóa',
+    recipientCount: 'Tài khoản có thể gửi',
+    unknownUser: 'Người nhận không xác định',
+    status: 'Trạng thái',
+    actions: 'Thao tác',
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  inventoryPage: {
+    title: 'Inventory management',
+    description: 'Track current stock and movement history for each book title.',
+    totalBooks: '{count} books',
+    search: 'Search by title, author, or category...',
+    empty: 'No inventory found',
+    lowStock: 'Low stock',
+    inStock: 'In stock',
+    outOfStock: 'Out of stock',
+    recentMovements: 'Recent movements',
+    movementHistory: 'Movement history',
+    latestMovement: 'Latest movement',
+    book: 'Book',
+    price: 'Price',
+    stock: 'Stock',
+    loadError: 'Unable to load inventory',
+    historyError: 'Unable to load stock history',
+    noMovement: 'No stock movement yet',
+    reference: 'Reference',
+    beforeAfter: 'Before / After',
+    quantity: 'Quantity',
+    unknownReference: 'No reference',
+    movementTypes: {
+      IMPORT: 'Import',
+      SALE: 'Sale',
+      CANCEL_ORDER: 'Cancel order',
+      ADJUSTMENT: 'Adjustment',
+    },
+  },
+  reviewsPage: {
+    title: 'Review management',
+    description:
+      'Review customer book ratings, inspect details, and remove inappropriate feedback.',
+    total: '{count} reviews',
+    search: 'Search by book, user, or review text...',
+    empty: 'No reviews found',
+    loadError: 'Unable to load reviews',
+    deleteError: 'Unable to delete the review',
+    deleteSuccess: 'Review deleted',
+    reviewer: 'Reviewer',
+    book: 'Book',
+    rating: 'Rating',
+    comment: 'Comment',
+    noComment: 'No comment',
+    detailTitle: 'Review details',
+    deleteTitle: 'Confirm review deletion',
+    deleteDescription:
+      'This review will be removed from the system and cannot be restored.',
+    average: 'Average rating',
+    withComment: 'With comment',
+    updatedAt: 'Updated',
+    unknownUser: 'Unknown user',
+    unknownBook: 'Unknown book',
+  },
+  notificationsPage: {
+    title: 'Notification management',
+    description:
+      'Send notifications to a single account or broadcast them to all users while keeping REST as the source of truth.',
+    total: '{count} notifications',
+    search: 'Search by title, recipient, or content...',
+    empty: 'No notifications found',
+    loadError: 'Unable to load notifications',
+    createError: 'Unable to send the notification',
+    createSuccess: 'Notification sent',
+    broadcastSuccess: 'Broadcast notification sent to {count} accounts',
+    deleteError: 'Unable to delete the notification',
+    deleteSuccess: 'Notification deleted',
+    add: 'Send to one user',
+    broadcast: 'Broadcast all',
+    detailTitle: 'Notification details',
+    previewTitle: 'Preview',
+    recipient: 'Recipient',
+    allRecipients: 'All users',
+    subject: 'Title',
+    content: 'Content',
+    type: 'Type',
+    link: 'Link',
+    chooseRecipient: 'Choose recipient',
+    unread: 'Unread',
+    read: 'Read',
+    readAt: 'Read at',
+    createdAt: 'Sent at',
+    noReadAt: 'Not read yet',
+    noContent: 'No content',
+    noType: 'Default',
+    noLink: 'None',
+    optional: 'Optional',
+    loadMore: 'Load more',
+    delete: 'Delete',
+    recipientCount: 'Available recipients',
+    unknownUser: 'Unknown recipient',
+    status: 'Status',
+    actions: 'Actions',
+  },
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  importReceiptsPage: {
+    title: 'Quản lý nhập kho',
+    description: 'Tạo và theo dõi các phiếu nhập sách vào kho.',
+    total: '{count} phiếu nhập',
+    add: 'Tạo phiếu nhập',
+    search: 'Tìm theo nhà cung cấp, mã phiếu hoặc tên sách...',
+    empty: 'Chưa có phiếu nhập nào',
+    receipt: 'Phiếu nhập',
+    supplier: 'Nhà cung cấp',
+    totalAmount: 'Tổng tiền',
+    items: 'Số dòng',
+    createdAt: 'Ngày nhập',
+    detailTitle: 'Chi tiết phiếu nhập',
+    note: 'Ghi chú',
+    noNote: 'Không có ghi chú',
+    loadError: 'Không tải được danh sách phiếu nhập',
+    saveError: 'Không tạo được phiếu nhập',
+    saveSuccess: 'Đã tạo phiếu nhập',
+    book: 'Sách',
+    quantity: 'Số lượng',
+    unitCost: 'Giá nhập',
+    addLine: 'Thêm dòng sách',
+    removeLine: 'Xóa dòng',
+    chooseSupplier: 'Chọn nhà cung cấp',
+    chooseBook: 'Chọn sách',
+  },
+  suppliersPage: {
+    pageTitle: 'Quản lý nhà cung cấp',
+    pageDescription:
+      'Theo dõi và cập nhật danh sách nhà cung cấp dùng cho nhập hàng.',
+    totalSuppliers: '{count} nhà cung cấp',
+    addSupplier: 'Thêm nhà cung cấp',
+    searchPlaceholder: 'Tìm theo tên, email hoặc số điện thoại...',
+    loadError: 'Không tải được danh sách nhà cung cấp',
+    empty: 'Chưa có nhà cung cấp nào',
+    showingCount: 'Hiển thị {count} trên {total} nhà cung cấp',
+    nameColumn: 'Nhà cung cấp',
+    detailTitle: 'Chi tiết nhà cung cấp',
+    editTitle: 'Sửa nhà cung cấp',
+    deleteTitle: 'Xác nhận xóa nhà cung cấp',
+    deleteDescription:
+      'Hành động này sẽ xóa nhà cung cấp khỏi hệ thống và không thể hoàn tác.',
+    createSuccess: 'Đã tạo nhà cung cấp',
+    updateSuccess: 'Đã cập nhật nhà cung cấp',
+    deleteSuccess: 'Đã xóa nhà cung cấp',
+    saveError: 'Không lưu được nhà cung cấp',
+    deleteError: 'Không xóa được nhà cung cấp',
+    noPhone: 'Chưa có số điện thoại',
+    noEmail: 'Chưa có email',
+    noAddress: 'Chưa có địa chỉ',
+    noNote: 'Chưa có ghi chú',
+    phoneLabel: 'Số điện thoại',
+    emailLabel: 'Email',
+    addressLabel: 'Địa chỉ',
+    noteLabel: 'Ghi chú',
+  },
+  settingsPage: {
+    title: 'Cài đặt tài khoản quản trị',
+    description:
+      'Xem thông tin tài khoản, cập nhật profile và tùy chỉnh không gian làm việc quản trị.',
+    overview: 'Tổng quan tài khoản',
+    preferences: 'Tùy chọn giao diện',
+    role: 'Vai trò',
+    status: 'Trạng thái',
+    active: 'Đang hoạt động',
+    inactive: 'Không hoạt động',
+    accountCreated: 'Ngày tạo tài khoản',
+    accountUpdated: 'Cập nhật gần nhất',
+    theme: 'Chế độ sáng tối',
+    themeDescription:
+      'Chuyển giao diện admin mà không cần rời khỏi bảng điều khiển.',
+    language: 'Ngôn ngữ hiển thị',
+    languageDescription: 'Áp dụng ngay cho toàn bộ giao diện quản trị.',
+    avatarLabel: 'Ảnh đại diện',
+    accountSaved: 'Đã cập nhật thông tin tài khoản',
+    profileSaved: 'Đã cập nhật profile',
+    profileLoadError: 'Không tải được thông tin profile',
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  importReceiptsPage: {
+    title: 'Import receipts',
+    description: 'Create and review book inventory import receipts.',
+    total: '{count} receipts',
+    add: 'Create receipt',
+    search: 'Search by supplier, receipt id, or book title...',
+    empty: 'No import receipts found',
+    receipt: 'Receipt',
+    supplier: 'Supplier',
+    totalAmount: 'Total',
+    items: 'Items',
+    createdAt: 'Created',
+    detailTitle: 'Receipt details',
+    note: 'Note',
+    noNote: 'No note',
+    loadError: 'Unable to load import receipts',
+    saveError: 'Unable to create receipt',
+    saveSuccess: 'Import receipt created',
+    book: 'Book',
+    quantity: 'Quantity',
+    unitCost: 'Unit cost',
+    addLine: 'Add book line',
+    removeLine: 'Remove line',
+    chooseSupplier: 'Choose supplier',
+    chooseBook: 'Choose book',
+  },
+  suppliersPage: {
+    pageTitle: 'Manage suppliers',
+    pageDescription: 'Review and update suppliers used for inventory imports.',
+    totalSuppliers: '{count} suppliers',
+    addSupplier: 'Add supplier',
+    searchPlaceholder: 'Search by name, email, or phone...',
+    loadError: 'Unable to load the supplier list',
+    empty: 'No suppliers found',
+    showingCount: 'Showing {count} of {total} suppliers',
+    nameColumn: 'Supplier',
+    detailTitle: 'Supplier details',
+    editTitle: 'Edit supplier',
+    deleteTitle: 'Confirm supplier deletion',
+    deleteDescription:
+      'This action removes the supplier from the system and cannot be undone.',
+    createSuccess: 'Supplier created successfully',
+    updateSuccess: 'Supplier updated successfully',
+    deleteSuccess: 'Supplier deleted successfully',
+    saveError: 'Unable to save supplier',
+    deleteError: 'Unable to delete supplier',
+    noPhone: 'No phone number',
+    noEmail: 'No email',
+    noAddress: 'No address',
+    noNote: 'No note',
+    phoneLabel: 'Phone number',
+    emailLabel: 'Email',
+    addressLabel: 'Address',
+    noteLabel: 'Note',
+  },
+  settingsPage: {
+    title: 'Admin account settings',
+    description:
+      'Review account details, update your profile, and adjust your admin workspace preferences.',
+    overview: 'Account overview',
+    preferences: 'Workspace preferences',
+    role: 'Role',
+    status: 'Status',
+    active: 'Active',
+    inactive: 'Inactive',
+    accountCreated: 'Account created',
+    accountUpdated: 'Last updated',
+    theme: 'Light and dark mode',
+    themeDescription:
+      'Switch the admin interface theme without leaving the dashboard.',
+    language: 'Display language',
+    languageDescription: 'Applies immediately across the admin interface.',
+    avatarLabel: 'Avatar image',
+    accountSaved: 'Account information updated',
+    profileSaved: 'Profile updated',
+    profileLoadError: 'Unable to load profile information',
+  },
+})
+
+Object.assign(messages.vi.checkout as Record<string, unknown>, {
+  digitalAccessTitle: 'Truy cập thư viện số',
+  digitalAccessDescription:
+    'Đơn hàng này chỉ gồm tài sản số. Hệ thống sẽ bỏ qua địa chỉ giao hàng và cấp quyền truy cập sau khi thanh toán hợp lệ.',
+  pickupDescription:
+    'Nhận tại cửa hàng, nhân viên sẽ liên hệ xác nhận sau khi đặt đơn.',
+  cashOnDeliveryDigitalOnlyDescription:
+    'Không áp dụng COD cho đơn chỉ gồm tài sản số.',
+  digitalOnlyPaymentNotice:
+    'Đơn thư viện số hiện chỉ hỗ trợ chuyển khoản SePay để cấp quyền truy cập nhanh sau thanh toán.',
+  standardPaymentNotice:
+    'Giao tận nơi tính phí 30.000đ và miễn phí từ 200.000đ. Chuyển khoản SePay sẽ có QR sau khi đặt đơn, COD thanh toán lúc nhận hàng.',
+  itemTypes: {
+    digitalAsset: 'Tài sản số',
+    physicalBook: 'Sách giấy',
+  },
+})
+
+Object.assign(messages.en.checkout as Record<string, unknown>, {
+  digitalAccessTitle: 'Digital library access',
+  digitalAccessDescription:
+    'This order contains digital assets only. Shipping details are skipped and access will be granted after successful payment.',
+  pickupDescription:
+    'Pick up at the store. Staff will contact you to confirm after checkout.',
+  cashOnDeliveryDigitalOnlyDescription:
+    'COD is not available for digital-only orders.',
+  digitalOnlyPaymentNotice:
+    'Digital library orders currently support SePay transfer only so access can be granted right after payment.',
+  standardPaymentNotice:
+    'Delivery costs 30,000 VND and becomes free from 200,000 VND. SePay transfer shows a QR after checkout, while COD is paid on delivery.',
+  itemTypes: {
+    digitalAsset: 'Digital asset',
+    physicalBook: 'Physical book',
+  },
+})
+
+Object.assign(messages.vi.common as Record<string, unknown>, {
+  avatarFileErrors: {
+    invalidType: 'Vui lòng chọn một file ảnh hợp lệ.',
+    decodeFailed: 'Không đọc được file ảnh đã chọn.',
+    tooLarge: 'Ảnh này quá lớn để lưu. Hãy chọn ảnh nhỏ hơn.',
+  },
+})
+
+Object.assign(messages.en.common as Record<string, unknown>, {
+  avatarFileErrors: {
+    invalidType: 'Please choose a valid image file.',
+    decodeFailed: 'Could not read the selected image file.',
+    tooLarge: 'This image is too large to save. Please choose a smaller one.',
+  },
+})
+
+Object.assign(messages.vi.admin.sidebar as Record<string, string>, {
+  digitalAssets: 'Tài sản số',
+})
+
+Object.assign(messages.en.admin.sidebar as Record<string, string>, {
+  digitalAssets: 'Digital assets',
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  digitalAssetsGuide: {
+    badge: 'Luồng quản trị tài sản số',
+    title: 'Tài sản số',
+    description:
+      'Tài sản số được quản lý theo từng sách. Hãy mở một sách trong Quản lý sách, thêm file PDF/EPUB/AUDIO, bật trạng thái phát hành và khách sẽ mua như một sản phẩm số.',
+    openBooks: 'Mở quản lý sách',
+    previewLibrary: 'Xem thư viện khách hàng',
+    accessLabel: 'Cấp quyền truy cập',
+    accessTitle: 'Quyền đọc sinh sau thanh toán',
+    accessDescription:
+      'Sau khi đơn SePay được xác nhận đã thanh toán, hệ thống tự cấp quyền đọc vào Thư viện số. Nếu đơn COD có kèm hàng giấy, quyền số chỉ được cấp khi đơn giao thành công.',
+    stepLabel: 'Bước {count}',
+    steps: {
+      pickBookTitle: 'Chọn sách cần gắn bản số',
+      pickBookDescription:
+        'Vào Quản lý sách, bấm Xem một sách rồi thao tác trong khối Tài sản số ở cuối dialog.',
+      uploadTitle: 'Upload file và cấu hình bán',
+      uploadDescription:
+        'Chọn định dạng, upload file chính, thêm file mẫu nếu cần, nhập giá và bật published/purchaseAllowed.',
+      sellTitle: 'Khách mua và đọc trong thư viện',
+      sellDescription:
+        'Khách thêm bản số vào giỏ, thanh toán, sau đó đọc ở /library bằng URL ký tạm thời.',
+    },
+    checklistLabel: 'Checklist trước khi publish',
+    checklistTitle: 'Những điều kiện để khách dùng được',
+    checklistDescription:
+      'Nếu thiếu một trong các điều kiện này, khách có thể không thấy asset, không mua được hoặc không tải được file.',
+    checklist: {
+      mainFile: 'File chính phải upload xong, là file private với purpose EBOOK_FILE.',
+      published: 'Bật Published để bản số hiện ở trang chi tiết sách và thư viện.',
+      purchaseAllowed: 'Bật Purchase allowed nếu muốn khách thêm bản số vào giỏ.',
+      downloadAllowed: 'Chỉ bật Download allowed khi muốn cho khách tải file gốc.',
+    },
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  digitalAssetsGuide: {
+    badge: 'Digital asset admin flow',
+    title: 'Digital assets',
+    description:
+      'Digital assets are managed per book. Open a book in Books, attach a PDF/EPUB/AUDIO file, publish it, and customers can purchase it as a digital product.',
+    openBooks: 'Open books',
+    previewLibrary: 'Preview customer library',
+    accessLabel: 'Access granting',
+    accessTitle: 'Access is granted after payment',
+    accessDescription:
+      'After a SePay order is marked paid, the system grants reading access automatically. For COD orders that include physical items, digital access is granted only after delivery.',
+    stepLabel: 'Step {count}',
+    steps: {
+      pickBookTitle: 'Choose the book',
+      pickBookDescription:
+        'Go to Books, open a book detail dialog, then manage its digital assets at the bottom.',
+      uploadTitle: 'Upload and configure',
+      uploadDescription:
+        'Choose a format, upload the main file, add an optional sample, set a price, and enable published/purchaseAllowed.',
+      sellTitle: 'Customer buys and reads',
+      sellDescription:
+        'Customers add the digital edition to cart, pay, then read it from /library through signed URLs.',
+    },
+    checklistLabel: 'Pre-publish checklist',
+    checklistTitle: 'Conditions customers need',
+    checklistDescription:
+      'If one condition is missing, customers may not see the asset, may not be able to buy it, or may not be able to download it.',
+    checklist: {
+      mainFile: 'The main file must be uploaded, private, and use purpose EBOOK_FILE.',
+      published: 'Enable Published so the asset appears on book detail and library pages.',
+      purchaseAllowed: 'Enable Purchase allowed if customers should be able to add it to cart.',
+      downloadAllowed: 'Enable Download allowed only when customers may download the original file.',
+    },
+  },
+})
+
+Object.assign(messages.vi.library.page as Record<string, unknown>, {
+  filterEmptyTitle: 'Không tìm thấy tài sản số',
+  filterEmptyDescription:
+    'Thử đổi từ khóa, định dạng hoặc trạng thái truy cập để xem lại các tài sản bạn đã sở hữu.',
+  emptyOwnedTitle: 'Bạn chưa có tài sản số nào',
+  emptyOwnedDescription:
+    'Mua phiên bản số của sách, hoàn tất thanh toán rồi quay lại đây để đọc PDF/EPUB hoặc nghe AUDIO trong thư viện riêng.',
+  emptyOwnedAction: 'Khám phá sách',
+  emptyGuideLabel: 'Cách bắt đầu',
+  emptySteps: {
+    findBook: 'Mở trang sách và tìm khối Phiên bản số.',
+    buyDigital: 'Thêm ebook/audio vào giỏ và thanh toán bằng SePay.',
+    readHere: 'Sau khi thanh toán thành công, tài sản sẽ xuất hiện ở trang này.',
+  },
+})
+
+Object.assign(messages.en.library.page as Record<string, unknown>, {
+  filterEmptyTitle: 'No digital assets found',
+  filterEmptyDescription:
+    'Try changing the search term, format, or access status to review owned assets again.',
+  emptyOwnedTitle: 'You do not own any digital assets yet',
+  emptyOwnedDescription:
+    'Buy a digital edition, complete payment, then return here to read PDF/EPUB files or listen to AUDIO from your private library.',
+  emptyOwnedAction: 'Browse books',
+  emptyGuideLabel: 'How to start',
+  emptySteps: {
+    findBook: 'Open a book detail page and find the Digital editions block.',
+    buyDigital: 'Add the ebook/audio to cart and pay with SePay.',
+    readHere: 'After payment succeeds, the asset will appear on this page.',
+  },
+})
+
+Object.assign(messages.vi.book.detail.digitalAssets as Record<string, unknown>, {
+  calloutTitle: 'Có {count} phiên bản số',
+  calloutDescription:
+    'Định dạng {formats}, giá từ {price}. Bạn có thể đọc thử hoặc mua bản số bên dưới.',
+  teaserDescription:
+    'Ebook của cuốn này được bán ở trang riêng. Bấm vào để xem bản mẫu, giá và tùy chọn mua.',
+  formatSummary: 'Định dạng {formats}',
+  priceSummary: 'Giá từ {price}',
+  sampleCallout: '{count} bản đọc thử',
+  viewOptions: 'Xem ebook',
+  viewPhysicalBook: 'Xem sách giấy',
+  accessNoteTitle: 'Quyền đọc được cấp sau thanh toán',
+  accessNoteDescription:
+    'Sau khi đơn SePay được xác nhận đã thanh toán, bản số sẽ xuất hiện trong Thư viện số của bạn. Nếu được phép tải, nút tải sẽ nằm trong trang chi tiết tài sản.',
+  formatLabel: 'Định dạng',
+  priceLabel: 'Giá bản số',
+  editionCountLabel: 'Phiên bản mở bán',
+  downloadLabel: 'Tải xuống',
+  sampleLabel: 'Đọc thử',
+  sampleCountLabel: 'Bản mẫu mở xem',
+  purchaseLabel: 'Trạng thái mua',
+})
+
+Object.assign(messages.en.book.detail.digitalAssets as Record<string, unknown>, {
+  calloutTitle: '{count} digital edition(s) available',
+  calloutDescription:
+    'Formats: {formats}. Starting from {price}. You can open a sample or buy a digital edition below.',
+  teaserDescription:
+    'This ebook is sold on a dedicated page. Open it to view the sample, pricing, and purchase options.',
+  formatSummary: 'Formats: {formats}',
+  priceSummary: 'Starting from {price}',
+  sampleCallout: '{count} sample(s)',
+  viewOptions: 'View ebook',
+  viewPhysicalBook: 'View print book',
+  accessNoteTitle: 'Reading access is granted after payment',
+  accessNoteDescription:
+    'After the SePay order is confirmed paid, the digital edition appears in your Digital library. If downloads are allowed, the download action is available on the asset detail page.',
+  formatLabel: 'Format',
+  priceLabel: 'Digital price',
+  editionCountLabel: 'Editions on sale',
+  downloadLabel: 'Download',
+  sampleLabel: 'Sample',
+  sampleCountLabel: 'Samples available',
+  purchaseLabel: 'Purchase status',
+})
+
 Object.assign(messages.vi.paymentMethods as Record<string, string>, {
-  BANK_TRANSFER_QR: 'Chuyen khoan SePay',
+  BANK_TRANSFER_QR: 'Chuyển khoản SePay',
 })
 
 Object.assign(messages.vi.paymentStatus as Record<string, string>, {
-  PENDING: 'Cho thanh toan',
-  CANCELLED: 'Da huy',
+  PENDING: 'Chờ thanh toán',
+  CANCELLED: 'Đã hủy',
 })
 
 Object.assign(messages.en.paymentMethods as Record<string, string>, {
@@ -1515,4 +3602,102 @@ Object.assign(messages.en.paymentMethods as Record<string, string>, {
 Object.assign(messages.en.paymentStatus as Record<string, string>, {
   PENDING: 'Waiting for payment',
   CANCELLED: 'Cancelled',
+})
+
+Object.assign(messages.vi.header.nav as Record<string, string>, {
+  ebooks: 'Ebook',
+})
+
+Object.assign(messages.en.header.nav as Record<string, string>, {
+  ebooks: 'Ebooks',
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  ebookCatalog: {
+    eyebrow: 'Kho ebook',
+    title: 'Danh mục ebook đang mở bán',
+    description:
+      'Tổng hợp các bản PDF, EPUB và AUDIO đang phát hành công khai. Tìm theo tên sách, tác giả hoặc thể loại rồi mở trang ebook riêng để xem bản mẫu và mua ngay.',
+    resultCount: '{count} ebook đang hiển thị',
+    categoryTitle: 'Thể loại ebook',
+    categoryCount: '{count} thể loại',
+    selectedCategoryLabel: 'Đang lọc',
+    clearCategory: 'Bỏ lọc',
+    categorySearchPlaceholder: 'Tìm thể loại ebook...',
+    categoryShowingCount: 'Hiển thị {count}/{total} thể loại',
+    categoryEmptyTitle: 'Không có thể loại phù hợp',
+    categoryEmptyDescription: 'Thử đổi từ khóa để xem lại danh sách thể loại.',
+    searchPlaceholder: 'Tìm ebook, tên sách hoặc tác giả...',
+    sortPlaceholder: 'Sắp xếp',
+    sortFeatured: 'Mới phát hành',
+    sortFormat: 'Theo định dạng',
+    sortPriceAsc: 'Giá tăng dần',
+    sortPriceDesc: 'Giá giảm dần',
+    emptyTitle: 'Chưa có ebook phù hợp',
+    emptyDescription:
+      'Thử đổi từ khóa hoặc thể loại để xem các ebook đang mở bán.',
+    errorTitle: 'Không tải được danh mục ebook',
+    errorDescription: 'Vui lòng thử lại sau ít phút.',
+    sampleAvailable: 'Có bản mẫu',
+    downloadAllowed: 'Cho tải xuống',
+    openDetail: 'Xem trang ebook',
+    publisherLine: 'Phát hành bởi {publisher}',
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  ebookCatalog: {
+    eyebrow: 'Ebook catalog',
+    title: 'Digital editions now on sale',
+    description:
+      'Browse public PDF, EPUB, and AUDIO releases. Search by book title, author, or category, then open the dedicated ebook page to preview and purchase.',
+    resultCount: '{count} ebooks showing',
+    categoryTitle: 'Ebook categories',
+    categoryCount: '{count} categories',
+    selectedCategoryLabel: 'Current filter',
+    clearCategory: 'Clear',
+    categorySearchPlaceholder: 'Search ebook categories...',
+    categoryShowingCount: 'Showing {count}/{total} categories',
+    categoryEmptyTitle: 'No matching categories',
+    categoryEmptyDescription: 'Try another keyword to review the category list.',
+    searchPlaceholder: 'Search ebooks, book titles, or authors...',
+    sortPlaceholder: 'Sort by',
+    sortFeatured: 'Newest releases',
+    sortFormat: 'By format',
+    sortPriceAsc: 'Price: low to high',
+    sortPriceDesc: 'Price: high to low',
+    emptyTitle: 'No matching ebooks yet',
+    emptyDescription:
+      'Try changing the keyword or category to review ebooks that are currently on sale.',
+    errorTitle: 'Could not load the ebook catalog',
+    errorDescription: 'Please try again in a few minutes.',
+    sampleAvailable: 'Sample available',
+    downloadAllowed: 'Download enabled',
+    openDetail: 'Open ebook page',
+    publisherLine: 'Published by {publisher}',
+  },
+})
+
+Object.assign(messages.vi.book.detail.digitalAssets as Record<string, unknown>, {
+  heroBadge: 'Trang ebook chính thức',
+  browseCatalog: 'Khám phá kho ebook',
+  availableFormatsTitle: 'Các phiên bản đang mở bán',
+  availableFormatsDescription:
+    'Mỗi phiên bản có thể khác định dạng, khả năng tải xuống và bản mẫu. Chọn phiên bản phù hợp rồi thêm vào giỏ ngay tại đây.',
+  summaryTitle: 'Mua phiên bản số',
+  summaryDescription:
+    'Chọn định dạng phù hợp và thanh toán để nhận quyền đọc ngay trong thư viện số của bạn.',
+  editionCountSummary: '{count} phiên bản đang mở bán',
+})
+
+Object.assign(messages.en.book.detail.digitalAssets as Record<string, unknown>, {
+  heroBadge: 'Official ebook page',
+  browseCatalog: 'Browse ebook catalog',
+  availableFormatsTitle: 'Digital editions on sale',
+  availableFormatsDescription:
+    'Each edition can differ by format, download access, and sample availability. Pick the version that fits you, then add it to cart here.',
+  summaryTitle: 'Buy the digital edition',
+  summaryDescription:
+    'Choose the right format and complete payment to unlock reading access in your digital library right away.',
+  editionCountSummary: '{count} editions on sale',
 })

@@ -1,7 +1,10 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/contexts/language-context'
 import {
+  getPublishedDigitalAssetSampleUrl,
+  getMyDigitalAssetDownloadUrl,
   getMyDigitalLibraryAsset,
   updateMyReadingProgress,
 } from '@/services/digital-library-service'
@@ -21,11 +24,14 @@ const initialFormState: ProgressFormState = {
 }
 
 export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
+  const { t } = useLanguage()
   const [asset, setAsset] = useState<DigitalLibraryAssetResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [isSavingProgress, setIsSavingProgress] = useState(false)
+  const [isResolvingDownloadUrl, setIsResolvingDownloadUrl] = useState(false)
+  const [isResolvingSampleUrl, setIsResolvingSampleUrl] = useState(false)
   const [progressForm, setProgressForm] = useState<ProgressFormState>(
     initialFormState,
   )
@@ -106,7 +112,7 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
       progressPercent < 0 ||
       progressPercent > 100
     ) {
-      toast.error('Progress percent must be between 0 and 100.')
+      toast.error(t('library.progress.validation.progressPercentRange'))
       return
     }
 
@@ -114,7 +120,7 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
       currentPage !== null &&
       (Number.isNaN(currentPage) || currentPage < 0 || !Number.isInteger(currentPage))
     ) {
-      toast.error('Current page must be a non-negative integer.')
+      toast.error(t('library.progress.validation.currentPageNonNegativeInteger'))
       return
     }
 
@@ -136,12 +142,29 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
           : currentAsset,
       )
       setProgressForm(createProgressFormStateFromProgress(progress))
-      toast.success('Reading progress updated.')
+      toast.success(t('library.progress.updateSuccess'))
     } catch (currentError) {
       toast.error(getErrorMessage(currentError))
     } finally {
       setIsSavingProgress(false)
     }
+  }
+
+  async function openSampleAsset() {
+    await openSignedAssetUrl({
+      asset,
+      requestUrl: () =>
+        getPublishedDigitalAssetSampleUrl(asset.bookId, asset.digitalAssetId),
+      setLoading: setIsResolvingSampleUrl,
+    })
+  }
+
+  async function downloadAsset() {
+    await openSignedAssetUrl({
+      asset,
+      requestUrl: () => getMyDigitalAssetDownloadUrl(asset.digitalAssetId),
+      setLoading: setIsResolvingDownloadUrl,
+    })
   }
 
   return {
@@ -150,9 +173,13 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
     error,
     notFound,
     isSavingProgress,
+    isResolvingDownloadUrl,
+    isResolvingSampleUrl,
     progressForm,
     handleProgressFieldChange,
     submitProgress,
+    openSampleAsset,
+    downloadAsset,
   }
 }
 
@@ -171,5 +198,37 @@ function createProgressFormStateFromProgress(
         ? String(progress.progressPercent)
         : '0',
     positionData: progress?.positionData ?? '',
+  }
+}
+
+async function openSignedAssetUrl({
+  asset,
+  requestUrl,
+  setLoading,
+}: {
+  asset: DigitalLibraryAssetResponse | null
+  requestUrl: () => Promise<{ url: string }>
+  setLoading: (value: boolean) => void
+}) {
+  if (!asset || typeof window === 'undefined') {
+    return
+  }
+
+  const pendingWindow = window.open('', '_blank')
+  setLoading(true)
+
+  try {
+    const signedUrl = await requestUrl()
+
+    if (pendingWindow) {
+      pendingWindow.location.href = signedUrl.url
+    } else {
+      window.location.assign(signedUrl.url)
+    }
+  } catch (currentError) {
+    pendingWindow?.close()
+    toast.error(getErrorMessage(currentError))
+  } finally {
+    setLoading(false)
   }
 }

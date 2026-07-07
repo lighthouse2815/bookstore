@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import { getBookReferences } from '@/services/book-service'
 import {
   createAuthor,
@@ -15,6 +16,9 @@ import {
   deleteAuthor,
   deleteCategory,
   deletePublisher,
+  getAuthorsPage,
+  getCategoriesPage,
+  getPublishersPage,
   updateAuthor,
   updateCategory,
   updatePublisher,
@@ -36,13 +40,23 @@ export type ReferenceFormState = {
   id: string | null
   name: string
   description: string
+  avatarFileAssetId: string
+  avatarPreviewUrl: string
+  birthYear: string
+  deathYear: string
 }
 
 const initialFormState: ReferenceFormState = {
   id: null,
   name: '',
   description: '',
+  avatarFileAssetId: '',
+  avatarPreviewUrl: '',
+  birthYear: '',
+  deathYear: '',
 }
+
+const PAGE_SIZE = 10
 
 export function useAdminReferenceManagementPage(
   sectionKey: ReferenceSectionKey,
@@ -57,6 +71,9 @@ export function useAdminReferenceManagementPage(
   const [selectedItem, setSelectedItem] = useState<ReferenceItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [page, setPage] = useState(0)
+  const [serverTotalCount, setServerTotalCount] = useState(0)
 
   const filteredItems = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase()
@@ -73,6 +90,25 @@ export function useAdminReferenceManagementPage(
     )
   }, [items, searchTerm, sectionKey])
 
+  const paginatedItems = useMemo(
+    () =>
+      searchTerm.trim()
+        ? filteredItems.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+        : filteredItems,
+    [filteredItems, page, searchTerm],
+  )
+
+  const totalCount = searchTerm.trim()
+    ? filteredItems.length
+    : serverTotalCount
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(totalCount / PAGE_SIZE) - 1)
+    if (page > lastPage) {
+      setPage(lastPage)
+    }
+  }, [page, totalCount])
+
   useEffect(() => {
     let isCancelled = false
 
@@ -80,13 +116,22 @@ export function useAdminReferenceManagementPage(
       setIsLoading(true)
 
       try {
-        const response = await getBookReferences()
-
-        if (isCancelled) {
-          return
+        if (searchTerm.trim()) {
+          const response = await getBookReferences()
+          const sectionItems = getSectionItems(sectionKey, response)
+          if (isCancelled) {
+            return
+          }
+          setItems(sectionItems)
+          setServerTotalCount(sectionItems.length)
+        } else {
+          const response = await getSectionPage(sectionKey, page, PAGE_SIZE)
+          if (isCancelled) {
+            return
+          }
+          setItems(response.items)
+          setServerTotalCount(response.totalCount)
         }
-
-        setItems(getSectionItems(sectionKey, response))
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -106,7 +151,7 @@ export function useAdminReferenceManagementPage(
     return () => {
       isCancelled = true
     }
-  }, [sectionKey, t])
+  }, [page, searchTerm, sectionKey, t])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -132,6 +177,7 @@ export function useAdminReferenceManagementPage(
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
   }
 
   function handleFormChange(field: keyof ReferenceFormState, value: string) {
@@ -139,6 +185,32 @@ export function useAdminReferenceManagementPage(
       ...currentForm,
       [field]: value,
     }))
+  }
+
+  async function handleAuthorAvatarFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    setIsUploadingAvatar(true)
+
+    try {
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'AUTHOR_AVATAR',
+        visibility: 'PUBLIC',
+        authorId: form.id ?? undefined,
+      })
+
+      setForm((currentForm) => ({
+        ...currentForm,
+        avatarFileAssetId: uploadedFile.id,
+        avatarPreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+      }))
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError, t('checkout.error')))
+    } finally {
+      setIsUploadingAvatar(false)
+    }
   }
 
   function resetDialog() {
@@ -172,6 +244,22 @@ export function useAdminReferenceManagementPage(
       id: item.id,
       name: item.name,
       description: getReferenceDescription(sectionKey, item),
+      avatarFileAssetId:
+        sectionKey === 'authors' && 'avatarFileAssetId' in item
+          ? item.avatarFileAssetId ?? ''
+          : '',
+      avatarPreviewUrl:
+        sectionKey === 'authors' && 'avatarUrl' in item
+          ? item.avatarUrl ?? ''
+          : '',
+      birthYear:
+        sectionKey === 'authors' && 'birthYear' in item && item.birthYear
+          ? String(item.birthYear)
+          : '',
+      deathYear:
+        sectionKey === 'authors' && 'deathYear' in item && item.deathYear
+          ? String(item.deathYear)
+          : '',
     })
     setDialogMode('edit')
   }
@@ -193,8 +281,16 @@ export function useAdminReferenceManagementPage(
     setIsLoading(true)
 
     try {
-      const response = await getBookReferences()
-      setItems(getSectionItems(sectionKey, response))
+      if (searchTerm.trim()) {
+        const response = await getBookReferences()
+        const sectionItems = getSectionItems(sectionKey, response)
+        setItems(sectionItems)
+        setServerTotalCount(sectionItems.length)
+      } else {
+        const response = await getSectionPage(sectionKey, page, PAGE_SIZE)
+        setItems(response.items)
+        setServerTotalCount(response.totalCount)
+      }
       setError(null)
     } catch (currentError) {
       setError(getErrorMessage(currentError, t('checkout.error')))
@@ -228,11 +324,17 @@ export function useAdminReferenceManagementPage(
             await updateAuthor(form.id, {
               name: form.name.trim(),
               biography: form.description.trim() || null,
+              avatarFileAssetId: toNullableString(form.avatarFileAssetId),
+              birthYear: toNullableNumber(form.birthYear),
+              deathYear: toNullableNumber(form.deathYear),
             })
           } else {
             await createAuthor({
               name: form.name.trim(),
               biography: form.description.trim() || null,
+              avatarFileAssetId: toNullableString(form.avatarFileAssetId),
+              birthYear: toNullableNumber(form.birthYear),
+              deathYear: toNullableNumber(form.deathYear),
             })
           }
           break
@@ -305,9 +407,15 @@ export function useAdminReferenceManagementPage(
     isSubmitting,
     isDeleting,
     filteredItems,
+    paginatedItems,
+    totalCount,
+    page,
+    pageSize: PAGE_SIZE,
     isDialogLocked: dialogMode === 'delete' && isDeleting,
+    isUploadingAvatar,
     handleSearchTermChange,
     handleFormChange,
+    handleAuthorAvatarFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -316,6 +424,18 @@ export function useAdminReferenceManagementPage(
     openDeleteDialog,
     handleSubmit,
     handleDeleteConfirm,
+    handlePageChange: setPage,
+  }
+}
+
+function getSectionPage(sectionKey: ReferenceSectionKey, page: number, size: number) {
+  switch (sectionKey) {
+    case 'categories':
+      return getCategoriesPage({ page, size })
+    case 'authors':
+      return getAuthorsPage({ page, size })
+    case 'publishers':
+      return getPublishersPage({ page, size })
   }
 }
 
@@ -342,4 +462,19 @@ export function getReferenceDescription(
   }
 
   return ('description' in item ? item.description : null) ?? ''
+}
+
+function toNullableString(value: string) {
+  const trimmedValue = value.trim()
+  return trimmedValue === '' ? null : trimmedValue
+}
+
+function toNullableNumber(value: string) {
+  const trimmedValue = value.trim()
+  if (trimmedValue === '') {
+    return null
+  }
+
+  const parsedValue = Number(trimmedValue)
+  return Number.isFinite(parsedValue) ? parsedValue : null
 }

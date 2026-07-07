@@ -16,7 +16,11 @@ public interface IPaymentRepository {
 
     Optional<Payment> findPendingSepayByOrderCode(String orderCode);
 
+    Optional<Payment> findPendingSepayByOrderCodeForUpdate(String orderCode);
+
     Optional<Payment> findPendingSepayByTransferContentInContent(String content);
+
+    Optional<Payment> findPendingSepayByTransferContentInContentForUpdate(String content);
 
     Payment save(Payment payment);
 }

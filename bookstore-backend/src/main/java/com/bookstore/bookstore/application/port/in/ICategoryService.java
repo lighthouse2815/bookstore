@@ -4,12 +4,15 @@ import com.bookstore.bookstore.application.command.CreateCategoryCommand;
 import com.bookstore.bookstore.application.command.DeleteCategoryCommand;
 import com.bookstore.bookstore.application.command.UpdateCategoryCommand;
 import com.bookstore.bookstore.domain.model.Category;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
 import java.util.UUID;
 
 public interface ICategoryService {
 
     List<Category> getAll();
+
+    PageSliceResult<Category> getAll(int page, int size);
 
     List<Category> getAllIncludingDeleted();
 

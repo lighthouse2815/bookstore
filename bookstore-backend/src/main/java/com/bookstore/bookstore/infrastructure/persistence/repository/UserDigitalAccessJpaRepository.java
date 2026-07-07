@@ -1,11 +1,17 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.domain.enums.DigitalAccessStatus;
+import com.bookstore.bookstore.domain.enums.DigitalAccessType;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserDigitalAccessJpaEntity;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserDigitalAccessJpaRepository extends JpaRepository<UserDigitalAccessJpaEntity, UUID> {
 
@@ -17,6 +23,24 @@ public interface UserDigitalAccessJpaRepository extends JpaRepository<UserDigita
             UUID userId
     );
 
+    @Query("""
+            select uda
+            from UserDigitalAccessJpaEntity uda
+            where uda.deletedAt is null
+              and uda.user.deletedAt is null
+              and uda.digitalAsset.deletedAt is null
+              and uda.user.id = :userId
+              and uda.status = :status
+              and (uda.expiresAt is null or uda.expiresAt > :now)
+            order by uda.createdAt desc
+            """)
+    Page<UserDigitalAccessJpaEntity> findAccessiblePageByUserId(
+            @Param("userId") UUID userId,
+            @Param("status") DigitalAccessStatus status,
+            @Param("now") Instant now,
+            Pageable pageable
+    );
+
     List<UserDigitalAccessJpaEntity> findAllByUser_IdOrderByCreatedAtDesc(UUID userId);
 
     List<UserDigitalAccessJpaEntity> findAllByUser_IdAndDigitalAsset_IdAndDeletedAtIsNullAndUser_DeletedAtIsNullAndDigitalAsset_DeletedAtIsNull(
@@ -26,6 +50,12 @@ public interface UserDigitalAccessJpaRepository extends JpaRepository<UserDigita
 
     List<UserDigitalAccessJpaEntity> findAllBySourceOrderIdAndDeletedAtIsNullAndUser_DeletedAtIsNullAndDigitalAsset_DeletedAtIsNullOrderByCreatedAtDesc(
             UUID sourceOrderId
+    );
+
+    Optional<UserDigitalAccessJpaEntity> findFirstByUser_IdAndDigitalAsset_IdAndAccessTypeOrderByCreatedAtDesc(
+            UUID userId,
+            UUID digitalAssetId,
+            DigitalAccessType accessType
     );
 
     boolean existsByUser_IdAndDigitalAsset_IdAndStatusAndDeletedAtIsNullAndUser_DeletedAtIsNullAndDigitalAsset_DeletedAtIsNull(

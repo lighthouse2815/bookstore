@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import { updateCurrentUser } from '@/services/auth-service'
 import { getMyOrders } from '@/services/order-service'
 import {
@@ -11,10 +12,6 @@ import {
 } from '@/services/profile-service'
 import type { OrderResponse } from '@/types/order'
 import type { ProfileResponse } from '@/types/profile'
-import {
-  compressAvatarFile,
-  getAvatarFileErrorMessage,
-} from '@/utils/avatar-image'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -26,6 +23,7 @@ type AccountFormState = {
 type ProfileFormState = {
   lastName: string
   firstName: string
+  avatarFileAssetId: string
   avatarUrl: string
   gender: ProfileResponse['gender']
   dateOfBirth: string
@@ -33,8 +31,7 @@ type ProfileFormState = {
 
 export function useProfilePage() {
   const { user, logout, refreshUser } = useAuth()
-  const { t, language } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
@@ -49,6 +46,7 @@ export function useProfilePage() {
   const [profileForm, setProfileForm] = useState<ProfileFormState>({
     lastName: '',
     firstName: '',
+    avatarFileAssetId: '',
     avatarUrl: '',
     gender: 'OTHER',
     dateOfBirth: '',
@@ -84,6 +82,7 @@ export function useProfilePage() {
         setProfileForm({
           lastName: profileResponse.lastName,
           firstName: profileResponse.firstName,
+          avatarFileAssetId: profileResponse.avatarFileAssetId ?? '',
           avatarUrl: profileResponse.avatarUrl ?? '',
           gender: profileResponse.gender,
           dateOfBirth: profileResponse.dateOfBirth,
@@ -140,15 +139,17 @@ export function useProfilePage() {
     }
 
     try {
-      const avatarUrl = await compressAvatarFile(file)
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'USER_AVATAR',
+        visibility: 'PUBLIC',
+      })
       setProfileForm((currentForm) => ({
         ...currentForm,
-        avatarUrl,
+        avatarFileAssetId: uploadedFile.id,
+        avatarUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
       }))
     } catch (error) {
-      toast.error(
-        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
-      )
+      toast.error(getErrorMessage(error, t('checkout.error')))
     }
   }
 
@@ -180,7 +181,7 @@ export function useProfilePage() {
       const response = await updateCurrentProfile({
         lastName: profileForm.lastName,
         firstName: profileForm.firstName,
-        avatarUrl: profileForm.avatarUrl || null,
+        avatarFileAssetId: profileForm.avatarFileAssetId || null,
         gender: profileForm.gender,
         dateOfBirth: profileForm.dateOfBirth,
       })
@@ -210,6 +211,6 @@ export function useProfilePage() {
     handleLogout,
     handleSaveAccount,
     handleSaveProfile,
-    avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
+    avatarLabel: t('auth.profile.avatarLabel'),
   }
 }

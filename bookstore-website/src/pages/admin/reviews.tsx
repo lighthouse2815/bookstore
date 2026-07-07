@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { useAdminReviewsPage } from '@/hooks/use-admin-reviews-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import type { AdminReviewResponse } from '@/types/admin-access'
@@ -31,6 +32,9 @@ export default function AdminReviewsPage() {
     formatNumber,
     labels,
     reviews,
+    page,
+    pageSize,
+    totalCount,
     searchTerm,
     isLoading,
     error,
@@ -43,6 +47,7 @@ export default function AdminReviewsPage() {
     averageRating,
     commentCount,
     handleSearchTermChange,
+    handlePageChange,
     openViewDialog,
     openDeleteDialog,
     closeDialog,
@@ -104,8 +109,8 @@ export default function AdminReviewsPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <MessageSquareText className="mr-2 h-4 w-4" />
-                    {interpolateLabel(labels.total, {
-                      count: formatNumber(reviews.length),
+                    {t('admin.reviewsPage.total', {
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -230,6 +235,14 @@ export default function AdminReviewsPage() {
                   })
                 )}
               </div>
+              {!isLoading && !error && totalCount > 0 ? (
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -437,14 +450,5 @@ function RatingBadge({ rating }: { rating: number }) {
       <Star className="mr-1.5 h-3.5 w-3.5 fill-current" />
       {rating}/5
     </Badge>
-  )
-}
-
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
   )
 }

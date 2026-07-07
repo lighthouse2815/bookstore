@@ -5,6 +5,7 @@ import com.bookstore.bookstore.presentation.mapper.ShipmentWebMapper;
 import com.bookstore.bookstore.presentation.request.AssignShipmentRequest;
 import com.bookstore.bookstore.presentation.request.UpdateShipmentStatusRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import com.bookstore.bookstore.presentation.response.ShipmentResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -40,10 +42,23 @@ public class ShipmentController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/shipments")
-    public ApiResponse<List<ShipmentResponse>> getAll() {
-        return ApiResponse.success(shipmentService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<ShipmentResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = shipmentService.getAll(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(shipmentWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(shipmentService.getAll().stream()
                 .map(shipmentWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -60,11 +75,26 @@ public class ShipmentController {
 
     @PreAuthorize("hasRole('SHIPPER')")
     @GetMapping("/api/shipper/shipments/my")
-    public ApiResponse<List<ShipmentResponse>> getMyShipments(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<ApiResponse<List<ShipmentResponse>>> getMyShipments(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
         UUID shipperId = UUID.fromString(jwt.getSubject());
-        return ApiResponse.success(shipmentService.getMyShipments(shipperId).stream()
+        if (page != null || size != null) {
+            var result = shipmentService.getMyShipments(
+                    shipperId,
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(shipmentWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(shipmentService.getMyShipments(shipperId).stream()
                 .map(shipmentWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('SHIPPER')")

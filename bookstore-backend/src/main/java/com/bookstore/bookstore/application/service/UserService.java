@@ -13,7 +13,11 @@ import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.enums.UserStatus;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
@@ -45,6 +49,7 @@ public class UserService implements IUserService {
     private final IProfileService profileService;
     private final IRoleRepository roleRepository;
     private final IPasswordEncoder passwordEncoder;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<User> getAll() {
@@ -57,8 +62,18 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public PageSliceResult<User> getCustomers(int page, int size) {
+        return getActiveUsersByRole(USER_ROLE, page, size);
+    }
+
+    @Override
     public List<User> getStaffs() {
         return getActiveUsersByRole(STAFF_ROLE);
+    }
+
+    @Override
+    public PageSliceResult<User> getStaffs(int page, int size) {
+        return getActiveUsersByRole(STAFF_ROLE, page, size);
     }
 
     @Override
@@ -67,8 +82,18 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public PageSliceResult<User> getAdmins(int page, int size) {
+        return getActiveUsersByRole(ADMIN_ROLE, page, size);
+    }
+
+    @Override
     public List<User> getShippers() {
         return getActiveUsersByRole(SHIPPER_ROLE);
+    }
+
+    @Override
+    public PageSliceResult<User> getShippers(int page, int size) {
+        return getActiveUsersByRole(SHIPPER_ROLE, page, size);
     }
 
     @Override
@@ -131,12 +156,13 @@ public class UserService implements IUserService {
         );
 
         User savedUser = create(user);
+        FileAsset avatarFileAsset = resolveAvatarFileAsset(command.avatarFileAssetId());
         profileService.create(new Profile(
                 UUID.randomUUID(),
                 savedUser.getId(),
                 command.lastName(),
                 command.firstName(),
-                command.avatarUrl(),
+                avatarFileAsset,
                 command.gender(),
                 command.dateOfBirth(),
                 now,
@@ -213,7 +239,9 @@ public class UserService implements IUserService {
         User currentUser = userRepository.findByIdIncludingDeleted(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND));
 
-        if (!currentUser.hasRole(STAFF_ROLE) && !currentUser.hasRole(ADMIN_ROLE)) {
+        if (!currentUser.hasRole(STAFF_ROLE)
+                && !currentUser.hasRole(SHIPPER_ROLE)
+                && !currentUser.hasRole(ADMIN_ROLE)) {
             throw new ApplicationException(ApplicationErrorCode.STAFF_NOT_FOUND);
         }
 
@@ -305,6 +333,11 @@ public class UserService implements IUserService {
                 .toList();
     }
 
+    private PageSliceResult<User> getActiveUsersByRole(String roleName, int page, int size) {
+        validatePageRequest(page, size);
+        return userRepository.findPageByRoleNameActive(roleName, page, size);
+    }
+
     private String normalizeManagedRole(String roleName) {
         String normalizedRoleName = StringUtils.trimToNull(roleName);
         if (normalizedRoleName == null) {
@@ -335,5 +368,27 @@ public class UserService implements IUserService {
         }
 
         return roles;
+    }
+
+    private FileAsset resolveAvatarFileAsset(UUID avatarFileAssetId) {
+        if (avatarFileAssetId == null) {
+            return null;
+        }
+
+        return fileAssetPolicyService.requireActiveAsset(
+                avatarFileAssetId,
+                FilePurpose.USER_AVATAR,
+                FileVisibility.PUBLIC
+        );
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

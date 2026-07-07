@@ -14,14 +14,40 @@ import { useBookCatalog } from '@/hooks/use-book-catalog'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
+const CATEGORY_PREVIEW_LIMIT = 8
+
 export default function HomePage() {
-  const { t } = useLanguage()
+  const { t, formatNumber } = useLanguage()
   const { books, categories, isLoading, error } = useBookCatalog()
-  const hero = books[0]
-  const highlightedBooks = books.filter((book) => book.id !== hero?.id).slice(0, 2)
+  const heroBooks = books.slice(0, 4)
   const featured = books.slice(0, 4)
+  const featuredCategories = categories.slice(0, CATEGORY_PREVIEW_LIMIT)
   const bestsellers =
     books.length > 4 ? books.slice(4, 8) : books.slice(0, Math.min(4, books.length))
+  const totalSoldCount = books.reduce((sum, book) => sum + book.soldCount, 0)
+  const totalReviewCount = books.reduce((sum, book) => sum + (book.reviews ?? 0), 0)
+  const weightedRatingTotal = books.reduce(
+    (sum, book) => sum + (book.rating ?? 0) * (book.reviews ?? 0),
+    0,
+  )
+  const averageRating =
+    totalReviewCount > 0 ? weightedRatingTotal / totalReviewCount : 0
+  const heroStats = [
+    {
+      value: formatNumber(books.length),
+      label: t('home.stats.books'),
+    },
+    {
+      value: formatNumber(totalSoldCount),
+      label: t('home.stats.sales'),
+    },
+    {
+      value: `${averageRating.toFixed(1)}/5`,
+      label: t('home.stats.reviewsCount', {
+        count: formatNumber(totalReviewCount),
+      }),
+    },
+  ]
 
   const valueProps = [
     {
@@ -112,52 +138,28 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="flex flex-wrap gap-6 pt-2">
-                <div>
-                  <p className="font-heading text-2xl font-bold">10K+</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.books')}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-heading text-2xl font-bold">50K+</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.customers')}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-heading text-2xl font-bold">4.9/5</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.reviews')}
-                  </p>
-                </div>
+                {heroStats.map((item) => (
+                  <div key={item.label}>
+                    <p className="font-heading text-2xl font-bold">{item.value}</p>
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-md">
-              {hero ? (
+            <div className="relative mx-auto w-full max-w-lg">
+              {heroBooks.length > 0 ? (
                 <>
                   <div className="absolute -right-4 -top-4 hidden size-24 rounded-full bg-accent/20 lg:block" />
                   <div className="absolute -bottom-6 -left-6 hidden size-32 rounded-full bg-primary/10 lg:block" />
                   <div className="relative grid grid-cols-2 gap-4">
-                    <Link
-                      to={`/books/${hero.id}`}
-                      className="col-span-1 row-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
-                    >
-                      <div className="relative aspect-[3/4]">
-                        <img
-                          src={getBookCoverUrl(hero.cover)}
-                          alt={hero.title}
-                          className="absolute inset-0 size-full object-cover"
-                        />
-                      </div>
-                    </Link>
-                    {highlightedBooks.map((book) => (
+                    {heroBooks.map((book) => (
                       <Link
                         key={book.id}
                         to={`/books/${book.id}`}
-                        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                        className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
                       >
-                        <div className="relative aspect-[3/4]">
+                        <div className="relative aspect-[4/5]">
                           <img
                             src={getBookCoverUrl(book.cover)}
                             alt={book.title}
@@ -201,18 +203,40 @@ export default function HomePage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight">
-            {t('home.categoriesTitle')}
-          </h2>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-heading text-2xl font-bold tracking-tight">
+                {t('home.categoriesTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('home.categoriesCount', { count: categories.length })}
+              </p>
+            </div>
+            <Link
+              to="/books"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+            >
+              {t('home.allCategories')}
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
           {categories.length > 0 ? (
-            <div className="flex flex-wrap gap-3">
-              {categories.map((category) => (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {featuredCategories.map((category, index) => (
                 <Link
                   key={category}
                   to={`/books?category=${encodeURIComponent(category)}`}
-                  className="rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                  className="group flex min-h-24 items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/70 bg-card px-4 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
-                  {getCategoryLabel(category, t)}
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold tabular-nums text-primary/70">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span className="mt-2 block truncate text-sm font-semibold text-foreground group-hover:text-primary">
+                      {getCategoryLabel(category, t)}
+                    </span>
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                 </Link>
               ))}
             </div>

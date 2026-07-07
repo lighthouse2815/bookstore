@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/language-context'
 import {
   createAdminPromotion,
   deleteAdminPromotion,
-  getAdminPromotions,
+  getAdminPromotionsPage,
   updateAdminPromotion,
 } from '@/services/admin-access-service'
 import type {
@@ -48,11 +48,13 @@ const promotionFieldNames: PromotionFieldName[] = [
   'active',
 ]
 
+const PAGE_SIZE = 10
+
 export function useAdminPromotionsPage() {
-  const { language, t, formatCurrency, formatDate, formatNumber } =
-    useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const [promotions, setPromotions] = useState<AdminPromotionResponse[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -69,106 +71,58 @@ export function useAdminPromotionsPage() {
 
   const labels = useMemo(
     () => ({
-      addPromotion: isVietnamese ? 'Tao coupon' : 'Create coupon',
-      detailTitle: isVietnamese ? 'Chi tiet coupon' : 'Coupon details',
-      editTitle: isVietnamese ? 'Sua coupon' : 'Edit coupon',
-      deleteTitle: isVietnamese
-        ? 'Xac nhan xoa coupon'
-        : 'Confirm coupon deletion',
-      deleteDescription: isVietnamese
-        ? 'Coupon nay se bi xoa khoi he thong va khong the hoan tac.'
-        : 'This coupon will be removed from the system and cannot be undone.',
-      createSuccess: isVietnamese ? 'Da tao coupon' : 'Coupon created successfully',
-      updateSuccess: isVietnamese
-        ? 'Da cap nhat coupon'
-        : 'Coupon updated successfully',
-      deleteSuccess: isVietnamese ? 'Da xoa coupon' : 'Coupon deleted successfully',
-      loadError: isVietnamese
-        ? 'Khong tai duoc danh sach coupon'
-        : 'Unable to load coupon list',
-      saveError: isVietnamese ? 'Khong luu duoc coupon' : 'Unable to save coupon',
-      deleteError: isVietnamese
-        ? 'Khong xoa duoc coupon'
-        : 'Unable to delete coupon',
-      showingCount: isVietnamese
-        ? 'Hien thi {count} tren {total} coupon'
-        : 'Showing {count} of {total} coupons',
-      codeLabel: isVietnamese ? 'Ma coupon' : 'Coupon code',
-      descriptionLabel: isVietnamese ? 'Mo ta' : 'Description',
-      couponTypeLabel: isVietnamese ? 'Loai coupon' : 'Coupon type',
-      discountTypeLabel: isVietnamese ? 'Kieu giam gia' : 'Discount type',
-      discountValueLabel: isVietnamese ? 'Gia tri giam' : 'Discount value',
-      minOrderAmountLabel: isVietnamese
-        ? 'Don toi thieu'
-        : 'Minimum order amount',
-      maxDiscountAmountLabel: isVietnamese
-        ? 'Giam toi da'
-        : 'Maximum discount amount',
-      maxUsageCountLabel: isVietnamese
-        ? 'Luot dung toi da'
-        : 'Maximum usage count',
-      startsAtLabel: isVietnamese ? 'Bat dau luc' : 'Starts at',
-      expiresAtLabel: isVietnamese ? 'Het han luc' : 'Expires at',
-      activeLabel: isVietnamese ? 'Dang kich hoat' : 'Active',
-      noDescription: isVietnamese ? 'Chua co mo ta' : 'No description',
-      noLimit: isVietnamese ? 'Khong gioi han' : 'No limit',
-      noMaxDiscount: isVietnamese ? 'Khong gioi han' : 'No cap',
-      codeHint: isVietnamese
-        ? 'Tu dong viet hoa va bo khoang trang.'
-        : 'Automatically uppercased with spaces removed.',
-      percentageHint: isVietnamese
-        ? 'Coupon phan tram chi nhan gia tri tu 0 den 100.'
-        : 'Percentage coupons only accept values from 0 to 100.',
-      startsAtHint: isVietnamese
-        ? 'Thoi gian tinh theo gio may hien tai.'
-        : 'Time is based on the current device timezone.',
-      expiresAtHint: isVietnamese
-        ? 'Phai sau thoi diem bat dau.'
-        : 'Must be later than the start time.',
-      invalidForm: isVietnamese
-        ? 'Vui long kiem tra lai thong tin coupon.'
-        : 'Please review the coupon details.',
-      codeRequired: isVietnamese
-        ? 'Vui long nhap ma coupon.'
-        : 'Coupon code is required.',
-      discountValueRequired: isVietnamese
-        ? 'Vui long nhap gia tri giam.'
-        : 'Discount value is required.',
-      discountValuePositive: isVietnamese
-        ? 'Gia tri giam phai lon hon 0.'
-        : 'Discount value must be greater than 0.',
-      discountValuePercentageMax: isVietnamese
-        ? 'Gia tri giam theo phan tram khong duoc vuot qua 100.'
-        : 'Percentage discount cannot exceed 100.',
-      minOrderAmountInvalid: isVietnamese
-        ? 'Don toi thieu phai tu 0 tro len.'
-        : 'Minimum order amount must be 0 or greater.',
-      maxDiscountAmountInvalid: isVietnamese
-        ? 'Giam toi da phai lon hon 0 neu duoc nhap.'
-        : 'Maximum discount amount must be greater than 0 when provided.',
-      maxUsageCountInvalid: isVietnamese
-        ? 'Luot dung toi da phai la so nguyen duong.'
-        : 'Maximum usage count must be a positive integer.',
-      startsAtInvalid: isVietnamese
-        ? 'Vui long chon thoi diem bat dau hop le.'
-        : 'Please choose a valid start time.',
-      expiresAtInvalid: isVietnamese
-        ? 'Vui long chon thoi diem het han hop le.'
-        : 'Please choose a valid expiration time.',
-      expiresAtAfterStartsAt: isVietnamese
-        ? 'Thoi diem het han phai sau thoi diem bat dau.'
-        : 'Expiration time must be later than the start time.',
-      deleteBlockedShort: isVietnamese
-        ? 'Da phat sinh luot dung'
-        : 'Already used',
-      deleteBlockedReason: isVietnamese
-        ? 'Coupon da co luot su dung, khong the xoa.'
-        : 'This coupon already has usage history and cannot be deleted.',
-      formDescription: isVietnamese
-        ? 'Cap nhat thong tin ma giam gia va lich ap dung.'
-        : 'Update the coupon information and active schedule.',
+      addPromotion: t('admin.promotionsPage.addPromotion'),
+      detailTitle: t('admin.promotionsPage.detailTitle'),
+      editTitle: t('admin.promotionsPage.editTitle'),
+      deleteTitle: t('admin.promotionsPage.deleteTitle'),
+      deleteDescription: t('admin.promotionsPage.deleteDescription'),
+      createSuccess: t('admin.promotionsPage.createSuccess'),
+      updateSuccess: t('admin.promotionsPage.updateSuccess'),
+      deleteSuccess: t('admin.promotionsPage.deleteSuccess'),
+      loadError: t('admin.promotionsPage.loadError'),
+      saveError: t('admin.promotionsPage.saveError'),
+      deleteError: t('admin.promotionsPage.deleteError'),
+      showingCount: t('admin.promotionsPage.showingCount'),
+      codeLabel: t('admin.promotionsPage.codeLabel'),
+      descriptionLabel: t('admin.promotionsPage.descriptionLabel'),
+      couponTypeLabel: t('admin.promotionsPage.couponTypeLabel'),
+      discountTypeLabel: t('admin.promotionsPage.discountTypeLabel'),
+      discountValueLabel: t('admin.promotionsPage.discountValueLabel'),
+      minOrderAmountLabel: t('admin.promotionsPage.minOrderAmountLabel'),
+      maxDiscountAmountLabel: t('admin.promotionsPage.maxDiscountAmountLabel'),
+      maxUsageCountLabel: t('admin.promotionsPage.maxUsageCountLabel'),
+      startsAtLabel: t('admin.promotionsPage.startsAtLabel'),
+      expiresAtLabel: t('admin.promotionsPage.expiresAtLabel'),
+      activeLabel: t('admin.promotionsPage.activeLabel'),
+      noDescription: t('admin.promotionsPage.noDescription'),
+      noLimit: t('admin.promotionsPage.noLimit'),
+      noMaxDiscount: t('admin.promotionsPage.noMaxDiscount'),
+      codeHint: t('admin.promotionsPage.codeHint'),
+      percentageHint: t('admin.promotionsPage.percentageHint'),
+      startsAtHint: t('admin.promotionsPage.startsAtHint'),
+      expiresAtHint: t('admin.promotionsPage.expiresAtHint'),
+      invalidForm: t('admin.promotionsPage.invalidForm'),
+      codeRequired: t('admin.promotionsPage.codeRequired'),
+      discountValueRequired: t('admin.promotionsPage.discountValueRequired'),
+      discountValuePositive: t('admin.promotionsPage.discountValuePositive'),
+      discountValuePercentageMax: t(
+        'admin.promotionsPage.discountValuePercentageMax',
+      ),
+      minOrderAmountInvalid: t('admin.promotionsPage.minOrderAmountInvalid'),
+      maxDiscountAmountInvalid: t(
+        'admin.promotionsPage.maxDiscountAmountInvalid',
+      ),
+      maxUsageCountInvalid: t('admin.promotionsPage.maxUsageCountInvalid'),
+      startsAtInvalid: t('admin.promotionsPage.startsAtInvalid'),
+      expiresAtInvalid: t('admin.promotionsPage.expiresAtInvalid'),
+      expiresAtAfterStartsAt: t(
+        'admin.promotionsPage.expiresAtAfterStartsAt',
+      ),
+      deleteBlockedShort: t('admin.promotionsPage.deleteBlockedShort'),
+      deleteBlockedReason: t('admin.promotionsPage.deleteBlockedReason'),
+      formDescription: t('admin.promotionsPage.formDescription'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   const formErrors = useMemo(
@@ -213,13 +167,14 @@ export function useAdminPromotionsPage() {
       setIsLoading(true)
 
       try {
-        const response = await getAdminPromotions()
+        const response = await getAdminPromotionsPage({ page, size: PAGE_SIZE })
 
         if (isCancelled) {
           return
         }
 
-        setPromotions(response)
+        setPromotions(response.items)
+        setTotalCount(response.totalCount)
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -240,7 +195,7 @@ export function useAdminPromotionsPage() {
     return () => {
       isCancelled = true
     }
-  }, [labels.loadError])
+  }, [labels.loadError, page])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -266,6 +221,11 @@ export function useAdminPromotionsPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function resetDialog() {
@@ -344,8 +304,9 @@ export function useAdminPromotionsPage() {
     setIsLoading(true)
 
     try {
-      const response = await getAdminPromotions()
-      setPromotions(response)
+      const response = await getAdminPromotionsPage({ page, size: PAGE_SIZE })
+      setPromotions(response.items)
+      setTotalCount(response.totalCount)
       setError(null)
     } catch (currentError) {
       setError(getErrorMessage(currentError, labels.loadError))
@@ -416,6 +377,9 @@ export function useAdminPromotionsPage() {
     formatDate,
     formatNumber,
     promotions,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     filteredPromotions,
     searchTerm,
     isLoading,
@@ -429,6 +393,7 @@ export function useAdminPromotionsPage() {
     labels,
     isDialogLocked: dialogMode === 'delete' && isDeleting,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,

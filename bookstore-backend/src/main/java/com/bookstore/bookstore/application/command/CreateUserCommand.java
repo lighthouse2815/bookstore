@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.domain.enums.Gender;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record CreateUserCommand(
         String username,
@@ -12,7 +13,7 @@ public record CreateUserCommand(
         String email,
         String firstName,
         String lastName,
-        String avatarUrl,
+        UUID avatarFileAssetId,
         Gender gender,
         LocalDate dateOfBirth,
         String roleName

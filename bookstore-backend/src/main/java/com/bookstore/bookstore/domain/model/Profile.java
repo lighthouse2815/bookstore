@@ -16,7 +16,7 @@ public class Profile {
     private UUID userId;
     private String lastName;
     private String firstName;
-    private String avatarUrl;
+    private FileAsset avatarFileAsset;
     private Gender gender;
     private LocalDate dateOfBirth;
     private Instant createdAt;
@@ -28,7 +28,7 @@ public class Profile {
             UUID userId,
             String lastName,
             String firstName,
-            String avatarUrl,
+            FileAsset avatarFileAsset,
             Gender gender,
             LocalDate dateOfBirth,
             Instant createdAt,
@@ -39,7 +39,7 @@ public class Profile {
         setUserId(userId);
         setLastName(lastName);
         setFirstName(firstName);
-        setAvatarUrl(avatarUrl);
+        setAvatarFileAsset(avatarFileAsset);
         setGender(gender);
         setDateOfBirth(dateOfBirth);
         setCreatedAt(createdAt);
@@ -50,7 +50,7 @@ public class Profile {
     public void updateProfileInfo(
             String lastName,
             String firstName,
-            String avatarUrl,
+            FileAsset avatarFileAsset,
             Gender gender,
             LocalDate dateOfBirth
     ) {
@@ -59,7 +59,7 @@ public class Profile {
 
         setRequiredLastName(lastName);
         setRequiredFirstName(firstName);
-        setAvatarUrl(avatarUrl);
+        setAvatarFileAsset(avatarFileAsset);
         setRequiredGender(gender);
         setRequiredDateOfBirth(dateOfBirth);
         setUpdatedAt(now);
@@ -92,11 +92,24 @@ public class Profile {
         this.firstName = Guard.notBlank(firstName, DomainErrorCode.INVALID_PROFILE_FIRST_NAME, "firstName");
     }
 
-    private void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = Guard.notBlankOrNull(
-                avatarUrl,
-                DomainErrorCode.INVALID_PROFILE_AVATAR_URL,
-                "avatarUrl"
+    public UUID getAvatarFileAssetId() {
+        return avatarFileAsset == null ? null : avatarFileAsset.getId();
+    }
+
+    public String getAvatarUrl() {
+        return avatarFileAsset == null ? null : avatarFileAsset.getPublicUrl();
+    }
+
+    private void setAvatarFileAsset(FileAsset avatarFileAsset) {
+        if (avatarFileAsset == null) {
+            this.avatarFileAsset = null;
+            return;
+        }
+
+        this.avatarFileAsset = Guard.notNull(
+                avatarFileAsset,
+                DomainErrorCode.INVALID_PROFILE_AVATAR_FILE_ASSET_ID,
+                "avatarFileAssetId"
         );
     }
 

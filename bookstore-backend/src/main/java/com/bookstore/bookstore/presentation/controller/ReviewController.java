@@ -5,6 +5,7 @@ import com.bookstore.bookstore.presentation.mapper.ReviewWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateReviewRequest;
 import com.bookstore.bookstore.presentation.request.UpdateReviewRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import com.bookstore.bookstore.presentation.response.ReviewResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,10 +33,25 @@ public class ReviewController {
     private final ReviewWebMapper reviewWebMapper;
 
     @GetMapping("/api/books/{bookId}/reviews")
-    public ApiResponse<List<ReviewResponse>> getByBookId(@PathVariable UUID bookId) {
-        return ApiResponse.success(reviewService.getByBookId(bookId).stream()
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getByBookId(
+            @PathVariable UUID bookId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = reviewService.getByBookId(
+                    bookId,
+                    page == null ? 0 : page,
+                    size == null ? 10 : size
+            ).map(reviewWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getByBookId(bookId).stream()
                 .map(reviewWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @PostMapping("/api/books/{bookId}/reviews")
@@ -72,10 +89,23 @@ public class ReviewController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/reviews")
-    public ApiResponse<List<ReviewResponse>> getAll() {
-        return ApiResponse.success(reviewService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = reviewService.getAll(
+                    page == null ? 0 : page,
+                    size == null ? 10 : size
+            ).map(reviewWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getAll().stream()
                 .map(reviewWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

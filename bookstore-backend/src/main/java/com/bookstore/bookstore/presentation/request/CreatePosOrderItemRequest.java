@@ -5,10 +5,11 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreatePosOrderItemRequest(
-        @NotNull(message = "bookId khong duoc null")
+        @NotNull(message = "bookId không được null")
         UUID bookId,
 
-        @Min(value = 1, message = "quantity phai lon hon 0")
+        @Min(value = 1, message = "quantity phải lớn hơn 0")
         int quantity
 ) {
 }
+

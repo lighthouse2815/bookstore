@@ -4,6 +4,7 @@ import type {
   AuthorResponse,
   Book,
   BookCatalog,
+  BookCatalogPage,
   BookDetail,
   BookDetailResponse,
   BookImage,
@@ -25,6 +26,8 @@ import type {
 } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { unwrapResponse } from '@/utils'
+import { toPageResult } from '@/services/pagination'
+import type { PageRequest } from '@/types/pagination'
 
 export async function getBookCatalog(
   request: SearchBooksRequest = {},
@@ -40,6 +43,30 @@ export async function getBookCatalog(
       mapBookResponseToBook(bookResponse, referenceMaps),
     ),
     categories: getCategoryNames(referenceData.categories),
+    categoryIds: getCategoryIds(referenceData.categories),
+  }
+}
+
+export async function getBookCatalogPage(
+  request: SearchBooksRequest & PageRequest = {},
+): Promise<BookCatalogPage> {
+  const [bookPage, referenceData] = await Promise.all([
+    getBookResponsesPage(request),
+    getBookReferenceData(),
+  ])
+  const referenceMaps = buildBookReferenceMaps(referenceData)
+
+  return {
+    books: bookPage.items.map((bookResponse) =>
+      mapBookResponseToBook(bookResponse, referenceMaps),
+    ),
+    categories: getCategoryNames(referenceData.categories),
+    categoryIds: getCategoryIds(referenceData.categories),
+    totalCount: bookPage.totalCount,
+    page: bookPage.page,
+    size: bookPage.size,
+    hasNext: bookPage.hasNext,
+    totalPages: bookPage.totalPages,
   }
 }
 
@@ -111,6 +138,21 @@ async function getBookResponses(
   })
 
   return unwrapResponse(response)
+}
+
+async function getBookResponsesPage(request: SearchBooksRequest & PageRequest) {
+  const keyword = request.keyword?.trim()
+  const categoryId = request.categoryId?.trim()
+  const endpoint = keyword || categoryId ? '/books/search' : '/books'
+  const pageRequest = { page: request.page ?? 0, size: request.size ?? 10 }
+  const response = await api.get<ApiResponse<BookResponse[]>>(endpoint, {
+    params:
+      keyword || categoryId
+        ? { ...pageRequest, keyword, categoryId }
+        : pageRequest,
+  })
+
+  return toPageResult(unwrapResponse(response), response.headers, pageRequest)
 }
 
 async function getBookResponseById(id: string): Promise<BookResponse> {
@@ -265,6 +307,7 @@ function mapBookImageResponses(imageResponses: BookImageResponse[]): BookImage[]
   return imageResponses.map((imageResponse) => ({
     id: imageResponse.id,
     bookId: imageResponse.bookId,
+    fileAssetId: imageResponse.fileAssetId,
     imageUrl: resolveBookImageUrl(imageResponse.imageUrl),
     primaryImage: imageResponse.primaryImage,
     sortOrder: imageResponse.sortOrder,
@@ -374,6 +417,12 @@ function getCategoryNames(categories: CategoryResponse[]) {
     .sort((firstCategory, secondCategory) =>
       firstCategory.localeCompare(secondCategory, 'vi'),
     )
+}
+
+function getCategoryIds(categories: CategoryResponse[]) {
+  return Object.fromEntries(
+    categories.map((category) => [category.name, category.id]),
+  )
 }
 
 function normalizeRatingValue(rating: number | null | undefined) {

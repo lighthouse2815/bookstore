@@ -8,6 +8,7 @@ import com.bookstore.bookstore.presentation.request.UpdateBookRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
 import com.bookstore.bookstore.presentation.response.BookResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -33,17 +34,47 @@ public class BookController {
     private final BookWebMapper bookWebMapper;
 
     @GetMapping("/api/books")
-    public ApiResponse<List<BookResponse>> getAll() {
-        return ApiResponse.success(bookQueryService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<BookResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = bookQueryService.getAll(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(bookWebMapper::toBookResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(bookQueryService.getAll().stream()
                 .map(bookWebMapper::toBookResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/api/books/search")
-    public ApiResponse<List<BookResponse>> search(@RequestParam(required = false) String keyword) {
-        return ApiResponse.success(bookQueryService.search(keyword).stream()
+    public ResponseEntity<ApiResponse<List<BookResponse>>> search(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null || categoryId != null) {
+            var result = bookQueryService.search(
+                    keyword,
+                    categoryId,
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(bookWebMapper::toBookResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(bookQueryService.search(keyword).stream()
                 .map(bookWebMapper::toBookResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/api/books/{id}/related")

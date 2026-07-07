@@ -1,17 +1,19 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLanguage } from '@/contexts/language-context'
-import { useBookCatalog } from '@/hooks/use-book-catalog'
+import { useBookCatalogPage } from '@/hooks/use-book-catalog'
 import { getCategoryLabel } from '@/utils/i18n'
 
 type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'rating'
 
 const ALL_CATEGORIES = '__all__'
+const PAGE_SIZE = 12
 const CATEGORY_PRESETS = {
   '__life-skills__': 'categories.lifeSkills',
   '__novel__': 'categories.novel',
@@ -22,13 +24,37 @@ export function useBookListing() {
   const requestedCategory = searchParams.get('category') ?? ALL_CATEGORIES
   const requestedQuery = searchParams.get('q')?.trim() ?? ''
   const { t, formatNumber } = useLanguage()
-  const { books, categories, isLoading, error } = useBookCatalog()
   const [category, setCategory] = useState(requestedCategory)
   const [query, setQuery] = useState(requestedQuery)
   const [sort, setSort] = useState<SortKey>('popular')
+  const [page, setPage] = useState(0)
+  const [categoryIds, setCategoryIds] = useState<Record<string, string>>({})
+  const resolvedCategoryRequest = useRef<string | null>(null)
+  const selectedCategoryId =
+    category === ALL_CATEGORIES ? undefined : categoryIds[category]
+  const catalog = useBookCatalogPage({
+    page,
+    size: PAGE_SIZE,
+    keyword: query,
+    categoryId: selectedCategoryId,
+  })
+  const { books, categories, isLoading, error, totalCount } = catalog
 
   useEffect(() => {
+    setCategoryIds(catalog.categoryIds)
+  }, [catalog.categoryIds])
+
+  useEffect(() => {
+    if (
+      categories.length === 0 ||
+      resolvedCategoryRequest.current === requestedCategory
+    ) {
+      return
+    }
+
     setCategory(resolveRequestedCategory(requestedCategory, categories, t))
+    setPage(0)
+    resolvedCategoryRequest.current = requestedCategory
   }, [categories, requestedCategory, t])
 
   useEffect(() => {
@@ -36,17 +62,7 @@ export function useBookListing() {
   }, [requestedQuery])
 
   const filteredBooks = useMemo(() => {
-    let result = books.filter((book) => {
-      const matchCategory = category === ALL_CATEGORIES || book.category === category
-      const matchQuery =
-        query.trim() === '' ||
-        book.title.toLowerCase().includes(query.toLowerCase()) ||
-        book.author.toLowerCase().includes(query.toLowerCase())
-
-      return matchCategory && matchQuery
-    })
-
-    result = [...result].sort((firstBook, secondBook) => {
+    return [...books].sort((firstBook, secondBook) => {
       switch (sort) {
         case 'price-asc':
           return firstBook.price - secondBook.price
@@ -62,13 +78,13 @@ export function useBookListing() {
       }
     })
 
-    return result
-  }, [books, category, query, sort])
+  }, [books, sort])
 
   const categoryOptions = [ALL_CATEGORIES, ...categories]
 
   function handleQueryChange(event: ChangeEvent<HTMLInputElement>) {
     setQuery(event.currentTarget.value)
+    setPage(0)
   }
 
   function handleCategorySelect(nextCategory: string | null) {
@@ -77,6 +93,7 @@ export function useBookListing() {
     }
 
     setCategory(nextCategory)
+    setPage(0)
   }
 
   function handleSortChange(nextSort: string | null) {
@@ -93,6 +110,9 @@ export function useBookListing() {
     isLoading,
     error,
     filteredBooks,
+    totalCount,
+    page,
+    pageSize: PAGE_SIZE,
     category,
     query,
     sort,
@@ -101,6 +121,7 @@ export function useBookListing() {
     handleQueryChange,
     handleCategorySelect,
     handleSortChange,
+    handlePageChange: setPage,
   }
 }
 

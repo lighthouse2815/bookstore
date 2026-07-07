@@ -3,6 +3,7 @@ import {
   BarChart3,
   BellRing,
   BookOpen,
+  FileText,
   Boxes,
   Building2,
   Key,
@@ -29,9 +30,8 @@ import { useTheme } from '@/contexts/theme-context'
 export function AdminSidebar() {
   const location = useLocation()
   const { logout, user } = useAuth()
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
-  const isVietnamese = language === 'vi'
   const isAdmin = user?.roles.includes('ADMIN') ?? false
 
   const menuItems = isAdmin
@@ -47,12 +47,17 @@ export function AdminSidebar() {
           icon: BookOpen,
         },
         {
-          label: isVietnamese ? 'Quan ly nhap kho' : 'Import receipts',
+          label: t('admin.sidebar.digitalAssets'),
+          href: '/admin/digital-assets',
+          icon: FileText,
+        },
+        {
+          label: t('admin.sidebar.importReceipts'),
           href: '/admin/import-receipts',
           icon: PackagePlus,
         },
         {
-          label: isVietnamese ? 'Quan ly ton kho' : 'Inventory',
+          label: t('admin.sidebar.inventory'),
           href: '/admin/inventory',
           icon: Boxes,
         },
@@ -62,17 +67,22 @@ export function AdminSidebar() {
           icon: ShoppingCart,
         },
         {
-          label: isVietnamese ? 'Quan ly danh gia' : 'Reviews',
+          label: t('admin.sidebar.shipments'),
+          href: '/admin/shipments',
+          icon: Truck,
+        },
+        {
+          label: t('admin.sidebar.reviews'),
           href: '/admin/reviews',
           icon: Star,
         },
         {
-          label: isVietnamese ? 'Quan ly thong bao' : 'Notifications',
+          label: t('admin.sidebar.notifications'),
           href: '/admin/notifications',
           icon: BellRing,
         },
         {
-          label: isVietnamese ? 'Chat ho tro' : 'Support chat',
+          label: t('admin.sidebar.chat'),
           href: '/admin/chat',
           icon: MessageSquareMore,
         },
@@ -92,17 +102,17 @@ export function AdminSidebar() {
           icon: Building2,
         },
         {
-          label: isVietnamese ? 'Quan ly nha cung cap' : 'Manage suppliers',
+          label: t('admin.sidebar.suppliers'),
           href: '/admin/suppliers',
           icon: Truck,
         },
         {
-          label: isVietnamese ? 'Quan ly khach hang' : 'Manage customers',
+          label: t('admin.sidebar.customers'),
           href: '/admin/customers',
           icon: Users,
         },
         {
-          label: isVietnamese ? 'Quan ly nhan vien' : 'Manage staff',
+          label: t('admin.sidebar.staff'),
           href: '/admin/staff',
           icon: User,
         },
@@ -122,14 +132,14 @@ export function AdminSidebar() {
           icon: Percent,
         },
         {
-          label: isVietnamese ? 'Cai dat tai khoan' : 'Account settings',
+          label: t('admin.sidebar.settings'),
           href: '/admin/settings',
           icon: Settings2,
         },
       ]
     : [
         {
-          label: isVietnamese ? 'Chat ho tro' : 'Support chat',
+          label: t('admin.sidebar.chat'),
           href: '/admin/chat',
           icon: MessageSquareMore,
         },
@@ -194,7 +204,7 @@ export function AdminSidebar() {
           <Link to="/admin/settings" className="mb-3 block">
             <Button variant="outline" size="sm" className="w-full">
               <Settings2 className="mr-2 h-4 w-4" />
-              {isVietnamese ? 'Tai khoan quan tri' : 'Admin account'}
+              {t('admin.sidebar.adminAccount')}
             </Button>
           </Link>
         ) : null}

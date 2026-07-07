@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Review;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderItemJpaEntity;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -39,6 +41,19 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
     }
 
     @Override
+    public PageSliceResult<Review> findPageByBookIdActive(UUID bookId, int page, int size) {
+        var resultPage = reviewJpaRepository.findAllByBook_IdActive(bookId, PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(reviewPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
+    }
+
+    @Override
     public Map<UUID, List<Integer>> findRatingsByBookIds(Collection<UUID> bookIds) {
         if (bookIds == null || bookIds.isEmpty()) {
             return Map.of();
@@ -56,6 +71,22 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
         return reviewJpaRepository.findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(reviewPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Review> findPageActive(int page, int size) {
+        var resultPage = reviewJpaRepository
+                .findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
+                        PageRequest.of(page, size)
+                );
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(reviewPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

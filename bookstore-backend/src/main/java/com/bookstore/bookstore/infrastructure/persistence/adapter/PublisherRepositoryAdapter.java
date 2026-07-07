@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Publisher;
 import com.bookstore.bookstore.infrastructure.persistence.entity.PublisherJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.PublisherPersistenceMapper;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -23,6 +25,17 @@ public class PublisherRepositoryAdapter implements IPublisherRepository {
         return publisherJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(publisherPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Publisher> findPageActive(int page, int size) {
+        var resultPage = publisherJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream().map(publisherPersistenceMapper::toDomain).toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

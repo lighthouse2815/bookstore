@@ -240,7 +240,7 @@ export default function AdminNotificationsPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <BellRing className="mr-2 h-4 w-4" />
-                    {interpolateLabel(labels.total, {
+                    {t('admin.notificationsPage.total', {
                       count: formatNumber(totalCount),
                     })}
                   </Badge>
@@ -671,15 +671,6 @@ function ReadStatusBadge({
     >
       {isRead ? readLabel : unreadLabel}
     </Badge>
-  )
-}
-
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
   )
 }
 

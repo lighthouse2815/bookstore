@@ -96,7 +96,7 @@ const defaultMessagePageState: AdminMessagePageState = {
 
 export function useAdminChatPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const { language, locale, formatNumber } = useLanguage()
+  const { locale, formatNumber, t } = useLanguage()
   const [conversations, setConversations] = useState<ConversationResponse[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     null,
@@ -135,60 +135,44 @@ export function useAdminChatPage() {
 
   const labels = useMemo<AdminChatLabels>(
     () => ({
-      title: language === 'vi' ? 'Chat ho tro khach hang' : 'Customer support chat',
-      description: language === 'vi'
-        ? 'Theo doi hoi thoai ho tro theo thoi gian thuc, phan cong nhan su va dong mo lai cuoc tro chuyen tu mot man hinh.'
-        : 'Handle support conversations in realtime, assign staff, and close or reopen threads from one workspace.',
-      totalConversations: language === 'vi' ? 'Tong hoi thoai' : 'Total conversations',
-      unreadCount: language === 'vi' ? 'Chua doc' : 'Unread',
-      openCount: language === 'vi' ? 'Dang mo' : 'Open',
-      connected: language === 'vi' ? 'Realtime dang bat' : 'Realtime connected',
-      fallback: language === 'vi' ? 'Dang dung REST fallback' : 'Using REST fallback',
-      listTitle: language === 'vi' ? 'Danh sach hoi thoai' : 'Conversation list',
-      searchPlaceholder: language === 'vi'
-        ? 'Tim theo khach hang, email, noi dung...'
-        : 'Search by customer, email, or message...',
-      statusLabel: language === 'vi' ? 'Trang thai' : 'Status',
-      statusAll: language === 'vi' ? 'Tat ca' : 'All',
-      statusOpen: language === 'vi' ? 'Dang mo' : 'Open',
-      statusPending: language === 'vi' ? 'Dang cho' : 'Pending',
-      statusClosed: language === 'vi' ? 'Da dong' : 'Closed',
-      emptyConversations: language === 'vi'
-        ? 'Khong co hoi thoai phu hop bo loc hien tai.'
-        : 'No conversations match the current filters.',
-      loadMore: language === 'vi' ? 'Tai them' : 'Load more',
-      loadingList: language === 'vi' ? 'Dang tai hoi thoai...' : 'Loading conversations...',
-      loadingMessages: language === 'vi' ? 'Dang tai tin nhan...' : 'Loading messages...',
-      messageEmpty: language === 'vi'
-        ? 'Chua co tin nhan trong hoi thoai nay.'
-        : 'No messages in this conversation yet.',
-      replyPlaceholder: language === 'vi'
-        ? 'Nhap noi dung phan hoi cho khach hang...'
-        : 'Write a reply to the customer...',
-      send: language === 'vi' ? 'Gui phan hoi' : 'Send reply',
-      closeConversation: language === 'vi' ? 'Dong hoi thoai' : 'Close conversation',
-      reopenConversation: language === 'vi' ? 'Mo lai hoi thoai' : 'Reopen conversation',
-      customer: language === 'vi' ? 'Khach hang' : 'Customer',
-      assignee: language === 'vi' ? 'Phu trach' : 'Assignee',
-      unassigned: language === 'vi' ? 'Chua phan cong' : 'Unassigned',
-      assignToSelf: language === 'vi' ? 'Nhan xu ly' : 'Assign to me',
-      assignButton: language === 'vi' ? 'Phan cong' : 'Assign',
-      staffPlaceholder: language === 'vi' ? 'Chon nhan vien' : 'Choose staff',
-      priority: language === 'vi' ? 'Do uu tien' : 'Priority',
-      target: language === 'vi' ? 'Nguon lien quan' : 'Target',
-      createdAt: language === 'vi' ? 'Tao luc' : 'Created at',
-      updatedAt: language === 'vi' ? 'Cap nhat luc' : 'Updated at',
-      noConversationSelected: language === 'vi'
-        ? 'Chon mot hoi thoai de bat dau xu ly.'
-        : 'Select a conversation to start handling it.',
-      closedNotice: language === 'vi'
-        ? 'Hoi thoai da dong. Mo lai neu can tiep tuc ho tro.'
-        : 'This conversation is closed. Reopen it if support should continue.',
-      noMessagesYet: language === 'vi'
-        ? 'Khach hang chua gui tin nhan.'
-        : 'The customer has not sent any messages yet.',
+      title: t('adminChat.title'),
+      description: t('adminChat.description'),
+      totalConversations: t('adminChat.totalConversations'),
+      unreadCount: t('adminChat.unreadCount'),
+      openCount: t('adminChat.openCount'),
+      connected: t('adminChat.connected'),
+      fallback: t('adminChat.fallback'),
+      listTitle: t('adminChat.listTitle'),
+      searchPlaceholder: t('adminChat.searchPlaceholder'),
+      statusLabel: t('adminChat.statusLabel'),
+      statusAll: t('adminChat.statusAll'),
+      statusOpen: t('adminChat.statusOpen'),
+      statusPending: t('adminChat.statusPending'),
+      statusClosed: t('adminChat.statusClosed'),
+      emptyConversations: t('adminChat.emptyConversations'),
+      loadMore: t('adminChat.loadMore'),
+      loadingList: t('adminChat.loadingList'),
+      loadingMessages: t('adminChat.loadingMessages'),
+      messageEmpty: t('adminChat.messageEmpty'),
+      replyPlaceholder: t('adminChat.replyPlaceholder'),
+      send: t('adminChat.send'),
+      closeConversation: t('adminChat.closeConversation'),
+      reopenConversation: t('adminChat.reopenConversation'),
+      customer: t('adminChat.customer'),
+      assignee: t('adminChat.assignee'),
+      unassigned: t('adminChat.unassigned'),
+      assignToSelf: t('adminChat.assignToSelf'),
+      assignButton: t('adminChat.assignButton'),
+      staffPlaceholder: t('adminChat.staffPlaceholder'),
+      priority: t('adminChat.priority'),
+      target: t('adminChat.target'),
+      createdAt: t('adminChat.createdAt'),
+      updatedAt: t('adminChat.updatedAt'),
+      noConversationSelected: t('adminChat.noConversationSelected'),
+      closedNotice: t('adminChat.closedNotice'),
+      noMessagesYet: t('adminChat.noMessagesYet'),
     }),
-    [language],
+    [t],
   )
 
   const activeConversation = useMemo(
@@ -437,9 +421,7 @@ export function useAdminChatPage() {
     } catch (currentError) {
       const nextError = getErrorMessage(
         currentError,
-        language === 'vi'
-          ? 'Khong tai duoc danh sach chat ho tro'
-          : 'Unable to load support conversations',
+        t('adminChat.loadError'),
       )
 
       if (loadMore) {

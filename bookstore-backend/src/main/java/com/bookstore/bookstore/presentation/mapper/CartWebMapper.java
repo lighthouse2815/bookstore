@@ -6,6 +6,7 @@ import com.bookstore.bookstore.application.command.UpdateCartItemCommand;
 import com.bookstore.bookstore.application.result.CartItemResult;
 import com.bookstore.bookstore.application.result.CartResult;
 import com.bookstore.bookstore.presentation.request.AddCartItemRequest;
+import com.bookstore.bookstore.presentation.request.AddDigitalCartItemRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCartItemRequest;
 import com.bookstore.bookstore.presentation.response.CartItemResponse;
 import com.bookstore.bookstore.presentation.response.CartResponse;
@@ -23,16 +24,20 @@ public class CartWebMapper {
         );
     }
 
-    public UpdateCartItemCommand toUpdateCommand(UUID userId, UUID bookId, UpdateCartItemRequest request) {
+    public AddCartItemCommand toAddDigitalCommand(UUID userId, AddDigitalCartItemRequest request) {
+        return AddCartItemCommand.digital(userId, request.digitalAssetId());
+    }
+
+    public UpdateCartItemCommand toUpdateCommand(UUID userId, UUID itemId, UpdateCartItemRequest request) {
         return new UpdateCartItemCommand(
                 userId,
-                bookId,
+                itemId,
                 request.quantity()
         );
     }
 
-    public RemoveCartItemCommand toRemoveCommand(UUID userId, UUID bookId) {
-        return new RemoveCartItemCommand(userId, bookId);
+    public RemoveCartItemCommand toRemoveCommand(UUID userId, UUID itemId) {
+        return new RemoveCartItemCommand(userId, itemId);
     }
 
     public CartResponse toResponse(CartResult result) {
@@ -50,8 +55,12 @@ public class CartWebMapper {
     private CartItemResponse toItemResponse(CartItemResult result) {
         return new CartItemResponse(
                 result.id(),
+                result.itemType(),
                 result.bookId(),
+                result.digitalAssetId(),
                 result.bookTitle(),
+                result.assetTitle(),
+                result.format(),
                 result.imageUrl(),
                 result.price(),
                 result.quantity(),

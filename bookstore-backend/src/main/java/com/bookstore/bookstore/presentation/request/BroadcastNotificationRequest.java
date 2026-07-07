@@ -4,9 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 
 public record BroadcastNotificationRequest(
-        @NotBlank(message = "title khong duoc de trong")
+        @NotBlank(message = "title không được để trống")
         String title,
-        @NotBlank(message = "content khong duoc de trong")
+        @NotBlank(message = "content không được để trống")
         String content,
         String type,
         String targetType,
@@ -14,3 +14,4 @@ public record BroadcastNotificationRequest(
         String link
 ) {
 }
+

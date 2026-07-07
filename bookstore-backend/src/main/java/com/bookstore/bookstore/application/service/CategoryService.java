@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICategoryService;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
@@ -26,6 +27,13 @@ public class CategoryService implements ICategoryService {
     @Override
     public List<Category> getAll() {
         return categoryRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<Category> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return categoryRepository.findPageActive(page, size);
     }
 
     @Override
@@ -130,6 +138,12 @@ public class CategoryService implements ICategoryService {
         }
         if (!categoryRepository.existsByIdIncludingDeleted(parentId)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND);
+        }
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
         }
     }
 }

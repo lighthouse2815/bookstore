@@ -6,7 +6,7 @@ import {
   deleteAdminReview,
   getAdminCustomers,
   getAdminEmployees,
-  getAdminReviews,
+  getAdminReviewsPage,
 } from '@/services/admin-access-service'
 import { getBookCatalog } from '@/services/book-service'
 import type { AdminReviewResponse, AdminUserResponse } from '@/types/admin-access'
@@ -20,11 +20,14 @@ type UserLookup = {
   email: string
 }
 
+const PAGE_SIZE = 10
+
 export function useAdminReviewsPage() {
   const { user } = useAuth()
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const [reviews, setReviews] = useState<AdminReviewResponse[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [books, setBooks] = useState<Book[]>([])
   const [userLookup, setUserLookup] = useState<Record<string, UserLookup>>({})
   const [searchTerm, setSearchTerm] = useState('')
@@ -38,41 +41,31 @@ export function useAdminReviewsPage() {
 
   const labels = useMemo(
     () => ({
-      title: isVietnamese ? 'Quan ly danh gia' : 'Review management',
-      description: isVietnamese
-        ? 'Theo doi danh gia sach tu khach hang, xem chi tiet va go bo noi dung khong phu hop.'
-        : 'Review customer book ratings, inspect details, and remove inappropriate feedback.',
-      total: isVietnamese ? '{count} danh gia' : '{count} reviews',
-      search: isVietnamese
-        ? 'Tim theo ten sach, nguoi dung, nhan xet...'
-        : 'Search by book, user, or review text...',
-      empty: isVietnamese ? 'Chua co danh gia nao' : 'No reviews found',
-      loadError: isVietnamese
-        ? 'Khong tai duoc danh sach danh gia'
-        : 'Unable to load reviews',
-      deleteError: isVietnamese
-        ? 'Khong xoa duoc danh gia'
-        : 'Unable to delete the review',
-      deleteSuccess: isVietnamese ? 'Da xoa danh gia' : 'Review deleted',
-      reviewer: isVietnamese ? 'Nguoi danh gia' : 'Reviewer',
-      book: isVietnamese ? 'Sach' : 'Book',
-      rating: isVietnamese ? 'Diem so' : 'Rating',
-      comment: isVietnamese ? 'Nhan xet' : 'Comment',
-      noComment: isVietnamese ? 'Khong co nhan xet' : 'No comment',
-      detailTitle: isVietnamese ? 'Chi tiet danh gia' : 'Review details',
-      deleteTitle: isVietnamese ? 'Xac nhan xoa danh gia' : 'Confirm review deletion',
-      deleteDescription: isVietnamese
-        ? 'Danh gia nay se bi xoa khoi he thong va khong the khoi phuc.'
-        : 'This review will be removed from the system and cannot be restored.',
+      title: t('admin.reviewsPage.title'),
+      description: t('admin.reviewsPage.description'),
+      total: t('admin.reviewsPage.total'),
+      search: t('admin.reviewsPage.search'),
+      empty: t('admin.reviewsPage.empty'),
+      loadError: t('admin.reviewsPage.loadError'),
+      deleteError: t('admin.reviewsPage.deleteError'),
+      deleteSuccess: t('admin.reviewsPage.deleteSuccess'),
+      reviewer: t('admin.reviewsPage.reviewer'),
+      book: t('admin.reviewsPage.book'),
+      rating: t('admin.reviewsPage.rating'),
+      comment: t('admin.reviewsPage.comment'),
+      noComment: t('admin.reviewsPage.noComment'),
+      detailTitle: t('admin.reviewsPage.detailTitle'),
+      deleteTitle: t('admin.reviewsPage.deleteTitle'),
+      deleteDescription: t('admin.reviewsPage.deleteDescription'),
       cancel: t('common.cancel'),
       delete: t('common.delete'),
-      average: isVietnamese ? 'Diem trung binh' : 'Average rating',
-      withComment: isVietnamese ? 'Co noi dung' : 'With comment',
-      updatedAt: isVietnamese ? 'Cap nhat' : 'Updated',
-      unknownUser: isVietnamese ? 'Nguoi dung khong xac dinh' : 'Unknown user',
-      unknownBook: isVietnamese ? 'Sach khong xac dinh' : 'Unknown book',
+      average: t('admin.reviewsPage.average'),
+      withComment: t('admin.reviewsPage.withComment'),
+      updatedAt: t('admin.reviewsPage.updatedAt'),
+      unknownUser: t('admin.reviewsPage.unknownUser'),
+      unknownBook: t('admin.reviewsPage.unknownBook'),
     }),
-    [isVietnamese, t],
+    [t],
   )
 
   const bookLookup = useMemo(
@@ -135,7 +128,7 @@ export function useAdminReviewsPage() {
 
       try {
         const [reviewResponse, bookResponse, customers, employees] = await Promise.all([
-          getAdminReviews(),
+          getAdminReviewsPage({ page, size: PAGE_SIZE }),
           getBookCatalog(),
           getAdminCustomers(),
           getAdminEmployees(),
@@ -145,7 +138,8 @@ export function useAdminReviewsPage() {
           return
         }
 
-        setReviews(reviewResponse)
+        setReviews(reviewResponse.items)
+        setTotalCount(reviewResponse.totalCount)
         setBooks(bookResponse.books)
         setUserLookup(
           buildUserLookup(customers, employees, user?.id, {
@@ -172,7 +166,7 @@ export function useAdminReviewsPage() {
     return () => {
       isCancelled = true
     }
-  }, [labels.loadError, user?.email, user?.id, user?.name])
+  }, [labels.loadError, page, user?.email, user?.id, user?.name])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -198,6 +192,11 @@ export function useAdminReviewsPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function openViewDialog(review: AdminReviewResponse) {
@@ -231,6 +230,7 @@ export function useAdminReviewsPage() {
       setReviews((currentReviews) =>
         currentReviews.filter((review) => review.reviewId !== selectedReview.reviewId),
       )
+      setTotalCount((currentCount) => Math.max(0, currentCount - 1))
       closeDialog()
       toast.success(labels.deleteSuccess)
     } catch (currentError) {
@@ -246,6 +246,9 @@ export function useAdminReviewsPage() {
     formatNumber,
     labels,
     reviews,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     searchTerm,
     isLoading,
     error,
@@ -258,6 +261,7 @@ export function useAdminReviewsPage() {
     averageRating,
     commentCount,
     handleSearchTermChange,
+    handlePageChange,
     openViewDialog,
     openDeleteDialog,
     closeDialog,

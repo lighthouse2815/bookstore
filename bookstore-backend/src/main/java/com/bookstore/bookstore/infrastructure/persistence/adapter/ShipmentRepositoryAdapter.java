@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IShipmentRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Shipment;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ShipmentJpaEntity;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -32,6 +34,19 @@ public class ShipmentRepositoryAdapter implements IShipmentRepository {
     }
 
     @Override
+    public PageSliceResult<Shipment> findPageAll(int page, int size) {
+        var resultPage = shipmentJpaRepository.findAllByOrderByAssignedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(shipmentPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
+    }
+
+    @Override
     public Optional<Shipment> findById(UUID shipmentId) {
         return shipmentJpaRepository.findById(shipmentId)
                 .map(shipmentPersistenceMapper::toDomain);
@@ -48,6 +63,22 @@ public class ShipmentRepositoryAdapter implements IShipmentRepository {
         return shipmentJpaRepository.findAllByShipperIdOrderByAssignedAtDesc(shipperId).stream()
                 .map(shipmentPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Shipment> findPageByShipperId(UUID shipperId, int page, int size) {
+        var resultPage = shipmentJpaRepository.findAllByShipperIdOrderByAssignedAtDesc(
+                shipperId,
+                PageRequest.of(page, size)
+        );
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(shipmentPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

@@ -34,10 +34,7 @@ import type {
 } from '@/types/auth'
 import type { ProfileResponse } from '@/types/profile'
 import { getErrorMessage } from '@/utils'
-import {
-  createLoginRestrictionMessage,
-  getLoginRestrictionCopy,
-} from '@/utils/login-restrictions'
+import { createLoginRestrictionMessage } from '@/utils/login-restrictions'
 
 type AuthContextType = {
   user: User | null
@@ -124,7 +121,7 @@ function clearSession() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const [user, setUser] = useState<User | null>(() => getStoredUser())
   const [isLoading, setIsLoading] = useState(true)
 
@@ -148,17 +145,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextUser = await syncCurrentUser()
 
     if (nextUser.locked) {
-      const copy = getLoginRestrictionCopy('locked', language)
       clearSession()
       setUser(null)
-      throw new Error(createLoginRestrictionMessage('locked', copy.description))
+      throw new Error(
+        createLoginRestrictionMessage(
+          'locked',
+          t('auth.login.restrictions.locked.description'),
+        ),
+      )
     }
 
     if (nextUser.status !== 'ACTIVE') {
-      const copy = getLoginRestrictionCopy('inactive', language)
       clearSession()
       setUser(null)
-      throw new Error(createLoginRestrictionMessage('inactive', copy.description))
+      throw new Error(
+        createLoginRestrictionMessage(
+          'inactive',
+          t('auth.login.restrictions.inactive.description'),
+        ),
+      )
     }
   }
 
@@ -235,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await requestRegistrationOtpRequest(payload)
     } catch (error) {
       throw new Error(
-        getErrorMessage(error, getRegistrationOtpRequestFallback(language)),
+        getErrorMessage(error, t('auth.register.verification.requestOtpErrorFallback')),
       )
     }
   }
@@ -332,8 +337,3 @@ export function useAuth() {
   return context
 }
 
-function getRegistrationOtpRequestFallback(language: 'vi' | 'en') {
-  return language === 'vi'
-    ? 'Không thể gửi lại mã OTP kích hoạt'
-    : 'Unable to send a new activation OTP'
-}

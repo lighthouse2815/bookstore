@@ -2,15 +2,17 @@ package com.bookstore.bookstore.presentation.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import java.util.UUID;
 
 public record UpdateAuthorRequest(
-        @NotBlank(message = "name khong duoc de trong")
+        @NotBlank(message = "name không được để trống")
         String name,
         String biography,
-        String avatarUrl,
-        @Positive(message = "birthYear phai lon hon 0")
+        UUID avatarFileAssetId,
+        @Positive(message = "birthYear phải lớn hơn 0")
         Integer birthYear,
-        @Positive(message = "deathYear phai lon hon 0")
+        @Positive(message = "deathYear phải lớn hơn 0")
         Integer deathYear
 ) {
 }
+

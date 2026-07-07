@@ -15,7 +15,7 @@ public class ProfileWebMapper {
                 userId,
                 request.lastName(),
                 request.firstName(),
-                request.avatarUrl(),
+                request.avatarFileAssetId(),
                 request.gender(),
                 request.dateOfBirth()
         );
@@ -27,6 +27,7 @@ public class ProfileWebMapper {
                 profile.getUserId(),
                 profile.getLastName(),
                 profile.getFirstName(),
+                profile.getAvatarFileAssetId(),
                 profile.getAvatarUrl(),
                 profile.getGender(),
                 profile.getDateOfBirth(),

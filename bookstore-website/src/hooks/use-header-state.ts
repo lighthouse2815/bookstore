@@ -22,15 +22,10 @@ export function useHeaderState() {
   const navLinks = [
     { to: '/', label: t('header.nav.home') },
     { to: '/books', label: t('header.nav.books') },
-    {
-      to: '/books?category=__life-skills__',
-      label: t('header.nav.lifeSkills'),
-    },
-    {
-      to: '/books?category=__novel__',
-      label: t('header.nav.novel'),
-    },
+    { to: '/ebooks', label: t('header.nav.ebooks') },
+    ...(user ? [{ to: '/library', label: t('header.nav.digitalLibrary') }] : []),
   ]
+  const searchTargetPath = isEbooksPath(location.pathname) ? '/ebooks' : '/books'
 
   useEffect(() => {
     const query = new URLSearchParams(location.search).get('q')?.trim() ?? ''
@@ -55,7 +50,20 @@ export function useHeaderState() {
   }, [profileOpen])
 
   function isActiveLink(to: string) {
-    return location.pathname + location.search === to
+    switch (to) {
+      case '/':
+        return location.pathname === '/'
+      case '/books':
+        return isBooksPath(location.pathname)
+      case '/ebooks':
+        return isEbooksPath(location.pathname)
+      case '/library':
+        return location.pathname.startsWith('/library')
+      default:
+        return (
+          location.pathname === to || location.pathname.startsWith(`${to}/`)
+        )
+    }
   }
 
   function toggleMenu() {
@@ -94,7 +102,7 @@ export function useHeaderState() {
 
     const queryString = searchParams.toString()
 
-    navigate(queryString ? `/books?${queryString}` : '/books')
+    navigate(queryString ? `${searchTargetPath}?${queryString}` : searchTargetPath)
     setOpen(false)
   }
 
@@ -106,6 +114,7 @@ export function useHeaderState() {
     brandSuffix,
     totalItems: items.length,
     navLinks,
+    searchTargetPath,
     open,
     profileOpen,
     searchQuery,
@@ -120,4 +129,12 @@ export function useHeaderState() {
     handleSearchQueryChange,
     submitSearch,
   }
+}
+
+function isBooksPath(pathname: string) {
+  return pathname === '/books' || /^\/books\/[^/]+$/.test(pathname)
+}
+
+function isEbooksPath(pathname: string) {
+  return pathname === '/ebooks' || /^\/books\/[^/]+\/ebook$/.test(pathname)
 }

@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom'
 import {
   BookOpenText,
   ChevronRight,
-  ExternalLink,
   Headphones,
   ShieldCheck,
   Star,
@@ -26,7 +25,6 @@ import type {
   BookRatingSummary,
 } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
-import { resolveDigitalAssetUrl } from '@/utils/digital-asset'
 import { getCategoryLabel } from '@/utils/i18n'
 
 type TranslateFunction = (
@@ -47,7 +45,7 @@ type DetailItem = {
 
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { t, formatCurrency, formatDate, formatNumber, language } = useLanguage()
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const {
     book,
     suggestions,
@@ -62,7 +60,6 @@ export default function BookDetailPage() {
     notFound,
   } = useBookDetail(id)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const digitalAssetsCopy = getDigitalAssetsSectionCopy(language)
 
   useEffect(() => {
     setSelectedImageIndex(0)
@@ -322,6 +319,37 @@ export default function BookDetailPage() {
               )}
             </div>
 
+            {digitalAssets.length > 0 ? (
+              <div className="rounded-[1.75rem] border border-primary/20 bg-[linear-gradient(135deg,hsl(var(--primary)/0.1),hsl(var(--background))_62%)] p-4 shadow-[0_18px_45px_rgba(99,102,241,0.12)]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                      <BookOpenText className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="font-heading text-lg font-bold text-foreground">
+                        {t('book.detail.digitalAssets.calloutTitle', {
+                          count: formatNumber(digitalAssets.length),
+                        })}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {t('book.detail.digitalAssets.teaserDescription')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <Link
+                      to={`/books/${book.id}/ebook`}
+                      className="inline-flex items-center rounded-2xl border border-border bg-background/70 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+                    >
+                      {t('book.detail.digitalAssets.viewOptions')}
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <span
@@ -352,88 +380,6 @@ export default function BookDetailPage() {
             </div>
 
             <AddToCart book={book} />
-
-            {digitalAssets.length > 0 && (
-              <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <BookOpenText className="size-5 text-primary" />
-                  <h2 className="font-heading text-xl font-bold">
-                    {digitalAssetsCopy.title}
-                  </h2>
-                </div>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {digitalAssetsCopy.description}
-                </p>
-
-                <div className="mt-4 grid gap-3">
-                  {digitalAssets.map((asset) => {
-                    const sampleUrl = resolveDigitalAssetUrl(asset.sampleStorageKey)
-
-                    return (
-                      <article
-                        key={asset.id}
-                        className="rounded-[1.5rem] border border-border bg-muted/20 p-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              {asset.format === 'AUDIO' ? (
-                                <Headphones className="size-4 text-primary" />
-                              ) : (
-                                <BookOpenText className="size-4 text-primary" />
-                              )}
-                              <p className="font-semibold text-foreground">
-                                {asset.title}
-                              </p>
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {asset.fileName}
-                            </p>
-                          </div>
-
-                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                            {asset.format}
-                          </span>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <InfoPill>{formatCurrency(asset.price)}</InfoPill>
-                          <InfoPill>
-                            {asset.downloadAllowed
-                              ? digitalAssetsCopy.downloadAllowed
-                              : digitalAssetsCopy.downloadRestricted}
-                          </InfoPill>
-                          <InfoPill>
-                            {asset.sampleStorageKey
-                              ? digitalAssetsCopy.sampleAvailable
-                              : digitalAssetsCopy.noSample}
-                          </InfoPill>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          {sampleUrl ? (
-                            <a href={sampleUrl} target="_blank" rel="noreferrer">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-2xl"
-                              >
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                {digitalAssetsCopy.openSample}
-                              </Button>
-                            </a>
-                          ) : asset.sampleStorageKey ? (
-                            <span className="text-sm text-muted-foreground">
-                              {digitalAssetsCopy.sampleMetadataOnly}
-                            </span>
-                          ) : null}
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
           </section>
 
           <aside className="order-4 space-y-4 xl:pt-1">
@@ -786,7 +732,7 @@ function CommitmentRow({
   icon,
   text,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   text: string
 }) {
   return (
@@ -904,43 +850,5 @@ function createNumberDetailItem(
   return {
     label,
     value: resolvedValue,
-  }
-}
-
-function InfoPill({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-      {children}
-    </span>
-  )
-}
-
-function getDigitalAssetsSectionCopy(language: 'vi' | 'en') {
-  if (language === 'en') {
-    return {
-      description:
-        'These are the published digital editions currently exposed by the backend for this book.',
-      downloadAllowed: 'Download allowed',
-      downloadRestricted: 'Download restricted',
-      noSample: 'No sample',
-      openSample: 'Open sample',
-      sampleAvailable: 'Sample available',
-      sampleMetadataOnly:
-        'Sample metadata exists, but the backend has not exposed a direct preview URL yet.',
-      title: 'Digital editions',
-    }
-  }
-
-  return {
-    description:
-      'Đây là các phiên bản số đang được backend publish công khai cho cuốn sách này.',
-    downloadAllowed: 'Cho phép tải',
-    downloadRestricted: 'Giới hạn tải',
-    noSample: 'Không có bản mẫu',
-    openSample: 'Mở bản mẫu',
-    sampleAvailable: 'Có bản mẫu',
-    sampleMetadataOnly:
-      'Backend có trả sample key nhưng hiện chưa phải URL preview mở trực tiếp.',
-    title: 'Phiên bản số',
   }
 }

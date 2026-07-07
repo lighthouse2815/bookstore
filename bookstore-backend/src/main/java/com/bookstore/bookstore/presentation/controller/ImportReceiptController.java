@@ -5,6 +5,7 @@ import com.bookstore.bookstore.presentation.mapper.ImportReceiptWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateImportReceiptRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.ImportReceiptResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/admin/import-receipts")
@@ -31,10 +33,20 @@ public class ImportReceiptController {
     private final ImportReceiptWebMapper importReceiptWebMapper;
 
     @GetMapping
-    public ApiResponse<List<ImportReceiptResponse>> getAll() {
-        return ApiResponse.success(importReceiptService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<ImportReceiptResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = importReceiptService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(importReceiptWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+        return ResponseEntity.ok(ApiResponse.success(importReceiptService.getAll().stream()
                 .map(importReceiptWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/{id}")

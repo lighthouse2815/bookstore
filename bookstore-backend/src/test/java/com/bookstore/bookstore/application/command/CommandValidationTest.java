@@ -29,7 +29,7 @@ class CommandValidationTest {
                         null,
                         "last",
                         "first",
-                        "avatar",
+                        null,
                         Gender.MALE,
                         LocalDate.now()
                 )

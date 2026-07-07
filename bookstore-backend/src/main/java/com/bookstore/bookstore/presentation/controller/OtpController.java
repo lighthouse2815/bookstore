@@ -23,12 +23,13 @@ public class OtpController {
     @PostMapping("/request")
     public ApiResponse<Void> requestOtp(@Valid @RequestBody RequestRegistrationOtpRequest request) {
         otpService.requestRegistrationOtp(otpWebMapper.toRequestRegistrationOtpCommand(request));
-        return ApiResponse.success("Neu email ton tai va tai khoan chua kich hoat, OTP da duoc gui", null);
+        return ApiResponse.success("Nếu email tồn tại và tài khoản chưa kích hoạt, OTP đã được gửi", null);
     }
 
     @PostMapping("/verify")
     public ApiResponse<Void> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
         otpService.verifyRegistrationOtp(otpWebMapper.toVerifyOtpCommand(request));
-        return ApiResponse.success("Xac thuc OTP thanh cong", null);
+        return ApiResponse.success("Xác thực OTP thành công", null);
     }
 }
+

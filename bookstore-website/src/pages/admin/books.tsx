@@ -1,14 +1,11 @@
-import { createPortal } from 'react-dom'
+﻿import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
   BookOpen,
   Building2,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   Edit2,
   Eye,
-  ExternalLink,
   Package2,
   Plus,
   RefreshCw,
@@ -24,6 +21,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import {
   Select,
   SelectContent,
@@ -42,10 +40,7 @@ import type {
   DigitalAssetResponse,
 } from '@/types/digital-library'
 import { getBookCoverUrl } from '@/utils/book-cover'
-import {
-  formatDigitalFileSize,
-  resolveDigitalAssetUrl,
-} from '@/utils/digital-asset'
+import { formatDigitalFileSize } from '@/utils/digital-asset'
 import { cn } from '@/utils'
 import { getCategoryLabel } from '@/utils/i18n'
 
@@ -59,6 +54,9 @@ export default function AdminBooksPage() {
     formatDate,
     formatNumber,
     books,
+    page,
+    pageSize,
+    totalCount,
     references,
     searchTerm,
     selectedCategoryId,
@@ -71,10 +69,12 @@ export default function AdminBooksPage() {
     form,
     hasReferenceData,
     isDialogLocked,
+    isUploadingImage,
     filteredBooks,
     dialogSizeClassName,
     handleSearchTermChange,
     handleCategoryChange,
+    handlePageChange,
     openCreateDialog,
     openViewDialog,
     openEditDialog,
@@ -82,6 +82,7 @@ export default function AdminBooksPage() {
     openDeleteDialog,
     closeDialog,
     handleFormChange,
+    handleImageFileChange,
     handleSubmit,
     confirmDelete,
   } = useAdminBooksPage()
@@ -227,18 +228,42 @@ export default function AdminBooksPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="bookImageUrl">
-                    {t('admin.books.fields.imageUrl')}
-                  </Label>
-                  <Input
-                    id="bookImageUrl"
-                    value={form.imageUrl}
-                    onChange={(event) =>
-                      handleFormChange('imageUrl', event.currentTarget.value)
-                    }
-                    className="mt-2 h-12 rounded-2xl bg-background/60"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="bookImageUpload">
+                      {t('admin.books.fields.imageUrl')}
+                    </Label>
+                    <Input
+                      id="bookImageUpload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) =>
+                        void handleImageFileChange(
+                          event.currentTarget.files?.[0] ?? null,
+                        )
+                      }
+                      className="mt-2 h-12 rounded-2xl bg-background/60"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {isUploadingImage
+                        ? t('common.processing')
+                        : t('admin.books.previewTitle')}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bookImageAltText">
+                      {t('common.description')}
+                    </Label>
+                    <Input
+                      id="bookImageAltText"
+                      value={form.imageAltText}
+                      onChange={(event) =>
+                        handleFormChange('imageAltText', event.currentTarget.value)
+                      }
+                      className="mt-2 h-12 rounded-2xl bg-background/60"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -287,7 +312,7 @@ export default function AdminBooksPage() {
                 <div className="mt-4 flex flex-col gap-4">
                   <div className="overflow-hidden rounded-[20px] border border-border/60 bg-background/70">
                     <img
-                      src={getBookCoverUrl(form.imageUrl)}
+                      src={getBookCoverUrl(form.imagePreviewUrl)}
                       alt={form.title || t('admin.books.fields.title')}
                       className="aspect-[3/4] w-full object-cover"
                     />
@@ -578,35 +603,20 @@ export default function AdminBooksPage() {
               </div>
 
               {!isLoading && !error && filteredBooks.length > 0 ? (
-                <div className="grid gap-4 border-t border-border/60 px-6 py-5 text-sm text-muted-foreground xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-center">
-                  <p className="min-w-0 xl:self-center">
+                <div>
+                  <p className="px-6 pt-4 text-sm text-muted-foreground">
                     {t('admin.books.showingCount', {
                       count: formatNumber(filteredBooks.length),
-                      total: formatNumber(books.length),
+                      total: formatNumber(totalCount),
                     })}
                   </p>
-                  <div className="flex items-center justify-center gap-3 xl:justify-self-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="size-12 rounded-2xl border-border/60 bg-background/40 p-0 text-muted-foreground opacity-60"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex h-12 min-w-[52px] items-center justify-center rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_18px_40px_rgba(99,102,241,0.35)]">
-                      1
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="size-12 rounded-2xl border-border/60 bg-background/40 p-0 text-muted-foreground opacity-60"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="hidden xl:block" />
+                  <PaginationControls
+                    page={page}
+                    size={pageSize}
+                    totalCount={totalCount}
+                    disabled={isLoading}
+                    onPageChange={handlePageChange}
+                  />
                 </div>
               ) : null}
             </section>
@@ -854,8 +864,7 @@ function BookDigitalAssetManager({
   formatCurrency: (value: number) => string
   formatDate: (value: string | number | Date) => string
 }) {
-  const { language } = useLanguage()
-  const copy = getAdminDigitalAssetCopy(language)
+  const { t } = useLanguage()
   const {
     assets,
     isLoading,
@@ -865,30 +874,38 @@ function BookDigitalAssetManager({
     form,
     isSubmitting,
     isDeleting,
+    isUploadingMainFile,
+    isUploadingSampleFile,
     openCreateForm,
     openEditForm,
     openDeleteDialog,
     closeAction,
     handleFormChange,
+    handleMainFileChange,
+    handleSampleFileChange,
     submitForm,
     confirmDelete,
   } = useAdminBookDigitalAssets(book.id)
+  const notUploadedLabel = t('admin.digitalAssets.notUploaded')
+  const noSampleLabel = t('admin.digitalAssets.noSample')
+  const mainFileHelp = t('admin.digitalAssets.mainFileHelp')
+  const sampleFileHelp = t('admin.digitalAssets.sampleFileHelp')
 
   return (
     <section className="rounded-[24px] border border-border/60 bg-background/55 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-sm font-semibold text-primary">{copy.sectionLabel}</p>
+          <p className="text-sm font-semibold text-primary">{t('admin.digitalAssets.sectionLabel')}</p>
           <h3 className="mt-1 font-heading text-2xl font-bold text-foreground">
-            {copy.title}
+            {t('admin.digitalAssets.title')}
           </h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {copy.description}
+            {t('admin.digitalAssets.description')}
           </p>
         </div>
         <Button type="button" onClick={openCreateForm} className="rounded-2xl">
           <Plus className="mr-2 h-4 w-4" />
-          {copy.addAsset}
+          {t('admin.digitalAssets.addAsset')}
         </Button>
       </div>
 
@@ -900,18 +917,15 @@ function BookDigitalAssetManager({
 
       {isLoading ? (
         <div className="mt-5 rounded-2xl border border-border/60 bg-background/70 px-4 py-6 text-sm text-muted-foreground">
-          {copy.loading}
+          {t('admin.digitalAssets.loading')}
         </div>
       ) : assets.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-dashed border-border/60 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
-          {copy.empty}
+          {t('admin.digitalAssets.empty')}
         </div>
       ) : (
         <div className="mt-5 grid gap-4">
           {assets.map((asset) => {
-            const sampleUrl = resolveDigitalAssetUrl(asset.sampleStorageKey)
-            const storageUrl = resolveDigitalAssetUrl(asset.storageKey)
-
             return (
               <article
                 key={asset.id}
@@ -931,11 +945,16 @@ function BookDigitalAssetManager({
                             : 'bg-amber-500/10 text-amber-700',
                         )}
                       >
-                        {asset.published ? copy.published : copy.unpublished}
+                        {asset.published ? t('admin.digitalAssets.published') : t('admin.digitalAssets.unpublished')}
                       </span>
                       {asset.downloadAllowed ? (
                         <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-700">
-                          {copy.downloadAllowed}
+                          {t('admin.digitalAssets.downloadAllowed')}
+                        </span>
+                      ) : null}
+                      {asset.purchaseAllowed ? (
+                        <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-700">
+                          {t('admin.digitalAssets.purchaseAllowed')}
                         </span>
                       ) : null}
                     </div>
@@ -956,7 +975,7 @@ function BookDigitalAssetManager({
                       className="rounded-2xl"
                     >
                       <Edit2 className="mr-2 h-4 w-4" />
-                      {copy.editAsset}
+                      {t('admin.digitalAssets.editAsset')}
                     </Button>
                     <Button
                       type="button"
@@ -965,67 +984,42 @@ function BookDigitalAssetManager({
                       className="rounded-2xl"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      {copy.deleteAsset}
+                      {t('admin.digitalAssets.deleteAsset')}
                     </Button>
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <AssetMetaItem
-                    label={copy.priceLabel}
+                    label={t('admin.digitalAssets.priceLabel')}
                     value={formatCurrency(asset.price)}
                   />
                   <AssetMetaItem
-                    label={copy.mimeTypeLabel}
+                    label={t('admin.digitalAssets.mimeTypeLabel')}
                     value={asset.mimeType}
                   />
                   <AssetMetaItem
-                    label={copy.fileSizeLabel}
+                    label={t('admin.digitalAssets.fileSizeLabel')}
                     value={formatDigitalFileSize(asset.fileSize)}
                   />
                   <AssetMetaItem
-                    label={copy.updatedAtLabel}
+                    label={t('admin.digitalAssets.updatedAtLabel')}
                     value={formatDate(asset.updatedAt)}
                   />
                 </div>
 
                 <div className="mt-4 grid gap-3 xl:grid-cols-2">
                   <AssetMetaItem
-                    label={copy.storageKeyLabel}
-                    value={asset.storageKey}
+                    label={t('admin.digitalAssets.fileAssetIdLabel')}
+                    value={asset.fileAssetId}
                   />
                   <AssetMetaItem
-                    label={copy.sampleStorageKeyLabel}
-                    value={asset.sampleStorageKey ?? copy.noSampleStorageKey}
+                    label={t('admin.digitalAssets.sampleFileAssetIdLabel')}
+                    value={asset.sampleFileAssetId ?? noSampleLabel}
                   />
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {storageUrl ? (
-                    <a href={storageUrl} target="_blank" rel="noreferrer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-2xl"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        {copy.openStorageUrl}
-                      </Button>
-                    </a>
-                  ) : null}
-                  {sampleUrl ? (
-                    <a href={sampleUrl} target="_blank" rel="noreferrer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-2xl"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        {copy.openSampleUrl}
-                      </Button>
-                    </a>
-                  ) : null}
-                </div>
+
               </article>
             )
           })}
@@ -1036,20 +1030,20 @@ function BookDigitalAssetManager({
         <div className="mt-5 rounded-[24px] border border-primary/15 bg-primary/4 p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-primary">{copy.sectionLabel}</p>
+              <p className="text-sm font-semibold text-primary">{t('admin.digitalAssets.sectionLabel')}</p>
               <h4 className="mt-1 text-xl font-bold text-foreground">
-                {actionMode === 'create' ? copy.createTitle : copy.editTitle}
+                {actionMode === 'create' ? t('admin.digitalAssets.createTitle') : t('admin.digitalAssets.editTitle')}
               </h4>
             </div>
             <Button type="button" variant="outline" onClick={closeAction} className="rounded-2xl">
-              {copy.cancel}
+              {t('common.cancel')}
             </Button>
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <DigitalAssetSelectField
               id="digitalAssetFormat"
-              label={copy.formatLabel}
+              label={t('admin.digitalAssets.formatLabel')}
               value={form.format}
               options={['PDF', 'EPUB', 'AUDIO']}
               onValueChange={(value) =>
@@ -1059,61 +1053,14 @@ function BookDigitalAssetManager({
 
             <DigitalAssetInputField
               id="digitalAssetTitle"
-              label={copy.titleLabel}
+              label={t('admin.digitalAssets.titleLabel')}
               value={form.title}
               onChange={(value) => handleFormChange('title', value)}
             />
 
             <DigitalAssetInputField
-              id="digitalAssetFileName"
-              label={copy.fileNameLabel}
-              value={form.fileName}
-              onChange={(value) => handleFormChange('fileName', value)}
-            />
-
-            <DigitalAssetInputField
-              id="digitalAssetMimeType"
-              label={copy.mimeTypeLabel}
-              value={form.mimeType}
-              onChange={(value) => handleFormChange('mimeType', value)}
-            />
-
-            <div className="lg:col-span-2">
-              <DigitalAssetInputField
-                id="digitalAssetStorageKey"
-                label={copy.storageKeyLabel}
-                value={form.storageKey}
-                onChange={(value) => handleFormChange('storageKey', value)}
-              />
-            </div>
-
-            <DigitalAssetInputField
-              id="digitalAssetSampleStorageKey"
-              label={copy.sampleStorageKeyLabel}
-              value={form.sampleStorageKey}
-              onChange={(value) => handleFormChange('sampleStorageKey', value)}
-            />
-
-            <DigitalAssetInputField
-              id="digitalAssetChecksum"
-              label={copy.checksumLabel}
-              value={form.checksum}
-              onChange={(value) => handleFormChange('checksum', value)}
-            />
-
-            <DigitalAssetInputField
-              id="digitalAssetFileSize"
-              label={copy.fileSizeBytesLabel}
-              type="number"
-              min="0"
-              step="1"
-              value={form.fileSize}
-              onChange={(value) => handleFormChange('fileSize', value)}
-            />
-
-            <DigitalAssetInputField
               id="digitalAssetPrice"
-              label={copy.priceLabel}
+              label={t('admin.digitalAssets.priceLabel')}
               type="number"
               min="0"
               step="0.01"
@@ -1122,18 +1069,91 @@ function BookDigitalAssetManager({
             />
           </div>
 
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[20px] border border-border/60 bg-background/80 p-4">
+              <Label htmlFor="digitalAssetMainFile">
+                {t('admin.digitalAssets.mainFileLabel')}
+              </Label>
+              <Input
+                id="digitalAssetMainFile"
+                type="file"
+                accept={getDigitalAssetAccept(form.format)}
+                onChange={(event) =>
+                  void handleMainFileChange(event.currentTarget.files?.[0] ?? null)
+                }
+                className="mt-2 h-11 rounded-2xl bg-background/80"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {isUploadingMainFile ? t('common.processing') : mainFileHelp}
+              </p>
+            </div>
+
+            <div className="rounded-[20px] border border-border/60 bg-background/80 p-4">
+              <Label htmlFor="digitalAssetSampleFile">
+                {t('admin.digitalAssets.sampleFileLabel')}
+              </Label>
+              <Input
+                id="digitalAssetSampleFile"
+                type="file"
+                accept={getDigitalAssetAccept(form.format)}
+                onChange={(event) =>
+                  void handleSampleFileChange(event.currentTarget.files?.[0] ?? null)
+                }
+                className="mt-2 h-11 rounded-2xl bg-background/80"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {isUploadingSampleFile ? t('common.processing') : sampleFileHelp}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <AssetMetaItem
+              label={t('admin.digitalAssets.fileAssetIdLabel')}
+              value={form.fileAssetId || notUploadedLabel}
+            />
+            <AssetMetaItem
+              label={t('admin.digitalAssets.fileNameLabel')}
+              value={form.fileName || notUploadedLabel}
+            />
+            <AssetMetaItem
+              label={t('admin.digitalAssets.mimeTypeLabel')}
+              value={form.mimeType || notUploadedLabel}
+            />
+            <AssetMetaItem
+              label={t('admin.digitalAssets.fileSizeLabel')}
+              value={formatAssetFileSize(form.fileSize, notUploadedLabel)}
+            />
+            <AssetMetaItem
+              label={t('admin.digitalAssets.checksumLabel')}
+              value={form.checksum || notUploadedLabel}
+            />
+            <AssetMetaItem
+              label={t('admin.digitalAssets.sampleFileAssetIdLabel')}
+              value={form.sampleFileAssetId || noSampleLabel}
+            />
+          </div>
+
           <div className="mt-5 flex flex-wrap gap-5">
             <DigitalAssetToggle
               id="digitalAssetDownloadAllowed"
-              label={copy.downloadAllowed}
+              label={t('admin.digitalAssets.downloadAllowed')}
               checked={form.downloadAllowed}
               onCheckedChange={(checked) =>
                 handleFormChange('downloadAllowed', checked)
               }
             />
             <DigitalAssetToggle
+              id="digitalAssetPurchaseAllowed"
+              label={t('admin.digitalAssets.purchaseAllowed')}
+              checked={form.purchaseAllowed}
+              onCheckedChange={(checked) =>
+                handleFormChange('purchaseAllowed', checked)
+              }
+            />
+            <DigitalAssetToggle
               id="digitalAssetPublished"
-              label={copy.published}
+              label={t('admin.digitalAssets.published')}
               checked={form.published}
               onCheckedChange={(checked) => handleFormChange('published', checked)}
             />
@@ -1146,7 +1166,7 @@ function BookDigitalAssetManager({
               onClick={closeAction}
               className="rounded-2xl"
             >
-              {copy.cancel}
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -1154,7 +1174,7 @@ function BookDigitalAssetManager({
               disabled={isSubmitting}
               className="rounded-2xl"
             >
-              {isSubmitting ? copy.processing : copy.save}
+              {isSubmitting ? t('common.processing') : t('admin.digitalAssets.save')}
             </Button>
           </div>
         </div>
@@ -1166,10 +1186,10 @@ function BookDigitalAssetManager({
             <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
             <div>
               <h4 className="text-lg font-bold text-foreground">
-                {copy.deleteTitle}
+                {t('admin.digitalAssets.deleteTitle')}
               </h4>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {copy.confirmDelete.replace('{title}', selectedAsset.title)}
+                {t('admin.digitalAssets.confirmDelete').replace('{title}', selectedAsset.title)}
               </p>
             </div>
           </div>
@@ -1182,7 +1202,7 @@ function BookDigitalAssetManager({
               disabled={isDeleting}
               className="rounded-2xl"
             >
-              {copy.cancel}
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -1191,7 +1211,7 @@ function BookDigitalAssetManager({
               disabled={isDeleting}
               className="rounded-2xl"
             >
-              {isDeleting ? copy.processing : copy.deleteAsset}
+              {isDeleting ? t('common.processing') : t('admin.digitalAssets.deleteAsset')}
             </Button>
           </div>
         </div>
@@ -1211,6 +1231,19 @@ function AssetMetaItem({ label, value }: { label: string; value: string }) {
       </p>
     </div>
   )
+}
+
+function formatAssetFileSize(value: string, fallbackValue: string) {
+  const normalizedValue = value.trim()
+
+  if (normalizedValue === '') {
+    return fallbackValue
+  }
+
+  const sizeBytes = Number(normalizedValue)
+  return Number.isFinite(sizeBytes)
+    ? formatDigitalFileSize(sizeBytes)
+    : fallbackValue
 }
 
 function DigitalAssetInputField({
@@ -1306,79 +1339,15 @@ function DigitalAssetToggle({
   )
 }
 
-function getAdminDigitalAssetCopy(language: 'vi' | 'en') {
-  if (language === 'en') {
-    return {
-      addAsset: 'Add asset',
-      cancel: 'Cancel',
-      checksumLabel: 'Checksum',
-      confirmDelete: 'Delete digital asset "{title}"?',
-      createTitle: 'Create digital asset',
-      deleteAsset: 'Delete asset',
-      deleteTitle: 'Confirm digital asset deletion',
-      description:
-        'Manage the backend digital assets attached to this book without leaving the current admin book flow.',
-      downloadAllowed: 'Download allowed',
-      editAsset: 'Edit asset',
-      editTitle: 'Edit digital asset',
-      empty: 'No digital asset is attached to this book yet.',
-      fileNameLabel: 'File name',
-      fileSizeBytesLabel: 'File size (bytes)',
-      fileSizeLabel: 'File size',
-      formatLabel: 'Format',
-      loading: 'Loading digital assets...',
-      mimeTypeLabel: 'MIME type',
-      noSampleStorageKey: 'No sample storage key',
-      openSampleUrl: 'Open sample URL',
-      openStorageUrl: 'Open storage URL',
-      priceLabel: 'Price',
-      processing: 'Processing...',
-      published: 'Published',
-      sampleStorageKeyLabel: 'Sample storage key',
-      save: 'Save asset',
-      sectionLabel: 'Digital asset',
-      storageKeyLabel: 'Storage key',
-      title: 'Digital assets for this book',
-      titleLabel: 'Title',
-      unpublished: 'Draft',
-      updatedAtLabel: 'Updated at',
-    }
-  }
-
-  return {
-    addAsset: 'Thêm tài sản',
-    cancel: 'Hủy',
-    checksumLabel: 'Checksum',
-    confirmDelete: 'Xóa digital asset "{title}"?',
-    createTitle: 'Tạo digital asset',
-    deleteAsset: 'Xóa tài sản',
-    deleteTitle: 'Xác nhận xóa digital asset',
-    description:
-      'Quản lý các digital asset mà backend đang gắn với cuốn sách này ngay trong flow admin books hiện tại.',
-    downloadAllowed: 'Cho phép tải',
-    editAsset: 'Sửa tài sản',
-    editTitle: 'Cập nhật digital asset',
-    empty: 'Cuốn sách này chưa có digital asset nào.',
-    fileNameLabel: 'Tên tệp',
-    fileSizeBytesLabel: 'Dung lượng (bytes)',
-    fileSizeLabel: 'Dung lượng',
-    formatLabel: 'Định dạng',
-    loading: 'Đang tải digital assets...',
-    mimeTypeLabel: 'MIME type',
-    noSampleStorageKey: 'Không có sample storage key',
-    openSampleUrl: 'Mở sample URL',
-    openStorageUrl: 'Mở storage URL',
-    priceLabel: 'Giá',
-    processing: 'Đang xử lý...',
-    published: 'Đã publish',
-    sampleStorageKeyLabel: 'Sample storage key',
-    save: 'Lưu tài sản',
-    sectionLabel: 'Digital asset',
-    storageKeyLabel: 'Storage key',
-    title: 'Digital assets của cuốn sách',
-    titleLabel: 'Tiêu đề',
-    unpublished: 'Chưa publish',
-    updatedAtLabel: 'Cập nhật lúc',
+function getDigitalAssetAccept(format: DigitalAssetFormat) {
+  switch (format) {
+    case 'EPUB':
+      return 'application/epub+zip'
+    case 'AUDIO':
+      return 'audio/mpeg,audio/mp4,audio/x-m4a'
+    case 'PDF':
+    default:
+      return 'application/pdf'
   }
 }
 
@@ -1463,3 +1432,5 @@ function ReferenceSelectField({
     </div>
   )
 }
+
+

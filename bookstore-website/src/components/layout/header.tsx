@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Package,
   Search,
   ShoppingCart,
   User,
@@ -24,6 +25,7 @@ export function Header() {
     brandSuffix,
     totalItems,
     navLinks,
+    searchTargetPath,
     open,
     profileOpen,
     searchQuery,
@@ -106,7 +108,7 @@ export function Header() {
           <LanguageSwitcher className="hidden sm:inline-flex" />
 
           <Link
-            to="/books"
+            to={searchTargetPath}
             className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
             aria-label={t('header.searchAria')}
           >
@@ -186,6 +188,14 @@ export function Header() {
                       {t('header.myProfile')}
                     </Link>
                     <Link
+                      to="/orders"
+                      onClick={closeProfileMenu}
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Package className="h-4 w-4" />
+                      {t('orderDetail.orderHistory')}
+                    </Link>
+                    <Link
                       to="/library"
                       onClick={closeProfileMenu}
                       className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
@@ -260,7 +270,12 @@ export function Header() {
                   key={link.to}
                   to={link.to}
                   onClick={closeMenu}
-                  className="rounded-2xl px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  className={cn(
+                    'rounded-2xl px-3 py-3 text-sm font-medium transition-colors',
+                    isActiveLink(link.to)
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-foreground hover:bg-muted',
+                  )}
                 >
                   {link.label}
                 </Link>

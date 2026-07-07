@@ -8,6 +8,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICouponService;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.domain.model.Coupon;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.Comparator;
@@ -28,6 +29,13 @@ public class CouponService implements ICouponService {
     @Transactional(readOnly = true)
     public List<Coupon> getAll() {
         return couponRepository.findAllActive();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<Coupon> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return couponRepository.findPageActive(page, size);
     }
 
     @Override
@@ -138,5 +146,11 @@ public class CouponService implements ICouponService {
     private String normalizeCode(String code) {
         String normalizedCode = StringUtils.trimToNull(code);
         return normalizedCode == null ? null : normalizedCode.toUpperCase(Locale.ROOT);
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
     }
 }

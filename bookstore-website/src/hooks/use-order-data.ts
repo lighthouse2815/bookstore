@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/language-context'
-import { getMyOrders, getOrderById } from '@/services/order-service'
+import { getMyOrdersPage, getOrderById } from '@/services/order-service'
 import type { OrderResponse } from '@/types/order'
 import { getErrorMessage } from '@/utils'
 
@@ -8,24 +8,27 @@ type UseOrderResourceOptions = {
   missingError?: string | null
 }
 
-export function useMyOrdersResource() {
+export function useMyOrdersResource(page = 0, size = 10) {
   const { t } = useLanguage()
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [totalCount, setTotalCount] = useState(0)
 
   useEffect(() => {
     let isCancelled = false
+    setIsLoading(true)
 
     async function loadOrders() {
       try {
-        const data = await getMyOrders()
+        const data = await getMyOrdersPage({ page, size })
 
         if (isCancelled) {
           return
         }
 
-        setOrders(data)
+        setOrders(data.items)
+        setTotalCount(data.totalCount)
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -45,12 +48,13 @@ export function useMyOrdersResource() {
     return () => {
       isCancelled = true
     }
-  }, [t])
+  }, [page, size, t])
 
   return {
     orders,
     isLoading,
     error,
+    totalCount,
   }
 }
 

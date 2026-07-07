@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +16,18 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     List<UserJpaEntity> findAllByDeletedAtIsNull();
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @Query("""
+            select distinct u
+            from UserJpaEntity u
+            join u.roles r
+            where u.deletedAt is null
+              and r.deletedAt is null
+              and r.name = :roleName
+            order by u.createdAt desc
+            """)
+    Page<UserJpaEntity> findPageByRoleNameActive(@Param("roleName") String roleName, Pageable pageable);
 
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     List<UserJpaEntity> findAll();

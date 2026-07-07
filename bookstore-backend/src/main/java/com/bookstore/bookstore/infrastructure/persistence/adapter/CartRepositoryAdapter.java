@@ -4,10 +4,12 @@ import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.domain.model.Cart;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CartJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.DigitalAssetJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.CartPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CartJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.DigitalAssetJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +26,7 @@ public class CartRepositoryAdapter implements ICartRepository {
     private final CartPersistenceMapper cartPersistenceMapper;
     private final UserJpaRepository userJpaRepository;
     private final BookJpaRepository bookJpaRepository;
+    private final DigitalAssetJpaRepository digitalAssetJpaRepository;
 
     @Override
     public Optional<Cart> findByUserId(UUID userId) {
@@ -35,18 +38,28 @@ public class CartRepositoryAdapter implements ICartRepository {
     public Cart save(Cart cart) {
         CartJpaEntity entity = cartJpaRepository.findById(cart.getId())
                 .orElseGet(CartJpaEntity::new);
-        
+
         UserJpaEntity user = userJpaRepository.getReferenceById(cart.getUserId());
-        
+
         Map<UUID, BookJpaEntity> bookMap = cart.getItems().stream()
                 .map(item -> item.getBookId())
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toMap(
-                    bookId -> bookId,
-                    bookJpaRepository::getReferenceById
+                        bookId -> bookId,
+                        bookJpaRepository::getReferenceById
                 ));
-        
-        cartPersistenceMapper.copyToEntityWithBooks(cart, entity, user, bookMap);
+
+        Map<UUID, DigitalAssetJpaEntity> digitalAssetMap = cart.getItems().stream()
+                .map(item -> item.getDigitalAssetId())
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toMap(
+                        digitalAssetId -> digitalAssetId,
+                        digitalAssetJpaRepository::getReferenceById
+                ));
+
+        cartPersistenceMapper.copyToEntityWithReferences(cart, entity, user, bookMap, digitalAssetMap);
         return cartPersistenceMapper.toDomain(cartJpaRepository.save(entity));
     }
 }

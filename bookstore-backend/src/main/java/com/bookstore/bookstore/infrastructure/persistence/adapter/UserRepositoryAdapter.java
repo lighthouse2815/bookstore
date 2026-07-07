@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import com.bookstore.bookstore.infrastructure.persistence.entity.RoleJpaEntity;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -30,6 +32,19 @@ public class UserRepositoryAdapter implements IUserRepository {
         return userJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(userPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<User> findPageByRoleNameActive(String roleName, int page, int size) {
+        var resultPage = userJpaRepository.findPageByRoleNameActive(roleName, PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(userPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

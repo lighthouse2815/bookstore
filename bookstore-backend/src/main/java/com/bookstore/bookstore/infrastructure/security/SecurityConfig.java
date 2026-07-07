@@ -70,6 +70,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/admin/chat/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET,
+                                "/api/ebooks",
                                 "/api/books/**",
                                 "/api/categories/**",
                                 "/api/authors/**",

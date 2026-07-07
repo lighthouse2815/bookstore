@@ -12,7 +12,9 @@ import { ProtectedRoute } from './protected-route'
 
 const HomePage = lazy(() => import('@/pages/home/home'))
 const BooksPage = lazy(() => import('@/pages/book/books'))
+const EbooksPage = lazy(() => import('@/pages/book/ebooks'))
 const BookDetailPage = lazy(() => import('@/pages/book/book-detail'))
+const BookEbookPage = lazy(() => import('@/pages/book/book-ebook'))
 const CartPage = lazy(() => import('@/pages/cart/cart'))
 const CheckoutPage = lazy(() => import('@/pages/cart/checkout'))
 const NotFoundPage = lazy(() => import('@/pages/home/not-found'))
@@ -30,6 +32,9 @@ const DigitalLibraryPage = lazy(() => import('@/pages/library/digital-library'))
 const DigitalLibraryDetailPage = lazy(
   () => import('@/pages/library/digital-library-detail'),
 )
+const DigitalLibraryReaderPage = lazy(
+  () => import('@/pages/library/digital-library-reader'),
+)
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
@@ -37,7 +42,9 @@ const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
+const AdminDigitalAssetsPage = lazy(() => import('@/pages/admin/digital-assets'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminShipmentsPage = lazy(() => import('@/pages/admin/shipments'))
 const AdminCategoriesPage = lazy(() => import('@/pages/admin/categories'))
 const AdminAuthorsPage = lazy(() => import('@/pages/admin/authors'))
 const AdminPublishersPage = lazy(() => import('@/pages/admin/publishers'))
@@ -129,10 +136,26 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/ebooks"
+          element={
+            <LazyPage>
+              <EbooksPage />
+            </LazyPage>
+          }
+        />
+        <Route
           path="/books/:id"
           element={
             <LazyPage>
               <BookDetailPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/books/:id/ebook"
+          element={
+            <LazyPage>
+              <BookEbookPage />
             </LazyPage>
           }
         />
@@ -260,6 +283,16 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/library/:digitalAssetId/read"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <DigitalLibraryReaderPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute requiredRole="ADMIN">
@@ -280,11 +313,31 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/admin/digital-assets"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminDigitalAssetsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/orders"
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <LazyPage>
                 <AdminOrdersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/shipments"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminShipmentsPage />
               </LazyPage>
             </ProtectedRoute>
           }

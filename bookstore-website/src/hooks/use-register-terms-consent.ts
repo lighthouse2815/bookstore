@@ -1,16 +1,20 @@
 import { useState, type ChangeEvent, type MouseEvent } from 'react'
 import { useLanguage } from '@/contexts/language-context'
-import { getRegisterTermsCopy } from '@/utils/register-terms'
+import type { RegisterTermsCopy } from '@/utils/register-terms'
 
 export function useRegisterTermsConsent() {
-  const { language } = useLanguage()
+  const { getMessage } = useLanguage()
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
   const [hasReadTermsDialog, setHasReadTermsDialog] = useState(false)
   const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [shouldAcceptTermsOnClose, setShouldAcceptTermsOnClose] =
     useState(false)
 
-  const termsCopy = getRegisterTermsCopy(language)
+  const termsCopy = getMessage<RegisterTermsCopy>('auth.register.terms')
+
+  if (!termsCopy) {
+    throw new Error('Missing register terms copy')
+  }
 
   function openTermsDialog(acceptTermsOnClose: boolean) {
     setShouldAcceptTermsOnClose(acceptTermsOnClose)

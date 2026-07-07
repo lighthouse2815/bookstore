@@ -7,14 +7,15 @@ import jakarta.validation.constraints.Pattern;
 import java.util.Set;
 
 public record UpdateStaffUserRequest(
-        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber khong hop le")
+        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber không hợp lệ")
         String phoneNumber,
 
-        @NotBlank(message = "email khong duoc de trong")
-        @Email(message = "email khong hop le")
+        @NotBlank(message = "email không được để trống")
+        @Email(message = "email không hợp lệ")
         String email,
 
-        @NotEmpty(message = "roleNames khong duoc de trong")
-        Set<@NotBlank(message = "roleName khong duoc de trong") String> roleNames
+        @NotEmpty(message = "roleNames không được để trống")
+        Set<@NotBlank(message = "roleName không được để trống") String> roleNames
 ) {
 }
+

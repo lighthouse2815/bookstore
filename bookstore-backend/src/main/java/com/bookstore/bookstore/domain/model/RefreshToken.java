@@ -12,7 +12,7 @@ public class RefreshToken {
 
     private UUID id;
     private UUID userId;
-    private String token;
+    private String tokenHash;
     private Instant expiresAt;
     private boolean revoked;
     private Instant createdAt;
@@ -20,14 +20,14 @@ public class RefreshToken {
     public RefreshToken(
             UUID id,
             UUID userId,
-            String token,
+            String tokenHash,
             Instant expiresAt,
             boolean revoked,
             Instant createdAt
     ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_REFRESH_TOKEN_ID, "id");
         setUserId(userId);
-        setToken(token);
+        setTokenHash(tokenHash);
         setRevoked(revoked);
         setCreatedAt(createdAt);
         setExpiresAt(expiresAt);
@@ -45,8 +45,8 @@ public class RefreshToken {
         this.userId = Guard.notNull(userId, DomainErrorCode.INVALID_REFRESH_TOKEN_USER_ID, "userId");
     }
 
-    private void setToken(String token) {
-        this.token = Guard.notBlank(token, DomainErrorCode.INVALID_REFRESH_TOKEN_TOKEN, "token");
+    private void setTokenHash(String tokenHash) {
+        this.tokenHash = Guard.notBlank(tokenHash, DomainErrorCode.INVALID_REFRESH_TOKEN_TOKEN, "tokenHash");
     }
 
     private void setExpiresAt(Instant expiresAt) {

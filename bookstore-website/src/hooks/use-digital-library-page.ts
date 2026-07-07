@@ -10,7 +10,11 @@ import { getErrorMessage } from '@/utils'
 export function useDigitalLibraryPage() {
   const [items, setItems] = useState<DigitalLibraryItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+  const [hasNext, setHasNext] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFormat, setSelectedFormat] = useState<DigitalAssetFormat | 'all'>(
     'all',
@@ -26,16 +30,23 @@ export function useDigitalLibraryPage() {
       setIsLoading(true)
 
       try {
-        const response = await getMyDigitalLibrary()
+        const response = await getMyDigitalLibrary({ page: 0 })
 
         if (isCancelled) {
           return
         }
 
-        setItems(response)
+        setItems(response.items)
+        setPage(response.page)
+        setTotalCount(response.totalCount)
+        setHasNext(response.hasNext)
         setError(null)
       } catch (currentError) {
         if (!isCancelled) {
+          setItems([])
+          setPage(0)
+          setTotalCount(0)
+          setHasNext(false)
           setError(getErrorMessage(currentError))
         }
       } finally {
@@ -51,6 +62,27 @@ export function useDigitalLibraryPage() {
       isCancelled = true
     }
   }, [])
+
+  async function loadMore() {
+    if (isLoading || isLoadingMore || !hasNext) {
+      return
+    }
+
+    setIsLoadingMore(true)
+
+    try {
+      const response = await getMyDigitalLibrary({ page: page + 1 })
+      setItems((currentItems) => [...currentItems, ...response.items])
+      setPage(response.page)
+      setTotalCount(response.totalCount)
+      setHasNext(response.hasNext)
+      setError(null)
+    } catch (currentError) {
+      setError(getErrorMessage(currentError))
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -77,12 +109,16 @@ export function useDigitalLibraryPage() {
     items,
     filteredItems,
     isLoading,
+    isLoadingMore,
     error,
+    totalCount,
+    hasNext,
     searchTerm,
     selectedFormat,
     selectedStatus,
     setSearchTerm,
     setSelectedFormat,
     setSelectedStatus,
+    loadMore,
   }
 }

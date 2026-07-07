@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreateNotificationRequest(
-        @NotNull(message = "userId khong duoc null")
+        @NotNull(message = "userId không được null")
         UUID userId,
-        @NotBlank(message = "title khong duoc de trong")
+        @NotBlank(message = "title không được để trống")
         String title,
-        @NotBlank(message = "content khong duoc de trong")
+        @NotBlank(message = "content không được để trống")
         String content,
         String type,
         String targetType,
@@ -17,3 +17,4 @@ public record CreateNotificationRequest(
         String link
 ) {
 }
+

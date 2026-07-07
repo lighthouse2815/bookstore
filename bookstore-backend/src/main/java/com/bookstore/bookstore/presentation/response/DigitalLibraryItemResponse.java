@@ -16,7 +16,7 @@ public record DigitalLibraryItemResponse(
         DigitalAssetFormat format,
         BigDecimal price,
         boolean downloadAllowed,
-        String sampleStorageKey,
+        boolean sampleAvailable,
         DigitalAccessType accessType,
         DigitalAccessStatus accessStatus,
         UUID sourceOrderId,

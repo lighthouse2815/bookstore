@@ -5,21 +5,23 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record UpdateProfileRequest(
-        @NotBlank(message = "lastName khong duoc de trong")
+        @NotBlank(message = "lastName không được để trống")
         String lastName,
 
-        @NotBlank(message = "firstName khong duoc de trong")
+        @NotBlank(message = "firstName không được để trống")
         String firstName,
 
-        String avatarUrl,
+        UUID avatarFileAssetId,
 
-        @NotNull(message = "gender khong duoc null")
+        @NotNull(message = "gender không được null")
         Gender gender,
 
-        @NotNull(message = "dateOfBirth khong duoc null")
-        @PastOrPresent(message = "dateOfBirth khong duoc nam trong tuong lai")
+        @NotNull(message = "dateOfBirth không được null")
+        @PastOrPresent(message = "dateOfBirth không được nằm trong tương lai")
         LocalDate dateOfBirth
 ) {
 }
+

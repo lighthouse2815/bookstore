@@ -1,7 +1,7 @@
 import type { Gender, UserRole, UserStatus } from '@/types/auth'
 import type { CouponDiscountType, CouponType } from '@/types/coupon'
 
-export type ManagedAdminUserRole = 'ADMIN' | 'STAFF'
+export type ManagedAdminUserRole = 'ADMIN' | 'STAFF' | 'SHIPPER'
 
 export type AdminUserResponse = {
   userId: string
@@ -22,7 +22,7 @@ export type AdminCreateUserRequest = {
   email: string
   firstName: string
   lastName: string
-  avatarUrl?: string | null
+  avatarFileAssetId?: string | null
   gender: Gender
   dateOfBirth: string
   roleName: ManagedAdminUserRole

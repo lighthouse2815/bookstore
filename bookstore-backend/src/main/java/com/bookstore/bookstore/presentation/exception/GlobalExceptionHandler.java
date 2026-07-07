@@ -80,18 +80,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException exception
     ) {
-        return ResponseEntity.badRequest().body(ApiResponse.error("Du lieu khong hop le"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Dữ liệu không hợp lệ"));
     }
 
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(RuntimeException exception) {
-        return ResponseEntity.badRequest().body(ApiResponse.error("Du lieu khong hop le"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Dữ liệu không hợp lệ"));
     }
 
     @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
     public ResponseEntity<ApiResponse<Void>> handleNotFoundException(Exception exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("API khong ton tai"));
+                .body(ApiResponse.error("API không tồn tại"));
     }
 
     @ExceptionHandler(Exception.class)
@@ -117,7 +117,11 @@ public class GlobalExceptionHandler {
     private HttpStatus mapApplicationStatus(ApplicationErrorCode errorCode) {
         return switch (errorCode) {
             case INVALID_ARGUMENT, INVALID_AUTH_PASSWORD, USER_ROLE_NOT_ALLOWED, OTP_INVALID, OTP_EXPIRED,
-                 OTP_NOT_VERIFIED, COUPON_TYPE_NOT_MATCH, CHAT_ASSIGNEE_ROLE_INVALID ->
+                 OTP_NOT_VERIFIED, COUPON_TYPE_NOT_MATCH, CHAT_ASSIGNEE_ROLE_INVALID,
+                 FILE_ASSET_INVALID_PURPOSE, FILE_ASSET_INVALID_VISIBILITY,
+                 FILE_ASSET_CONTENT_TYPE_NOT_ALLOWED, FILE_ASSET_SIZE_EXCEEDED,
+                 FILE_ASSET_DOWNLOAD_NOT_ALLOWED, FILE_ASSET_OBJECT_NOT_FOUND,
+                 FILE_ASSET_OBJECT_METADATA_MISMATCH ->
                     HttpStatus.BAD_REQUEST;
             case OTP_RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
             case AUTH_USER_NOT_FOUND, AUTH_INVALID_PASSWORD, AUTH_INVALID_REFRESH_TOKEN, AUTH_REFRESH_TOKEN_EXPIRED,
@@ -128,18 +132,21 @@ public class GlobalExceptionHandler {
             case USER_NOT_FOUND, STAFF_NOT_FOUND, SHIPPER_NOT_FOUND, ROLE_NOT_FOUND, CATEGORY_NOT_FOUND, AUTHOR_NOT_FOUND, PUBLISHER_NOT_FOUND,
                  SUPPLIER_NOT_FOUND,
                  IMPORT_RECEIPT_NOT_FOUND, COUPON_NOT_FOUND,
-                 BOOK_NOT_FOUND, DIGITAL_ASSET_NOT_FOUND, CART_NOT_FOUND, CART_ITEM_NOT_FOUND, ORDER_NOT_FOUND, SHIPMENT_NOT_FOUND, PAYMENT_NOT_FOUND, USER_ADDRESS_NOT_FOUND,
+                 BOOK_NOT_FOUND, DIGITAL_ASSET_NOT_FOUND, FILE_ASSET_NOT_FOUND, CART_NOT_FOUND, CART_ITEM_NOT_FOUND, ORDER_NOT_FOUND, SHIPMENT_NOT_FOUND, PAYMENT_NOT_FOUND, USER_ADDRESS_NOT_FOUND,
                   NOTIFICATION_NOT_FOUND,
                   CHAT_CONVERSATION_NOT_FOUND, CHAT_MESSAGE_NOT_FOUND, CHAT_ASSIGNEE_NOT_FOUND,
                   REVIEW_NOT_FOUND,
                   PERMISSION_NOT_FOUND, PROFILE_NOT_FOUND, PROFILE_USER_NOT_FOUND ->
                     HttpStatus.NOT_FOUND;
             case USER_NOT_ADMIN, USER_SELF_MANAGEMENT_NOT_ALLOWED, REVIEW_BOOK_NOT_PURCHASED,
+                 FILE_ASSET_ACCESS_DENIED,
                  CHAT_CONVERSATION_FORBIDDEN, CHAT_ADMIN_ROLE_REQUIRED, CHAT_CUSTOMER_ROLE_REQUIRED ->
                     HttpStatus.FORBIDDEN;
-            case OTP_EMAIL_NOT_CONFIGURED -> HttpStatus.INTERNAL_SERVER_ERROR;
+            case OTP_EMAIL_NOT_CONFIGURED, FILE_STORAGE_NOT_CONFIGURED -> HttpStatus.INTERNAL_SERVER_ERROR;
             case OTP_EMAIL_SEND_FAILED -> HttpStatus.BAD_GATEWAY;
-            case CART_EMPTY, SHIPMENT_ORDER_NOT_READY, SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT,
+            case CART_EMPTY, ORDER_PAYMENT_NOT_PAID, SHIPMENT_ORDER_NOT_READY, SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT,
+                 DIGITAL_ASSET_PURCHASE_NOT_ALLOWED,
+                 FILE_ASSET_UPLOAD_NOT_COMPLETED,
                  CHAT_CONVERSATION_CLOSED -> HttpStatus.CONFLICT;
             case USER_ALREADY_EXISTS, USER_USERNAME_ALREADY_EXISTS, USER_PHONE_ALREADY_EXISTS, USER_EMAIL_ALREADY_EXISTS,
                  AUTH_GOOGLE_ACCOUNT_ALREADY_LINKED,
@@ -152,7 +159,8 @@ public class GlobalExceptionHandler {
                  REVIEW_ALREADY_EXISTS,
                  PERMISSION_ALREADY_EXISTS, PERMISSION_CODE_ALREADY_EXISTS,
                  PERMISSION_IN_USE,
-                 PROFILE_ALREADY_EXISTS, PROFILE_USER_ALREADY_HAS_PROFILE -> HttpStatus.CONFLICT;
+                 PROFILE_ALREADY_EXISTS, PROFILE_USER_ALREADY_HAS_PROFILE,
+                 FILE_ASSET_IN_USE -> HttpStatus.CONFLICT;
         };
     }
 
@@ -182,3 +190,4 @@ public class GlobalExceptionHandler {
         return HttpStatus.BAD_REQUEST;
     }
 }
+
