@@ -18,8 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Component
-@Profile("seed")
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 @Order(100)
 @RequiredArgsConstructor
 public class DevelopmentDataSeeder implements ApplicationRunner {
@@ -42,6 +42,9 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     @Value("${app.seed.category-count:12}")
     private int categoryCount;
 
+    @Value("${app.seed.exit-after-run:false}")
+    private boolean exitAfterRun;
+
     private final JdbcTemplate jdbcTemplate;
     private final IPasswordEncoder passwordEncoder;
     private final TransactionTemplate transactionTemplate;
@@ -51,12 +54,21 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         transactionTemplate.executeWithoutResult(status -> seedDatabase());
-        SpringApplication.exit(applicationContext, () -> 0);
+        if (exitAfterRun) {
+            SpringApplication.exit(applicationContext, () -> 0);
+        }
     }
 
     private void seedDatabase() {
         validateSeedConfiguration();
-        assertFreshDatabase();
+        if (!isFreshDatabase()) {
+            if (exitAfterRun) {
+                throw new IllegalStateException(
+                        "Seed profile requires a freshly created schema containing only the initialized admin account");
+            }
+            log.info("Skipping seed because database already contains application data");
+            return;
+        }
 
         String adminId = requiredId("SELECT BIN_TO_UUID(id) FROM users WHERE username = ?", adminUsername());
         String userRoleId = requiredId("SELECT BIN_TO_UUID(id) FROM roles WHERE name = ?", "USER");
@@ -666,13 +678,10 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         }
     }
 
-    private void assertFreshDatabase() {
+    private boolean isFreshDatabase() {
         Integer userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
         Integer bookCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM books", Integer.class);
-        if (userCount == null || userCount != 1 || bookCount == null || bookCount != 0) {
-            throw new IllegalStateException(
-                    "Seed profile requires a freshly created schema containing only the initialized admin account");
-        }
+        return userCount != null && userCount == 1 && bookCount != null && bookCount == 0;
     }
 
     private void assertNoRows(String query, String message) {

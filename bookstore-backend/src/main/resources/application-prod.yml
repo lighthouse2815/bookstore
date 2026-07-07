@@ -7,16 +7,29 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    enabled: false
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       "[hibernate.format_sql]": false
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:01234567890123456789012345678901}
+  admin:
+    seed-enabled: ${ADMIN_SEED_ENABLED:true}
+    username: ${ADMIN_USERNAME:admin.prod}
+    password: ${ADMIN_PASSWORD:ProdAdmin@12345}
+    phone: ${ADMIN_PHONE:0900000001}
+    email: ${ADMIN_EMAIL:admin.prod@local.bookstore}
+    last-name: ${ADMIN_LAST_NAME:Prod}
+    first-name: ${ADMIN_FIRST_NAME:Admin}
+  seed:
+    enabled: true
+    size: ${APP_SEED_SIZE:50}
+    category-count: ${APP_SEED_CATEGORY_COUNT:12}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:SeedUser@12345}
+    exit-after-run: false

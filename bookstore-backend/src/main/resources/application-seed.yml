@@ -15,9 +15,11 @@ server:
 
 app:
   seed:
+    enabled: true
     size: ${APP_SEED_SIZE:50}
     category-count: ${APP_SEED_CATEGORY_COUNT:12}
     default-password: ${APP_SEED_DEFAULT_PASSWORD:}
+    exit-after-run: true
 
 logging:
   level:
