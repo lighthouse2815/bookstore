@@ -2,35 +2,44 @@
 
 Danh sach thao tac tay de check nhanh truoc demo.
 
+## Preflight
+
+- [ ] `GET /actuator/health` tra `UP`
+- [ ] Demo deploy: `APP_SWAGGER_ENABLED=true` thi `/swagger-ui/index.html` mo duoc
+- [ ] Real prod deploy: `APP_SWAGGER_ENABLED=false` thi `/v3/api-docs` va `/swagger-ui/index.html` tra `404`
+- [ ] Demo accounts/password chi lay tu env, khong copy secret vao docs
+- [ ] Neu dung demo seed, co the chay `D:\bookstore\scripts\smoke-demo.ps1`
+
 ## Customer
 
-- [ ] Register
-- [ ] Verify OTP after register
-- [ ] Login
-- [ ] Browse books
-- [ ] View book detail
+- [ ] Login user demo (`minhanh.nguyen` + `APP_DEMO_USER_PASSWORD`)
+- [ ] Books list load du
+- [ ] Categories load du
+- [ ] View book detail / page detail
+- [ ] Recently viewed UI khong loi sau khi mo book detail
+- [ ] Add/remove wishlist
 - [ ] Add to cart
 - [ ] Update cart item quantity
 - [ ] Remove cart item
+- [ ] `GET /api/cart/best-coupon` tra coupon seed hop le (`DOCHEM03` tren fresh demo DB), khong can insert DB thu cong
+- [ ] Apply coupon tu best-coupon suggestion
 - [ ] Checkout without coupon
 - [ ] Checkout with book coupon
 - [ ] View order history
-- [ ] View order detail
+- [ ] View order detail / timeline neu UI co hien
 
 ## Admin
 
 - [ ] Login admin
-- [ ] View dashboard
-- [ ] Create/update/delete book
-- [ ] Manage category
-- [ ] Manage author
-- [ ] Manage publisher
-- [ ] Manage supplier
-- [ ] Manage order status
-- [ ] Assign shipper to eligible order
-- [ ] Manage coupon / promotion
+- [ ] View dashboard tai `/admin`
+- [ ] `/admin/dashboard` redirect/render dashboard thanh cong
+- [ ] Dashboard co revenue, orders, top books, low stock
+- [ ] Open admin order list
+- [ ] Tim pending order vua tao trong customer flow
+- [ ] Confirm hoac cancel order pending theo muc tieu demo
+- [ ] Neu can demo rollback stock/coupon, chi test tren DB smoke/demo rieng
 
-## Shipper
+## Optional shipper / staff
 
 - [ ] Login shipper
 - [ ] View assigned orders
@@ -58,3 +67,4 @@ Danh sach thao tac tay de check nhanh truoc demo.
 - Neu chuc nang chua co that, danh dau ro `Not implemented yet`, khong ghi pass gia.
 - Neu shipper khong thay don, quay lai admin flow va xac nhan da assign shipment.
 - Neu mobile/ship app test tren may that, backend URL phai la IP LAN thay vi `localhost`.
+- Thu tu UI demo khuyen nghi: `D:\bookstore\docs\DEMO_SCRIPT.md`

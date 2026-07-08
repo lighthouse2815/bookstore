@@ -693,10 +693,16 @@ function getSummaryCards(
   },
 ) {
   const safeSummary: DashboardSummary = summary ?? {
+    totalRevenue: 0,
     todayRevenue: 0,
     monthRevenue: 0,
+    totalOrders: 0,
     todayOrders: 0,
     pendingOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    totalUsers: 0,
+    totalBooks: 0,
     lowStockBooks: 0,
     newCustomers: 0,
     newReviews: 0,
@@ -705,56 +711,56 @@ function getSummaryCards(
 
   return [
     {
-      label: copy.stats.todayRevenue,
-      value: helpers.formatCurrency(safeSummary.todayRevenue),
+      label: copy.stats.totalRevenue,
+      value: helpers.formatCurrency(safeSummary.totalRevenue),
       icon: Wallet,
       accentClassName: 'bg-primary/12 text-primary',
     },
     {
-      label: copy.stats.monthRevenue,
-      value: helpers.formatCurrency(safeSummary.monthRevenue),
-      icon: TrendingUp,
-      accentClassName:
-        'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/18 dark:text-emerald-300',
-    },
-    {
-      label: copy.stats.todayOrders,
-      value: helpers.formatNumber(safeSummary.todayOrders),
+      label: copy.stats.totalOrders,
+      value: helpers.formatNumber(safeSummary.totalOrders),
       icon: ShoppingCart,
       accentClassName:
-        'bg-sky-500/12 text-sky-600 dark:bg-sky-500/18 dark:text-sky-300',
+        'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/18 dark:text-emerald-300',
     },
     {
       label: copy.stats.pendingOrders,
       value: helpers.formatNumber(safeSummary.pendingOrders),
       icon: Clock3,
       accentClassName:
+        'bg-sky-500/12 text-sky-600 dark:bg-sky-500/18 dark:text-sky-300',
+    },
+    {
+      label: copy.stats.deliveredOrders,
+      value: helpers.formatNumber(safeSummary.deliveredOrders),
+      icon: TrendingUp,
+      accentClassName:
         'bg-amber-500/12 text-amber-600 dark:bg-amber-500/18 dark:text-amber-300',
     },
     {
-      label: copy.stats.lowStockBooks,
-      value: helpers.formatNumber(safeSummary.lowStockBooks),
-      icon: Package,
+      label: copy.stats.cancelledOrders,
+      value: helpers.formatNumber(safeSummary.cancelledOrders),
+      icon: AlertTriangle,
       accentClassName:
         'bg-rose-500/12 text-rose-600 dark:bg-rose-500/18 dark:text-rose-300',
     },
     {
-      label: copy.stats.newCustomers,
-      value: helpers.formatNumber(safeSummary.newCustomers),
+      label: copy.stats.totalUsers,
+      value: helpers.formatNumber(safeSummary.totalUsers),
       icon: Users,
       accentClassName:
         'bg-indigo-500/12 text-indigo-600 dark:bg-indigo-500/18 dark:text-indigo-300',
     },
     {
-      label: copy.stats.newReviews,
-      value: helpers.formatNumber(safeSummary.newReviews),
+      label: copy.stats.totalBooks,
+      value: helpers.formatNumber(safeSummary.totalBooks),
       icon: Star,
       accentClassName:
         'bg-fuchsia-500/12 text-fuchsia-600 dark:bg-fuchsia-500/18 dark:text-fuchsia-300',
     },
     {
-      label: copy.stats.activeCoupons,
-      value: helpers.formatNumber(safeSummary.activeCoupons),
+      label: copy.stats.lowStockBooks,
+      value: helpers.formatNumber(safeSummary.lowStockBooks),
       icon: Ticket,
       accentClassName:
         'bg-cyan-500/12 text-cyan-600 dark:bg-cyan-500/18 dark:text-cyan-300',
@@ -819,14 +825,14 @@ type DashboardCopy = {
     recentOrders: string
   }
   stats: {
-    todayRevenue: string
-    monthRevenue: string
-    todayOrders: string
+    totalRevenue: string
+    totalOrders: string
     pendingOrders: string
+    deliveredOrders: string
+    cancelledOrders: string
+    totalUsers: string
+    totalBooks: string
     lowStockBooks: string
-    newCustomers: string
-    newReviews: string
-    activeCoupons: string
   }
   columns: {
     orderId: string
@@ -839,7 +845,7 @@ type DashboardCopy = {
   }
 }
 
-const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
+const dashboardCopy = {
   vi: {
     description:
       'Theo dõi doanh thu, đơn hàng và tồn kho từ hệ thống backend trong một màn hình tổng hợp.',
@@ -958,4 +964,26 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
       stockQuantity: 'Stock',
     },
   },
+} as Record<'vi' | 'en', DashboardCopy>
+
+dashboardCopy.vi.stats = {
+  totalRevenue: 'Tổng doanh thu',
+  totalOrders: 'Tổng đơn hàng',
+  pendingOrders: 'Đơn chờ xử lý',
+  deliveredOrders: 'Đơn đã giao',
+  cancelledOrders: 'Đơn đã hủy',
+  totalUsers: 'Tổng người dùng',
+  totalBooks: 'Tổng đầu sách',
+  lowStockBooks: 'Sách sắp hết hàng',
+}
+
+dashboardCopy.en.stats = {
+  totalRevenue: 'Total revenue',
+  totalOrders: 'Total orders',
+  pendingOrders: 'Pending orders',
+  deliveredOrders: 'Delivered orders',
+  cancelledOrders: 'Cancelled orders',
+  totalUsers: 'Total users',
+  totalBooks: 'Total books',
+  lowStockBooks: 'Low-stock books',
 }

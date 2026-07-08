@@ -24,8 +24,10 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -63,14 +65,12 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     @Override
     public PageSliceResult<Order> findPageByUserId(UUID userId, int page, int size) {
-        var resultPage = orderJpaRepository.findAllByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
+        var resultPage = orderJpaRepository.findPageIdsByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
                 userId,
                 PageRequest.of(page, size)
         );
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(orderPersistenceMapper::toDomain)
-                        .toList(),
+                loadOrdersInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
@@ -172,11 +172,9 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     @Override
     public PageSliceResult<Order> findPageAll(int page, int size) {
-        var resultPage = orderJpaRepository.findAllByUser_DeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        var resultPage = orderJpaRepository.findPageIdsByUser_DeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(orderPersistenceMapper::toDomain)
-                        .toList(),
+                loadOrdersInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
@@ -225,5 +223,26 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     private long defaultLong(Long value) {
         return value == null ? 0L : value;
+    }
+
+    private List<Order> loadOrdersInOrder(Collection<UUID> orderIds) {
+        List<UUID> orderedIds = orderIds == null
+                ? List.of()
+                : orderIds.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, OrderJpaEntity> ordersById = orderJpaRepository.findAllByIdInAndUser_DeletedAtIsNull(orderedIds).stream()
+                .collect(Collectors.toMap(OrderJpaEntity::getId, Function.identity()));
+
+        return orderedIds.stream()
+                .map(ordersById::get)
+                .filter(Objects::nonNull)
+                .map(orderPersistenceMapper::toDomain)
+                .toList();
     }
 }

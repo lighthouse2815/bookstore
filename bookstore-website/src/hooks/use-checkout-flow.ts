@@ -10,9 +10,11 @@ import { toast } from 'sonner'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
 import { createAddress, getMyAddresses } from '@/services/address-service'
+import { getBestCartCoupon } from '@/services/cart-service'
 import { getActiveCoupons } from '@/services/coupon-service'
 import { createOrder } from '@/services/order-service'
 import type { UserAddressResponse } from '@/types/address'
+import type { BestCouponSuggestion } from '@/types/cart'
 import type { CouponResponse, CouponType } from '@/types/coupon'
 import type { PaymentMethod, ShippingMethod } from '@/types/order'
 import {
@@ -63,6 +65,9 @@ export function useCheckoutFlow() {
   const [isCouponLoading, setIsCouponLoading] = useState(true)
   const [savedAddresses, setSavedAddresses] = useState<UserAddressResponse[]>([])
   const [activeCoupons, setActiveCoupons] = useState<CouponResponse[]>([])
+  const [bestCouponSuggestion, setBestCouponSuggestion] =
+    useState<BestCouponSuggestion | null>(null)
+  const [isBestCouponLoading, setIsBestCouponLoading] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState(NO_ADDRESS_VALUE)
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethod>(DEFAULT_SHIPPING_METHOD)
@@ -94,6 +99,10 @@ export function useCheckoutFlow() {
     const selectedCartItemIdSet = new Set(selectedCartItemIds)
     return cartItems.filter((item) => selectedCartItemIdSet.has(item.id))
   }, [cartItems, selectedCartItemIds])
+  const selectedItemIdsKey = useMemo(
+    () => items.map((item) => item.id).join(','),
+    [items],
+  )
 
   const hasPhysicalItems = useMemo(
     () => items.some((item) => item.itemType === 'PHYSICAL_BOOK'),
@@ -215,6 +224,63 @@ export function useCheckoutFlow() {
     setSelectedAddressId(NO_ADDRESS_VALUE)
   }, [isDigitalOnly])
 
+  useEffect(() => {
+    const nextBookCouponCode =
+      normalizeCouponCode(searchParams.get('bookCoupon')) || null
+    const nextShippingCouponCode =
+      normalizeCouponCode(searchParams.get('shippingCoupon')) || null
+
+    if (!nextBookCouponCode && !nextShippingCouponCode) {
+      return
+    }
+
+    setFormData((previousValue) => ({
+      ...previousValue,
+      bookCouponCode: nextBookCouponCode ?? previousValue.bookCouponCode,
+      shippingCouponCode:
+        nextShippingCouponCode ?? previousValue.shippingCouponCode,
+    }))
+  }, [searchParams])
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setBestCouponSuggestion(null)
+      setIsBestCouponLoading(false)
+      return
+    }
+
+    let isCancelled = false
+
+    async function loadBestCouponSuggestion() {
+      setIsBestCouponLoading(true)
+
+      try {
+        const suggestion = await getBestCartCoupon({
+          itemIds: items.map((item) => item.id),
+          shippingMethod: hasPhysicalItems ? shippingMethod : 'PICKUP',
+        })
+
+        if (!isCancelled) {
+          setBestCouponSuggestion(suggestion)
+        }
+      } catch {
+        if (!isCancelled) {
+          setBestCouponSuggestion(null)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsBestCouponLoading(false)
+        }
+      }
+    }
+
+    void loadBestCouponSuggestion()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [items, shippingMethod, hasPhysicalItems, selectedItemIdsKey])
+
   function handleChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
@@ -277,6 +343,21 @@ export function useCheckoutFlow() {
     }
 
     setPaymentMethod(nextPaymentMethod)
+  }
+
+  function applySuggestedCoupon() {
+    if (
+      !bestCouponSuggestion?.available ||
+      !bestCouponSuggestion.couponCode ||
+      !bestCouponSuggestion.couponType
+    ) {
+      return
+    }
+
+    handleCouponCodeChange(
+      bestCouponSuggestion.couponType,
+      bestCouponSuggestion.couponCode,
+    )
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -373,6 +454,8 @@ export function useCheckoutFlow() {
     isAddressLoading,
     isCartLoading,
     isCouponLoading,
+    bestCouponSuggestion,
+    isBestCouponLoading,
     savedAddresses,
     activeCoupons,
     selectedBookCoupon,
@@ -385,6 +468,7 @@ export function useCheckoutFlow() {
     handleSelectAddressChange,
     handleShippingMethodChange,
     handlePaymentMethodChange,
+    applySuggestedCoupon,
     handleSubmit,
   }
 }

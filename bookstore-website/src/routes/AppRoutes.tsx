@@ -27,6 +27,7 @@ const OrderConfirmationPage = lazy(
 )
 const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
 const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
+const WishlistPage = lazy(() => import('@/pages/book/wishlist'))
 const NotificationsPage = lazy(() => import('@/pages/notifications/notifications'))
 const DigitalLibraryPage = lazy(() => import('@/pages/library/digital-library'))
 const DigitalLibraryDetailPage = lazy(
@@ -233,6 +234,16 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <WishlistPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/order-confirmation"
           element={
             <ProtectedRoute>
@@ -299,6 +310,14 @@ function AppRouteContent() {
               <LazyPage>
                 <AdminDashboard />
               </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <Navigate to="/admin" replace />
             </ProtectedRoute>
           }
         />

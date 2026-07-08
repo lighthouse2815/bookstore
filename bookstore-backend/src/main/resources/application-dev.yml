@@ -18,7 +18,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:01234567890123456789012345678901}
   admin:
-    seed-enabled: ${ADMIN_SEED_ENABLED:true}
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
     username: ${ADMIN_USERNAME:admin.dev}
     password: ${ADMIN_PASSWORD:DevAdmin@12345}
     phone: ${ADMIN_PHONE:0900000001}

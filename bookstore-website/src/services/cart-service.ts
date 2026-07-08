@@ -3,7 +3,9 @@ import type { ApiResponse } from '@/types/api'
 import type {
   AddCartItemRequest,
   AddDigitalCartItemRequest,
+  BestCouponSuggestion,
   CartResponse,
+  GetBestCartCouponParams,
   UpdateCartItemRequest,
 } from '@/types/cart'
 import { unwrapResponse } from '@/utils'
@@ -47,4 +49,21 @@ export async function removeCartItem(itemId: string): Promise<void> {
 
 export async function clearMyCart(): Promise<void> {
   await api.delete<ApiResponse<null>>('/cart/items')
+}
+
+export async function getBestCartCoupon(
+  params: GetBestCartCouponParams = {},
+): Promise<BestCouponSuggestion> {
+  const queryParams = {
+    shippingMethod: params.shippingMethod,
+    itemIds: params.itemIds?.length ? params.itemIds.join(',') : undefined,
+  }
+
+  const response = await api.get<ApiResponse<BestCouponSuggestion>>(
+    '/cart/best-coupon',
+    {
+      params: queryParams,
+    },
+  )
+  return unwrapResponse(response)
 }

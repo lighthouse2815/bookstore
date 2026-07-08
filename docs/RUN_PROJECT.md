@@ -61,11 +61,75 @@ Notes:
 
 - `.env` must live in `D:\bookstore\bookstore-backend`.
 - Backend default URL: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- Dev admin seed is controlled by `ADMIN_*` variables. If `ADMIN_SEED_ENABLED=true` and no active ADMIN user exists, the app creates one admin account.
-- In `dev`, `application-dev.yml` provides local-only fallback values for `ADMIN_*` if you do not define them.
-- The `seed` profile expects a fresh schema and uses `APP_SEED_DEFAULT_PASSWORD` for customer/staff/shipper demo accounts.
+- Readiness endpoint: `http://localhost:8080/actuator/health`
+- Swagger UI chi co khi `APP_SWAGGER_ENABLED=true`: `http://localhost:8080/swagger-ui/index.html`
+- Admin seed is controlled by `APP_ADMIN_SEED_ENABLED` + `ADMIN_*`. The safe default is `APP_ADMIN_SEED_ENABLED=false`.
+- If `APP_ADMIN_SEED_ENABLED=true` and no active `ADMIN` user exists, the app creates one admin account.
+- The `seed` profile expects a fresh schema and uses `APP_DEMO_USER_PASSWORD` for customer/staff/shipper demo accounts.
+- For demo deploy on profile `prod`, set `APP_DEMO_SEED_ENABLED=true` and `APP_ADMIN_SEED_ENABLED=true` explicitly. Real production should keep both false unless you intentionally bootstrap the first admin.
+- `spring.jpa.open-in-view=false` is now part of the runtime config and was re-smoked successfully on MySQL 8.
 - Storage-related uploads/presigned URLs require the `STORAGE_*` variables from `.env.example`.
+
+## 1.1 Backend prod smoke / deploy verification
+
+Demo deploy env on `prod`:
+
+```env
+SPRING_PROFILES_ACTIVE=prod
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=bookstore_demo_prod
+DB_USER=<db-user>
+DB_PASSWORD=<db-password>
+JWT_SECRET=<32-plus-char-secret>
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+APP_SWAGGER_ENABLED=true
+APP_ADMIN_SEED_ENABLED=true
+ADMIN_USERNAME=admin_demo
+ADMIN_PASSWORD=<set in env>
+ADMIN_EMAIL=admin_demo@example.com
+ADMIN_PHONE=0900000001
+ADMIN_FIRST_NAME=Admin
+ADMIN_LAST_NAME=Demo
+APP_DEMO_SEED_ENABLED=true
+APP_DEMO_USER_PASSWORD=<set in env>
+```
+
+Real production env:
+
+```env
+SPRING_PROFILES_ACTIVE=prod
+DB_HOST=<mysql-or-aiven-host>
+DB_PORT=3306
+DB_NAME=bookstore_db
+DB_USER=<db-user>
+DB_PASSWORD=<db-password>
+JWT_SECRET=<32-plus-char-secret>
+CORS_ALLOWED_ORIGINS=https://your-frontend.example.com
+APP_SWAGGER_ENABLED=false
+APP_ADMIN_SEED_ENABLED=false
+APP_DEMO_SEED_ENABLED=false
+```
+
+Prod runtime proof:
+
+- `GET /actuator/health` must return `UP`
+- `GET /v3/api-docs` and `GET /swagger-ui/index.html` should return `404` when `APP_SWAGGER_ENABLED=false`
+- `GET /v3/api-docs` and `GET /swagger-ui/index.html` may stay enabled on demo deploys by setting `APP_SWAGGER_ENABLED=true`
+- Final demo walkthrough: `D:\bookstore\docs\DEMO_SCRIPT.md`
+- Demo smoke helper: `D:\bookstore\scripts\smoke-demo.ps1`
+- Render/Aiven deploy note: `D:\bookstore\docs\DEPLOY_RENDER_AIVEN.md`
+
+Current verified snapshot on MySQL 8:
+
+- MySQL prod smoke: `PASS`
+- Docker prod smoke: `PASS`
+- Seed idempotent: `PASS`
+- API smoke: `PASS`
+- Coupon checkout + cancel rollback smoke: `PASS`
+- Demo coupon seed now uses relative validity windows, so `GET /api/coupons/active` should return at least 1 active `DOCHEMxx` coupon whenever `APP_DEMO_SEED_ENABLED=true`.
+- Coupon smoke command set: login demo user -> `GET /api/coupons/active` -> add cart item -> checkout with coupon -> verify order detail -> cancel on smoke DB if rollback needs verification.
+- Hibernate warning `HHH90003004` from paginated collection fetch was removed by paging IDs first and loading details in a second query.
 
 ## 2. Website
 
@@ -189,3 +253,21 @@ Notes:
 
 Backend production profile still uses `spring.jpa.hibernate.ddl-auto=validate`, but empty production schema bootstrap is now handled by Flyway.
 Read `D:\bookstore\bookstore-backend\docs\PRODUCTION_DATABASE_SETUP.md` before deploying with `SPRING_PROFILES_ACTIVE=prod`.
+
+## Prod smoke cleanup
+
+Do not run these against any real production database/container. These are only for the local smoke environment:
+
+```powershell
+docker stop bookstore-backend-prod-smoke bookstore-prod-smoke-mysql
+docker rm bookstore-backend-prod-smoke bookstore-prod-smoke-mysql
+docker network rm bookstore-prod-smoke-net
+```
+
+If you also want to remove the local smoke schema only:
+
+```sql
+DROP DATABASE bookstore_prod_polish;
+```
+
+Do not run schema/database deletion against Aiven or any shared MySQL instance.

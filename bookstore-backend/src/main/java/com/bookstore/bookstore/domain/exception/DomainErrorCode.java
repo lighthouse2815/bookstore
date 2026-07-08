@@ -482,7 +482,17 @@ public enum DomainErrorCode {
     INVALID_STOCK_MOVEMENT_NOTE("DOMAIN_STOCK_MOVEMENT_008", "%s không được để trống"),
     INVALID_STOCK_MOVEMENT_CREATED_AT("DOMAIN_STOCK_MOVEMENT_009", "%s không được nằm trong tương lai"),
     INVALID_STOCK_MOVEMENT_CREATED_BY("DOMAIN_STOCK_MOVEMENT_010", "%s không được null"),
-    STOCK_MOVEMENT_QUANTITY_MISMATCH("DOMAIN_STOCK_MOVEMENT_011", "số lượng bien đóng không khớp ton truoc va sau");
+    STOCK_MOVEMENT_QUANTITY_MISMATCH("DOMAIN_STOCK_MOVEMENT_011", "so luong bien dong khong khop ton truoc va sau"),
+
+    INVALID_WISHLIST_ITEM_ID("DOMAIN_WISHLIST_001", "%s khong duoc null"),
+    INVALID_WISHLIST_ITEM_USER_ID("DOMAIN_WISHLIST_002", "%s khong duoc null"),
+    INVALID_WISHLIST_ITEM_BOOK_ID("DOMAIN_WISHLIST_003", "%s khong duoc null"),
+    INVALID_WISHLIST_ITEM_CREATED_AT("DOMAIN_WISHLIST_004", "%s khong duoc nam trong tuong lai"),
+    INVALID_WISHLIST_ITEM_UPDATED_AT("DOMAIN_WISHLIST_005", "%s khong duoc nam trong tuong lai"),
+    INVALID_WISHLIST_ITEM_DELETED_AT("DOMAIN_WISHLIST_006", "%s khong duoc nam trong tuong lai"),
+    INVALID_WISHLIST_ITEM_AUDIT_ORDER("DOMAIN_WISHLIST_007", "%s khong duoc som hon %s"),
+    WISHLIST_ITEM_ALREADY_DELETED("DOMAIN_WISHLIST_008", "wishlist item da bi xoa"),
+    WISHLIST_ITEM_ALREADY_ACTIVE("DOMAIN_WISHLIST_009", "wishlist item dang hoat dong");
 
     private final String code;
     private final String messageTemplate;

@@ -22,46 +22,58 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UU
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
             order by p.createdAt asc
             """)
     Optional<PaymentJpaEntity> findPendingSepayByOrderCode(
-      @Param("orderCode") String orderCode,
-      @Param("provider") PaymentProvider provider,
-      @Param("status") PaymentStatus status
+            @Param("orderCode") String orderCode,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
             order by p.createdAt asc
             """)
-    Optional<PaymentJpaEntity> findPendingSepayByOrderCodeForUpdate(@Param("orderCode") String orderCode);
+    Optional<PaymentJpaEntity> findPendingSepayByOrderCodeForUpdate(
+            @Param("orderCode") String orderCode,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
 
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and lower(:content) like concat('%', lower(p.transferContent), '%')
             order by p.createdAt asc
             """)
-    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContent(@Param("content") String content);
+    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContent(
+            @Param("content") String content,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and lower(:content) like concat('%', lower(p.transferContent), '%')
             order by p.createdAt asc
             """)
-    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContentForUpdate(@Param("content") String content);
+    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContentForUpdate(
+            @Param("content") String content,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
 }

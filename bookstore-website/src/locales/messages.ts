@@ -3741,3 +3741,137 @@ Object.assign(messages.en.book.detail.digitalAssets as Record<string, unknown>, 
     'Choose the right format and complete payment to unlock reading access in your digital library right away.',
   editionCountSummary: '{count} editions on sale',
 })
+
+Object.assign(messages.vi.header as Record<string, unknown>, {
+  myWishlist: 'Yêu thích của tôi',
+})
+
+Object.assign(messages.en.header as Record<string, unknown>, {
+  myWishlist: 'My wishlist',
+})
+
+Object.assign(messages.vi.home as Record<string, unknown>, {
+  recentlyViewedTitle: 'Đã xem gần đây',
+  recentlyViewedDescription:
+    'Những tựa sách bạn vừa mở sẽ được lưu tại đây để quay lại nhanh hơn.',
+})
+
+Object.assign(messages.en.home as Record<string, unknown>, {
+  recentlyViewedTitle: 'Recently viewed',
+  recentlyViewedDescription:
+    'Books you opened recently are stored here for quick access.',
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  wishlist: {
+    badge: 'Yêu thích',
+    title: 'Sách yêu thích',
+    description: 'Lưu lại những tựa sách bạn muốn quay lại xem hoặc mua sau.',
+    count: '{count} sách trong wishlist',
+    emptyTitle: 'Wishlist của bạn đang trống',
+    emptyDescription:
+      'Bấm trái tim ở book card hoặc trang chi tiết để lưu sách vào đây.',
+    browseBooks: 'Khám phá sách',
+    loginRequired: 'Vui lòng đăng nhập để dùng wishlist',
+    fetchError: 'Không thể tải wishlist',
+    updateError: 'Không thể cập nhật wishlist',
+    added: 'Đã thêm "{title}" vào wishlist',
+    removed: 'Đã xóa "{title}" khỏi wishlist',
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  wishlist: {
+    badge: 'Wishlist',
+    title: 'My wishlist',
+    description: 'Save books you want to revisit or purchase later.',
+    count: '{count} books in your wishlist',
+    emptyTitle: 'Your wishlist is empty',
+    emptyDescription:
+      'Tap the heart button on a book card or detail page to save books here.',
+    browseBooks: 'Browse books',
+    loginRequired: 'Please sign in to use wishlist',
+    fetchError: 'Could not load wishlist',
+    updateError: 'Could not update wishlist',
+    added: 'Added "{title}" to wishlist',
+    removed: 'Removed "{title}" from wishlist',
+  },
+})
+
+Object.assign(messages.vi.book.card as Record<string, unknown>, {
+  wishlistAria: 'Lưu "{title}" vào wishlist',
+})
+
+Object.assign(messages.en.book.card as Record<string, unknown>, {
+  wishlistAria: 'Save "{title}" to wishlist',
+})
+
+Object.assign(messages.vi.book.detail as Record<string, unknown>, {
+  addToWishlist: 'Thêm vào wishlist',
+  removeFromWishlist: 'Bỏ khỏi wishlist',
+  recentlyViewedTitle: 'Bạn vừa xem',
+  recentlyViewedDescription:
+    'Quay lại nhanh những tựa sách bạn đã mở gần đây.',
+})
+
+Object.assign(messages.en.book.detail as Record<string, unknown>, {
+  addToWishlist: 'Add to wishlist',
+  removeFromWishlist: 'Remove from wishlist',
+  recentlyViewedTitle: 'Recently viewed',
+  recentlyViewedDescription:
+    'Quick access to books you opened a moment ago.',
+})
+
+Object.assign(messages.vi.cart as Record<string, unknown>, {
+  bestCouponTitle: 'Mã giảm giá tốt nhất cho bạn',
+  bestCouponDescription:
+    'Hệ thống gợi ý mã giảm giá tối ưu cho những sản phẩm đang được chọn.',
+  bestCouponRecommended: 'Gợi ý từ hệ thống',
+  bestCouponApply: 'Áp dụng',
+  bestCouponApplied: 'Đã áp dụng mã {code}',
+  bestCouponAppliedBadge: 'Đã áp dụng',
+  bestCouponAppliedButton: 'Đã áp dụng',
+  bestCouponUnavailable: 'Chưa có mã giảm giá phù hợp cho lựa chọn hiện tại.',
+  bestCouponDiscount: 'Giảm được {amount}',
+  bestCouponEstimate: 'Tổng dự kiến sau giảm: {amount}',
+  bestCouponLine: 'Giảm từ coupon',
+})
+
+Object.assign(messages.en.cart as Record<string, unknown>, {
+  bestCouponTitle: 'Best coupon for you',
+  bestCouponDescription:
+    'The system suggests the best discount code for the items you selected.',
+  bestCouponRecommended: 'Recommended by the system',
+  bestCouponApply: 'Apply',
+  bestCouponApplied: 'Applied code {code}',
+  bestCouponAppliedBadge: 'Applied',
+  bestCouponAppliedButton: 'Applied',
+  bestCouponUnavailable: 'No suitable coupon is available for this selection.',
+  bestCouponDiscount: 'You save {amount}',
+  bestCouponEstimate: 'Estimated total after discount: {amount}',
+  bestCouponLine: 'Coupon discount',
+})
+
+Object.assign(messages.vi.checkout as Record<string, unknown>, {
+  bestCouponTitle: 'Gợi ý mã giảm giá',
+  bestCouponDescription:
+    'Bạn có thể áp dụng mã gợi ý bên dưới mà không làm thay đổi flow coupon hiện có.',
+  bestCouponRecommended: 'Gợi ý từ hệ thống',
+  bestCouponApply: 'Áp dụng mã này',
+  bestCouponApplied: 'Đã áp dụng',
+  bestCouponUnavailable: 'Chưa có mã giảm giá phù hợp cho đơn hàng này.',
+  bestCouponDiscount: 'Giảm được {amount}',
+  bestCouponEstimate: 'Tổng dự kiến sau giảm: {amount}',
+})
+
+Object.assign(messages.en.checkout as Record<string, unknown>, {
+  bestCouponTitle: 'Suggested coupon',
+  bestCouponDescription:
+    'Apply the recommended code below without changing the existing coupon flow.',
+  bestCouponRecommended: 'Recommended by the system',
+  bestCouponApply: 'Apply this code',
+  bestCouponApplied: 'Applied',
+  bestCouponUnavailable: 'No suitable coupon is available for this order.',
+  bestCouponDiscount: 'You save {amount}',
+  bestCouponEstimate: 'Estimated total after discount: {amount}',
+})

@@ -20,8 +20,22 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     List<BookJpaEntity> findAllByDeletedAtIsNull();
 
-    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
-    Page<BookJpaEntity> findAllByDeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
+    long countByDeletedAtIsNull();
+
+    @Query(
+            value = """
+                    select b.id
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                    order by b.createdAt desc, b.id desc
+                    """,
+            countQuery = """
+                    select count(b)
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                    """
+    )
+    Page<UUID> findPageIdsByDeletedAtIsNull(Pageable pageable);
 
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     List<BookJpaEntity> findAll();
@@ -34,6 +48,15 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     List<BookJpaEntity> findAllByIdIn(Collection<UUID> bookIds);
+
+    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
+    @Query("""
+            select distinct b
+            from BookJpaEntity b
+            where b.deletedAt is null
+              and b.id in :bookIds
+            """)
+    List<BookJpaEntity> findAllByDeletedAtIsNullAndIdIn(@Param("bookIds") Collection<UUID> bookIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
@@ -57,42 +80,64 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
             """)
     List<BookJpaEntity> searchByKeywordActive(@Param("keyword") String keyword);
 
-    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.deletedAt is null
-              and (
-                  lower(b.title) like lower(concat('%', :keyword, '%'))
-                  or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
-              )
-            order by b.createdAt desc
-            """)
-    Page<BookJpaEntity> searchByKeywordActive(@Param("keyword") String keyword, Pageable pageable);
+    @Query(
+            value = """
+                    select b.id
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                      and (
+                          lower(b.title) like lower(concat('%', :keyword, '%'))
+                          or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
+                      )
+                    order by b.createdAt desc, b.id desc
+                    """,
+            countQuery = """
+                    select count(b)
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                      and (
+                          lower(b.title) like lower(concat('%', :keyword, '%'))
+                          or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
+                      )
+                    """
+    )
+    Page<UUID> searchPageIdsByKeywordActive(@Param("keyword") String keyword, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.deletedAt is null
-              and (:categoryId is null or b.category.id = :categoryId)
-              and (
-                  :keyword is null
-                  or lower(b.title) like lower(concat('%', :keyword, '%'))
-                  or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
-                  or lower(b.author.name) like lower(concat('%', :keyword, '%'))
-              )
-            order by b.createdAt desc
-            """)
-    Page<BookJpaEntity> searchActive(
+    @Query(
+            value = """
+                    select b.id
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                      and (:categoryId is null or b.category.id = :categoryId)
+                      and (
+                          :keyword is null
+                          or lower(b.title) like lower(concat('%', :keyword, '%'))
+                          or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
+                          or lower(b.author.name) like lower(concat('%', :keyword, '%'))
+                      )
+                    order by b.createdAt desc, b.id desc
+                    """,
+            countQuery = """
+                    select count(b)
+                    from BookJpaEntity b
+                    where b.deletedAt is null
+                      and (:categoryId is null or b.category.id = :categoryId)
+                      and (
+                          :keyword is null
+                          or lower(b.title) like lower(concat('%', :keyword, '%'))
+                          or lower(coalesce(b.description, '')) like lower(concat('%', :keyword, '%'))
+                          or lower(b.author.name) like lower(concat('%', :keyword, '%'))
+                      )
+                    """
+    )
+    Page<UUID> searchPageIdsActive(
             @Param("keyword") String keyword,
             @Param("categoryId") UUID categoryId,
             Pageable pageable
     );
 
-    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     @Query("""
-            select distinct b
+            select b.id
             from BookJpaEntity b
             where b.deletedAt is null
               and b.category.deletedAt is null
@@ -100,9 +145,9 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
               and b.publisher.deletedAt is null
               and b.category.id = :categoryId
               and b.id <> :excludedBookId
-            order by b.createdAt desc
+            order by b.createdAt desc, b.id desc
             """)
-    List<BookJpaEntity> findRelatedActiveByCategoryId(
+    List<UUID> findRelatedActiveIdsByCategoryId(
             @Param("categoryId") UUID categoryId,
             @Param("excludedBookId") UUID excludedBookId,
             Pageable pageable

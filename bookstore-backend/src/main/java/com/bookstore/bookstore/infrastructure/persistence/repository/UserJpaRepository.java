@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
+import java.util.Collection;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -17,17 +18,35 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     List<UserJpaEntity> findAllByDeletedAtIsNull();
 
+    @Query(
+            value = """
+                    select u.id
+                    from UserJpaEntity u
+                    join u.roles r
+                    where u.deletedAt is null
+                      and r.deletedAt is null
+                      and r.name = :roleName
+                    order by u.createdAt desc, u.id desc
+                    """,
+            countQuery = """
+                    select count(distinct u)
+                    from UserJpaEntity u
+                    join u.roles r
+                    where u.deletedAt is null
+                      and r.deletedAt is null
+                      and r.name = :roleName
+                    """
+    )
+    Page<UUID> findPageIdsByRoleNameActive(@Param("roleName") String roleName, Pageable pageable);
+
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     @Query("""
             select distinct u
             from UserJpaEntity u
-            join u.roles r
             where u.deletedAt is null
-              and r.deletedAt is null
-              and r.name = :roleName
-            order by u.createdAt desc
+              and u.id in :userIds
             """)
-    Page<UserJpaEntity> findPageByRoleNameActive(@Param("roleName") String roleName, Pageable pageable);
+    List<UserJpaEntity> findAllByIdInAndDeletedAtIsNull(@Param("userIds") Collection<UUID> userIds);
 
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     List<UserJpaEntity> findAll();
@@ -54,6 +73,8 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
     boolean existsByPhoneNumber(String phoneNumber);
 
     boolean existsByEmail(String email);
+
+    long countByDeletedAtIsNull();
 
     @Query("""
             select count(distinct u)

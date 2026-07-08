@@ -134,6 +134,46 @@ class PaymentServiceTest {
     }
 
     @Test
+    void handleSepayIpn_whenReferenceCodeAlreadySettled_ignoresDuplicate() {
+        paymentService = new PaymentService(
+                paymentRepository,
+                orderRepository,
+                digitalLibraryService,
+                new SepayProperties("merchant-123", null, "webhook-key")
+        );
+
+        Payment existingPayment = payment();
+        existingPayment.markPaid("merchant-123", "TXN-OLD", "REF-001", "SEPAY", Instant.EPOCH.plusSeconds(1));
+        HandleSepayIpnCommand command = new HandleSepayIpnCommand(
+                "Apikey webhook-key",
+                null,
+                "TXN-NEW",
+                "SEPAY",
+                null,
+                null,
+                null,
+                "DH123",
+                "DH123",
+                "in",
+                null,
+                new BigDecimal("10.00"),
+                "REF-001",
+                null
+        );
+
+        when(paymentRepository.findByTransactionId("TXN-NEW")).thenReturn(Optional.empty());
+        when(paymentRepository.findByReferenceCode("REF-001")).thenReturn(Optional.of(existingPayment));
+
+        paymentService.handleSepayIpn(command);
+
+        verify(paymentRepository, never()).findPendingSepayByOrderCodeForUpdate(any());
+        verify(paymentRepository, never()).findPendingSepayByTransferContentInContentForUpdate(any());
+        verify(paymentRepository, never()).save(any(Payment.class));
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(any(Order.class));
+    }
+
+    @Test
     void handleSepayIpn_whenWebhookSecretsMissing_rejectsFailClosed() {
         paymentService = new PaymentService(
                 paymentRepository,

@@ -197,7 +197,7 @@ public class PersistenceDataInitializer implements ApplicationRunner {
     }
 
     private boolean hasActiveAdminUser() {
-        return userJpaRepository.findPageByRoleNameActive(ADMIN_ROLE, PageRequest.of(0, 1)).hasContent();
+        return userJpaRepository.findPageIdsByRoleNameActive(ADMIN_ROLE, PageRequest.of(0, 1)).hasContent();
     }
 
     private void rejectConflictingAdminIdentity(String adminUsername, String adminEmail) {

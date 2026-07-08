@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
   BookOpen,
+  Heart,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -194,6 +195,14 @@ export function Header() {
                     >
                       <Package className="h-4 w-4" />
                       {t('orderDetail.orderHistory')}
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={closeProfileMenu}
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Heart className="h-4 w-4" />
+                      {t('header.myWishlist')}
                     </Link>
                     <Link
                       to="/library"

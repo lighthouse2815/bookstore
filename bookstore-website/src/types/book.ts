@@ -143,6 +143,12 @@ export type Book = {
   updatedAt: string
 }
 
+export type BookCardData = Pick<
+  Book,
+  'id' | 'title' | 'author' | 'category' | 'price' | 'cover'
+> &
+  Partial<Pick<Book, 'oldPrice' | 'rating' | 'reviews' | 'bestseller'>>
+
 export type BookImage = {
   id: string
   bookId: string

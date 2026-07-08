@@ -42,8 +42,34 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
     @EntityGraph(attributePaths = "items")
     List<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNull(UUID userId);
 
+    @Query(
+            value = """
+                    select o.id
+                    from OrderJpaEntity o
+                    where o.user.id = :userId
+                      and o.user.deletedAt is null
+                    order by o.createdAt desc, o.id desc
+                    """,
+            countQuery = """
+                    select count(o)
+                    from OrderJpaEntity o
+                    where o.user.id = :userId
+                      and o.user.deletedAt is null
+                    """
+    )
+    Page<UUID> findPageIdsByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
+
     @EntityGraph(attributePaths = "items")
-    Page<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNullOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    @Query("""
+            select distinct o
+            from OrderJpaEntity o
+            where o.id in :orderIds
+              and o.user.deletedAt is null
+            """)
+    List<OrderJpaEntity> findAllByIdInAndUser_DeletedAtIsNull(@Param("orderIds") Collection<UUID> orderIds);
 
 
     @Query("""
@@ -172,8 +198,20 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
     @EntityGraph(attributePaths = "items")
     List<OrderJpaEntity> findAllByUser_DeletedAtIsNull();
 
-    @EntityGraph(attributePaths = "items")
-    Page<OrderJpaEntity> findAllByUser_DeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
+    @Query(
+            value = """
+                    select o.id
+                    from OrderJpaEntity o
+                    where o.user.deletedAt is null
+                    order by o.createdAt desc, o.id desc
+                    """,
+            countQuery = """
+                    select count(o)
+                    from OrderJpaEntity o
+                    where o.user.deletedAt is null
+                    """
+    )
+    Page<UUID> findPageIdsByUser_DeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
 
 
 }

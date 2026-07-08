@@ -188,7 +188,24 @@ public class Coupon {
         return applyTo(orderAmount, orderAmount, appliedAt);
     }
 
+    public BigDecimal previewDiscount(BigDecimal orderAmount, BigDecimal discountableAmount, Instant appliedAt) {
+        PricingContext pricingContext = validatePricingContext(orderAmount, discountableAmount, appliedAt);
+        return calculateDiscountAmount(pricingContext.discountableAmount());
+    }
+
     public BigDecimal applyTo(BigDecimal orderAmount, BigDecimal discountableAmount, Instant appliedAt) {
+        PricingContext pricingContext = validatePricingContext(orderAmount, discountableAmount, appliedAt);
+        BigDecimal discountAmount = calculateDiscountAmount(pricingContext.discountableAmount());
+        setUsedCount(usedCount + 1);
+        setUpdatedAt(pricingContext.appliedAt());
+        return discountAmount;
+    }
+
+    private PricingContext validatePricingContext(
+            BigDecimal orderAmount,
+            BigDecimal discountableAmount,
+            Instant appliedAt
+    ) {
         BigDecimal validOrderAmount = Guard.notNull(
                 orderAmount,
                 DomainErrorCode.INVALID_COUPON_MIN_ORDER_AMOUNT,
@@ -217,9 +234,12 @@ public class Coupon {
                 validOrderAmount,
                 validAppliedAt
         );
+        return new PricingContext(validDiscountableAmount, validAppliedAt);
+    }
 
+    private BigDecimal calculateDiscountAmount(BigDecimal discountableAmount) {
         BigDecimal discountAmount = switch (discountType) {
-            case PERCENTAGE -> validDiscountableAmount
+            case PERCENTAGE -> discountableAmount
                     .multiply(discountValue)
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             case FIXED_AMOUNT -> discountValue;
@@ -229,12 +249,9 @@ public class Coupon {
             discountAmount = maxDiscountAmount;
         }
 
-        if (discountAmount.compareTo(validDiscountableAmount) > 0) {
-            discountAmount = validDiscountableAmount;
+        if (discountAmount.compareTo(discountableAmount) > 0) {
+            discountAmount = discountableAmount;
         }
-
-        setUsedCount(usedCount + 1);
-        setUpdatedAt(validAppliedAt);
         return discountAmount;
     }
 
@@ -386,5 +403,11 @@ public class Coupon {
                 DomainErrorCode.INVALID_COUPON_AUDIT_ORDER
         );
         this.deletedAt = validDeletedAt;
+    }
+
+    private record PricingContext(
+            BigDecimal discountableAmount,
+            Instant appliedAt
+    ) {
     }
 }

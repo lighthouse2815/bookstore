@@ -1,10 +1,16 @@
 import type { OrderStatus } from '@/types/order'
 
 export type DashboardSummary = {
+  totalRevenue: number
   todayRevenue: number
   monthRevenue: number
+  totalOrders: number
   todayOrders: number
   pendingOrders: number
+  deliveredOrders: number
+  cancelledOrders: number
+  totalUsers: number
+  totalBooks: number
   lowStockBooks: number
   newCustomers: number
   newReviews: number

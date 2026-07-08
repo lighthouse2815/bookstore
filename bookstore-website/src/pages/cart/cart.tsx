@@ -19,12 +19,14 @@ import {
   Trash2,
   Truck,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/common/button'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
-import type { CartItem } from '@/types/cart'
+import { getBestCartCoupon } from '@/services/cart-service'
+import type { BestCouponSuggestion, CartItem } from '@/types/cart'
 import { cn } from '@/utils'
 import { getBookCoverUrl } from '@/utils/book-cover'
 
@@ -38,6 +40,9 @@ export default function CartPage() {
     readStoredSelectedItemIds,
   )
   const [isRemovingSelected, setIsRemovingSelected] = useState(false)
+  const [bestCoupon, setBestCoupon] = useState<BestCouponSuggestion | null>(null)
+  const [isBestCouponLoading, setIsBestCouponLoading] = useState(false)
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null)
 
   useEffect(() => {
     if (items.length === 0) {
@@ -65,6 +70,10 @@ export default function CartPage() {
     () => items.filter((item) => selectedItemIdSet.has(item.id)),
     [items, selectedItemIdSet],
   )
+  const selectedItemIdsKey = useMemo(
+    () => selectedItems.map((item) => item.id).join(','),
+    [selectedItems],
+  )
   const selectedSubtotal = selectedItems.reduce(
     (sum, item) => sum + item.lineTotal,
     0,
@@ -78,9 +87,59 @@ export default function CartPage() {
   )
   const shipping =
     hasPhysicalSelectedItems && selectedSubtotal < 200000 ? 30000 : 0
-  const finalTotal = selectedSubtotal + shipping
+  const appliedBestCoupon =
+    bestCoupon?.available &&
+    bestCoupon.couponCode &&
+    appliedCouponCode === bestCoupon.couponCode
+      ? bestCoupon
+      : null
+  const couponDiscount = appliedBestCoupon?.discountAmount ?? 0
+  const finalTotal = appliedBestCoupon?.finalAmountEstimate ?? selectedSubtotal + shipping
   const allSelected = items.length > 0 && selectedItems.length === items.length
   const partiallySelected = selectedItems.length > 0 && !allSelected
+
+  useEffect(() => {
+    setAppliedCouponCode(null)
+  }, [selectedItemIdsKey, hasPhysicalSelectedItems])
+
+  useEffect(() => {
+    if (selectedItems.length === 0) {
+      setBestCoupon(null)
+      setIsBestCouponLoading(false)
+      return
+    }
+
+    let isCancelled = false
+
+    async function loadBestCoupon() {
+      setIsBestCouponLoading(true)
+
+      try {
+        const suggestion = await getBestCartCoupon({
+          itemIds: selectedItems.map((item) => item.id),
+          shippingMethod: hasPhysicalSelectedItems ? 'DELIVERY' : 'PICKUP',
+        })
+
+        if (!isCancelled) {
+          setBestCoupon(suggestion)
+        }
+      } catch {
+        if (!isCancelled) {
+          setBestCoupon(null)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsBestCouponLoading(false)
+        }
+      }
+    }
+
+    void loadBestCoupon()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedItems, hasPhysicalSelectedItems])
 
   function toggleItem(itemId: string) {
     setSelectedItemIds((currentIds) =>
@@ -117,7 +176,30 @@ export default function CartPage() {
 
     const searchParams = new URLSearchParams()
     searchParams.set('items', selectedItems.map((item) => item.id).join(','))
+
+    if (appliedBestCoupon?.couponCode && appliedBestCoupon.couponType) {
+      searchParams.set(
+        appliedBestCoupon.couponType === 'SHIPPING'
+          ? 'shippingCoupon'
+          : 'bookCoupon',
+        appliedBestCoupon.couponCode,
+      )
+    }
+
     navigate(`/checkout?${searchParams.toString()}`)
+  }
+
+  function handleApplyBestCoupon() {
+    if (!bestCoupon?.available || !bestCoupon.couponCode) {
+      return
+    }
+
+    setAppliedCouponCode(bestCoupon.couponCode)
+    toast.success(
+      t('cart.bestCouponApplied', {
+        code: bestCoupon.couponCode,
+      }),
+    )
   }
 
   return (
@@ -248,6 +330,70 @@ export default function CartPage() {
                 </div>
               </div>
 
+              {selectedItems.length > 0 ? (
+                <div className="mb-6 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {t('cart.bestCouponTitle')}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t('cart.bestCouponDescription')}
+                      </p>
+                    </div>
+                    {appliedBestCoupon ? (
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600">
+                        {t('cart.bestCouponAppliedBadge')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {isBestCouponLoading ? (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {t('common.loading')}
+                    </p>
+                  ) : bestCoupon?.available && bestCoupon.couponCode ? (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-sm font-semibold text-primary">
+                          {bestCoupon.couponCode}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {bestCoupon.label || t('cart.bestCouponRecommended')}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p>
+                          {t('cart.bestCouponDiscount', {
+                            amount: formatCurrency(bestCoupon.discountAmount),
+                          })}
+                        </p>
+                        <p>
+                          {t('cart.bestCouponEstimate', {
+                            amount: formatCurrency(bestCoupon.finalAmountEstimate),
+                          })}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant={appliedBestCoupon ? 'outline' : 'default'}
+                        disabled={Boolean(appliedBestCoupon)}
+                        className="h-10 rounded-xl"
+                        onClick={handleApplyBestCoupon}
+                      >
+                        {appliedBestCoupon
+                          ? t('cart.bestCouponAppliedButton')
+                          : t('cart.bestCouponApply')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {bestCoupon?.reason || t('cart.bestCouponUnavailable')}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
               <div className="space-y-4 border-y border-border py-5">
                 <div className="flex items-center justify-between gap-4 text-sm">
                   <span className="text-muted-foreground">
@@ -275,6 +421,21 @@ export default function CartPage() {
                     {shipping === 0 && selectedItems.length > 0
                       ? t('common.free')
                       : formatCurrency(shipping)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">
+                    {t('cart.bestCouponLine')}
+                  </span>
+                  <span
+                    className={cn(
+                      'font-semibold',
+                      couponDiscount > 0 ? 'text-green-600' : 'text-foreground',
+                    )}
+                  >
+                    {couponDiscount > 0
+                      ? `-${formatCurrency(couponDiscount)}`
+                      : formatCurrency(0)}
                   </span>
                 </div>
               </div>
@@ -515,4 +676,3 @@ function readStoredSelectedItemIds() {
     return []
   }
 }
-

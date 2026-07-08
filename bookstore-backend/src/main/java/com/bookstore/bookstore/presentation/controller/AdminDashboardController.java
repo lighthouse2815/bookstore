@@ -88,10 +88,16 @@ public class AdminDashboardController {
 
     private DashboardSummaryResponse toSummaryResponse(DashboardSummaryResult result) {
         return new DashboardSummaryResponse(
+                result.totalRevenue(),
                 result.todayRevenue(),
                 result.monthRevenue(),
+                result.totalOrders(),
                 result.todayOrders(),
                 result.pendingOrders(),
+                result.deliveredOrders(),
+                result.cancelledOrders(),
+                result.totalUsers(),
+                result.totalBooks(),
                 result.lowStockBooks(),
                 result.newCustomers(),
                 result.newReviews(),

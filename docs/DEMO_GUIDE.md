@@ -1,5 +1,7 @@
 # DEMO_GUIDE
 
+For the final walkthrough order, use `D:\bookstore\docs\DEMO_SCRIPT.md`.
+
 ## 1. Tong quan project
 
 Bookstore gom 5 thanh phan:
@@ -26,6 +28,38 @@ cd D:\bookstore\bookstore-backend
 Copy-Item .env.example .env
 docker-compose up -d
 .\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Readiness proof cho backend:
+
+- `http://localhost:8080/actuator/health`
+- Swagger chi co khi `APP_SWAGGER_ENABLED=true`: `http://localhost:8080/swagger-ui/index.html`
+
+### Backend demo deploy tren profile `prod`
+
+Khi can demo/cham bai tren runtime `prod`, set ro env demo thay vi dung mac dinh prod that:
+
+```powershell
+cd D:\bookstore\bookstore-backend
+$env:SPRING_PROFILES_ACTIVE='prod'
+$env:DB_HOST='localhost'
+$env:DB_PORT='3306'
+$env:DB_NAME='bookstore_demo_prod'
+$env:DB_USER='bookstore_user'
+$env:DB_PASSWORD='change_me'
+$env:JWT_SECRET='replace_with_a_32_char_minimum_secret'
+$env:CORS_ALLOWED_ORIGINS='http://localhost:5173'
+$env:APP_SWAGGER_ENABLED='true'
+$env:APP_ADMIN_SEED_ENABLED='true'
+$env:ADMIN_USERNAME='admin_demo'
+$env:ADMIN_PASSWORD='<set in env>'
+$env:ADMIN_EMAIL='admin_demo@example.com'
+$env:ADMIN_PHONE='0900000001'
+$env:ADMIN_FIRST_NAME='Admin'
+$env:ADMIN_LAST_NAME='Demo'
+$env:APP_DEMO_SEED_ENABLED='true'
+$env:APP_DEMO_USER_PASSWORD='<set in env>'
+.\mvnw.cmd --% spring-boot:run
 ```
 
 ### Website
@@ -69,7 +103,7 @@ dotnet run
 ### Admin
 
 - Tai khoan admin khong hard-code trong code.
-- Backend tao admin dau tien khi `ADMIN_SEED_ENABLED=true` va chua co active admin.
+- Backend tao admin dau tien khi `APP_ADMIN_SEED_ENABLED=true` va chua co active admin.
 - Username/password/email lay tu:
   - `ADMIN_USERNAME`
   - `ADMIN_PASSWORD`
@@ -87,15 +121,16 @@ cd D:\bookstore\bookstore-backend
 Dieu kien:
 
 - DB phai la schema moi
+- `APP_ADMIN_SEED_ENABLED=true`
 - `ADMIN_*` phai du
-- `APP_SEED_DEFAULT_PASSWORD` phai du
+- `APP_DEMO_USER_PASSWORD` phai du
 
 Tai khoan demo co the dung ngay sau khi seed:
 
 - Customer dau tien: `minhanh.nguyen`
 - Shipper dau tien: `thanhtruc.do`
 - Staff/POS dau tien: `anhtuan.truong`
-- Password chung cua customer/staff/shipper seed: gia tri `APP_SEED_DEFAULT_PASSWORD`
+- Password chung cua customer/staff/shipper seed: gia tri `APP_DEMO_USER_PASSWORD`
 
 Neu khong chay `seed` profile:
 
@@ -123,10 +158,16 @@ Neu khong chay `seed` profile:
 9. Checkout
 10. Xem danh sach va chi tiet don hang
 
+Luu y coupon demo:
+
+- Khi `APP_DEMO_SEED_ENABLED=true`, `DemoCouponInitializer` se refresh 1 coupon public `DOCHEMxx` bang validity tuong doi theo ngay chay seed (`starts_at = now - 1 day`, `expires_at = now + 90 days`).
+- Khong can insert tay `SMOKEBEST10` hay coupon local khac nua. Best-coupon smoke phai dua tren seed that.
+- Smoke coupon nen di theo flow: login demo user -> add item vao cart -> `GET /api/cart/best-coupon` -> apply coupon seed tra ve -> checkout -> neu can thi cancel order tren DB smoke/demo rieng de verify rollback.
+
 ### Flow B - Admin
 
 1. Dang nhap admin
-2. Xem dashboard
+2. Xem dashboard (`/admin`; `/admin/dashboard` redirect ve day)
 3. Quan ly books
 4. Quan ly category / author / publisher / supplier
 5. Quan ly orders
@@ -161,7 +202,8 @@ Neu khong chay `seed` profile:
 - Android emulator nen dung `http://10.0.2.2:8080`
 - MySQL chua chay
 - Thieu `ADMIN_*` env
-- Thieu `APP_SEED_DEFAULT_PASSWORD` khi chay profile `seed`
+- Thieu `APP_DEMO_USER_PASSWORD` khi chay profile `seed`
+- Thieu `APP_SWAGGER_ENABLED=true` khi can demo Swagger tren runtime `prod`
 - Thieu `STORAGE_*` env neu demo upload/presigned URL
 - Sai `VITE_API_BASE_URL` hoac `EXPO_PUBLIC_API_BASE_URL`
 - CORS chua cho phep origin local
@@ -170,6 +212,8 @@ Neu khong chay `seed` profile:
 ## 6. Tai lieu lien quan
 
 - `D:\bookstore\docs\RUN_PROJECT.md`
+- `D:\bookstore\docs\DEMO_SCRIPT.md`
 - `D:\bookstore\docs\RELEASE_CHECKLIST.md`
 - `D:\bookstore\docs\SMOKE_TEST_FLOW.md`
+- `D:\bookstore\docs\DEPLOY_RENDER_AIVEN.md`
 - `D:\bookstore\bookstore-backend\docs\PRODUCTION_DATABASE_SETUP.md`

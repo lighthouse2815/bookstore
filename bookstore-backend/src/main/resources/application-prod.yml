@@ -4,32 +4,37 @@ spring:
       on-profile: prod
 
   datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   flyway:
-    enabled: false
+    enabled: true
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       "[hibernate.format_sql]": false
 
 app:
+  swagger:
+    enabled: ${APP_SWAGGER_ENABLED:false}
   jwt:
-    secret: ${JWT_SECRET:01234567890123456789012345678901}
+    secret: ${JWT_SECRET}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   admin:
-    seed-enabled: ${ADMIN_SEED_ENABLED:true}
-    username: ${ADMIN_USERNAME:admin.prod}
-    password: ${ADMIN_PASSWORD:ProdAdmin@12345}
-    phone: ${ADMIN_PHONE:0900000001}
-    email: ${ADMIN_EMAIL:admin.prod@local.bookstore}
-    last-name: ${ADMIN_LAST_NAME:Prod}
-    first-name: ${ADMIN_FIRST_NAME:Admin}
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+    phone: ${ADMIN_PHONE:}
+    email: ${ADMIN_EMAIL:}
+    last-name: ${ADMIN_LAST_NAME:}
+    first-name: ${ADMIN_FIRST_NAME:}
   seed:
-    enabled: true
+    enabled: ${APP_DEMO_SEED_ENABLED:false}
     size: ${APP_SEED_SIZE:50}
     category-count: ${APP_SEED_CATEGORY_COUNT:12}
-    default-password: ${APP_SEED_DEFAULT_PASSWORD:SeedUser@12345}
+    default-password: ${APP_DEMO_USER_PASSWORD:${APP_SEED_DEFAULT_PASSWORD:}}
     exit-after-run: false

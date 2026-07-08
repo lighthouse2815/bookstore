@@ -45,25 +45,41 @@ public class PaymentRepositoryAdapter implements IPaymentRepository {
 
     @Override
     public Optional<Payment> findPendingSepayByOrderCode(String orderCode) {
-        return paymentJpaRepository.findPendingSepayByOrderCode(orderCode,PaymentProvider.SEPAY,PaymentStatus.PENDING)
+        return paymentJpaRepository.findPendingSepayByOrderCode(
+                        orderCode,
+                        PaymentProvider.SEPAY,
+                        PaymentStatus.PENDING
+                )
                 .map(paymentPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Payment> findPendingSepayByOrderCodeForUpdate(String orderCode) {
-        return paymentJpaRepository.findPendingSepayByOrderCodeForUpdate(orderCode)
+        return paymentJpaRepository.findPendingSepayByOrderCodeForUpdate(
+                        orderCode,
+                        PaymentProvider.SEPAY,
+                        PaymentStatus.PENDING
+                )
                 .map(paymentPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Payment> findPendingSepayByTransferContentInContent(String content) {
-        return paymentJpaRepository.findPendingSepayByTransferContentInContent(content)
+        return paymentJpaRepository.findPendingSepayByTransferContentInContent(
+                        content,
+                        PaymentProvider.SEPAY,
+                        PaymentStatus.PENDING
+                )
                 .map(paymentPersistenceMapper::toDomain);
     }
 
     @Override
     public Optional<Payment> findPendingSepayByTransferContentInContentForUpdate(String content) {
-        return paymentJpaRepository.findPendingSepayByTransferContentInContentForUpdate(content)
+        return paymentJpaRepository.findPendingSepayByTransferContentInContentForUpdate(
+                        content,
+                        PaymentProvider.SEPAY,
+                        PaymentStatus.PENDING
+                )
                 .map(paymentPersistenceMapper::toDomain);
     }
 

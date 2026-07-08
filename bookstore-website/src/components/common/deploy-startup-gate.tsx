@@ -14,14 +14,20 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { useLanguage } from '@/contexts/language-context'
-import { probeBackendReady, shouldUseDeployStartupGate } from '@/services/api'
+import {
+  probeBackendReady,
+  rememberBackendReadyProbe,
+  shouldUseDeployStartupGate,
+} from '@/services/api'
 
+const INITIAL_PROBE_GRACE_MS = 900
 const RETRY_INTERVAL_MS = 3500
 
 export function DeployStartupGate({ children }: { children: ReactNode }) {
   const { t } = useLanguage()
   const gateEnabled = shouldUseDeployStartupGate()
   const [isReady, setIsReady] = useState(() => !gateEnabled)
+  const [isGateVisible, setIsGateVisible] = useState(false)
   const [attemptCount, setAttemptCount] = useState(0)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [retryToken, setRetryToken] = useState(0)
@@ -49,17 +55,24 @@ export function DeployStartupGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!gateEnabled) {
       setIsReady(true)
+      setIsGateVisible(false)
       return
     }
 
     if (isReady) {
+      setIsGateVisible(false)
       return
     }
 
     let cancelled = false
+    let gateVisibilityTimer: number | undefined
     let retryTimer: number | undefined
     let elapsedTimer: number | undefined
     let controller: AbortController | null = null
+
+    gateVisibilityTimer = window.setTimeout(() => {
+      setIsGateVisible(true)
+    }, INITIAL_PROBE_GRACE_MS)
 
     const runProbe = async () => {
       controller?.abort()
@@ -72,11 +85,20 @@ export function DeployStartupGate({ children }: { children: ReactNode }) {
       }
 
       if (ready) {
+        rememberBackendReadyProbe()
+
+        if (gateVisibilityTimer !== undefined) {
+          window.clearTimeout(gateVisibilityTimer)
+        }
+
         startTransition(() => {
+          setIsGateVisible(false)
           setIsReady(true)
         })
         return
       }
+
+      setIsGateVisible(true)
 
       retryTimer = window.setTimeout(() => {
         void runProbe()
@@ -93,6 +115,10 @@ export function DeployStartupGate({ children }: { children: ReactNode }) {
       cancelled = true
       controller?.abort()
 
+      if (gateVisibilityTimer !== undefined) {
+        window.clearTimeout(gateVisibilityTimer)
+      }
+
       if (retryTimer !== undefined) {
         window.clearTimeout(retryTimer)
       }
@@ -105,6 +131,10 @@ export function DeployStartupGate({ children }: { children: ReactNode }) {
 
   if (isReady) {
     return <>{children}</>
+  }
+
+  if (!isGateVisible) {
+    return <div aria-hidden="true" className="min-h-screen bg-background" />
   }
 
   return (

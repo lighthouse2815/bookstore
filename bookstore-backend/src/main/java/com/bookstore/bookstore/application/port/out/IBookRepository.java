@@ -22,6 +22,8 @@ public interface IBookRepository {
 
     boolean existsByIdIncludingDeleted(UUID bookId);
 
+    List<Book> findAllByIdsActive(Collection<UUID> bookIds);
+
     List<Book> findAllByIdsIncludingDeleted(Collection<UUID> bookIds);
 
     List<Book> findAllByIdsIncludingDeletedForUpdate(Collection<UUID> bookIds);
@@ -33,6 +35,8 @@ public interface IBookRepository {
     PageSliceResult<Book> searchPageByKeywordActive(String keyword, int page, int size);
 
     PageSliceResult<Book> searchPageActive(String keyword, UUID categoryId, int page, int size);
+
+    long countActiveBooks();
 
     long countLowStockBooks(int threshold);
 

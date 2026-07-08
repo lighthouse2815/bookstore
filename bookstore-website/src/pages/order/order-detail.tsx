@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/common/button'
+import { Badge } from '@/components/common/badge'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -462,4 +463,3 @@ function SummaryRow({
     </div>
   )
 }
-

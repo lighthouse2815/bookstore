@@ -60,6 +60,8 @@ export default function CheckoutPage() {
     isAddressLoading,
     isCartLoading,
     isCouponLoading,
+    bestCouponSuggestion,
+    isBestCouponLoading,
     savedAddresses,
     activeCoupons,
     selectedBookCoupon,
@@ -72,6 +74,7 @@ export default function CheckoutPage() {
     handleSelectAddressChange,
     handleShippingMethodChange,
     handlePaymentMethodChange,
+    applySuggestedCoupon,
     handleSubmit,
   } = useCheckoutFlow()
 
@@ -126,6 +129,14 @@ export default function CheckoutPage() {
     chooseCouponTitle: t('checkout.chooseCouponTitle'),
     couponInputPlaceholder: t('checkout.couponInputPlaceholder'),
     applyCoupon: t('checkout.applyCoupon'),
+    bestCouponTitle: t('checkout.bestCouponTitle'),
+    bestCouponDescription: t('checkout.bestCouponDescription'),
+    bestCouponApply: t('checkout.bestCouponApply'),
+    bestCouponApplied: t('checkout.bestCouponApplied'),
+    bestCouponUnavailable: t('checkout.bestCouponUnavailable'),
+    bestCouponRecommended: t('checkout.bestCouponRecommended'),
+    bestCouponDiscount: t('checkout.bestCouponDiscount'),
+    bestCouponEstimate: t('checkout.bestCouponEstimate'),
     useCoupon: t('checkout.useCoupon'),
     shippingCoupons: t('checkout.shippingCoupons'),
     bookCoupons: t('checkout.bookCoupons'),
@@ -140,6 +151,13 @@ export default function CheckoutPage() {
 
   const hasSavedAddresses = savedAddresses.length > 0
   const hasCheckoutAddress = isDigitalOnly || Boolean(selectedAddress) || isUsingNewAddress
+  const isSuggestedCouponApplied =
+    bestCouponSuggestion?.available &&
+    bestCouponSuggestion.couponCode &&
+    ((bestCouponSuggestion.couponType === 'BOOK' &&
+      selectedBookCoupon?.code === bestCouponSuggestion.couponCode) ||
+      (bestCouponSuggestion.couponType === 'SHIPPING' &&
+        selectedShippingCoupon?.code === bestCouponSuggestion.couponCode))
 
   function openAddressDialog() {
     if (isDigitalOnly || !hasSavedAddresses) {
@@ -320,6 +338,68 @@ export default function CheckoutPage() {
                 icon={<Tag className="size-5" />}
               >
                 <div className="space-y-4">
+                  <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {labels.bestCouponTitle}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {labels.bestCouponDescription}
+                        </p>
+                      </div>
+                      {isSuggestedCouponApplied ? (
+                        <Badge variant="secondary">{labels.bestCouponApplied}</Badge>
+                      ) : null}
+                    </div>
+
+                    {isBestCouponLoading ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {t('common.loading')}
+                      </p>
+                    ) : bestCouponSuggestion?.available &&
+                      bestCouponSuggestion.couponCode ? (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-sm font-semibold text-primary">
+                            {bestCouponSuggestion.couponCode}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {bestCouponSuggestion.label || labels.bestCouponRecommended}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p>
+                            {labels.bestCouponDiscount.replace(
+                              '{amount}',
+                              formatCurrency(bestCouponSuggestion.discountAmount),
+                            )}
+                          </p>
+                          <p>
+                            {labels.bestCouponEstimate.replace(
+                              '{amount}',
+                              formatCurrency(bestCouponSuggestion.finalAmountEstimate),
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant={isSuggestedCouponApplied ? 'outline' : 'default'}
+                          disabled={Boolean(isSuggestedCouponApplied)}
+                          className="h-10 rounded-xl"
+                          onClick={applySuggestedCoupon}
+                        >
+                          {isSuggestedCouponApplied
+                            ? labels.bestCouponApplied
+                            : labels.bestCouponApply}
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {bestCouponSuggestion?.reason || labels.bestCouponUnavailable}
+                      </p>
+                    )}
+                  </div>
                   <CouponInputRow
                     title={labels.bookCoupons}
                     inputId="bookCouponCode"

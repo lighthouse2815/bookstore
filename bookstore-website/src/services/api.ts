@@ -6,6 +6,8 @@ import type { LoginResponse } from '@/types/auth'
 const ACCESS_TOKEN_KEY = 'accessToken'
 const REFRESH_TOKEN_KEY = 'refreshToken'
 const AUTH_USER_KEY = 'auth_user'
+const DEPLOY_STARTUP_READY_KEY = 'deploy_startup_backend_ready_at'
+const DEPLOY_STARTUP_READY_TTL_MS = 5 * 60 * 1000
 
 const apiBaseURL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
@@ -39,6 +41,32 @@ function clearSession() {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
   localStorage.removeItem(AUTH_USER_KEY)
+}
+
+function readRecentBackendReadyTimestamp() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const storedTimestamp = window.sessionStorage.getItem(DEPLOY_STARTUP_READY_KEY)
+
+  if (!storedTimestamp) {
+    return null
+  }
+
+  const parsedTimestamp = Number(storedTimestamp)
+
+  if (!Number.isFinite(parsedTimestamp)) {
+    window.sessionStorage.removeItem(DEPLOY_STARTUP_READY_KEY)
+    return null
+  }
+
+  if (Date.now() - parsedTimestamp > DEPLOY_STARTUP_READY_TTL_MS) {
+    window.sessionStorage.removeItem(DEPLOY_STARTUP_READY_KEY)
+    return null
+  }
+
+  return parsedTimestamp
 }
 
 api.interceptors.request.use((config) => {
@@ -143,7 +171,22 @@ export function shouldUseDeployStartupGate() {
   }
 
   // Enable the cold-start screen on real deployed hosts only.
-  return import.meta.env.PROD && !isLocalHostname(window.location.hostname)
+  return (
+    import.meta.env.PROD &&
+    !isLocalHostname(window.location.hostname) &&
+    !readRecentBackendReadyTimestamp()
+  )
+}
+
+export function rememberBackendReadyProbe() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(
+    DEPLOY_STARTUP_READY_KEY,
+    Date.now().toString(),
+  )
 }
 
 export async function probeBackendReady(signal?: AbortSignal) {

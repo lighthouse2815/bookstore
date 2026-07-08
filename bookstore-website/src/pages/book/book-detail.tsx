@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   BookOpenText,
   ChevronRight,
+  Heart,
   Headphones,
   ShieldCheck,
   Star,
@@ -11,21 +12,29 @@ import {
   Undo2,
   UserRound,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { AddToCart } from '@/components/book/add-to-cart'
 import { BookCard } from '@/components/book/book-card'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
+import { useWishlist } from '@/contexts/wishlist-context'
 import { useBookDetail } from '@/hooks/use-book-detail'
 import NotFoundPage from '@/pages/home/not-found'
 import type {
   AuthorResponse,
   Book,
+  BookCardData,
   BookPromotion,
   BookRatingSummary,
 } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
+import {
+  getRecentlyViewedBooks,
+  pushRecentlyViewedBook,
+} from '@/utils/recently-viewed'
 
 type TranslateFunction = (
   key: string,
@@ -45,6 +54,9 @@ type DetailItem = {
 
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { isWishlisted, toggleBook } = useWishlist()
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const {
     book,
@@ -60,10 +72,50 @@ export default function BookDetailPage() {
     notFound,
   } = useBookDetail(id)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [recentlyViewedBooks, setRecentlyViewedBooks] = useState<BookCardData[]>(
+    [],
+  )
 
   useEffect(() => {
     setSelectedImageIndex(0)
   }, [id])
+
+  useEffect(() => {
+    if (!book) {
+      setRecentlyViewedBooks([])
+      return
+    }
+
+    pushRecentlyViewedBook(book)
+    setRecentlyViewedBooks(
+      getRecentlyViewedBooks().filter((item) => item.id !== book.id).slice(0, 4),
+    )
+  }, [book])
+
+  async function handleToggleWishlist() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('wishlist.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    try {
+      const added = await toggleBook(toBookCardData(book))
+      toast.success(
+        added
+          ? t('wishlist.added', { title: book.title })
+          : t('wishlist.removed', { title: book.title }),
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('wishlist.updateError'),
+      )
+    }
+  }
 
   if (isLoading) {
     return (
@@ -119,6 +171,7 @@ export default function BookDetailPage() {
   const reviewCount = resolvedRatingSummary.reviewCount
   const reviewItems = reviews.slice(0, 3)
   const brandName = t('common.brand')
+  const isFavorite = isWishlisted(book.id)
 
   const detailItems = [
     createTextDetailItem(t('book.detail.specIsbn'), book.isbn, detailFallback),
@@ -376,7 +429,24 @@ export default function BookDetailPage() {
                   })}
                 </span>
               </div>
-            
+
+              <button
+                type="button"
+                onClick={() => {
+                  void handleToggleWishlist()
+                }}
+                className={`inline-flex h-12 items-center gap-2 rounded-2xl border px-5 text-sm font-semibold transition-colors ${
+                  isFavorite
+                    ? 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'
+                    : 'border-border bg-background text-foreground hover:bg-muted'
+                }`}
+                aria-pressed={isFavorite}
+              >
+                <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} />
+                {isFavorite
+                  ? t('book.detail.removeFromWishlist')
+                  : t('book.detail.addToWishlist')}
+              </button>
             </div>
 
             <AddToCart book={book} />
@@ -722,6 +792,22 @@ export default function BookDetailPage() {
             </div>
           </section>
         )}
+
+        {recentlyViewedBooks.length > 0 && (
+          <section className="mt-10">
+            <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight">
+              {t('book.detail.recentlyViewedTitle')}
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              {t('book.detail.recentlyViewedDescription')}
+            </p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {recentlyViewedBooks.map((recentBook) => (
+                <BookCard key={recentBook.id} book={recentBook} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </div>
@@ -850,5 +936,20 @@ function createNumberDetailItem(
   return {
     label,
     value: resolvedValue,
+  }
+}
+
+function toBookCardData(book: Book): BookCardData {
+  return {
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    category: book.category,
+    price: book.price,
+    cover: book.cover,
+    oldPrice: book.oldPrice,
+    rating: book.rating,
+    reviews: book.reviews,
+    bestseller: book.bestseller,
   }
 }

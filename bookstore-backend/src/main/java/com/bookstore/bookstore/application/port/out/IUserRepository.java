@@ -33,6 +33,8 @@ public interface IUserRepository {
 
     boolean existsByEmailIncludingDeleted(String email);
 
+    long countActiveUsers();
+
     long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive);
 
     void deleteById(UUID userId);

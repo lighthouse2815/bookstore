@@ -95,7 +95,7 @@ Co 2 cach demo tai khoan customer tren mobile:
 1. Dung seed dataset:
    - Chay backend voi profile `seed`.
    - Tai khoan customer dau tien: `minhanh.nguyen`
-   - Password dung gia tri `APP_SEED_DEFAULT_PASSWORD` trong `bookstore-backend/.env`
+   - Password dung gia tri `APP_DEMO_USER_PASSWORD` trong `bookstore-backend/.env`
 2. Tu tao tai khoan moi trong app:
    - Dang ky email moi trong app
    - Nhap OTP duoc backend gui qua email

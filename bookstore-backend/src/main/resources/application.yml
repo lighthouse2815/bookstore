@@ -10,11 +10,26 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     enabled: false
+  jpa:
+    open-in-view: false
 
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
 app:
+  swagger:
+    enabled: ${APP_SWAGGER_ENABLED:true}
   jwt:
     secret: ${JWT_SECRET:}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
@@ -34,7 +49,7 @@ app:
     from-email: ${RESEND_FROM_EMAIL:}
     from-name: ${RESEND_FROM_NAME:Bookstore}
   admin:
-    seed-enabled: ${ADMIN_SEED_ENABLED:false}
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
     username: ${ADMIN_USERNAME:}
     password: ${ADMIN_PASSWORD:}
     phone: ${ADMIN_PHONE:}
@@ -57,3 +72,9 @@ app:
     presign-download-expire-minutes: ${STORAGE_PRESIGN_DOWNLOAD_EXPIRE_MINUTES:5}
     max-image-size-mb: ${STORAGE_MAX_IMAGE_SIZE_MB:5}
     max-digital-file-size-mb: ${STORAGE_MAX_DIGITAL_FILE_SIZE_MB:200}
+
+springdoc:
+  api-docs:
+    enabled: ${app.swagger.enabled}
+  swagger-ui:
+    enabled: ${app.swagger.enabled}

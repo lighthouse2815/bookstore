@@ -7,6 +7,8 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,7 +36,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @RequiredArgsConstructor
 public class DevelopmentDataSeeder implements ApplicationRunner {
 
-    private static final Instant BASE_TIME = Instant.parse("2026-01-01T08:00:00Z");
+    private static final long RECENT_ACTIVITY_WINDOW_MINUTES = 760L;
+    private static final int DASHBOARD_LOW_STOCK_TARGET = 8;
 
     @Value("${app.seed.size:50}")
     private int seedSize;
@@ -50,6 +53,9 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     private final TransactionTemplate transactionTemplate;
     private final ConfigurableApplicationContext applicationContext;
     private final Environment environment;
+    private final Instant seedBaseTime = Instant.now()
+            .truncatedTo(ChronoUnit.MINUTES)
+            .minus(RECENT_ACTIVITY_WINDOW_MINUTES, ChronoUnit.MINUTES);
 
     @Override
     public void run(ApplicationArguments args) {
@@ -297,7 +303,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     """,
                     bookId, authorId, categoryId, time(i),
                     DevelopmentSeedCatalog.bookDescriptionAt(i - 1, book, category),
-                    book.coverUrl(), money(book.price()), publisherId, 24 + (i * 17) % 180,
+                    book.coverUrl(), money(book.price()), publisherId, seedStockQuantity(i),
                     book.title(), time(i + 1), book.isbn());
 
             insert("""
@@ -631,6 +637,11 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                 LEFT JOIN shipments shipment ON shipment.order_id = current_order.id AND shipment.status = 'DELIVERED'
                 WHERE item.id IS NULL OR payment.id IS NULL OR shipment.id IS NULL
                 """, "Delivered orders must have items, a paid payment, and a delivered shipment");
+        assertMinimumCount(
+                "SELECT COUNT(*) FROM books WHERE deleted_at IS NULL AND stock_quantity <= 10",
+                DASHBOARD_LOW_STOCK_TARGET,
+                "Seed must provide low-stock books for dashboard smoke"
+        );
     }
 
     private void validateSeedConfiguration() {
@@ -691,6 +702,13 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         }
     }
 
+    private void assertMinimumCount(String query, int minimum, String message) {
+        Integer count = jdbcTemplate.queryForObject(query, Integer.class);
+        if (count == null || count < minimum) {
+            throw new IllegalStateException(message + ": " + count + " < " + minimum);
+        }
+    }
+
     private String adminUsername() {
         return requiredProperty("app.admin.username");
     }
@@ -737,8 +755,20 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                 .getBytes(StandardCharsets.UTF_8)));
     }
 
-    private static Timestamp time(int minuteOffset) {
-        return Timestamp.from(BASE_TIME.plus(minuteOffset, ChronoUnit.MINUTES));
+    private Timestamp time(int minuteOffset) {
+        return timestamp(seedBaseTime.plus(minuteOffset, ChronoUnit.MINUTES));
+    }
+
+    private static Timestamp timestamp(Instant instant) {
+        return Timestamp.valueOf(LocalDateTime.ofInstant(instant, ZoneOffset.UTC));
+    }
+
+    private int seedStockQuantity(int index) {
+        if (index <= DASHBOARD_LOW_STOCK_TARGET) {
+            return index + 2;
+        }
+
+        return 24 + (index * 17) % 180;
     }
 
     private static BigDecimal money(long value) {

@@ -52,12 +52,19 @@ public class AdminDashboardService implements IAdminDashboardService {
         Instant todayStart = toStartOfDay(today);
         Instant tomorrowStart = toStartOfDay(today.plusDays(1));
         Instant monthStart = toStartOfDay(today.withDayOfMonth(1));
+        Instant epochStart = Instant.EPOCH;
 
         return new DashboardSummaryResult(
+                orderRepository.sumDeliveredRevenueBetween(epochStart, tomorrowStart),
                 orderRepository.sumDeliveredRevenueBetween(todayStart, tomorrowStart),
                 orderRepository.sumDeliveredRevenueBetween(monthStart, tomorrowStart),
+                orderRepository.countCreatedBetween(epochStart, tomorrowStart),
                 orderRepository.countCreatedBetween(todayStart, tomorrowStart),
                 orderRepository.countByStatus(OrderStatus.PENDING),
+                orderRepository.countByStatus(OrderStatus.DELIVERED),
+                orderRepository.countByStatus(OrderStatus.CANCELLED),
+                userRepository.countActiveUsers(),
+                bookRepository.countActiveBooks(),
                 bookRepository.countLowStockBooks(DEFAULT_THRESHOLD),
                 userRepository.countNewCustomersBetween(todayStart, tomorrowStart),
                 reviewRepository.countNewReviewsBetween(todayStart, tomorrowStart),

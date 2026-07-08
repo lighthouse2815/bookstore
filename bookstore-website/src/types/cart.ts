@@ -1,4 +1,6 @@
 import type { DigitalAssetFormat } from './digital-library'
+import type { CouponType } from './coupon'
+import type { ShippingMethod } from './order'
 
 export type CartItemType = 'PHYSICAL_BOOK' | 'DIGITAL_ASSET'
 
@@ -49,4 +51,19 @@ export type CartItem = {
   price: number
   qty: number
   lineTotal: number
+}
+
+export type GetBestCartCouponParams = {
+  itemIds?: string[]
+  shippingMethod?: ShippingMethod
+}
+
+export type BestCouponSuggestion = {
+  available: boolean
+  couponCode: string | null
+  couponType: CouponType | null
+  discountAmount: number
+  finalAmountEstimate: number
+  label: string | null
+  reason: string | null
 }

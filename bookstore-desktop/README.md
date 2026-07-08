@@ -56,9 +56,9 @@ Sau khi login, vao man hinh `Cai dat` de doi Backend Base URL. Nhap URL goc, kho
 
 ## Tai khoan demo
 
-- Admin demo: duoc tao boi backend khi `ADMIN_SEED_ENABLED=true`. Username/password lay tu `ADMIN_USERNAME` va `ADMIN_PASSWORD`.
+- Admin demo: duoc tao boi backend khi `APP_ADMIN_SEED_ENABLED=true`. Username/password lay tu `ADMIN_USERNAME` va `ADMIN_PASSWORD`.
 - Staff demo cho POS: neu chay backend voi profile `seed`, tai khoan staff dau tien la `anhtuan.truong`.
-- Tat ca tai khoan customer/staff/shipper cua profile `seed` dung chung password tu `APP_SEED_DEFAULT_PASSWORD`.
+- Tat ca tai khoan customer/staff/shipper cua profile `seed` dung chung password tu `APP_DEMO_USER_PASSWORD`.
 
 Khong commit password that vao repo. Dat gia tri demo trong `.env` local.
 

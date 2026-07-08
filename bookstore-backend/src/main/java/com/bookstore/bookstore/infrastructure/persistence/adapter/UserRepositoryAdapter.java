@@ -12,9 +12,13 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepo
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -36,11 +40,9 @@ public class UserRepositoryAdapter implements IUserRepository {
 
     @Override
     public PageSliceResult<User> findPageByRoleNameActive(String roleName, int page, int size) {
-        var resultPage = userJpaRepository.findPageByRoleNameActive(roleName, PageRequest.of(page, size));
+        var resultPage = userJpaRepository.findPageIdsByRoleNameActive(roleName, PageRequest.of(page, size));
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(userPersistenceMapper::toDomain)
-                        .toList(),
+                loadUsersInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
@@ -105,6 +107,11 @@ public class UserRepositoryAdapter implements IUserRepository {
     }
 
     @Override
+    public long countActiveUsers() {
+        return userJpaRepository.countByDeletedAtIsNull();
+    }
+
+    @Override
     public long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive) {
         return userJpaRepository.countNewCustomersBetween(fromInclusive, toExclusive);
     }
@@ -130,5 +137,26 @@ public class UserRepositoryAdapter implements IUserRepository {
             resolved.add(entity);
         }
         return resolved;
+    }
+
+    private List<User> loadUsersInOrder(List<UUID> userIds) {
+        List<UUID> orderedIds = userIds == null
+                ? List.of()
+                : userIds.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, UserJpaEntity> usersById = userJpaRepository.findAllByIdInAndDeletedAtIsNull(orderedIds).stream()
+                .collect(Collectors.toMap(UserJpaEntity::getId, Function.identity()));
+
+        return orderedIds.stream()
+                .map(usersById::get)
+                .filter(Objects::nonNull)
+                .map(userPersistenceMapper::toDomain)
+                .toList();
     }
 }

@@ -1,13 +1,16 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.ICartService;
+import com.bookstore.bookstore.application.port.in.ICouponService;
 import com.bookstore.bookstore.presentation.mapper.CartWebMapper;
 import com.bookstore.bookstore.presentation.request.AddCartItemRequest;
 import com.bookstore.bookstore.presentation.request.AddDigitalCartItemRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCartItemRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.BestCouponSuggestionResponse;
 import com.bookstore.bookstore.presentation.response.CartResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +22,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.bookstore.bookstore.domain.enums.ShippingMethod;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CartController {
 
     private final ICartService cartService;
+    private final ICouponService couponService;
     private final CartWebMapper cartWebMapper;
 
     @GetMapping
@@ -53,6 +59,25 @@ public class CartController {
         UUID userId = UUID.fromString(jwt.getSubject());
         var result = cartService.addItem(cartWebMapper.toAddDigitalCommand(userId, request));
         return ApiResponse.success(cartWebMapper.toResponse(result));
+    }
+
+    @GetMapping("/best-coupon")
+    public ApiResponse<BestCouponSuggestionResponse> getBestCoupon(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) List<UUID> itemIds,
+            @RequestParam(required = false) ShippingMethod shippingMethod
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        var result = couponService.getBestCouponForCart(userId, itemIds, shippingMethod);
+        return ApiResponse.success(new BestCouponSuggestionResponse(
+                result.available(),
+                result.couponCode(),
+                result.couponType(),
+                result.discountAmount(),
+                result.finalAmountEstimate(),
+                result.label(),
+                result.reason()
+        ));
     }
 
     @PutMapping("/items/{itemId}")

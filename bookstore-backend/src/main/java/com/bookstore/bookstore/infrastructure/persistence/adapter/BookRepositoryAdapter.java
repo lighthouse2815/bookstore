@@ -13,6 +13,8 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJp
 import com.bookstore.bookstore.infrastructure.persistence.repository.PublisherJpaRepository;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -41,11 +43,9 @@ public class BookRepositoryAdapter implements IBookRepository {
 
     @Override
     public PageSliceResult<Book> findPageActive(int page, int size) {
-        var resultPage = bookJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        var resultPage = bookJpaRepository.findPageIdsByDeletedAtIsNull(PageRequest.of(page, size));
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(bookPersistenceMapper::toDomain)
-                        .toList(),
+                loadActiveBooksInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
@@ -74,6 +74,11 @@ public class BookRepositoryAdapter implements IBookRepository {
     @Override
     public boolean existsByIdIncludingDeleted(UUID bookId) {
         return bookJpaRepository.existsById(bookId);
+    }
+
+    @Override
+    public List<Book> findAllByIdsActive(Collection<UUID> bookIds) {
+        return loadActiveBooksInOrder(bookIds);
     }
 
     @Override
@@ -109,9 +114,9 @@ public class BookRepositoryAdapter implements IBookRepository {
             return List.of();
         }
 
-        return bookJpaRepository.findRelatedActiveByCategoryId(categoryId, excludedBookId, PageRequest.of(0, limit)).stream()
-                .map(bookPersistenceMapper::toDomain)
-                .toList();
+        return loadActiveBooksInOrder(
+                bookJpaRepository.findRelatedActiveIdsByCategoryId(categoryId, excludedBookId, PageRequest.of(0, limit))
+        );
     }
 
     @Override
@@ -123,11 +128,9 @@ public class BookRepositoryAdapter implements IBookRepository {
 
     @Override
     public PageSliceResult<Book> searchPageByKeywordActive(String keyword, int page, int size) {
-        var resultPage = bookJpaRepository.searchByKeywordActive(keyword, PageRequest.of(page, size));
+        var resultPage = bookJpaRepository.searchPageIdsByKeywordActive(keyword, PageRequest.of(page, size));
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(bookPersistenceMapper::toDomain)
-                        .toList(),
+                loadActiveBooksInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
@@ -136,15 +139,18 @@ public class BookRepositoryAdapter implements IBookRepository {
 
     @Override
     public PageSliceResult<Book> searchPageActive(String keyword, UUID categoryId, int page, int size) {
-        var resultPage = bookJpaRepository.searchActive(keyword, categoryId, PageRequest.of(page, size));
+        var resultPage = bookJpaRepository.searchPageIdsActive(keyword, categoryId, PageRequest.of(page, size));
         return new PageSliceResult<>(
-                resultPage.stream()
-                        .map(bookPersistenceMapper::toDomain)
-                        .toList(),
+                loadActiveBooksInOrder(resultPage.getContent()),
                 resultPage.getTotalElements(),
                 page,
                 size
         );
+    }
+
+    @Override
+    public long countActiveBooks() {
+        return bookJpaRepository.countByDeletedAtIsNull();
     }
 
     @Override
@@ -186,5 +192,26 @@ public class BookRepositoryAdapter implements IBookRepository {
     @Override
     public void deleteById(UUID bookId) {
         bookJpaRepository.deleteById(bookId);
+    }
+
+    private List<Book> loadActiveBooksInOrder(Collection<UUID> bookIds) {
+        List<UUID> orderedIds = bookIds == null
+                ? List.of()
+                : bookIds.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, BookJpaEntity> booksById = bookJpaRepository.findAllByDeletedAtIsNullAndIdIn(orderedIds).stream()
+                .collect(Collectors.toMap(BookJpaEntity::getId, Function.identity()));
+
+        return orderedIds.stream()
+                .map(booksById::get)
+                .filter(Objects::nonNull)
+                .map(bookPersistenceMapper::toDomain)
+                .toList();
     }
 }

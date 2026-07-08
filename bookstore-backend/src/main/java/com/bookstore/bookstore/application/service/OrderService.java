@@ -215,8 +215,8 @@ public class OrderService implements IOrderService {
 
         Order savedOrder = orderRepository.save(order);
         Payment savedPayment = createCheckoutPayment(savedOrder, now);
-        saveAppliedCoupon(appliedBookCoupon, command.userId(), orderId, now);
-        saveAppliedCoupon(appliedShippingCoupon, command.userId(), orderId, now);
+        saveAppliedCoupon(appliedBookCoupon, command.userId(), orderId, couponDiscount, now);
+        saveAppliedCoupon(appliedShippingCoupon, command.userId(), orderId, shippingDiscount, now);
         stockMovements.forEach(stockMovementRepository::save);
         checkoutItems.stream()
                 .filter(CartItem::isPhysicalBook)
@@ -350,7 +350,7 @@ public class OrderService implements IOrderService {
                 now,
                 now
         ));
-        saveAppliedCoupon(appliedBookCoupon, command.staffUserId(), savedOrder.getId(), now);
+        saveAppliedCoupon(appliedBookCoupon, command.staffUserId(), savedOrder.getId(), couponDiscount, now);
         stockMovements.forEach(stockMovementRepository::save);
         booksById.values().forEach(bookRepository::save);
         notificationService.create(newOrderNotification(savedOrder));
@@ -615,7 +615,7 @@ public class OrderService implements IOrderService {
         return coupon;
     }
 
-    private void saveAppliedCoupon(Coupon coupon, UUID userId, UUID orderId, Instant usedAt) {
+    private void saveAppliedCoupon(Coupon coupon, UUID userId, UUID orderId, BigDecimal discountAmount, Instant usedAt) {
         if (coupon == null) {
             return;
         }
@@ -626,6 +626,7 @@ public class OrderService implements IOrderService {
                 coupon.getId(),
                 userId,
                 orderId,
+                discountAmount,
                 usedAt
         ));
     }

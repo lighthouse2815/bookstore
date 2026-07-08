@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -11,14 +12,19 @@ import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalog } from '@/hooks/use-book-catalog'
+import type { BookCardData } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
+import { getRecentlyViewedBooks } from '@/utils/recently-viewed'
 
 const CATEGORY_PREVIEW_LIMIT = 8
 
 export default function HomePage() {
   const { t, formatNumber } = useLanguage()
   const { books, categories, isLoading, error } = useBookCatalog()
+  const [recentlyViewedBooks, setRecentlyViewedBooks] = useState<BookCardData[]>(
+    [],
+  )
   const heroBooks = books.slice(0, 4)
   const featured = books.slice(0, 4)
   const featuredCategories = categories.slice(0, CATEGORY_PREVIEW_LIMIT)
@@ -48,6 +54,10 @@ export default function HomePage() {
       }),
     },
   ]
+
+  useEffect(() => {
+    setRecentlyViewedBooks(getRecentlyViewedBooks().slice(0, 4))
+  }, [])
 
   const valueProps = [
     {
@@ -280,6 +290,33 @@ export default function HomePage() {
             )}
           </div>
         </section>
+
+        {recentlyViewedBooks.length > 0 ? (
+          <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="font-heading text-2xl font-bold tracking-tight">
+                  {t('home.recentlyViewedTitle')}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t('home.recentlyViewedDescription')}
+                </p>
+              </div>
+              <Link
+                to="/books"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              >
+                {t('common.viewAll')}
+                <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {recentlyViewedBooks.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-4 rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-12">

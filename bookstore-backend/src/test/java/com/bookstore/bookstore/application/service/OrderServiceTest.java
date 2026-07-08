@@ -2,6 +2,7 @@ package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -10,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.assembler.OrderAssembler;
 import com.bookstore.bookstore.application.command.CreateOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
@@ -39,6 +42,8 @@ import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.Cart;
 import com.bookstore.bookstore.domain.model.DigitalAsset;
 import com.bookstore.bookstore.domain.model.FileAsset;
+import com.bookstore.bookstore.domain.model.Coupon;
+import com.bookstore.bookstore.domain.model.CouponUsage;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -52,6 +57,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -248,6 +255,56 @@ class OrderServiceTest {
     }
 
     @Test
+    void checkout_withBookCoupon_persistsCouponUsageDiscountAmount() {
+        UUID userId = UUID.randomUUID();
+        UUID couponId = UUID.randomUUID();
+        Book book = book(new BigDecimal("20.00"), 5);
+        UserAddress address = userAddress(userId);
+        Cart cart = cart(userId);
+        cart.addPhysicalItem(book.getId(), 1, book.getStockQuantity());
+        Coupon coupon = coupon(couponId, "BOOK10", 0);
+        CreateOrderCommand command = new CreateOrderCommand(
+                userId,
+                List.of(),
+                address.getId(),
+                ShippingMethod.DELIVERY,
+                PaymentMethod.COD,
+                "BOOK10",
+                null,
+                null
+        );
+
+        when(userAddressRepository.findByIdAndUserIdActive(address.getId(), userId)).thenReturn(Optional.of(address));
+        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(bookRepository.findAllByIdsIncludingDeletedForUpdate(List.of(book.getId()))).thenReturn(List.of(book));
+        when(couponRepository.findByCodeActiveForUpdate("BOOK10")).thenReturn(Optional.of(coupon));
+        when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentRepository.save(org.mockito.ArgumentMatchers.any(Payment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(couponRepository.save(org.mockito.ArgumentMatchers.any(Coupon.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(couponUsageRepository.save(org.mockito.ArgumentMatchers.any(CouponUsage.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(stockMovementRepository.save(org.mockito.ArgumentMatchers.any(StockMovement.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(bookRepository.save(org.mockito.ArgumentMatchers.any(Book.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartRepository.save(org.mockito.ArgumentMatchers.any(Cart.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CreateOrderResult result = orderService.checkout(command);
+
+        ArgumentCaptor<CouponUsage> couponUsageCaptor = ArgumentCaptor.forClass(CouponUsage.class);
+        verify(couponUsageRepository).save(couponUsageCaptor.capture());
+        assertEquals(couponId, couponUsageCaptor.getValue().getCouponId());
+        assertEquals(new BigDecimal("10.00"), couponUsageCaptor.getValue().getDiscountAmount());
+        assertEquals(PaymentMethod.COD, result.paymentMethod());
+        assertEquals(PaymentStatus.PENDING, result.paymentStatus());
+        assertEquals(new BigDecimal("30010.00"), result.totalAmount());
+    }
+
+    @Test
     void updateStatus_deliveredCod_marksPaymentPaidAndGrantsDigitalAccess() {
         UUID userId = UUID.randomUUID();
         Book book = book(new BigDecimal("20.00"), 5);
@@ -306,6 +363,38 @@ class OrderServiceTest {
         assertEquals(PaymentStatus.PAID, result.paymentStatus());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = OrderStatus.class, names = {"CONFIRMED", "SHIPPING", "DELIVERED"})
+    void updateStatus_bankTransferQrPendingPayment_rejectsProtectedStatuses(OrderStatus nextStatus) {
+        UUID userId = UUID.randomUUID();
+        Order order = order(
+                userId,
+                List.of(new OrderItem(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Book Title",
+                        new BigDecimal("10.00"),
+                        1,
+                        new BigDecimal("10.00")
+                )),
+                PaymentMethod.BANK_TRANSFER_QR,
+                PaymentStatus.PENDING,
+                OrderStatus.PENDING,
+                BigDecimal.ZERO
+        );
+
+        when(orderRepository.findByIdForUpdate(order.getId())).thenReturn(Optional.of(order));
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> orderService.updateStatus(new UpdateOrderStatusCommand(order.getId(), nextStatus))
+        );
+
+        assertEquals(ApplicationErrorCode.ORDER_PAYMENT_NOT_PAID, exception.getErrorCode());
+        verify(orderRepository, never()).save(org.mockito.ArgumentMatchers.any(Order.class));
+        verifyNoInteractions(paymentRepository, couponRepository, couponUsageRepository, stockMovementRepository);
+    }
+
     @Test
     void updateStatus_cancelled_restoresPhysicalStockAndRevokesAccess() {
         UUID userId = UUID.randomUUID();
@@ -353,6 +442,67 @@ class OrderServiceTest {
         assertEquals(10, book.getStockQuantity());
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
         assertNotNull(order.getCancelledAt());
+        assertEquals(OrderStatus.CANCELLED, result.status());
+    }
+
+    @Test
+    void updateStatus_cancelled_rollsBackCouponUsageOncePerAppliedCoupon() {
+        UUID userId = UUID.randomUUID();
+        UUID bookCouponId = UUID.randomUUID();
+        UUID shippingCouponId = UUID.randomUUID();
+        Order order = new Order(
+                UUID.randomUUID(),
+                "DH-TEST-COUPON",
+                userId,
+                List.of(new OrderItem(
+                        UUID.randomUUID(),
+                        PurchaseItemType.DIGITAL_ASSET,
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Ebook",
+                        new BigDecimal("20.00"),
+                        1,
+                        new BigDecimal("20.00")
+                )),
+                new BigDecimal("20.00"),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                new BigDecimal("20.00"),
+                bookCouponId,
+                "BOOK10",
+                shippingCouponId,
+                "SHIP10",
+                PaymentMethod.COD,
+                PaymentStatus.PENDING,
+                OrderStatus.PENDING,
+                "Receiver Name",
+                "0900000000",
+                "Receiver Address",
+                Instant.EPOCH,
+                Instant.EPOCH,
+                null
+        );
+        Coupon bookCoupon = coupon(bookCouponId, "BOOK10", 3);
+        Coupon shippingCoupon = coupon(shippingCouponId, "SHIP10", 2);
+
+        when(orderRepository.findByIdForUpdate(order.getId())).thenReturn(Optional.of(order));
+        when(couponRepository.findByIdIncludingDeletedForUpdate(bookCouponId)).thenReturn(Optional.of(bookCoupon));
+        when(couponRepository.findByIdIncludingDeletedForUpdate(shippingCouponId)).thenReturn(Optional.of(shippingCoupon));
+        when(couponRepository.save(org.mockito.ArgumentMatchers.any(Coupon.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderAssembler.toResult(org.mockito.ArgumentMatchers.any(Order.class)))
+                .thenAnswer(invocation -> toResult(invocation.getArgument(0)));
+
+        OrderResult result = orderService.updateStatus(new UpdateOrderStatusCommand(order.getId(), OrderStatus.CANCELLED));
+
+        assertEquals(2, bookCoupon.getUsedCount());
+        assertEquals(1, shippingCoupon.getUsedCount());
+        verify(couponRepository).save(bookCoupon);
+        verify(couponRepository).save(shippingCoupon);
+        verify(couponUsageRepository).deleteByOrderId(order.getId());
         assertEquals(OrderStatus.CANCELLED, result.status());
     }
 
@@ -517,6 +667,28 @@ class OrderServiceTest {
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 order.getCancelledAt()
+        );
+    }
+
+    private static Coupon coupon(UUID couponId, String code, int usedCount) {
+        Instant now = Instant.now();
+        return new Coupon(
+                couponId,
+                code,
+                "Test coupon",
+                com.bookstore.bookstore.domain.enums.CouponType.BOOK,
+                com.bookstore.bookstore.domain.enums.CouponDiscountType.FIXED_AMOUNT,
+                new BigDecimal("10.00"),
+                BigDecimal.ZERO,
+                null,
+                100,
+                usedCount,
+                now.minusSeconds(60),
+                now.plusSeconds(3_600),
+                true,
+                now.minusSeconds(120),
+                now.minusSeconds(120),
+                null
         );
     }
 }
