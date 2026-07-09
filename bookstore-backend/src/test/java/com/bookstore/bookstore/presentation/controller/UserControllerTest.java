@@ -21,6 +21,7 @@ import com.bookstore.bookstore.domain.model.User;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
 import com.bookstore.bookstore.presentation.mapper.UserWebMapper;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +55,9 @@ class UserControllerTest {
 
     @MockitoBean
     private CurrentUserJwtAuthenticationConverter currentUserJwtAuthenticationConverter;
+
+    @MockitoBean
+    private AdminAuditSupport adminAuditSupport;
 
     @Test
     void create_whenAdminAuthenticated_returnsCreatedUser() throws Exception {
@@ -118,6 +122,8 @@ class UserControllerTest {
                 "0987654321",
                 new LinkedHashSet<>(List.of(buildRole("STAFF"), buildRole("ADMIN")))
         );
+        given(userService.getByIdIncludingDeleted(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+                .willReturn(buildUser("STAFF"));
         given(userService.updateStaffByAdmin(any())).willReturn(updatedStaff);
 
         mockMvc.perform(put("/api/admin/users/staff/00000000-0000-0000-0000-000000000001")
@@ -144,6 +150,8 @@ class UserControllerTest {
     @Test
     void updateStaff_whenPhoneNumberIsNull_returnsUpdatedStaff() throws Exception {
         User updatedStaff = buildUserWithPhone(null, "STAFF", "ADMIN");
+        given(userService.getByIdIncludingDeleted(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+                .willReturn(buildUser("STAFF"));
         given(userService.updateStaffByAdmin(any())).willReturn(updatedStaff);
 
         mockMvc.perform(put("/api/admin/users/staff/00000000-0000-0000-0000-000000000001")
@@ -167,6 +175,8 @@ class UserControllerTest {
     void lockUser_whenAdminAuthenticated_returnsLockedUser() throws Exception {
         User lockedUser = buildUser("USER");
         lockedUser.updateLockStatus(true);
+        given(userService.getByIdIncludingDeleted(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+                .willReturn(buildUser("USER"));
         given(userService.updateLockByAdmin(any())).willReturn(lockedUser);
 
         mockMvc.perform(put("/api/admin/users/00000000-0000-0000-0000-000000000001/lock")
@@ -181,6 +191,8 @@ class UserControllerTest {
     @Test
     void unlockUser_whenAdminAuthenticated_returnsUnlockedUser() throws Exception {
         User unlockedUser = buildUser("USER");
+        given(userService.getByIdIncludingDeleted(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+                .willReturn(buildUser("USER"));
         given(userService.updateLockByAdmin(any())).willReturn(unlockedUser);
 
         mockMvc.perform(put("/api/admin/users/00000000-0000-0000-0000-000000000001/unlock")
@@ -238,6 +250,8 @@ class UserControllerTest {
 
     @Test
     void deleteByAdmin_whenAdminAuthenticated_returnsSuccess() throws Exception {
+        given(userService.getByIdIncludingDeleted(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+                .willReturn(buildUser("USER"));
         willDoNothing().given(userService).deleteByAdmin(any());
 
         mockMvc.perform(delete("/api/admin/users/00000000-0000-0000-0000-000000000001")

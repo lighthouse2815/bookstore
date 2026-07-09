@@ -27,6 +27,7 @@ const OrderConfirmationPage = lazy(
 )
 const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
 const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
+const ReturnRequestsPage = lazy(() => import('@/pages/order/return-requests'))
 const WishlistPage = lazy(() => import('@/pages/book/wishlist'))
 const NotificationsPage = lazy(() => import('@/pages/notifications/notifications'))
 const DigitalLibraryPage = lazy(() => import('@/pages/library/digital-library'))
@@ -42,9 +43,13 @@ const RegisterPage = lazy(() => import('@/pages/auth/register'))
 const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
+const AdminAuditLogsPage = lazy(() => import('@/pages/admin/audit-logs'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
 const AdminDigitalAssetsPage = lazy(() => import('@/pages/admin/digital-assets'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminReturnRequestsPage = lazy(
+  () => import('@/pages/admin/return-requests'),
+)
 const AdminShipmentsPage = lazy(() => import('@/pages/admin/shipments'))
 const AdminCategoriesPage = lazy(() => import('@/pages/admin/categories'))
 const AdminAuthorsPage = lazy(() => import('@/pages/admin/authors'))
@@ -234,6 +239,16 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/return-requests"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ReturnRequestsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/wishlist"
           element={
             <ProtectedRoute>
@@ -322,6 +337,16 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/admin/audit-logs"
+          element={
+            <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+              <LazyPage>
+                <AdminAuditLogsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/books"
           element={
             <ProtectedRoute requiredRole="ADMIN">
@@ -347,6 +372,16 @@ function AppRouteContent() {
             <ProtectedRoute requiredRole="ADMIN">
               <LazyPage>
                 <AdminOrdersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/return-requests"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminReturnRequestsPage />
               </LazyPage>
             </ProtectedRoute>
           }

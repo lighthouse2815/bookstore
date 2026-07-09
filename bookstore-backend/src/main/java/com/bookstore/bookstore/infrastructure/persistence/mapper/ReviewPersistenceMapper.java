@@ -22,6 +22,10 @@ public class ReviewPersistenceMapper {
                 entity.getOrderItem().getId(),
                 entity.getRating(),
                 entity.getComment(),
+                entity.getStatus(),
+                entity.getModerationReason(),
+                entity.getModeratedBy(),
+                entity.getModeratedAt(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
@@ -41,6 +45,10 @@ public class ReviewPersistenceMapper {
         entity.setOrderItem(orderItem);
         entity.setRating(review.getRating());
         entity.setComment(review.getComment());
+        entity.setStatus(review.getStatus());
+        entity.setModerationReason(review.getModerationReason());
+        entity.setModeratedBy(review.getModeratedBy());
+        entity.setModeratedAt(review.getModeratedAt());
         entity.setCreatedAt(review.getCreatedAt());
         entity.setUpdatedAt(review.getUpdatedAt());
         entity.setDeletedAt(review.getDeletedAt());

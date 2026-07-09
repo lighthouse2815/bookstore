@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.projection.LowStockBookProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.LowStockReportProjection;
 import jakarta.persistence.LockModeType;
 import java.util.Collection;
 import java.util.List;
@@ -165,4 +166,17 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
             order by b.stockQuantity asc, b.createdAt asc
             """)
     List<LowStockBookProjection> findLowStockBooks(@Param("threshold") int threshold);
+
+    @Query("""
+            select b.id as bookId,
+                   b.title as title,
+                   b.isbn as isbn,
+                   b.stockQuantity as stockQuantity,
+                   b.category.name as categoryName
+            from BookJpaEntity b
+            where b.deletedAt is null
+              and b.stockQuantity <= :threshold
+            order by b.stockQuantity asc, b.createdAt asc
+            """)
+    List<LowStockReportProjection> findLowStockReportRows(@Param("threshold") int threshold);
 }

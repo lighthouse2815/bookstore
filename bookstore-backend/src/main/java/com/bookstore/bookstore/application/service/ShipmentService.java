@@ -8,6 +8,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.INotificationService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.in.IShipmentService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
@@ -44,6 +45,7 @@ public class ShipmentService implements IShipmentService {
     private final INotificationService notificationService;
     private final ShipmentAssembler shipmentAssembler;
     private final IDigitalLibraryService digitalLibraryService;
+    private final IOrderTimelineService orderTimelineService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -57,6 +59,7 @@ public class ShipmentService implements IShipmentService {
         requireOrderReady(order);
         requireNoActiveAssignment(command.orderId());
         User shipper = loadShipper(command.shipperId());
+        OrderStatus oldOrderStatus = order.getStatus();
 
         Order orderForResponse = order;
         if (order.getStatus() == OrderStatus.CONFIRMED) {
@@ -80,6 +83,10 @@ public class ShipmentService implements IShipmentService {
         );
         Shipment savedShipment = shipmentRepository.save(shipment);
         notificationService.create(newShipmentAssignedNotification(orderForResponse, shipper));
+        if (oldOrderStatus != orderForResponse.getStatus()) {
+            orderTimelineService.recordStatusChanged(orderForResponse, oldOrderStatus, orderForResponse.getStatus());
+        }
+        orderTimelineService.recordShipmentAssigned(orderForResponse, savedShipment, shipper.getUsername());
         return shipmentAssembler.toResult(savedShipment, orderForResponse);
     }
 
@@ -157,6 +164,7 @@ public class ShipmentService implements IShipmentService {
 
         Shipment shipment = shipmentRepository.findByIdAndShipperId(command.shipmentId(), command.shipperId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHIPMENT_NOT_FOUND));
+        ShipmentStatus oldShipmentStatus = shipment.getStatus();
 
         switch (command.status()) {
             case ASSIGNED -> throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "status");
@@ -165,6 +173,7 @@ public class ShipmentService implements IShipmentService {
                 shipment.markPickedUp();
                 Shipment savedShipment = shipmentRepository.save(shipment);
                 notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
                 return shipmentAssembler.toResult(savedShipment, order);
             }
             case DELIVERING -> {
@@ -172,6 +181,7 @@ public class ShipmentService implements IShipmentService {
                 shipment.startDelivering();
                 Shipment savedShipment = shipmentRepository.save(shipment);
                 notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
                 return shipmentAssembler.toResult(savedShipment, order);
             }
             case DELIVERED -> {
@@ -182,6 +192,7 @@ public class ShipmentService implements IShipmentService {
                 shipment.markFailed(StringUtils.trimToNull(command.failureReason()));
                 Shipment savedShipment = shipmentRepository.save(shipment);
                 notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
                 return shipmentAssembler.toResult(savedShipment, order);
             }
         }
@@ -272,6 +283,9 @@ public class ShipmentService implements IShipmentService {
     }
 
     private ShipmentResult completeDeliveredShipment(Shipment shipment, Order order, boolean settleCodPaymentOnDelivery) {
+        ShipmentStatus oldShipmentStatus = shipment.getStatus();
+        OrderStatus oldOrderStatus = order.getStatus();
+        PaymentStatus oldPaymentStatus = order.getPaymentStatus();
         requirePaymentReadyForDelivery(order);
         boolean shipmentStatusChanged = shipment.getStatus() != ShipmentStatus.DELIVERED;
         if (shipmentStatusChanged) {
@@ -290,6 +304,17 @@ public class ShipmentService implements IShipmentService {
         }
         if (savedOrder.getPaymentMethod() == PaymentMethod.COD && (shipmentStatusChanged || codPaymentSettled)) {
             digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
+        }
+        if (shipmentStatusChanged) {
+            orderTimelineService.recordShipmentStatusChanged(savedOrder, savedShipment, oldShipmentStatus, savedShipment.getStatus());
+        }
+        if (oldOrderStatus != savedOrder.getStatus()) {
+            orderTimelineService.recordStatusChanged(savedOrder, oldOrderStatus, savedOrder.getStatus());
+        }
+        if (oldPaymentStatus != savedOrder.getPaymentStatus()
+                && savedOrder.getPaymentStatus() == PaymentStatus.PAID) {
+            paymentRepository.findByOrderId(savedOrder.getId())
+                    .ifPresent(payment -> orderTimelineService.recordPaymentPaid(savedOrder, payment));
         }
 
         return shipmentAssembler.toResult(savedShipment, savedOrder);

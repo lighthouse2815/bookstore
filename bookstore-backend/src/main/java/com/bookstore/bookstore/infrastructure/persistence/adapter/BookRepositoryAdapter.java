@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.result.LowStockBookResult;
+import com.bookstore.bookstore.application.result.LowStockReportRowResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
@@ -165,6 +166,19 @@ public class BookRepositoryAdapter implements IBookRepository {
                         row.getBookId(),
                         row.getTitle(),
                         row.getStockQuantity() == null ? 0 : row.getStockQuantity()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<LowStockReportRowResult> findLowStockReportRows(int threshold) {
+        return bookJpaRepository.findLowStockReportRows(threshold).stream()
+                .map(row -> new LowStockReportRowResult(
+                        row.getBookId(),
+                        row.getTitle(),
+                        row.getIsbn(),
+                        row.getStockQuantity() == null ? 0 : row.getStockQuantity(),
+                        row.getCategoryName()
                 ))
                 .toList();
     }

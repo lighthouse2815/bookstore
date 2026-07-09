@@ -15,6 +15,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.INotificationService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
@@ -103,6 +104,9 @@ class OrderServiceTest {
     @Mock
     private IDigitalLibraryService digitalLibraryService;
 
+    @Mock
+    private IOrderTimelineService orderTimelineService;
+
     private OrderService orderService;
 
     @BeforeEach
@@ -120,6 +124,7 @@ class OrderServiceTest {
                 notificationService,
                 orderAssembler,
                 digitalLibraryService,
+                orderTimelineService,
                 new SepayProperties("merchant-123", null, null)
         );
     }
@@ -190,6 +195,8 @@ class OrderServiceTest {
         assertEquals(0, cartCaptor.getValue().getItems().size());
         verify(notificationService).create(org.mockito.ArgumentMatchers.any());
         verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(org.mockito.ArgumentMatchers.any());
+        verify(orderTimelineService).recordOrderCreated(orderCaptor.getValue());
+        verify(orderTimelineService).recordPaymentPending(orderCaptor.getValue(), paymentCaptor.getValue());
 
         assertEquals(orderCaptor.getValue().getId(), result.orderId());
         assertEquals(PaymentMethod.BANK_TRANSFER_QR, result.paymentMethod());
@@ -250,6 +257,11 @@ class OrderServiceTest {
         verifyNoInteractions(stockMovementRepository);
         verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any(Book.class));
         verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(orderTimelineService).recordOrderCreated(savedOrder);
+        verify(orderTimelineService).recordPaymentPending(
+                org.mockito.ArgumentMatchers.eq(savedOrder),
+                org.mockito.ArgumentMatchers.any(Payment.class)
+        );
         assertEquals(new BigDecimal("5.00"), result.totalAmount());
         assertEquals(PaymentStatus.PENDING, result.paymentStatus());
     }
@@ -297,6 +309,7 @@ class OrderServiceTest {
 
         ArgumentCaptor<CouponUsage> couponUsageCaptor = ArgumentCaptor.forClass(CouponUsage.class);
         verify(couponUsageRepository).save(couponUsageCaptor.capture());
+        verify(orderTimelineService).recordCouponsApplied(org.mockito.ArgumentMatchers.any(Order.class));
         assertEquals(couponId, couponUsageCaptor.getValue().getCouponId());
         assertEquals(new BigDecimal("10.00"), couponUsageCaptor.getValue().getDiscountAmount());
         assertEquals(PaymentMethod.COD, result.paymentMethod());
@@ -356,6 +369,8 @@ class OrderServiceTest {
         verify(paymentRepository).save(payment);
         verify(digitalLibraryService).grantPurchasedAccessForOrder(order);
         verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(orderTimelineService).recordStatusChanged(order, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
+        verify(orderTimelineService).recordPaymentPaid(order, payment);
         assertEquals(PaymentStatus.PAID, payment.getStatus());
         assertEquals(PaymentStatus.PAID, order.getPaymentStatus());
         assertEquals(OrderStatus.DELIVERED, order.getStatus());
@@ -439,6 +454,8 @@ class OrderServiceTest {
         verify(bookRepository).save(book);
         verify(digitalLibraryService).revokePurchasedAccessForOrder(order.getId());
         verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(orderTimelineService).recordOrderCancelled(order, null);
+        verify(orderTimelineService).recordStockRolledBack(order);
         assertEquals(10, book.getStockQuantity());
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
         assertNotNull(order.getCancelledAt());
@@ -503,6 +520,9 @@ class OrderServiceTest {
         verify(couponRepository).save(bookCoupon);
         verify(couponRepository).save(shippingCoupon);
         verify(couponUsageRepository).deleteByOrderId(order.getId());
+        verify(orderTimelineService).recordOrderCancelled(order, null);
+        verify(orderTimelineService).recordCouponRolledBack(order, "BOOK10");
+        verify(orderTimelineService).recordCouponRolledBack(order, "SHIP10");
         assertEquals(OrderStatus.CANCELLED, result.status());
     }
 

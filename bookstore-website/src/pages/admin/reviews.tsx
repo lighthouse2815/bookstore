@@ -3,9 +3,11 @@ import {
   AlertTriangle,
   BookOpen,
   CalendarDays,
+  CheckCircle2,
   Eye,
   MessageSquareText,
   Search,
+  ShieldAlert,
   Star,
   Trash2,
   UserRound,
@@ -17,7 +19,7 @@ import { Input } from '@/components/common/input'
 import { PaginationControls } from '@/components/common/pagination-controls'
 import { useAdminReviewsPage } from '@/hooks/use-admin-reviews-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
-import type { AdminReviewResponse } from '@/types/admin-access'
+import type { AdminReviewResponse, AdminReviewStatus } from '@/types/admin-access'
 import type { Book } from '@/types/book'
 
 type UserLookup = {
@@ -36,21 +38,38 @@ export default function AdminReviewsPage() {
     pageSize,
     totalCount,
     searchTerm,
+    selectedStatus,
+    selectedRating,
+    selectedBookId,
+    selectedUserId,
+    hideReason,
     isLoading,
     error,
     dialogMode,
     selectedReview,
-    isDeleting,
+    isMutating,
+    activeReviewId,
     userLookup,
     bookLookup,
     filteredReviews,
+    bookOptions,
+    userOptions,
     averageRating,
     commentCount,
     handleSearchTermChange,
+    handleStatusChange,
+    handleRatingChange,
+    handleBookChange,
+    handleUserChange,
+    handleHideReasonChange,
     handlePageChange,
+    clearFilters,
     openViewDialog,
+    openHideDialog,
     openDeleteDialog,
     closeDialog,
+    handleApprove,
+    handleHide,
     handleDelete,
   } = useAdminReviewsPage()
 
@@ -61,7 +80,7 @@ export default function AdminReviewsPage() {
         aria-label={t('common.close')}
         className="absolute inset-0 bg-background/72 backdrop-blur-sm"
         onClick={closeDialog}
-        disabled={isDeleting}
+        disabled={isMutating}
       />
 
       <div className="relative z-10 w-full max-w-3xl">
@@ -77,9 +96,22 @@ export default function AdminReviewsPage() {
           </DialogShell>
         ) : null}
 
+        {dialogMode === 'hide' && selectedReview ? (
+          <HideDialog
+            hideReason={hideReason}
+            isMutating={isMutating}
+            labels={labels}
+            onClose={closeDialog}
+            onConfirm={() => {
+              void handleHide()
+            }}
+            onReasonChange={handleHideReasonChange}
+          />
+        ) : null}
+
         {dialogMode === 'delete' && selectedReview ? (
           <DeleteDialog
-            isDeleting={isDeleting}
+            isMutating={isMutating}
             labels={labels}
             onClose={closeDialog}
             onConfirm={() => {
@@ -109,9 +141,7 @@ export default function AdminReviewsPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <MessageSquareText className="mr-2 h-4 w-4" />
-                    {t('admin.reviewsPage.total', {
-                      count: formatNumber(totalCount),
-                    })}
+                    {labels.total.replace('{count}', formatNumber(totalCount))}
                   </Badge>
                 </div>
                 <p className="mt-3 max-w-2xl text-base text-muted-foreground">
@@ -131,8 +161,8 @@ export default function AdminReviewsPage() {
               </div>
             </div>
 
-            <div className="mt-8 max-w-xl">
-              <div className="relative">
+            <div className="mt-8 grid gap-3 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto]">
+              <div className="relative lg:col-span-2 xl:col-span-1">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
@@ -140,6 +170,64 @@ export default function AdminReviewsPage() {
                   placeholder={labels.search}
                   className="h-14 rounded-2xl border-border/70 bg-background/55 pl-12 text-base"
                 />
+              </div>
+              <FilterSelect
+                label={labels.filterStatus}
+                value={selectedStatus}
+                onChange={handleStatusChange}
+                options={[
+                  { value: '', label: labels.allStatuses },
+                  { value: 'APPROVED', label: labels.statuses.APPROVED },
+                  { value: 'HIDDEN', label: labels.statuses.HIDDEN },
+                  { value: 'PENDING', label: labels.statuses.PENDING },
+                ]}
+              />
+              <FilterSelect
+                label={labels.filterRating}
+                value={selectedRating === '' ? '' : String(selectedRating)}
+                onChange={handleRatingChange}
+                options={[
+                  { value: '', label: labels.allRatings },
+                  { value: '5', label: '5/5' },
+                  { value: '4', label: '4/5' },
+                  { value: '3', label: '3/5' },
+                  { value: '2', label: '2/5' },
+                  { value: '1', label: '1/5' },
+                ]}
+              />
+              <FilterSelect
+                label={labels.filterBook}
+                value={selectedBookId}
+                onChange={handleBookChange}
+                options={[
+                  { value: '', label: labels.allBooks },
+                  ...bookOptions.map((book) => ({
+                    value: book.id,
+                    label: book.title,
+                  })),
+                ]}
+              />
+              <FilterSelect
+                label={labels.filterUser}
+                value={selectedUserId}
+                onChange={handleUserChange}
+                options={[
+                  { value: '', label: labels.allUsers },
+                  ...userOptions.map((reviewer) => ({
+                    value: reviewer.userId,
+                    label: `${reviewer.name} (${reviewer.email})`,
+                  })),
+                ]}
+              />
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="h-14 w-full rounded-2xl xl:w-auto"
+                >
+                  {labels.clearFilters}
+                </Button>
               </div>
             </div>
 
@@ -151,13 +239,16 @@ export default function AdminReviewsPage() {
 
             <section className="mt-8 overflow-hidden rounded-[28px] border border-primary/30 bg-background/20 shadow-[0_24px_80px_rgba(15,23,42,0.24)] backdrop-blur">
               <div className="space-y-4 p-4">
-                <div className="hidden rounded-[24px] border border-border/60 bg-background/55 text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.3fr_10rem_12rem]">
+                <div className="hidden rounded-[24px] border border-border/60 bg-background/55 text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_9rem_10rem_14rem]">
                   <div className="px-8 py-6">{labels.book}</div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
                     {labels.reviewer}
                   </div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
                     {labels.rating}
+                  </div>
+                  <div className="border-l border-border/40 px-6 py-6 text-center">
+                    {labels.status}
                   </div>
                   <div className="border-l border-border/40 px-6 py-6 text-center">
                     {t('common.actions')}
@@ -176,11 +267,13 @@ export default function AdminReviewsPage() {
                   filteredReviews.map((review) => {
                     const reviewer = userLookup[review.userId]
                     const book = bookLookup[review.bookId]
+                    const rowIsMutating =
+                      isMutating && activeReviewId === review.reviewId
 
                     return (
                       <article
                         key={review.reviewId}
-                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.3fr_10rem_12rem] xl:gap-0 xl:p-0"
+                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2fr)_1.2fr_9rem_10rem_14rem] xl:gap-0 xl:p-0"
                       >
                         <div className="min-w-0 xl:px-8 xl:py-6">
                           <p className="truncate text-lg font-semibold text-foreground">
@@ -198,7 +291,9 @@ export default function AdminReviewsPage() {
                         <div className="flex items-center justify-start border-border/40 text-sm font-medium text-foreground xl:justify-center xl:border-l">
                           <div className="min-w-0 text-left xl:text-center">
                             <p className="truncate">
-                              {reviewer?.name ?? labels.unknownUser}
+                              {review.reviewerName ??
+                                reviewer?.name ??
+                                labels.unknownUser}
                             </p>
                             <p className="mt-1 truncate text-xs text-muted-foreground">
                               {reviewer?.email ?? review.userId}
@@ -210,24 +305,58 @@ export default function AdminReviewsPage() {
                           <RatingBadge rating={review.rating} />
                         </div>
 
+                        <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
+                          <StatusBadge
+                            labels={labels.statuses}
+                            status={review.status}
+                          />
+                        </div>
+
                         <div className="flex flex-wrap items-center gap-3 border-border/40 xl:justify-center xl:border-l">
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => openViewDialog(review)}
                             className="rounded-2xl"
+                            disabled={rowIsMutating}
                           >
                             <Eye className="mr-2 h-4 w-4" />
-                            {t('common.view')}
+                            {labels.view}
                           </Button>
+                          {review.status !== 'APPROVED' ? (
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                void handleApprove(review)
+                              }}
+                              className="rounded-2xl"
+                              disabled={rowIsMutating}
+                            >
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              {labels.approve}
+                            </Button>
+                          ) : null}
+                          {review.status !== 'HIDDEN' ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => openHideDialog(review)}
+                              className="rounded-2xl"
+                              disabled={rowIsMutating}
+                            >
+                              <ShieldAlert className="mr-2 h-4 w-4" />
+                              {labels.hide}
+                            </Button>
+                          ) : null}
                           <Button
                             type="button"
                             variant="destructive"
                             onClick={() => openDeleteDialog(review)}
                             className="rounded-2xl"
+                            disabled={rowIsMutating}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            {t('common.delete')}
+                            {labels.delete}
                           </Button>
                         </div>
                       </article>
@@ -270,9 +399,15 @@ function ReviewDetail({
     noComment: string
     rating: string
     reviewer: string
+    status: string
+    moderationReason: string
+    moderatedBy: string
+    moderatedAt: string
+    noReason: string
     unknownBook: string
     unknownUser: string
     updatedAt: string
+    statuses: Record<AdminReviewStatus, string>
   }
   review: AdminReviewResponse
   reviewer: UserLookup | undefined
@@ -288,7 +423,7 @@ function ReviewDetail({
         <DetailCard
           icon={UserRound}
           label={labels.reviewer}
-          value={reviewer?.name ?? labels.unknownUser}
+          value={review.reviewerName ?? reviewer?.name ?? labels.unknownUser}
           secondary={reviewer?.email ?? review.userId}
         />
       </div>
@@ -307,23 +442,120 @@ function ReviewDetail({
         />
       </div>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatusInfoCard labels={labels.statuses} status={review.status} />
+        <DetailCard
+          icon={ShieldAlert}
+          label={labels.moderatedBy}
+          value={review.moderatedByName ?? review.moderatedBy ?? labels.unknownUser}
+        />
+        <DetailCard
+          icon={CalendarDays}
+          label={labels.moderatedAt}
+          value={
+            review.moderatedAt ? formatDate(review.moderatedAt) : labels.noReason
+          }
+        />
+      </div>
+
       <div className="rounded-[22px] border border-border/60 bg-background/55 p-5">
         <p className="text-sm text-muted-foreground">{labels.comment}</p>
         <p className="mt-3 whitespace-pre-wrap text-base font-medium text-foreground">
           {review.comment?.trim() || labels.noComment}
         </p>
       </div>
+
+      <div className="rounded-[22px] border border-border/60 bg-background/55 p-5">
+        <p className="text-sm text-muted-foreground">{labels.moderationReason}</p>
+        <p className="mt-3 whitespace-pre-wrap text-base font-medium text-foreground">
+          {review.moderationReason?.trim() || labels.noReason}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function HideDialog({
+  hideReason,
+  isMutating,
+  labels,
+  onClose,
+  onConfirm,
+  onReasonChange,
+}: {
+  hideReason: string
+  isMutating: boolean
+  labels: {
+    cancel: string
+    hide: string
+    hideDescription: string
+    hideTitle: string
+    reason: string
+    reasonPlaceholder: string
+  }
+  onClose: () => void
+  onConfirm: () => void
+  onReasonChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
+}) {
+  return (
+    <div className="mx-auto max-w-2xl overflow-hidden rounded-[28px] border border-border/70 bg-card/95 shadow-[0_30px_120px_rgba(2,6,23,0.5)] backdrop-blur">
+      <div className="flex items-start gap-4 px-6 py-6">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/12 text-amber-500">
+          <ShieldAlert className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-2xl font-semibold text-foreground">
+            {labels.hideTitle}
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {labels.hideDescription}
+          </p>
+        </div>
+      </div>
+
+      <div className="px-6 pb-6">
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          {labels.reason}
+        </label>
+        <textarea
+          value={hideReason}
+          onChange={onReasonChange}
+          rows={5}
+          placeholder={labels.reasonPlaceholder}
+          className="w-full rounded-[22px] border border-border/70 bg-background/55 px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
+        />
+      </div>
+
+      <div className="flex items-center justify-end gap-3 border-t border-border/60 px-6 py-5">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          className="rounded-2xl"
+          disabled={isMutating}
+        >
+          {labels.cancel}
+        </Button>
+        <Button
+          type="button"
+          onClick={onConfirm}
+          className="rounded-2xl"
+          disabled={isMutating}
+        >
+          {isMutating ? '...' : labels.hide}
+        </Button>
+      </div>
     </div>
   )
 }
 
 function DeleteDialog({
-  isDeleting,
+  isMutating,
   labels,
   onClose,
   onConfirm,
 }: {
-  isDeleting: boolean
+  isMutating: boolean
   labels: {
     cancel: string
     delete: string
@@ -355,7 +587,7 @@ function DeleteDialog({
           variant="outline"
           onClick={onClose}
           className="rounded-2xl"
-          disabled={isDeleting}
+          disabled={isMutating}
         >
           {labels.cancel}
         </Button>
@@ -364,9 +596,9 @@ function DeleteDialog({
           variant="destructive"
           onClick={onConfirm}
           className="rounded-2xl"
-          disabled={isDeleting}
+          disabled={isMutating}
         >
-          {isDeleting ? '...' : labels.delete}
+          {isMutating ? '...' : labels.delete}
         </Button>
       </div>
     </div>
@@ -444,11 +676,80 @@ function DetailCard({
   )
 }
 
+function StatusInfoCard({
+  labels,
+  status,
+}: {
+  labels: Record<AdminReviewStatus, string>
+  status: AdminReviewStatus
+}) {
+  return (
+    <div className="rounded-[22px] border border-border/60 bg-background/55 p-4">
+      <p className="text-sm text-muted-foreground">Status</p>
+      <div className="mt-3">
+        <StatusBadge labels={labels} status={status} />
+      </div>
+    </div>
+  )
+}
+
+function FilterSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string
+  onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void
+  options: Array<{ value: string; label: string }>
+  value: string
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={onChange}
+        className="h-14 w-full rounded-2xl border border-border/70 bg-background/55 px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
+      >
+        {options.map((option) => (
+          <option key={`${label}-${option.value || 'all'}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function RatingBadge({ rating }: { rating: number }) {
   return (
     <Badge variant="outline" className="rounded-2xl px-3 py-1.5 text-amber-500">
       <Star className="mr-1.5 h-3.5 w-3.5 fill-current" />
       {rating}/5
+    </Badge>
+  )
+}
+
+function StatusBadge({
+  labels,
+  status,
+}: {
+  labels: Record<AdminReviewStatus, string>
+  status: AdminReviewStatus
+}) {
+  const statusClassName =
+    status === 'APPROVED'
+      ? 'border-emerald-500/30 bg-emerald-500/12 text-emerald-500'
+      : status === 'HIDDEN'
+        ? 'border-destructive/30 bg-destructive/10 text-destructive'
+        : 'border-amber-500/30 bg-amber-500/12 text-amber-500'
+
+  return (
+    <Badge variant="outline" className={`rounded-2xl px-3 py-1.5 ${statusClassName}`}>
+      {labels[status]}
     </Badge>
   )
 }

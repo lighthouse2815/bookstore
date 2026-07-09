@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.in.IOrderService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
@@ -51,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +78,7 @@ public class OrderService implements IOrderService {
     private final INotificationService notificationService;
     private final OrderAssembler orderAssembler;
     private final com.bookstore.bookstore.application.port.in.IDigitalLibraryService digitalLibraryService;
+    private final IOrderTimelineService orderTimelineService;
     private final SepayProperties sepayProperties;
 
     @Override
@@ -227,6 +230,9 @@ public class OrderService implements IOrderService {
         checkoutItems.forEach(item -> cart.removeItemById(item.getId()));
         cartRepository.save(cart);
         notificationService.create(newOrderNotification(savedOrder));
+        orderTimelineService.recordOrderCreated(savedOrder);
+        orderTimelineService.recordCouponsApplied(savedOrder);
+        orderTimelineService.recordPaymentPending(savedOrder, savedPayment);
         return new CreateOrderResult(
                 savedOrder.getId(),
                 savedOrder.getOrderCode(),
@@ -435,13 +441,16 @@ public class OrderService implements IOrderService {
         Order currentOrder = orderRepository.findByIdForUpdate(command.orderId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
 
+        OrderStatus oldStatus = currentOrder.getStatus();
+        PaymentStatus oldPaymentStatus = currentOrder.getPaymentStatus();
         requirePaymentReadyForStatusUpdate(currentOrder, command.status());
         currentOrder.updateStatus(command.status());
         if (command.status() == OrderStatus.CANCELLED) {
             rollbackCancelledOrder(currentOrder);
         }
+        Payment settledPayment = null;
         if (command.status() == OrderStatus.DELIVERED && currentOrder.getPaymentMethod() == PaymentMethod.COD) {
-            settleCodPaymentOnDelivery(currentOrder);
+            settledPayment = settleCodPaymentOnDelivery(currentOrder);
         }
         Order savedOrder = orderRepository.save(currentOrder);
         if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
@@ -451,6 +460,28 @@ public class OrderService implements IOrderService {
             digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
         }
         notificationService.create(newOrderStatusNotification(savedOrder));
+        if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
+            orderTimelineService.recordOrderCancelled(savedOrder, null);
+            orderTimelineService.recordStockRolledBack(savedOrder);
+            if (savedOrder.getBookCouponCode() != null) {
+                orderTimelineService.recordCouponRolledBack(savedOrder, savedOrder.getBookCouponCode());
+            }
+            if (savedOrder.getShippingCouponCode() != null
+                    && !Objects.equals(savedOrder.getShippingCouponId(), savedOrder.getBookCouponId())) {
+                orderTimelineService.recordCouponRolledBack(savedOrder, savedOrder.getShippingCouponCode());
+            }
+        } else {
+            orderTimelineService.recordStatusChanged(savedOrder, oldStatus, savedOrder.getStatus());
+        }
+        if (oldPaymentStatus != savedOrder.getPaymentStatus()
+                && savedOrder.getPaymentStatus() == PaymentStatus.PAID) {
+            Payment paymentForTimeline = settledPayment != null
+                    ? settledPayment
+                    : paymentRepository.findByOrderId(savedOrder.getId()).orElse(null);
+            if (paymentForTimeline != null) {
+                orderTimelineService.recordPaymentPaid(savedOrder, paymentForTimeline);
+            }
+        }
         return orderAssembler.toResult(savedOrder);
     }
 
@@ -779,9 +810,9 @@ public class OrderService implements IOrderService {
         return StringUtils.trimToNull(customerPhone) == null ? "0900000000" : customerPhone;
     }
 
-    private void settleCodPaymentOnDelivery(Order order) {
+    private Payment settleCodPaymentOnDelivery(Order order) {
         if (order.getPaymentMethod() != PaymentMethod.COD) {
-            return;
+            return null;
         }
 
         Payment payment = paymentRepository.findByOrderId(order.getId())
@@ -804,6 +835,7 @@ public class OrderService implements IOrderService {
         if (order.getPaymentStatus() != PaymentStatus.PAID) {
             order.markPaymentPaid(settledAt);
         }
+        return payment;
     }
 
     private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {

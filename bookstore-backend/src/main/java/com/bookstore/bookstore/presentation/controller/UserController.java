@@ -12,6 +12,8 @@ import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import com.bookstore.bookstore.presentation.response.UserMeResponse;
 import com.bookstore.bookstore.presentation.response.UserResponse;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -36,15 +38,28 @@ public class UserController {
 
     private final IUserService userService;
     private final UserWebMapper userWebMapper;
+    private final AdminAuditSupport adminAuditSupport;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/users")
     public ResponseEntity<ApiResponse<UserResponse>> create(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @Valid @RequestBody CreateUserRequest request
     ) {
         var result = userService.createByAdmin(userWebMapper.toCreateCommand(request));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordCreate(
+                jwt,
+                httpServletRequest,
+                "USER_CREATED",
+                "USER",
+                response.userId(),
+                "Tạo tài khoản " + response.username(),
+                response
+        );
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(userWebMapper.toUserResponse(result)));
+                .body(ApiResponse.success(response));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -92,33 +107,73 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/staff/{id}")
     public ApiResponse<UserResponse> updateStaff(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateStaffUserRequest request
     ) {
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateStaffByAdmin(userWebMapper.toUpdateStaffCommand(id, request));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordUpdate(
+                jwt,
+                httpServletRequest,
+                "USER_UPDATED",
+                "USER",
+                response.userId(),
+                "Cập nhật tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/{id}/lock")
     public ApiResponse<UserResponse> lockUser(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, true));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                "USER_LOCKED",
+                "USER",
+                response.userId(),
+                "Khóa tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/{id}/unlock")
     public ApiResponse<UserResponse> unlockUser(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, false));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                "USER_UNLOCKED",
+                "USER",
+                response.userId(),
+                "Mở khóa tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -167,10 +222,21 @@ public class UserController {
     @DeleteMapping("/api/admin/users/{id}")
     public ApiResponse<Void> deleteByAdmin(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         userService.deleteByAdmin(new DeleteUserCommand(id, adminId));
+        adminAuditSupport.recordDelete(
+                jwt,
+                httpServletRequest,
+                "USER_DELETED",
+                "USER",
+                id,
+                "Xóa tài khoản " + before.username(),
+                before
+        );
         return ApiResponse.success("Deleted", null);
     }
 

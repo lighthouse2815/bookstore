@@ -7,6 +7,8 @@ import com.bookstore.bookstore.presentation.request.UpdateShipmentStatusRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import com.bookstore.bookstore.presentation.response.ShipmentResponse;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -30,12 +32,26 @@ public class ShipmentController {
 
     private final IShipmentService shipmentService;
     private final ShipmentWebMapper shipmentWebMapper;
+    private final AdminAuditSupport adminAuditSupport;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/shipments")
-    public ResponseEntity<ApiResponse<ShipmentResponse>> assign(@Valid @RequestBody AssignShipmentRequest request) {
+    public ResponseEntity<ApiResponse<ShipmentResponse>> assign(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
+            @Valid @RequestBody AssignShipmentRequest request
+    ) {
         ShipmentResponse response = shipmentWebMapper.toResponse(
                 shipmentService.assign(shipmentWebMapper.toAssignCommand(request))
+        );
+        adminAuditSupport.recordCreate(
+                jwt,
+                httpServletRequest,
+                "SHIPMENT_ASSIGNED",
+                "SHIPMENT",
+                response.shipmentId(),
+                "Phân công shipment cho đơn hàng " + response.orderCode(),
+                response
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
@@ -69,8 +85,24 @@ public class ShipmentController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/shipments/{id}/confirm-delivered")
-    public ApiResponse<ShipmentResponse> confirmDelivered(@PathVariable UUID id) {
-        return ApiResponse.success(shipmentWebMapper.toResponse(shipmentService.confirmDeliveredByAdmin(id)));
+    public ApiResponse<ShipmentResponse> confirmDelivered(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
+            @PathVariable UUID id
+    ) {
+        ShipmentResponse before = shipmentWebMapper.toResponse(shipmentService.getById(id));
+        ShipmentResponse response = shipmentWebMapper.toResponse(shipmentService.confirmDeliveredByAdmin(id));
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                "SHIPMENT_STATUS_UPDATED",
+                "SHIPMENT",
+                response.shipmentId(),
+                "Xác nhận shipment " + response.shipmentId() + " đã giao thành công",
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('SHIPPER')")

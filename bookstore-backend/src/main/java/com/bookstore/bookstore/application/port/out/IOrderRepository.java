@@ -2,7 +2,9 @@ package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
+import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.RecentOrderResult;
+import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.application.result.RevenueChartResult;
 import com.bookstore.bookstore.application.result.TopBookStatsResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -36,6 +38,14 @@ public interface IOrderRepository {
     List<RevenueChartResult> findRevenueStatsGroupByDay(Instant fromInclusive, Instant toExclusive);
 
     List<RevenueChartResult> findRevenueStatsGroupByMonth(Instant fromInclusive, Instant toExclusive);
+
+    List<OrderReportRowResult> findOrderReports(
+            Instant fromInclusive,
+            Instant toExclusive,
+            OrderStatus status
+    );
+
+    List<RevenueReportRowResult> findDailyRevenueReports(Instant fromInclusive, Instant toExclusive);
 
     List<TopBookStatsResult> findTopSellingBooks(int limit);
 

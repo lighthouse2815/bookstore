@@ -2,6 +2,8 @@ package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.projection.DailyRevenueReportProjection;
+import com.bookstore.bookstore.infrastructure.persistence.projection.OrderReportProjection;
 import com.bookstore.bookstore.infrastructure.persistence.projection.OrderStatusStatsProjection;
 import com.bookstore.bookstore.infrastructure.persistence.projection.RecentOrderProjection;
 import com.bookstore.bookstore.infrastructure.persistence.projection.RevenueStatsProjection;
@@ -154,6 +156,48 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
             nativeQuery = true
     )
     List<RevenueStatsProjection> findRevenueStatsGroupByMonth(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
+
+    @Query("""
+            select o.id as orderId,
+                   o.orderCode as orderCode,
+                   o.receiverName as customerName,
+                   o.status as status,
+                   o.paymentStatus as paymentStatus,
+                   o.finalAmount as finalAmount,
+                   o.createdAt as createdAt
+            from OrderJpaEntity o
+            where o.user.deletedAt is null
+              and o.createdAt >= :fromInclusive
+              and o.createdAt < :toExclusive
+              and (:status is null or o.status = :status)
+            order by o.createdAt desc, o.id desc
+            """)
+    List<OrderReportProjection> findOrderReports(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("status") OrderStatus status
+    );
+
+    @Query(
+            value = """
+                    select date_format(o.created_at, '%Y-%m-%d') as periodKey,
+                           count(o.id) as totalOrders,
+                           coalesce(sum(case when o.status = 'DELIVERED' then o.final_amount else 0 end), 0) as revenue,
+                           sum(case when o.status = 'CANCELLED' then 1 else 0 end) as cancelledOrders
+                    from orders o
+                    join users u on u.id = o.user_id
+                    where u.deleted_at is null
+                      and o.created_at >= :fromInclusive
+                      and o.created_at < :toExclusive
+                    group by date_format(o.created_at, '%Y-%m-%d')
+                    order by periodKey
+                    """,
+            nativeQuery = true
+    )
+    List<DailyRevenueReportProjection> findDailyRevenueReports(
             @Param("fromInclusive") Instant fromInclusive,
             @Param("toExclusive") Instant toExclusive
     );

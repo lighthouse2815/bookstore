@@ -4,6 +4,7 @@ import type {
   CreateOrderRequest,
   CreateOrderResponse,
   OrderResponse,
+  OrderTimelineEventResponse,
   UpdateOrderStatusRequest,
 } from '@/types/order'
 import { unwrapResponse } from '@/utils'
@@ -82,6 +83,24 @@ export async function getAdminOrdersPage(
 export async function getAdminOrder(id: string): Promise<OrderResponse> {
   const response = await api.get<ApiResponse<OrderResponse>>(
     `/admin/orders/${id}`,
+  )
+  return unwrapResponse(response)
+}
+
+export async function getMyOrderTimeline(
+  orderId: string,
+): Promise<OrderTimelineEventResponse[]> {
+  const response = await api.get<ApiResponse<OrderTimelineEventResponse[]>>(
+    `/orders/${orderId}/timeline`,
+  )
+  return unwrapResponse(response)
+}
+
+export async function getAdminOrderTimeline(
+  orderId: string,
+): Promise<OrderTimelineEventResponse[]> {
+  const response = await api.get<ApiResponse<OrderTimelineEventResponse[]>>(
+    `/admin/orders/${orderId}/timeline`,
   )
   return unwrapResponse(response)
 }

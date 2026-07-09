@@ -17,6 +17,7 @@ import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.response.AuthorResponse;
 import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -56,6 +57,9 @@ class BookControllerTest {
 
     @MockitoBean
     private CurrentUserJwtAuthenticationConverter currentUserJwtAuthenticationConverter;
+
+    @MockitoBean
+    private AdminAuditSupport adminAuditSupport;
 
     @Test
     void getPageDetail_whenBookIdIsValid_returnsPageDetail() throws Exception {

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  ArrowLeftRight,
+  CircleDollarSign,
   CalendarDays,
   Clock3,
   MapPin,
@@ -16,15 +18,28 @@ import { Button } from '@/components/common/button'
 import { Badge } from '@/components/common/badge'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { Input } from '@/components/common/input'
+import { Label } from '@/components/common/label'
+import { Textarea } from '@/components/common/textarea'
+import { OrderTimelineList } from '@/components/order/order-timeline-list'
 import { useLanguage } from '@/contexts/language-context'
 import { useOrderDetailPage } from '@/hooks/use-order-detail-page'
-import type { OrderResponse, OrderStatus } from '@/types/order'
+import type {
+  OrderResponse,
+  OrderStatus,
+  OrderTimelineEventResponse,
+} from '@/types/order'
+import type {
+  ReturnRequestResponse,
+  ReturnRequestStatus,
+} from '@/types/return-request'
 import { cn } from '@/utils'
 import { BOOK_DEFAULT_COVER } from '@/utils/book-cover'
 import {
   getOrderStatusLabel,
   getPaymentMethodLabel,
   getPaymentStatusLabel,
+  getReturnRequestStatusLabel,
 } from '@/utils/i18n'
 
 const ORDER_STATUS_TONES: Record<
@@ -91,7 +106,27 @@ const PAYMENT_STATUS_TONES: Record<
 
 export default function OrderDetailPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
-  const { order, isLoading, error } = useOrderDetailPage()
+  const {
+    order,
+    timeline,
+    isLoading,
+    error,
+    latestReturnRequest,
+    isReturnLoading,
+    canCreateReturnRequest,
+    canCancelReturnRequest,
+    isCreateDialogOpen,
+    returnReason,
+    requestedRefundAmount,
+    isSubmittingReturnRequest,
+    isCancellingReturnRequest,
+    openCreateDialog,
+    closeCreateDialog,
+    handleSubmitReturnRequest,
+    handleCancelReturnRequest,
+    setReturnReason,
+    setRequestedRefundAmount,
+  } = useOrderDetailPage()
 
   return (
     <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)]">
@@ -140,11 +175,33 @@ export default function OrderDetailPage() {
               formatDate={formatDate}
               formatNumber={formatNumber}
               order={order}
+              timeline={timeline}
+              latestReturnRequest={latestReturnRequest}
+              isReturnLoading={isReturnLoading}
+              canCreateReturnRequest={canCreateReturnRequest}
+              canCancelReturnRequest={canCancelReturnRequest}
+              isSubmittingReturnRequest={isSubmittingReturnRequest}
+              isCancellingReturnRequest={isCancellingReturnRequest}
+              onOpenCreateDialog={openCreateDialog}
+              onCancelReturnRequest={handleCancelReturnRequest}
               t={t}
             />
           )}
         </div>
       </main>
+
+      {isCreateDialogOpen ? (
+        <ReturnRequestDialog
+          reason={returnReason}
+          requestedRefundAmount={requestedRefundAmount}
+          isSubmitting={isSubmittingReturnRequest}
+          onClose={closeCreateDialog}
+          onReasonChange={setReturnReason}
+          onRequestedRefundAmountChange={setRequestedRefundAmount}
+          onSubmit={handleSubmitReturnRequest}
+          t={t}
+        />
+      ) : null}
 
       <Footer />
     </div>
@@ -156,12 +213,30 @@ function OrderDetailContent({
   formatDate,
   formatNumber,
   order,
+  timeline,
+  latestReturnRequest,
+  isReturnLoading,
+  canCreateReturnRequest,
+  canCancelReturnRequest,
+  isSubmittingReturnRequest,
+  isCancellingReturnRequest,
+  onOpenCreateDialog,
+  onCancelReturnRequest,
   t,
 }: {
   formatCurrency: (value: number) => string
   formatDate: (value: Date | number | string) => string
   formatNumber: (value: number) => string
   order: OrderResponse
+  timeline: OrderTimelineEventResponse[]
+  latestReturnRequest: ReturnRequestResponse | null
+  isReturnLoading: boolean
+  canCreateReturnRequest: boolean
+  canCancelReturnRequest: boolean
+  isSubmittingReturnRequest: boolean
+  isCancellingReturnRequest: boolean
+  onOpenCreateDialog: () => void
+  onCancelReturnRequest: () => void
   t: (key: string, params?: Record<string, number | string>) => string
 }) {
   const orderTone = ORDER_STATUS_TONES[order.status]
@@ -267,6 +342,20 @@ function OrderDetailContent({
         </SurfacePanel>
       </section>
 
+      <ReturnRequestPanel
+        canCancelReturnRequest={canCancelReturnRequest}
+        canCreateReturnRequest={canCreateReturnRequest}
+        formatCurrency={formatCurrency}
+        formatDate={formatDate}
+        isCancellingReturnRequest={isCancellingReturnRequest}
+        isReturnLoading={isReturnLoading}
+        isSubmittingReturnRequest={isSubmittingReturnRequest}
+        latestReturnRequest={latestReturnRequest}
+        onCancelReturnRequest={onCancelReturnRequest}
+        onOpenCreateDialog={onOpenCreateDialog}
+        t={t}
+      />
+
       <SurfacePanel>
         <SectionHeading
           icon={Package2}
@@ -337,6 +426,24 @@ function OrderDetailContent({
             count: formatNumber(order.items.length),
           })}
         </p>
+      </SurfacePanel>
+
+      <SurfacePanel>
+        <SectionHeading
+          icon={Clock3}
+          title={t('orderTimeline.title')}
+          variant="plain"
+        />
+        <p className="mt-3 text-sm leading-6 text-slate-500">
+          {t('orderTimeline.description')}
+        </p>
+
+        <div className="mt-6">
+          <OrderTimelineList
+            emptyLabel={t('orderTimeline.empty')}
+            events={timeline}
+          />
+        </div>
       </SurfacePanel>
     </div>
   )
@@ -460,6 +567,277 @@ function SummaryRow({
       >
         {value}
       </span>
+    </div>
+  )
+}
+
+const RETURN_REQUEST_STATUS_TONES: Record<
+  ReturnRequestStatus,
+  {
+    badgeClassName: string
+    iconClassName: string
+  }
+> = {
+  PENDING: {
+    badgeClassName: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
+    iconClassName: 'text-amber-600',
+  },
+  APPROVED: {
+    badgeClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
+    iconClassName: 'text-emerald-600',
+  },
+  REJECTED: {
+    badgeClassName: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100',
+    iconClassName: 'text-rose-600',
+  },
+  CANCELLED: {
+    badgeClassName: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+    iconClassName: 'text-slate-500',
+  },
+}
+
+function ReturnRequestPanel({
+  canCancelReturnRequest,
+  canCreateReturnRequest,
+  formatCurrency,
+  formatDate,
+  isCancellingReturnRequest,
+  isReturnLoading,
+  latestReturnRequest,
+  onCancelReturnRequest,
+  onOpenCreateDialog,
+  t,
+}: {
+  canCancelReturnRequest: boolean
+  canCreateReturnRequest: boolean
+  formatCurrency: (value: number) => string
+  formatDate: (value: Date | number | string) => string
+  isCancellingReturnRequest: boolean
+  isReturnLoading: boolean
+  isSubmittingReturnRequest: boolean
+  latestReturnRequest: ReturnRequestResponse | null
+  onCancelReturnRequest: () => void
+  onOpenCreateDialog: () => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}) {
+  return (
+    <SurfacePanel>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <SectionHeading
+            icon={CircleDollarSign}
+            title={t('returnRequests.sectionTitle')}
+            variant="plain"
+          />
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+            {t('returnRequests.sectionDescription')}
+          </p>
+        </div>
+
+        {canCreateReturnRequest ? (
+          <Button
+            type="button"
+            onClick={onOpenCreateDialog}
+            className="h-11 rounded-2xl px-5"
+          >
+            <ArrowLeftRight className="mr-2 h-4 w-4" />
+            {t('returnRequests.createAction')}
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="mt-6">
+        {isReturnLoading ? (
+          <div className="rounded-[24px] border border-dashed border-primary/15 bg-primary/4 px-6 py-10 text-center text-slate-500">
+            {t('common.loading')}
+          </div>
+        ) : latestReturnRequest == null ? (
+          <div className="rounded-[24px] border border-dashed border-primary/15 bg-primary/4 px-6 py-10 text-center text-slate-500">
+            {t('returnRequests.emptyForOrder')}
+          </div>
+        ) : (
+          <div className="rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(249,245,255,0.94)_100%)] p-5 shadow-[0_12px_30px_rgba(137,92,255,0.06)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="font-heading text-2xl font-bold text-slate-950">
+                    {t('returnRequests.latestRequestTitle')}
+                  </h3>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold',
+                      RETURN_REQUEST_STATUS_TONES[latestReturnRequest.status]
+                        .badgeClassName,
+                    )}
+                  >
+                    <CircleDollarSign
+                      className={cn(
+                        'h-4 w-4',
+                        RETURN_REQUEST_STATUS_TONES[latestReturnRequest.status]
+                          .iconClassName,
+                      )}
+                    />
+                    {getReturnRequestStatusLabel(latestReturnRequest.status, t)}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500">
+                  {t('returnRequests.createdAt')}: {formatDate(latestReturnRequest.createdAt)}
+                </p>
+                <p className="text-sm leading-6 text-slate-600">
+                  {latestReturnRequest.reason}
+                </p>
+              </div>
+
+              {canCancelReturnRequest ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancelReturnRequest}
+                  disabled={isCancellingReturnRequest}
+                  className="h-11 rounded-2xl border-primary/15 px-5 text-primary hover:bg-primary/6"
+                >
+                  {isCancellingReturnRequest
+                    ? t('common.processing')
+                    : t('returnRequests.cancelAction')}
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <DetailTile
+                icon={ReceiptText}
+                iconClassName="text-primary"
+                label={t('returnRequests.requestedAmount')}
+                value={
+                  latestReturnRequest.requestedRefundAmount == null
+                    ? t('returnRequests.notProvided')
+                    : formatCurrency(latestReturnRequest.requestedRefundAmount)
+                }
+              />
+              <DetailTile
+                icon={ReceiptText}
+                iconClassName="text-emerald-500"
+                label={t('returnRequests.approvedAmount')}
+                value={
+                  latestReturnRequest.approvedRefundAmount == null
+                    ? t('returnRequests.notProcessed')
+                    : formatCurrency(latestReturnRequest.approvedRefundAmount)
+                }
+                tileClassName="border-emerald-100 bg-emerald-50/65"
+              />
+              <DetailTile
+                icon={Clock3}
+                iconClassName="text-primary"
+                label={t('returnRequests.processedAt')}
+                value={
+                  latestReturnRequest.processedAt == null
+                    ? t('returnRequests.notProcessed')
+                    : formatDate(latestReturnRequest.processedAt)
+                }
+              />
+              <DetailTile
+                icon={UserRound}
+                iconClassName="text-primary"
+                label={t('returnRequests.processedBy')}
+                value={
+                  latestReturnRequest.processedByName ??
+                  t('returnRequests.notProcessed')
+                }
+              />
+            </div>
+
+            {latestReturnRequest.adminNote ? (
+              <div className="mt-5 rounded-[20px] border border-slate-200 bg-slate-50/90 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  {t('returnRequests.adminNote')}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {latestReturnRequest.adminNote}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+    </SurfacePanel>
+  )
+}
+
+function ReturnRequestDialog({
+  reason,
+  requestedRefundAmount,
+  isSubmitting,
+  onClose,
+  onReasonChange,
+  onRequestedRefundAmountChange,
+  onSubmit,
+  t,
+}: {
+  reason: string
+  requestedRefundAmount: string
+  isSubmitting: boolean
+  onClose: () => void
+  onReasonChange: (value: string) => void
+  onRequestedRefundAmountChange: (value: string) => void
+  onSubmit: () => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4">
+      <div className="w-full max-w-2xl rounded-[28px] border border-primary/10 bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-3xl font-bold text-slate-950">
+              {t('returnRequests.dialogTitle')}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              {t('returnRequests.dialogDescription')}
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
+            <Clock3 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="returnReason">{t('returnRequests.reasonLabel')}</Label>
+            <Textarea
+              id="returnReason"
+              rows={6}
+              value={reason}
+              onChange={(event) => onReasonChange(event.currentTarget.value)}
+              placeholder={t('returnRequests.reasonPlaceholder')}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="requestedRefundAmount">
+              {t('returnRequests.requestedAmount')}
+            </Label>
+            <Input
+              id="requestedRefundAmount"
+              inputMode="decimal"
+              value={requestedRefundAmount}
+              onChange={(event) =>
+                onRequestedRefundAmountChange(event.currentTarget.value)
+              }
+              placeholder="0"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={onSubmit}
+              disabled={isSubmitting || reason.trim() === ''}
+            >
+              {isSubmitting ? t('common.processing') : t('returnRequests.submitAction')}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

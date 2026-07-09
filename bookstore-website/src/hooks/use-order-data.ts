@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/language-context'
-import { getMyOrdersPage, getOrderById } from '@/services/order-service'
-import type { OrderResponse } from '@/types/order'
+import {
+  getMyOrderTimeline,
+  getMyOrdersPage,
+  getOrderById,
+} from '@/services/order-service'
+import type { OrderResponse, OrderTimelineEventResponse } from '@/types/order'
 import { getErrorMessage } from '@/utils'
 
 type UseOrderResourceOptions = {
@@ -64,12 +68,14 @@ export function useOrderResource(
 ) {
   const { t } = useLanguage()
   const [order, setOrder] = useState<OrderResponse | null>(null)
+  const [timeline, setTimeline] = useState<OrderTimelineEventResponse[]>([])
   const [isLoading, setIsLoading] = useState(Boolean(orderId))
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!orderId) {
       setOrder(null)
+      setTimeline([])
       setIsLoading(false)
       setError(options.missingError ?? null)
       return
@@ -81,20 +87,26 @@ export function useOrderResource(
 
     async function loadOrder() {
       try {
-        const data = await getOrderById(currentOrderId)
+        const [data, timelineData] = await Promise.all([
+          getOrderById(currentOrderId),
+          getMyOrderTimeline(currentOrderId),
+        ])
 
         if (isCancelled) {
           return
         }
 
         setOrder(data)
+        setTimeline(timelineData)
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
           return
         }
 
+        setOrder(null)
         setError(getErrorMessage(currentError, t('checkout.error')))
+        setTimeline([])
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -111,6 +123,7 @@ export function useOrderResource(
 
   return {
     order,
+    timeline,
     isLoading,
     error,
   }

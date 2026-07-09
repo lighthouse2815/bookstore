@@ -108,15 +108,31 @@ export type AdminCreateImportReceiptRequest = {
   note: string
 }
 
+export type AdminReviewStatus = 'PENDING' | 'APPROVED' | 'HIDDEN'
+
 export type AdminReviewResponse = {
   reviewId: string
   userId: string
   bookId: string
   orderItemId: string
+  reviewerName: string | null
+  reviewerAvatarUrl: string | null
+  verifiedPurchase: boolean
+  reviewImages: string[]
+  helpfulCount: number
   rating: number
   comment: string | null
+  status: AdminReviewStatus
+  moderationReason: string | null
+  moderatedBy: string | null
+  moderatedByName: string | null
+  moderatedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type AdminModerateReviewRequest = {
+  reason?: string | null
 }
 
 export type AdminNotificationResponse = {

@@ -84,3 +84,35 @@ export type OrderResponse = {
   updatedAt: string
   cancelledAt: string | null
 }
+
+export type OrderTimelineEventType =
+  | 'ORDER_CREATED'
+  | 'COUPON_APPLIED'
+  | 'PAYMENT_PENDING'
+  | 'PAYMENT_PAID'
+  | 'ORDER_STATUS_CHANGED'
+  | 'SHIPMENT_ASSIGNED'
+  | 'SHIPMENT_STATUS_CHANGED'
+  | 'ORDER_CANCELLED'
+  | 'STOCK_ROLLED_BACK'
+  | 'COUPON_ROLLED_BACK'
+  | 'RETURN_REQUESTED'
+  | 'RETURN_APPROVED'
+  | 'RETURN_REJECTED'
+  | 'RETURN_CANCELLED'
+  | 'REFUND_INTERNAL_APPROVED'
+  | 'STOCK_RESTOCKED_FROM_RETURN'
+
+export type OrderTimelineEventResponse = {
+  id: string
+  orderId: string
+  eventType: OrderTimelineEventType | string
+  title: string
+  description: string | null
+  oldStatus: string | null
+  newStatus: string | null
+  actorName: string | null
+  actorRole: string | null
+  createdAt: string
+  metadata: string | null
+}

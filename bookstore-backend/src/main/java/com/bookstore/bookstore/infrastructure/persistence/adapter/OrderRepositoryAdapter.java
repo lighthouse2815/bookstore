@@ -1,9 +1,11 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
+import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.RecentOrderResult;
+import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.application.result.RevenueChartResult;
 import com.bookstore.bookstore.application.result.TopBookStatsResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -21,6 +23,7 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.OrderJpaRep
 import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -123,6 +126,37 @@ public class OrderRepositoryAdapter implements IOrderRepository {
                         row.getPeriodKey(),
                         row.getRevenue(),
                         defaultLong(row.getOrderCount())
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<OrderReportRowResult> findOrderReports(
+            Instant fromInclusive,
+            Instant toExclusive,
+            OrderStatus status
+    ) {
+        return orderJpaRepository.findOrderReports(fromInclusive, toExclusive, status).stream()
+                .map(row -> new OrderReportRowResult(
+                        row.getOrderId(),
+                        row.getOrderCode(),
+                        row.getCustomerName(),
+                        row.getStatus(),
+                        row.getPaymentStatus(),
+                        row.getFinalAmount(),
+                        row.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<RevenueReportRowResult> findDailyRevenueReports(Instant fromInclusive, Instant toExclusive) {
+        return orderJpaRepository.findDailyRevenueReports(fromInclusive, toExclusive).stream()
+                .map(row -> new RevenueReportRowResult(
+                        LocalDate.parse(row.getPeriodKey()),
+                        defaultLong(row.getTotalOrders()),
+                        row.getRevenue(),
+                        defaultLong(row.getCancelledOrders())
                 ))
                 .toList();
     }

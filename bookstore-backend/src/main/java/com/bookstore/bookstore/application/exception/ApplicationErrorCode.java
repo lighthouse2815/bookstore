@@ -51,6 +51,7 @@ public enum ApplicationErrorCode {
     SUPPLIER_NAME_ALREADY_EXISTS("APPLICATION_SUPPLIER_002", "supplier đã tồn tại"),
 
     IMPORT_RECEIPT_NOT_FOUND("APPLICATION_IMPORT_RECEIPT_001", "không tìm thấy phiếu nhập"),
+    AUDIT_LOG_NOT_FOUND("APPLICATION_AUDIT_LOG_001", "không tìm thấy nhật ký hệ thống"),
 
     COUPON_NOT_FOUND("APPLICATION_COUPON_001", "không tìm thấy coupon"),
     COUPON_CODE_ALREADY_EXISTS("APPLICATION_COUPON_002", "coupon đã tồn tại"),
@@ -79,6 +80,13 @@ public enum ApplicationErrorCode {
 
     ORDER_NOT_FOUND("APPLICATION_ORDER_001", "không tìm thấy đơn hàng"),
     ORDER_PAYMENT_NOT_PAID("APPLICATION_ORDER_002", "đơn hàng thanh toán online chưa được thanh toán"),
+
+    RETURN_REQUEST_NOT_FOUND("APPLICATION_RETURN_REQUEST_001", "không tìm thấy yêu cầu trả hàng"),
+    RETURN_REQUEST_ORDER_NOT_DELIVERED("APPLICATION_RETURN_REQUEST_002", "chỉ có thể tạo yêu cầu trả hàng cho đơn đã giao"),
+    RETURN_REQUEST_ALREADY_EXISTS("APPLICATION_RETURN_REQUEST_003", "đơn hàng đã có yêu cầu trả hàng đang xử lý hoặc đã được duyệt"),
+    RETURN_REQUEST_NOT_PENDING("APPLICATION_RETURN_REQUEST_004", "chỉ có thể thao tác với yêu cầu đang chờ xử lý"),
+    RETURN_REQUEST_REFUND_AMOUNT_INVALID("APPLICATION_RETURN_REQUEST_005", "số tiền hoàn không hợp lệ"),
+    RETURN_REQUEST_REJECT_NOTE_REQUIRED("APPLICATION_RETURN_REQUEST_006", "lý do từ chối không được để trống"),
 
     SHIPMENT_NOT_FOUND("APPLICATION_SHIPMENT_001", "không tìm thấy phiếu giao hàng"),
     SHIPMENT_ORDER_NOT_READY("APPLICATION_SHIPMENT_002", "đơn hàng không ở trạng thái sẵn sàng giao"),

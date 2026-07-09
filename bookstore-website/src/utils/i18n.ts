@@ -5,6 +5,7 @@ import type {
 } from '@/types/order'
 import type { Gender, UserRole } from '@/types/auth'
 import type { ShipmentStatus } from '@/types/shipment'
+import type { ReturnRequestStatus } from '@/types/return-request'
 
 type TranslateFunction = (
   key: string,
@@ -37,11 +38,20 @@ const orderStatusKeys: Record<string, string> = {
   SHIPPING: 'orderStatus.SHIPPING',
   DELIVERED: 'orderStatus.DELIVERED',
   CANCELLED: 'orderStatus.CANCELLED',
+  APPROVED: 'returnRequests.status.APPROVED',
+  REJECTED: 'returnRequests.status.REJECTED',
   pending: 'orderStatus.pending',
   processing: 'orderStatus.processing',
   shipped: 'orderStatus.shipped',
   delivered: 'orderStatus.delivered',
   cancelled: 'orderStatus.cancelled',
+}
+
+const returnRequestStatusKeys: Record<ReturnRequestStatus, string> = {
+  PENDING: 'returnRequests.status.PENDING',
+  APPROVED: 'returnRequests.status.APPROVED',
+  REJECTED: 'returnRequests.status.REJECTED',
+  CANCELLED: 'returnRequests.status.CANCELLED',
 }
 
 const paymentMethodKeys: Record<OrderPaymentMethod, string> = {
@@ -117,6 +127,13 @@ export function getShipmentStatusLabel(
   t: TranslateFunction,
 ) {
   return t(shipmentStatusKeys[shipmentStatus])
+}
+
+export function getReturnRequestStatusLabel(
+  status: ReturnRequestStatus,
+  t: TranslateFunction,
+) {
+  return t(returnRequestStatusKeys[status])
 }
 
 export function getUserRoleLabel(role: UserRole, t: TranslateFunction) {
