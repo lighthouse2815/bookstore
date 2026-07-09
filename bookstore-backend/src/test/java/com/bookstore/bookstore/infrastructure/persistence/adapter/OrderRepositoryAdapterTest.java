@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.domain.model.Order;
+import java.util.Optional;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.OrderPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.BookJpaRepository;
@@ -93,6 +94,26 @@ class OrderRepositoryAdapterTest {
         assertEquals(6, result.totalCount());
         verify(orderJpaRepository).findPageIdsByUser_DeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(1, 2));
         verify(orderJpaRepository).findAllByIdInAndUser_DeletedAtIsNull(List.of(newestOrderId, olderOrderId));
+    }
+
+    @Test
+    void findByIdForUpdate_locksRowBeforeFetchingGraph() {
+        UUID orderId = UUID.randomUUID();
+        OrderJpaEntity lockedOrderEntity = orderEntity(orderId);
+        OrderJpaEntity detailedOrderEntity = orderEntity(orderId);
+        Order mappedOrder = org.mockito.Mockito.mock(Order.class);
+
+        when(orderJpaRepository.findByIdAndUser_DeletedAtIsNullForUpdate(orderId))
+                .thenReturn(Optional.of(lockedOrderEntity));
+        when(orderJpaRepository.findByIdAndUser_DeletedAtIsNull(orderId))
+                .thenReturn(Optional.of(detailedOrderEntity));
+        when(orderPersistenceMapper.toDomain(detailedOrderEntity)).thenReturn(mappedOrder);
+
+        var result = orderRepositoryAdapter.findByIdForUpdate(orderId);
+
+        assertEquals(Optional.of(mappedOrder), result);
+        verify(orderJpaRepository).findByIdAndUser_DeletedAtIsNullForUpdate(orderId);
+        verify(orderJpaRepository).findByIdAndUser_DeletedAtIsNull(orderId);
     }
 
     private static OrderJpaEntity orderEntity(UUID orderId) {

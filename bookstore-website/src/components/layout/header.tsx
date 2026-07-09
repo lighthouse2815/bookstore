@@ -110,7 +110,7 @@ export function Header() {
 
           <Link
             to={searchTargetPath}
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
+            className="hidden size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted sm:flex lg:hidden"
             aria-label={t('header.searchAria')}
           >
             <Search className="size-5" />
@@ -119,6 +119,7 @@ export function Header() {
           <ThemeSwitch
             checked={theme === 'dark'}
             onToggle={toggleTheme}
+            className="hidden sm:inline-flex"
             label={
               theme === 'dark'
                 ? t('header.switchToLight')

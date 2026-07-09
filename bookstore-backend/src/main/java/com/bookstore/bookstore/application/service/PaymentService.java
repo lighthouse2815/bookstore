@@ -8,10 +8,10 @@ import com.bookstore.bookstore.application.port.in.IPaymentService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
+import com.bookstore.bookstore.application.port.out.ISepaySettings;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.Payment;
-import com.bookstore.bookstore.infrastructure.payment.SepayProperties;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -32,7 +32,7 @@ public class PaymentService implements IPaymentService {
     private final IOrderRepository orderRepository;
     private final IDigitalLibraryService digitalLibraryService;
     private final IOrderTimelineService orderTimelineService;
-    private final SepayProperties sepayProperties;
+    private final ISepaySettings sepaySettings;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -120,8 +120,8 @@ public class PaymentService implements IPaymentService {
     }
 
     private void validateWebhookAuthorization(HandleSepayIpnCommand command) {
-        String configuredApiKey = StringUtils.trimToNull(sepayProperties.webhookApiKey());
-        String configuredSecretKey = StringUtils.trimToNull(sepayProperties.secretKey());
+        String configuredApiKey = StringUtils.trimToNull(sepaySettings.webhookApiKey());
+        String configuredSecretKey = StringUtils.trimToNull(sepaySettings.secretKey());
         boolean apiKeyConfigured = configuredApiKey != null;
         boolean secretKeyConfigured = configuredSecretKey != null;
 
@@ -196,7 +196,7 @@ public class PaymentService implements IPaymentService {
     }
 
     private String resolveMerchantId(Payment payment) {
-        String configuredMerchantId = StringUtils.trimToNull(sepayProperties.merchantId());
+        String configuredMerchantId = StringUtils.trimToNull(sepaySettings.merchantId());
         if (configuredMerchantId != null) {
             return configuredMerchantId;
         }

@@ -5,6 +5,8 @@ import { cn } from '@/utils'
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
 
 let googleScriptPromise: Promise<void> | null = null
+let initializedClientId: string | null = null
+let activeCredentialHandler: ((credential: string) => void) | null = null
 
 type GoogleAuthButtonText = 'continue_with' | 'signin_with' | 'signup_with'
 
@@ -64,7 +66,12 @@ export function GoogleAuthButton({
 
         container.replaceChildren()
 
-        googleId.initialize({
+        activeCredentialHandler = (credential: string) => {
+          void onCredentialRef.current(credential)
+        }
+
+        if (initializedClientId !== resolvedClientId) {
+          googleId.initialize({
           callback: (response) => {
             const credential = response.credential?.trim()
 
@@ -77,10 +84,12 @@ export function GoogleAuthButton({
               return
             }
 
-            void onCredentialRef.current(credential)
+            activeCredentialHandler?.(credential)
           },
           client_id: resolvedClientId,
-        })
+          })
+          initializedClientId = resolvedClientId
+        }
 
         googleId.renderButton(container, {
           locale,

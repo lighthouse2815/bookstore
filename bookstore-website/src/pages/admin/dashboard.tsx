@@ -32,6 +32,7 @@ import {
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
+import { StatePanel } from '@/components/common/page-shell'
 import {
   Select,
   SelectContent,
@@ -137,21 +138,19 @@ export default function AdminDashboard() {
   if (!isLoading && error && !hasData) {
     return (
       <AdminLayout>
-        <div className="flex min-h-full items-center justify-center">
-          <div className="w-full max-w-2xl rounded-[28px] border border-destructive/20 bg-card p-8 text-center shadow-sm">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="h-7 w-7" />
-            </div>
-            <h1 className="mt-5 font-heading text-3xl font-bold text-foreground">
-              {t('common.dashboard')}
-            </h1>
-            <p className="mt-3 text-base text-muted-foreground">{error}</p>
-            <Button className="mt-6" onClick={() => void refresh()}>
+        <StatePanel
+          icon={<AlertTriangle className="h-8 w-8 text-destructive" />}
+          title={t('common.dashboard')}
+          description={error}
+          tone="error"
+          minHeightClassName="min-h-[420px]"
+          action={
+            <Button className="rounded-2xl" onClick={() => void refresh()}>
               <RefreshCw className="h-4 w-4" />
               {copy.retry}
             </Button>
-          </div>
-        </div>
+          }
+        />
       </AdminLayout>
     )
   }
@@ -900,9 +899,7 @@ function StatCard({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[220px] items-center justify-center rounded-[24px] border border-dashed border-border/70 bg-background/50 px-6 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
+    <StatePanel description={message} minHeightClassName="min-h-[220px]" />
   )
 }
 

@@ -31,7 +31,6 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
     Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNull(UUID id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @EntityGraph(attributePaths = "items")
     @Query("""
             select o
             from OrderJpaEntity o

@@ -12,6 +12,15 @@ import { ProtectedRoute } from './protected-route'
 
 const HomePage = lazy(() => import('@/pages/home/home'))
 const BooksPage = lazy(() => import('@/pages/book/books'))
+const BookMatchPage = lazy(() => import('@/pages/book/book-match'))
+const GiftFinderPage = lazy(() => import('@/pages/book/gift-finder'))
+const ShelvesPage = lazy(() => import('@/pages/book/shelves'))
+const ShelfDetailPage = lazy(() => import('@/pages/book/shelf-detail'))
+const ReadingJournalPage = lazy(() => import('@/pages/book/reading-journal'))
+const CouponGamePage = lazy(() => import('@/pages/home/coupon-game'))
+const ReadingChallengePage = lazy(
+  () => import('@/pages/home/reading-challenge'),
+)
 const EbooksPage = lazy(() => import('@/pages/book/ebooks'))
 const BookDetailPage = lazy(() => import('@/pages/book/book-detail'))
 const BookEbookPage = lazy(() => import('@/pages/book/book-ebook'))
@@ -142,6 +151,38 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/book-match"
+          element={
+            <LazyPage>
+              <BookMatchPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/gift-finder"
+          element={
+            <LazyPage>
+              <GiftFinderPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/coupon-game"
+          element={
+            <LazyPage>
+              <CouponGamePage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/reading-challenge"
+          element={
+            <LazyPage>
+              <ReadingChallengePage />
+            </LazyPage>
+          }
+        />
+        <Route
           path="/ebooks"
           element={
             <LazyPage>
@@ -254,6 +295,36 @@ function AppRouteContent() {
             <ProtectedRoute>
               <LazyPage>
                 <WishlistPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shelves"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ShelvesPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shelves/:shelfId"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ShelfDetailPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reading-journal"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ReadingJournalPage />
               </LazyPage>
             </ProtectedRoute>
           }

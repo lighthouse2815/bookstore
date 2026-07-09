@@ -104,7 +104,13 @@ public class BookRepositoryAdapter implements IBookRepository {
                 .sorted()
                 .toList();
 
-        return bookJpaRepository.findAllByIdInForUpdate(sortedBookIds).stream()
+        bookJpaRepository.findIdsByIdInForUpdate(sortedBookIds);
+        Map<UUID, BookJpaEntity> booksById = bookJpaRepository.findAllByIdIn(sortedBookIds).stream()
+                .collect(Collectors.toMap(BookJpaEntity::getId, Function.identity()));
+
+        return sortedBookIds.stream()
+                .map(booksById::get)
+                .filter(Objects::nonNull)
                 .map(bookPersistenceMapper::toDomain)
                 .toList();
     }

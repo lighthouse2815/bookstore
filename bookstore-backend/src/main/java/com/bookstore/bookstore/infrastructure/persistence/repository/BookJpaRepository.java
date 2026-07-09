@@ -60,14 +60,13 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
     List<BookJpaEntity> findAllByDeletedAtIsNullAndIdIn(@Param("bookIds") Collection<UUID> bookIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     @Query("""
-            select distinct b
+            select b.id
             from BookJpaEntity b
             where b.id in :bookIds
             order by b.id
             """)
-    List<BookJpaEntity> findAllByIdInForUpdate(@Param("bookIds") Collection<UUID> bookIds);
+    List<UUID> findIdsByIdInForUpdate(@Param("bookIds") Collection<UUID> bookIds);
     
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
     @Query("""

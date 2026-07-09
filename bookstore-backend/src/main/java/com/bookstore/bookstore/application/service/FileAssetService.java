@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IFileAssetService;
 import com.bookstore.bookstore.application.port.out.IFileAssetRepository;
 import com.bookstore.bookstore.application.port.out.IFileStorage;
+import com.bookstore.bookstore.application.port.out.IFileStorageSettings;
 import com.bookstore.bookstore.application.result.PresignedUploadResult;
 import com.bookstore.bookstore.application.result.StorageObjectMetadataResult;
 import com.bookstore.bookstore.application.result.StoragePresignResult;
@@ -14,7 +15,6 @@ import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileStatus;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.FileAsset;
-import com.bookstore.bookstore.infrastructure.storage.FileStorageProperties;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -44,7 +44,7 @@ public class FileAssetService implements IFileAssetService {
 
     private final IFileAssetRepository fileAssetRepository;
     private final IFileStorage fileStorage;
-    private final FileStorageProperties fileStorageProperties;
+    private final IFileStorageSettings fileStorageSettings;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -63,9 +63,9 @@ public class FileAssetService implements IFileAssetService {
         Instant now = Instant.now();
         FileAsset fileAsset = new FileAsset(
                 UUID.randomUUID(),
-                fileStorageProperties.resolvedProvider(),
+                fileStorageSettings.resolvedProvider(),
                 command.purpose(),
-                fileStorageProperties.bucket().trim(),
+                fileStorageSettings.bucket().trim(),
                 storageKey,
                 buildPublicUrl(command.visibility(), storageKey),
                 normalizeOriginalName(command.fileName()),
@@ -85,7 +85,7 @@ public class FileAssetService implements IFileAssetService {
                 savedFileAsset.getBucket(),
                 savedFileAsset.getStorageKey(),
                 savedFileAsset.getContentType(),
-                Duration.ofMinutes(fileStorageProperties.resolvedPresignUploadExpireMinutes())
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignUploadExpireMinutes())
         );
 
         return new PresignedUploadResult(
@@ -157,7 +157,7 @@ public class FileAssetService implements IFileAssetService {
             );
         }
 
-        if (fileStorageProperties.isConfigured() && fileStorage.objectExists(fileAsset.getBucket(), fileAsset.getStorageKey())) {
+        if (fileStorageSettings.isConfigured() && fileStorage.objectExists(fileAsset.getBucket(), fileAsset.getStorageKey())) {
             fileStorage.deleteObject(fileAsset.getBucket(), fileAsset.getStorageKey());
         }
 
@@ -171,7 +171,7 @@ public class FileAssetService implements IFileAssetService {
     }
 
     private void requireStorageConfigured() {
-        if (!fileStorageProperties.isConfigured()) {
+        if (!fileStorageSettings.isConfigured()) {
             throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_NOT_CONFIGURED);
         }
     }
@@ -225,9 +225,9 @@ public class FileAssetService implements IFileAssetService {
     private void validateSize(FilePurpose purpose, Long sizeBytes) {
         long maxBytes = switch (purpose) {
             case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE ->
-                    fileStorageProperties.resolvedMaxImageSizeMb() * 1024L * 1024L;
+                    fileStorageSettings.resolvedMaxImageSizeMb() * 1024L * 1024L;
             case EBOOK_FILE, SAMPLE_FILE, INVOICE ->
-                    fileStorageProperties.resolvedMaxDigitalFileSizeMb() * 1024L * 1024L;
+                    fileStorageSettings.resolvedMaxDigitalFileSizeMb() * 1024L * 1024L;
         };
 
         if (sizeBytes == null || sizeBytes <= 0 || sizeBytes > maxBytes) {
@@ -335,7 +335,7 @@ public class FileAssetService implements IFileAssetService {
             return null;
         }
 
-        String publicBaseUrl = fileStorageProperties.normalizedPublicBaseUrl();
+        String publicBaseUrl = fileStorageSettings.normalizedPublicBaseUrl();
         if (publicBaseUrl == null) {
             return null;
         }

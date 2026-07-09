@@ -133,6 +133,15 @@ export const messages = {
       categoriesTitle: 'Khám phá theo thể loại',
       categoriesCount: '{count} thể loại để bạn khám phá',
       allCategories: 'Xem tất cả thể loại',
+      catalogLoadingTitle: 'Đang tải kệ sách trang chủ',
+      catalogLoadingDescription:
+        'Phần khung trang vẫn sẵn sàng trong lúc dữ liệu sách đang được tải.',
+      catalogBooksErrorTitle: 'Chưa tải được danh sách sách',
+      catalogBooksErrorDescription:
+        'Hero và các mục khám phá vẫn hoạt động. Các kệ sách sẽ tự hiển thị lại khi catalog phản hồi.',
+      catalogCategoriesErrorTitle: 'Chưa tải được thể loại',
+      catalogCategoriesErrorDescription:
+        'Danh sách thể loại sẽ xuất hiện lại khi kết nối catalog ổn định.',
       featuredTitle: 'Sách nổi bật',
       emptyTitle: 'Chưa có sách nào trong hệ thống',
       emptyDescription:
@@ -142,6 +151,75 @@ export const messages = {
         'Áp dụng cho toàn bộ sách kỹ năng sống và tiểu thuyết. Số lượng có hạn, nhanh tay sở hữu ngay hôm nay!',
       promoButton: 'Săn deal ngay',
       bestsellersTitle: 'Bán chạy nhất',
+      bookMatch: {
+        badge: 'BookMatch',
+        title: 'Không biết đọc gì hôm nay?',
+        description:
+          'Làm quiz 3 bước để hệ thống ghép mood, ngân sách và thời lượng đọc thành một list sách hợp vibe ngay trên storefront.',
+        button: 'Mở quiz gợi ý',
+        stepCount: '3 bước siêu nhanh',
+      },
+      couponGame: {
+        badge: 'Mini game hôm nay',
+        title: 'Săn mã giảm giá hôm nay',
+        description:
+          'Quay vòng may mắn để lấy một mã coupon public đang hoạt động. Mã chỉ hiển thị để bạn copy và nhập thủ công ở giỏ hàng hoặc checkout.',
+        button: 'Mở vòng quay',
+        dailyLimit: '1 lượt mỗi ngày',
+      },
+    },
+    couponGamePage: {
+      badge: 'Vui nhẹ nhưng có quà',
+      title: 'Vòng quay may mắn săn coupon',
+      description:
+        'Mỗi ngày bạn có một lượt quay để nhận ngẫu nhiên một coupon public đang active trên storefront. MVP này không tự áp mã, không đụng usedCount, chỉ giúp bạn săn và copy nhanh.',
+      limitChip: 'Giới hạn',
+      dailyLimit: '1 lần / ngày',
+      poolChip: 'Pool active',
+      poolCount: '{count} mã sẵn sàng',
+      manualChip: 'Cách dùng',
+      manualOnly: 'Copy và nhập thủ công',
+      wheelBadge: 'Lucky Spin',
+      spinHint:
+        'Bấm quay để hệ thống chọn một coupon active với chút ưu tiên cho ưu đãi lớn hơn, nhưng vẫn đủ random để vui.',
+      spinButton: 'Quay ngay',
+      spinLoading: 'Đang quay...',
+      playedButton: 'Đã quay hôm nay',
+      alreadyPlayedTitle: 'Bạn đã chơi hôm nay',
+      alreadyPlayedDescription:
+        'Kết quả hôm nay đã được giữ lại bên phải. Quay lại ngày mai để săn tiếp một mã khác.',
+      resultTitle: 'Mã bạn có thể săn được',
+      resultPlaceholder: 'Chưa mở quà',
+      resultWaiting:
+        'Khi quay xong, mã coupon, mô tả giảm giá, hạn dùng và nút copy sẽ hiện ở đây.',
+      todayResultBadge: 'Mã hôm nay',
+      resultSaved: 'Kết quả giữ đến',
+      copyButton: 'Sao chép mã',
+      copySuccess: 'Đã sao chép mã coupon.',
+      copyError:
+        'Không thể sao chép tự động. Hãy sao chép thủ công mã coupon phía trên.',
+      openCart: 'Đi tới giỏ hàng',
+      backHome: 'Về trang chủ',
+      viewBooks: 'Xem thêm sách',
+      manualApplyHint:
+        'Mã này chưa được áp tự động vào giỏ hàng. Hãy dán thủ công vào flow coupon hiện có ở giỏ hàng hoặc checkout.',
+      typeBook: 'Dùng cho sách',
+      typeShipping: 'Dùng cho phí vận chuyển',
+      minOrderLabel: 'Đơn tối thiểu',
+      maxDiscountLabel: 'Giảm tối đa',
+      expiresLabel: 'Hạn dùng',
+      noExpiry: 'Không giới hạn thời gian',
+      noDescription:
+        'Coupon này không có mô tả thêm, nhưng bạn vẫn có thể copy mã và thử áp dụng theo flow hiện có.',
+      emptyTitle: 'Hôm nay chưa có coupon active để quay',
+      emptyDescription:
+        'Khi storefront có coupon public hợp lệ, vòng quay sẽ sáng đèn trở lại. Bạn có thể quay lại sau mà không cần làm gì thêm.',
+      errorTitle: 'Tạm thời chưa tải được vòng quay',
+      errorDescription:
+        'Không lấy được danh sách coupon active từ hệ thống lúc này. Vui lòng thử lại sau.',
+      discountPercent: 'Giảm {value}%',
+      discountFixed: 'Giảm {amount}',
+      wheelCenter: 'LUCKY',
     },
     auth: {
       login: {
@@ -487,6 +565,124 @@ export const messages = {
           purchaseDisabled: 'T\u1ea1m th\u1eddi kh\u00f4ng b\u00e1n',
           purchaseUnavailable: 'Kh\u00f4ng h\u1ed7 tr\u1ee3 mua',
           sampleAvailable: 'C\u00f3 b\u1ea3n m\u1eabu',
+        },
+      },
+      match: {
+        heroBadge: 'BookMatch',
+        title: 'Quiz “Hôm nay đọc gì?”',
+        description:
+          'Chọn mood, ngân sách và thời lượng đọc. Hệ thống sẽ ghép rule-based để gợi ý ngay các cuốn sách hợp hôm nay nhất.',
+        progressTitle: 'Tiến độ quiz',
+        progressReady: 'Sẵn sàng gợi ý',
+        progressStep: 'Bước {current}/3',
+        sidebarTitle: 'Phiên gợi ý hôm nay',
+        sidebarDescription:
+          'Khi đủ 3 lựa chọn, BookMatch sẽ trả về khoảng {count} cuốn sách để bạn demo ngay.',
+        submit: 'Gợi ý sách cho tôi',
+        submitLoading: 'Đang ghép mood...',
+        reset: 'Làm lại quiz',
+        resultsTitle: 'Kết quả BookMatch',
+        resultsDescription:
+          'Danh sách này ưu tiên mood, khớp ngân sách, độ dày sách rồi mới cộng thêm rating và độ phổ biến.',
+        resultsCount: '{count} cuốn đang hợp vibe',
+        errorTitle: 'Chưa gợi ý được sách',
+        errorRetry: 'Thử lại',
+        catalogEmptyTitle: 'Kệ sách đang nghỉ giải lao',
+        catalogEmptyDescription:
+          'Backend hiện chưa có dữ liệu sách để BookMatch trộn mood cho bạn.',
+        emptyTitle: 'Hôm nay kho sách hơi khó chiều rồi',
+        emptyDescription:
+          'Chưa có enough match cho lựa chọn này. Thử mood khác hoặc nới ngân sách một chút nhé.',
+        summary: {
+          mood: 'Mood',
+          budget: 'Ngân sách',
+          readingTime: 'Thời lượng',
+          pending: 'Chưa chọn',
+        },
+        steps: {
+          moodLabel: 'Mood',
+          budgetLabel: 'Ngân sách',
+          readingTimeLabel: 'Thời lượng',
+          moodTitle: 'Bạn muốn đọc theo mood nào?',
+          moodDescription:
+            'Chọn vibe chính để BookMatch ưu tiên thể loại và keyword phù hợp.',
+          budgetTitle: 'Hôm nay bạn muốn chi khoảng bao nhiêu?',
+          budgetDescription:
+            'Giá sách sẽ được ưu tiên theo đúng khoảng ngân sách bạn chọn.',
+          readingTimeTitle: 'Bạn muốn đọc dày hay mỏng?',
+          readingTimeDescription:
+            'BookMatch dùng số trang hiện có để ưu tiên sách ngắn, vừa hoặc dài.',
+        },
+        moods: {
+          RELAX: {
+            label: 'RELAX · Muốn thư giãn',
+            description:
+              'Văn học, truyện ngắn, đời sống nhẹ nhàng để đọc chill.',
+          },
+          STUDY: {
+            label: 'STUDY · Muốn học tập',
+            description:
+              'Kỹ năng, ngoại ngữ, kinh doanh và các cuốn giúp bạn lên level.',
+          },
+          ADVENTURE: {
+            label: 'ADVENTURE · Muốn phiêu lưu',
+            description:
+              'Fantasy, hành trình, lịch sử và cảm giác muốn đi thật xa.',
+          },
+          MYSTERY: {
+            label: 'MYSTERY · Muốn bí ẩn',
+            description:
+              'Trinh thám, kinh dị, bí mật và các cú twist giữ bạn đọc tiếp.',
+          },
+          HEALING: {
+            label: 'HEALING · Muốn chữa lành',
+            description:
+              'Self-help, tâm lý, chữa lành và năng lượng dịu hơn một chút.',
+          },
+        },
+        budgets: {
+          UNDER_100: {
+            label: 'Dưới 100.000đ',
+            description:
+              'Ưu tiên các cuốn giá mềm để chốt nhanh, ít đắn đo.',
+          },
+          FROM_100_TO_200: {
+            label: 'Từ 100.000đ đến 200.000đ',
+            description:
+              'Khoảng ngân sách cân bằng nhất cho phần lớn đầu sách phổ biến.',
+          },
+          ABOVE_200: {
+            label: 'Trên 200.000đ',
+            description:
+              'Mở rộng sang các cuốn dày, bản đẹp hoặc đầu sách premium hơn.',
+          },
+        },
+        readingTimes: {
+          SHORT: {
+            label: 'SHORT · Đọc nhanh',
+            description:
+              'Ưu tiên sách khoảng 220 trang trở xuống cho một nhịp đọc nhẹ.',
+          },
+          MEDIUM: {
+            label: 'MEDIUM · Vừa phải',
+            description:
+              'Ưu tiên sách khoảng 221-380 trang, đủ đã mà không quá dài.',
+          },
+          LONG: {
+            label: 'LONG · Đọc lâu dài',
+            description:
+              'Ưu tiên sách từ 381 trang trở lên cho một hành trình đọc sâu.',
+          },
+        },
+        weakDataHint:
+          'Má»™t sá»‘ sĂ¡ch chÆ°a cĂ³ sá»‘ trang nĂªn káº¿t quáº£ cĂ³ thá»ƒ dá»±a nhiá»u hÆ¡n vĂ o Ä‘Ă¡nh giĂ¡ vĂ  Ä‘á»™ phá»• biáº¿n.',
+        reasons: {
+          MOOD: 'Đúng mood bạn chọn',
+          BUDGET: 'Khớp ngân sách',
+          READING_TIME: 'Vừa độ dày mong muốn',
+          HIGH_RATING: 'Đánh giá tốt',
+          POPULAR_PICK: 'Nhiều người chọn',
+          FRESH_PICK: 'Sách mới lên kệ',
         },
       },
     },
@@ -1588,6 +1784,15 @@ export const messages = {
       categoriesTitle: 'Browse by category',
       categoriesCount: '{count} categories to explore',
       allCategories: 'View all categories',
+      catalogLoadingTitle: 'Loading the home catalog',
+      catalogLoadingDescription:
+        'The page shell stays available while the catalog data is loading.',
+      catalogBooksErrorTitle: 'Could not load books right now',
+      catalogBooksErrorDescription:
+        'The hero and discovery blocks still work. Book shelves will reappear when the catalog responds again.',
+      catalogCategoriesErrorTitle: 'Could not load categories right now',
+      catalogCategoriesErrorDescription:
+        'The category list will return when the catalog connection recovers.',
       featuredTitle: 'Featured books',
       emptyTitle: 'No books are available yet',
       emptyDescription:
@@ -1597,6 +1802,75 @@ export const messages = {
         'Applies to all life skills and novel titles. Limited quantity, grab the deal today.',
       promoButton: 'Grab the deal',
       bestsellersTitle: 'Bestsellers',
+      bookMatch: {
+        badge: 'BookMatch',
+        title: 'Not sure what to read today?',
+        description:
+          'Take a quick 3-step quiz and let the storefront match your mood, budget, and reading time into a playful recommendation list.',
+        button: 'Open the quiz',
+        stepCount: '3 quick steps',
+      },
+      couponGame: {
+        badge: 'Today’s mini game',
+        title: 'Hunt today’s coupon',
+        description:
+          'Spin the wheel to reveal one active public coupon. The code is shown for manual copy and use in the existing cart or checkout flow.',
+        button: 'Open the wheel',
+        dailyLimit: '1 spin per day',
+      },
+    },
+    couponGamePage: {
+      badge: 'A light daily treat',
+      title: 'Lucky wheel coupon hunt',
+      description:
+        'You get one spin per day to reveal a random active public coupon from the storefront. This MVP does not auto-apply codes, does not touch usedCount, and simply helps users discover and copy a deal.',
+      limitChip: 'Limit',
+      dailyLimit: '1 time / day',
+      poolChip: 'Active pool',
+      poolCount: '{count} codes ready',
+      manualChip: 'Usage',
+      manualOnly: 'Copy and apply manually',
+      wheelBadge: 'Lucky Spin',
+      spinHint:
+        'Tap spin and the app will pick one active coupon with a slight bias toward bigger discounts, while keeping the result fun and random.',
+      spinButton: 'Spin now',
+      spinLoading: 'Spinning...',
+      playedButton: 'Already played today',
+      alreadyPlayedTitle: 'You already played today',
+      alreadyPlayedDescription:
+        'Today’s result is kept on the right. Come back tomorrow for another coupon hunt.',
+      resultTitle: 'Coupon reveal',
+      resultPlaceholder: 'Gift not opened yet',
+      resultWaiting:
+        'After the spin, the coupon code, discount summary, expiry, and copy button will appear here.',
+      todayResultBadge: 'Today’s code',
+      resultSaved: 'Saved until',
+      copyButton: 'Copy code',
+      copySuccess: 'Coupon code copied.',
+      copyError:
+        'Automatic copy failed. Please copy the coupon code manually from above.',
+      openCart: 'Go to cart',
+      backHome: 'Back to home',
+      viewBooks: 'Browse books',
+      manualApplyHint:
+        'This coupon is not auto-applied to the cart. Paste it manually into the existing coupon flow in cart or checkout.',
+      typeBook: 'For books',
+      typeShipping: 'For shipping',
+      minOrderLabel: 'Minimum order',
+      maxDiscountLabel: 'Max discount',
+      expiresLabel: 'Expires on',
+      noExpiry: 'No time limit',
+      noDescription:
+        'This coupon does not have an extra description, but you can still copy the code and try it in the existing flow.',
+      emptyTitle: 'No active coupon is available to spin today',
+      emptyDescription:
+        'Once the storefront has a valid public coupon again, the wheel will light back up. You can simply come back later.',
+      errorTitle: 'The wheel is unavailable right now',
+      errorDescription:
+        'The app could not load the active coupon list at the moment. Please try again later.',
+      discountPercent: '{value}% off',
+      discountFixed: '{amount} off',
+      wheelCenter: 'LUCKY',
     },
     auth: {
       login: {
@@ -1937,6 +2211,124 @@ export const messages = {
           purchaseDisabled: 'Currently unavailable',
           purchaseUnavailable: 'Cannot purchase',
           sampleAvailable: 'Sample available',
+        },
+      },
+      match: {
+        heroBadge: 'BookMatch',
+        title: '“What should I read today?” quiz',
+        description:
+          'Pick your mood, budget, and reading time. The storefront will use simple rules to build a fun recommendation shelf for today.',
+        progressTitle: 'Quiz progress',
+        progressReady: 'Ready to recommend',
+        progressStep: 'Step {current}/3',
+        sidebarTitle: 'Today’s recommendation run',
+        sidebarDescription:
+          'Once all 3 choices are set, BookMatch returns around {count} books that are easy to demo right away.',
+        submit: 'Recommend books for me',
+        submitLoading: 'Matching your mood...',
+        reset: 'Start over',
+        resultsTitle: 'BookMatch results',
+        resultsDescription:
+          'These picks prioritize mood fit, price range, and reading length first, then use rating and popularity as tie-breakers.',
+        resultsCount: '{count} books fit today’s vibe',
+        errorTitle: 'Unable to suggest books',
+        errorRetry: 'Try again',
+        catalogEmptyTitle: 'The shelf is taking a break',
+        catalogEmptyDescription:
+          'The backend does not have book data yet, so BookMatch has nothing to blend for you.',
+        emptyTitle: 'Today’s shelf is being picky',
+        emptyDescription:
+          'This combination does not have enough good matches yet. Try another mood or loosen the budget a bit.',
+        summary: {
+          mood: 'Mood',
+          budget: 'Budget',
+          readingTime: 'Reading time',
+          pending: 'Not selected',
+        },
+        steps: {
+          moodLabel: 'Mood',
+          budgetLabel: 'Budget',
+          readingTimeLabel: 'Reading time',
+          moodTitle: 'Which mood are you reading in?',
+          moodDescription:
+            'This helps BookMatch prefer the most relevant categories and keywords.',
+          budgetTitle: 'How much do you want to spend today?',
+          budgetDescription:
+            'Prices are prioritized to stay inside the budget band you picked.',
+          readingTimeTitle: 'How long do you want the read to feel?',
+          readingTimeDescription:
+            'BookMatch uses the current page-count data to prefer short, medium, or long reads.',
+        },
+        moods: {
+          RELAX: {
+            label: 'RELAX · Unwind',
+            description:
+              'Literary, slice-of-life, and shorter comforting reads for a chill session.',
+          },
+          STUDY: {
+            label: 'STUDY · Learn something',
+            description:
+              'Skills, language, business, and books that help you level up.',
+          },
+          ADVENTURE: {
+            label: 'ADVENTURE · Explore',
+            description:
+              'Fantasy, journeys, history, and books that feel like going far away.',
+          },
+          MYSTERY: {
+            label: 'MYSTERY · Stay curious',
+            description:
+              'Detective, horror, secretive stories, and page-turning twists.',
+          },
+          HEALING: {
+            label: 'HEALING · Feel softer',
+            description:
+              'Self-help, psychology, healing, and gentler emotional energy.',
+          },
+        },
+        budgets: {
+          UNDER_100: {
+            label: 'Under 100,000 VND',
+            description:
+              'Soft-price picks that are easy to grab without overthinking.',
+          },
+          FROM_100_TO_200: {
+            label: '100,000 VND to 200,000 VND',
+            description:
+              'The most balanced budget range for many popular titles.',
+          },
+          ABOVE_200: {
+            label: 'Above 200,000 VND',
+            description:
+              'Broader picks for thicker books, nicer editions, or premium titles.',
+          },
+        },
+        readingTimes: {
+          SHORT: {
+            label: 'SHORT · Quick read',
+            description:
+              'Prioritizes books with around 220 pages or fewer.',
+          },
+          MEDIUM: {
+            label: 'MEDIUM · Balanced read',
+            description:
+              'Prioritizes books around 221-380 pages for a satisfying middle ground.',
+          },
+          LONG: {
+            label: 'LONG · Deep dive',
+            description:
+              'Prioritizes books with 381 pages or more for a longer reading trip.',
+          },
+        },
+        weakDataHint:
+          'Some books do not have page-count data yet, so the ranking may lean more on ratings and popularity.',
+        reasons: {
+          MOOD: 'Matches your mood',
+          BUDGET: 'Fits the budget',
+          READING_TIME: 'Fits the reading length',
+          HIGH_RATING: 'Strong rating',
+          POPULAR_PICK: 'Popular choice',
+          FRESH_PICK: 'Recently added',
         },
       },
     },
@@ -3762,6 +4154,682 @@ Object.assign(messages.en.home as Record<string, unknown>, {
     'Books you opened recently are stored here for quick access.',
 })
 
+Object.assign(messages.vi.home as Record<string, unknown>, {
+  funDiscovery: {
+    title: 'Khám phá vui',
+    subtitle: 'Một vài cách nhẹ nhàng để tìm sách và săn ưu đãi hôm nay.',
+    bookMatchTitle: 'Hôm nay đọc gì?',
+    bookMatchDescription: 'Trả lời vài câu hỏi để tìm sách hợp mood.',
+    bookMatchCta: 'Mở quiz',
+    couponGameTitle: 'Vòng quay săn mã',
+    couponGameDescription: 'Quay mỗi ngày một lần để nhận mã giảm giá.',
+    couponGameCta: 'Săn mã',
+    recentTitle: 'Sách bạn vừa xem',
+    recentDescription: 'Mở lại nhanh 3 tựa gần nhất và tiếp tục nơi bạn dừng.',
+    recentItemLabel: 'Vừa xem',
+    recentCta: 'Xem tiếp',
+    recentEmptyTitle: 'Chưa có sách nào ở đây',
+    recentEmptyDescription:
+      'Khi bạn mở trang chi tiết sách, danh sách xem gần đây sẽ hiện ra.',
+    recentEmptyCta: 'Khám phá sách',
+    wishlistTitle: 'Danh sách yêu thích',
+    wishlistDescription: 'Quay lại những cuốn bạn đã lưu.',
+    wishlistCta: 'Mở wishlist',
+  },
+})
+
+Object.assign(messages.en.home as Record<string, unknown>, {
+  funDiscovery: {
+    title: 'Fun discovery',
+    subtitle: 'A few light ways to find books and hunt offers today.',
+    bookMatchTitle: 'What should I read today?',
+    bookMatchDescription: 'Answer a few quick questions to match the right mood.',
+    bookMatchCta: 'Open quiz',
+    couponGameTitle: 'Coupon spin',
+    couponGameDescription: 'Spin once a day to reveal a discount code.',
+    couponGameCta: 'Hunt deals',
+    recentTitle: 'Books you just viewed',
+    recentDescription: 'Jump back into the latest three titles you opened.',
+    recentItemLabel: 'Just viewed',
+    recentCta: 'Continue reading',
+    recentEmptyTitle: 'Nothing here yet',
+    recentEmptyDescription:
+      'Open a book detail page and your recent list will appear here.',
+    recentEmptyCta: 'Browse books',
+    wishlistTitle: 'Wishlist',
+    wishlistDescription: 'Return to the books you already saved.',
+    wishlistCta: 'Open wishlist',
+  },
+})
+
+Object.assign(messages.vi.home.funDiscovery as Record<string, string>, {
+  giftFinderBadge: '4 bước tặng quà',
+  giftFinderTitle: 'Tìm sách làm quà',
+  giftFinderDescription:
+    'Chọn người nhận, dịp tặng, ngân sách và vibe để nhận ngay 6-8 gợi ý sách còn hàng.',
+  giftFinderCta: 'Mở Gift Finder',
+  readingChallengeBadge: 'Reading Challenge',
+  readingChallengeTitle: 'Giữ nhịp đọc mỗi ngày',
+  readingChallengeDescription:
+    'Tạo thử thách cá nhân, tăng tiến độ bằng từng cuốn đã đọc và giữ mọi thứ ngay trên trình duyệt của bạn.',
+  readingChallengeCta: 'Tạo challenge',
+  readingChallengeHint: 'Frontend-only MVP, lưu bằng localStorage.',
+  readingChallengeProgress: '{completed}/{target} cuốn',
+  readingChallengeActiveDescription:
+    'Trạng thái {status}, đã đi được {progress}. Mở lại để cập nhật tiến độ hoặc chỉnh deadline.',
+  readingChallengeActiveCta: 'Tiếp tục thử thách',
+  readingChallengeActiveHint: 'Có thể +1, -1, chỉnh sửa hoặc xóa challenge.',
+})
+
+Object.assign(messages.en.home.funDiscovery as Record<string, string>, {
+  giftFinderBadge: '4 quick gift picks',
+  giftFinderTitle: 'Find a book gift',
+  giftFinderDescription:
+    'Pick the recipient, occasion, budget, and vibe to reveal 6-8 in-stock gift ideas instantly.',
+  giftFinderCta: 'Open Gift Finder',
+  readingChallengeBadge: 'Reading Challenge',
+  readingChallengeTitle: 'Keep your reading streak alive',
+  readingChallengeDescription:
+    'Create a personal challenge, move the bar book by book, and keep everything in your browser only.',
+  readingChallengeCta: 'Create challenge',
+  readingChallengeHint: 'Frontend-only MVP powered by localStorage.',
+  readingChallengeProgress: '{completed}/{target} books',
+  readingChallengeActiveDescription:
+    'Status: {status}. You are already {progress} in. Open it again to update progress or change the deadline.',
+  readingChallengeActiveCta: 'Continue challenge',
+  readingChallengeActiveHint:
+    'You can add +1, subtract -1, edit, or delete the challenge.',
+})
+
+Object.assign(messages.vi.book as Record<string, unknown>, {
+  giftFinder: {
+    heroBadge: 'Gift Finder',
+    title: 'Tìm sách làm quà không cần đoán mò',
+    description:
+      'Chọn người nhận, dịp tặng, ngân sách và tone quà. Gift Finder sẽ lọc ngay từ catalog hiện có để trả về các cuốn phù hợp để tặng hôm nay.',
+    progressTitle: 'Tiến độ chọn quà',
+    progressReady: 'Sẵn sàng gợi ý',
+    progressStep: 'Bước {current}/4',
+    sidebarTitle: 'Phiên chọn quà',
+    sidebarDescription:
+      'Hoàn thành đủ 4 bước để nhận danh sách 6-8 cuốn sách còn hàng, kèm lý do vì sao hợp để tặng.',
+    submit: 'Tìm sách phù hợp',
+    submitLoading: 'Đang chọn sách...',
+    reset: 'Làm lại',
+    resultsTitle: 'Gợi ý quà tặng',
+    resultsDescription:
+      'Các gợi ý ưu tiên độ khớp người nhận, dịp tặng, tone và ngân sách trước, rồi mới dùng rating cùng độ phổ biến để sắp thứ tự.',
+    resultsCount: '{count} cuốn đang hợp nhất',
+    errorTitle: 'Chưa tìm được gợi ý quà',
+    errorRetry: 'Thử lại',
+    catalogEmptyTitle: 'Kệ quà đang trống dữ liệu',
+    catalogEmptyDescription:
+      'Catalog hiện chưa có sách để Gift Finder ghép gợi ý cho bạn.',
+    emptyTitle: 'Chưa có cuốn nào thật sự khớp',
+    emptyDescription:
+      'Thử đổi một lựa chọn hoặc nới ngân sách để hệ thống mở rộng danh sách gợi ý.',
+    summary: {
+      recipient: 'Người nhận',
+      occasion: 'Dịp tặng',
+      budget: 'Ngân sách',
+      tone: 'Tone quà',
+      pending: 'Chưa chọn',
+    },
+    steps: {
+      recipientLabel: 'Người nhận',
+      occasionLabel: 'Dịp tặng',
+      budgetLabel: 'Ngân sách',
+      toneLabel: 'Tone quà',
+      recipientTitle: 'Bạn đang tìm quà cho ai?',
+      recipientDescription:
+        'Gift Finder sẽ ưu tiên nhóm sách và từ khóa hợp với người bạn muốn tặng.',
+      occasionTitle: 'Bạn muốn tặng vào dịp nào?',
+      occasionDescription:
+        'Mỗi dịp tặng sẽ kéo danh sách theo cảm xúc và mức độ trang trọng khác nhau.',
+      budgetTitle: 'Khoảng ngân sách bạn muốn chi là bao nhiêu?',
+      budgetDescription:
+        'Giá sách sẽ được ưu tiên nằm gần đúng khoảng ngân sách bạn đã chọn.',
+      toneTitle: 'Bạn muốn món quà mang cảm giác gì?',
+      toneDescription:
+        'Tone quà giúp hệ thống đẩy lên những cuốn có vibe ấm áp, truyền cảm hứng hay thực tế hơn.',
+    },
+    recipients: {
+      BEST_FRIEND: {
+        label: 'Bạn thân',
+        description:
+          'Nhẹ nhàng, hợp gu, đủ cá tính để tạo cảm giác “mình hiểu bạn”.',
+      },
+      PARTNER: {
+        label: 'Người thương',
+        description:
+          'Ưu tiên những cuốn giàu cảm xúc, tinh tế và có thể khiến buổi tặng quà đáng nhớ hơn.',
+      },
+      PARENT: {
+        label: 'Ba mẹ / người thân lớn',
+        description:
+          'Nghiêng về giá trị sống, chữa lành, kỹ năng và những cuốn dễ đọc, dễ tặng.',
+      },
+      COLLEAGUE: {
+        label: 'Đồng nghiệp',
+        description:
+          'Gọn gàng, lịch sự, thực tế và phù hợp cho môi trường công việc.',
+      },
+      YOUNG_READER: {
+        label: 'Bạn đọc trẻ',
+        description:
+          'Năng lượng mới, dễ hứng thú, thiên về khám phá và học hỏi.',
+      },
+    },
+    occasions: {
+      BIRTHDAY: {
+        label: 'Sinh nhật',
+        description:
+          'Một món quà dễ tạo bất ngờ và mang cảm giác được chọn riêng.',
+      },
+      THANK_YOU: {
+        label: 'Cảm ơn',
+        description:
+          'Ưu tiên những cuốn mềm mại, tinh tế và có sắc thái tri ân.',
+      },
+      CELEBRATION: {
+        label: 'Chúc mừng',
+        description:
+          'Phù hợp với cột mốc mới, thành tựu mới hoặc một bước chuyển tích cực.',
+      },
+      ENCOURAGEMENT: {
+        label: 'Động viên',
+        description:
+          'Nghiêng về chữa lành, bồi đắp tinh thần và tạo thêm động lực.',
+      },
+    },
+    budgets: {
+      UNDER_150: {
+        label: 'Dưới 150.000đ',
+        description:
+          'Nhóm quà gọn nhẹ, dễ tặng nhanh mà vẫn đủ tinh tế.',
+      },
+      FROM_150_TO_300: {
+        label: '150.000đ - 300.000đ',
+        description:
+          'Khoảng ngân sách cân bằng nhất cho nhiều tựa phổ biến trên storefront.',
+      },
+      ABOVE_300: {
+        label: 'Trên 300.000đ',
+        description:
+          'Ưu tiên những cuốn dày dặn hơn hoặc có cảm giác quà tặng đậm hơn.',
+      },
+    },
+    tones: {
+      COZY: {
+        label: 'Ấm áp',
+        description:
+          'Một món quà mềm, gần gũi, đọc vào thấy nhẹ đầu và dễ chịu.',
+      },
+      INSPIRING: {
+        label: 'Truyền cảm hứng',
+        description:
+          'Thiên về động lực, cảm hứng sống và cảm giác được tiếp thêm năng lượng.',
+      },
+      PRACTICAL: {
+        label: 'Thực tế',
+        description:
+          'Tập trung vào giá trị ứng dụng, kỹ năng và điều có thể dùng được ngay.',
+      },
+      ESCAPIST: {
+        label: 'Thoát vai thường ngày',
+        description:
+          'Cho người muốn được cuốn vào một hành trình, thế giới hoặc câu chuyện khác.',
+      },
+    },
+    actions: {
+      viewDetail: 'Xem chi tiết',
+      addToWishlist: 'Lưu wishlist',
+      removeFromWishlist: 'Bỏ khỏi wishlist',
+      addToCart: 'Thêm vào giỏ',
+    },
+    reasons: {
+      RECIPIENT: 'Hợp người nhận',
+      OCCASION: 'Hợp dịp tặng',
+      BUDGET: 'Đúng tầm ngân sách',
+      TONE: 'Đúng tone quà',
+      HIGH_RATING: 'Được đánh giá tốt',
+      POPULAR_PICK: 'Được chọn nhiều',
+      GIFTABLE_PICK: 'Dễ tặng, độ dày vừa đẹp',
+    },
+  },
+})
+
+Object.assign(messages.en.book as Record<string, unknown>, {
+  giftFinder: {
+    heroBadge: 'Gift Finder',
+    title: 'Find a book gift without guessing',
+    description:
+      'Pick the recipient, occasion, budget, and gift tone. Gift Finder uses the live catalog to return the most giftable picks for today.',
+    progressTitle: 'Gift progress',
+    progressReady: 'Ready to recommend',
+    progressStep: 'Step {current}/4',
+    sidebarTitle: 'Gift session',
+    sidebarDescription:
+      'Finish all 4 steps to reveal 6-8 in-stock books, plus clear reasons why each one fits.',
+    submit: 'Find matching books',
+    submitLoading: 'Picking books...',
+    reset: 'Start over',
+    resultsTitle: 'Gift suggestions',
+    resultsDescription:
+      'These picks prioritize recipient fit, gifting occasion, tone, and budget first, then use rating and popularity as tie-breakers.',
+    resultsCount: '{count} books fit best right now',
+    errorTitle: 'Unable to build gift suggestions',
+    errorRetry: 'Try again',
+    catalogEmptyTitle: 'The gift shelf is empty',
+    catalogEmptyDescription:
+      'The catalog does not have book data available for Gift Finder right now.',
+    emptyTitle: 'Nothing is a strong match yet',
+    emptyDescription:
+      'Try changing one answer or widening the budget to open up more gift options.',
+    summary: {
+      recipient: 'Recipient',
+      occasion: 'Occasion',
+      budget: 'Budget',
+      tone: 'Gift tone',
+      pending: 'Not selected',
+    },
+    steps: {
+      recipientLabel: 'Recipient',
+      occasionLabel: 'Occasion',
+      budgetLabel: 'Budget',
+      toneLabel: 'Gift tone',
+      recipientTitle: 'Who are you buying for?',
+      recipientDescription:
+        'Gift Finder will prefer categories and keywords that fit this person best.',
+      occasionTitle: 'What is the gifting moment?',
+      occasionDescription:
+        'Different occasions shift the shelf toward different emotional tones and levels of formality.',
+      budgetTitle: 'How much do you want to spend?',
+      budgetDescription:
+        'Book prices are pushed toward the budget band you choose here.',
+      toneTitle: 'What feeling should the gift carry?',
+      toneDescription:
+        'The tone helps the ranking lean warm, inspiring, practical, or more immersive.',
+    },
+    recipients: {
+      BEST_FRIEND: {
+        label: 'Best friend',
+        description:
+          'Warm, personal, and a little specific so the gift feels chosen on purpose.',
+      },
+      PARTNER: {
+        label: 'Partner',
+        description:
+          'More emotional, intimate, and polished picks that feel memorable to give.',
+      },
+      PARENT: {
+        label: 'Parent or elder family member',
+        description:
+          'Leans toward life value, healing, skills, and books that are easy to give and easy to read.',
+      },
+      COLLEAGUE: {
+        label: 'Colleague',
+        description:
+          'Clean, polite, practical options that still feel thoughtful in a work setting.',
+      },
+      YOUNG_READER: {
+        label: 'Young reader',
+        description:
+          'Fresh energy, easier curiosity hooks, and more room for discovery.',
+      },
+    },
+    occasions: {
+      BIRTHDAY: {
+        label: 'Birthday',
+        description:
+          'A pick that can feel personal, fun, and easy to wrap into a small surprise.',
+      },
+      THANK_YOU: {
+        label: 'Thank you',
+        description:
+          'Softer and more graceful picks with a clear sense of appreciation.',
+      },
+      CELEBRATION: {
+        label: 'Celebration',
+        description:
+          'Built for milestones, wins, and positive turning points.',
+      },
+      ENCOURAGEMENT: {
+        label: 'Encouragement',
+        description:
+          'More healing, restorative, and motivating choices.',
+      },
+    },
+    budgets: {
+      UNDER_150: {
+        label: 'Under 150,000 VND',
+        description:
+          'Lightweight gift territory that still feels thoughtful and polished.',
+      },
+      FROM_150_TO_300: {
+        label: '150,000 VND to 300,000 VND',
+        description:
+          'The most balanced range for many proven storefront titles.',
+      },
+      ABOVE_300: {
+        label: 'Above 300,000 VND',
+        description:
+          'Favors larger, weightier, or more premium-feeling gift picks.',
+      },
+    },
+    tones: {
+      COZY: {
+        label: 'Cozy',
+        description:
+          'Soft, close, and comforting energy that feels easy to give.',
+      },
+      INSPIRING: {
+        label: 'Inspiring',
+        description:
+          'Motivation, life energy, and books that leave the reader uplifted.',
+      },
+      PRACTICAL: {
+        label: 'Practical',
+        description:
+          'Focused on immediate use, skill-building, and direct value.',
+      },
+      ESCAPIST: {
+        label: 'Escapist',
+        description:
+          'For readers who want to disappear into a story or another world for a while.',
+      },
+    },
+    actions: {
+      viewDetail: 'View detail',
+      addToWishlist: 'Save to wishlist',
+      removeFromWishlist: 'Remove from wishlist',
+      addToCart: 'Add to cart',
+    },
+    reasons: {
+      RECIPIENT: 'Fits the recipient',
+      OCCASION: 'Fits the occasion',
+      BUDGET: 'Matches the budget',
+      TONE: 'Matches the tone',
+      HIGH_RATING: 'Strong rating',
+      POPULAR_PICK: 'Popular pick',
+      GIFTABLE_PICK: 'Nice giftable length',
+    },
+  },
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  commandPalette: {
+    openButton: 'Lệnh nhanh',
+    shortcutBadge: 'Ctrl/Cmd K',
+    title: 'Quick Command Palette',
+    description:
+      'Tìm nhanh màn hình admin hoặc thao tác shell mà không cần rời bàn phím.',
+    placeholder: 'Tìm màn hình, thao tác hoặc từ khóa...',
+    emptyTitle: 'Không có lệnh phù hợp',
+    emptyDescription:
+      'Thử từ khóa khác hoặc mở rộng truy vấn để thấy thêm route và thao tác.',
+    navigationGroup: 'Điều hướng',
+    actionsGroup: 'Tác vụ nhanh',
+    routeSubtitle: 'Mở màn hình admin',
+    shortcutOpen: 'Ctrl/Cmd + K mở palette',
+    shortcutMove: '↑ ↓ di chuyển',
+    shortcutSelect: 'Enter thực thi',
+    shortcutClose: 'Esc đóng',
+    actions: {
+      switchToDark: 'Chuyển sang giao diện tối',
+      switchToLight: 'Chuyển sang giao diện sáng',
+      openChat: 'Mở chat hỗ trợ',
+      goStorefront: 'Về storefront',
+      logout: 'Đăng xuất',
+    },
+    subtitles: {
+      toggleTheme: 'Đổi theme của workspace admin hiện tại',
+      openChat: 'Đi thẳng tới khu vực chat hỗ trợ',
+      goStorefront: 'Rời admin và quay về trang khách hàng',
+      logout: 'Đóng phiên hiện tại và quay về màn hình đăng nhập',
+    },
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  commandPalette: {
+    openButton: 'Quick commands',
+    shortcutBadge: 'Ctrl/Cmd K',
+    title: 'Quick Command Palette',
+    description:
+      'Jump across admin routes or trigger shell actions without leaving the keyboard.',
+    placeholder: 'Search routes, actions, or keywords...',
+    emptyTitle: 'No command matches',
+    emptyDescription:
+      'Try another keyword or broaden the query to reveal more routes and actions.',
+    navigationGroup: 'Navigation',
+    actionsGroup: 'Quick actions',
+    routeSubtitle: 'Open admin screen',
+    shortcutOpen: 'Ctrl/Cmd + K opens the palette',
+    shortcutMove: '↑ ↓ moves selection',
+    shortcutSelect: 'Enter runs command',
+    shortcutClose: 'Esc closes palette',
+    actions: {
+      switchToDark: 'Switch to dark theme',
+      switchToLight: 'Switch to light theme',
+      openChat: 'Open support chat',
+      goStorefront: 'Go to storefront',
+      logout: 'Log out',
+    },
+    subtitles: {
+      toggleTheme: 'Change the current admin workspace theme',
+      openChat: 'Jump straight to the support chat workspace',
+      goStorefront: 'Leave admin and return to the storefront',
+      logout: 'End the current session and go back to login',
+    },
+  },
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  readingChallengePage: {
+    badge: 'Thử thách đọc sách cá nhân',
+    title: 'Reading Challenge của riêng bạn',
+    description:
+      'Một góc vui vẻ để đặt mục tiêu đọc, tự theo dõi tiến độ và tự thưởng cho mình khi hoàn thành. MVP này chỉ chạy trên website và lưu trực tiếp bằng localStorage.',
+    localStorageLabel: 'Lưu ở đâu',
+    localStorageValue: 'Trình duyệt hiện tại',
+    scopeLabel: 'Scope',
+    scopeValue: 'Frontend-only, không gọi API',
+    goalLabel: 'Mục tiêu',
+    goalValue: '{target} cuốn',
+    goalEmptyValue: 'Chưa tạo challenge',
+    storageErrorTitle: 'Không thể lưu ổn định vào trình duyệt',
+    storageErrorDescription:
+      'Thao tác vẫn được phản ánh trên màn hình hiện tại, nhưng dữ liệu có thể không giữ lại sau khi reload.',
+    storageErrorDismiss: 'Ẩn cảnh báo',
+    progressOfGoal: 'Đã đọc {completed}/{target} cuốn',
+    progressDescription:
+      'Mỗi lần bấm +1 hoặc -1, thanh tiến độ sẽ cập nhật ngay. Khi đổi mục tiêu, hệ thống tự chặn completedBooks không vượt quá target mới.',
+    progressPercentLabel: 'Tiến độ hiện tại',
+    progressBarLabel: 'Tiến độ thử thách',
+    completedLabel: 'Đã đọc',
+    booksLeftValue: 'Còn {count} cuốn nữa để chạm đích',
+    targetLabelCard: 'Mục tiêu',
+    startedAtValue: 'Bắt đầu từ {date}',
+    deadlineLabel: 'Deadline',
+    endsAtValue: 'Kết thúc vào {date}',
+    daysRemaining: 'Còn {count} ngày',
+    daysDueToday: 'Hết hạn hôm nay',
+    daysOverdue: 'Quá hạn {count} ngày',
+    completedTitle: 'Hoàn thành rồi!',
+    completedDescription:
+      'Bạn đã chạm mục tiêu đọc sách. Thử tăng target mới hoặc tạo thử thách kế tiếp để giữ đà đọc.',
+    urgentTitle: 'Sắp hết hạn',
+    urgentDescription:
+      'Deadline đang ở rất gần nhưng challenge vẫn chưa hoàn tất. Đây là lúc tăng tốc cho vài trang cuối.',
+    overdueTitle: 'Challenge đã quá hạn',
+    overdueDescription:
+      'Bạn vẫn có thể chỉnh deadline hoặc reset tiến độ để bắt đầu lại một vòng đọc mới.',
+    incrementButton: '+1 sách đã đọc',
+    decrementButton: '-1',
+    resetProgressButton: 'Đặt lại tiến độ',
+    deleteButton: 'Xóa challenge',
+    deleteConfirm: 'Bạn có chắc muốn xóa Reading Challenge hiện tại không?',
+    emptyTitle: 'Chưa có challenge nào được tạo',
+    emptyDescription:
+      'Bắt đầu bằng một mục tiêu nhỏ như 5 cuốn trong tháng này. Khi tạo xong, progress card, badge trạng thái và deadline sẽ hiện ngay ở đây.',
+    emptyBrowseBooks: 'Khám phá sách',
+    emptyCreateButton: 'Tạo challenge ngay',
+    formCreateBadge: 'Bắt đầu mới',
+    formEditBadge: 'Chỉnh sửa',
+    formCreateTitle: 'Tạo thử thách đọc mới',
+    formEditTitle: 'Chỉnh sửa challenge hiện tại',
+    formCreateDescription:
+      'Điền tên, mục tiêu và khoảng thời gian bạn muốn chinh phục.',
+    formEditDescription:
+      'Bạn có thể đổi tên, đổi target hoặc kéo dài deadline mà không cần rời khỏi trang.',
+    localOnlyChip: 'Local MVP',
+    titleLabel: 'Tên thử thách',
+    titlePlaceholder: 'Ví dụ: Đọc 5 cuốn tháng này',
+    targetLabel: 'Số sách mục tiêu',
+    targetPlaceholder: 'Nhập số cuốn muốn hoàn thành',
+    durationLabel: 'Thời hạn',
+    presetWeek: '1 tuần',
+    presetWeekDescription: 'Phù hợp với một mini sprint đọc nhanh.',
+    presetMonth: '1 tháng',
+    presetMonthDescription: 'Đủ thoải mái để giữ nhịp đọc đều mỗi tuần.',
+    presetYear: '1 năm',
+    presetYearDescription: 'Dành cho mục tiêu dài hơi và bền bỉ.',
+    presetCustom: 'Chọn ngày kết thúc',
+    presetCustomDescription:
+      'Tự đặt deadline chính xác theo lịch cá nhân của bạn.',
+    customEndDateLabel: 'Ngày kết thúc',
+    previewLabel: 'Deadline dự kiến',
+    previewValue: 'Challenge sẽ kết thúc vào {date}',
+    previewFallback: 'Chọn thêm deadline để xem trước.',
+    createButton: 'Tạo challenge',
+    updateButton: 'Lưu thay đổi',
+    formHintTitle: 'Gợi ý nhỏ',
+    formHintCreate:
+      'Hãy đặt một target vừa sức để bạn dễ hoàn thành lần đầu, rồi nâng dần ở các challenge sau.',
+    formHintEdit:
+      'Nếu giảm target xuống thấp hơn completedBooks hiện tại, hệ thống sẽ tự clamp lại để dữ liệu luôn hợp lệ.',
+    errors: {
+      titleRequired: 'Hãy nhập tên challenge.',
+      targetInvalid: 'Số sách mục tiêu phải lớn hơn 0.',
+      endDateRequired: 'Hãy chọn ngày kết thúc cho challenge.',
+      endDateInvalid: 'Ngày kết thúc chưa hợp lệ.',
+      endDateBeforeStart:
+        'Ngày kết thúc không thể sớm hơn ngày bắt đầu challenge.',
+      unknown: 'Không thể lưu challenge lúc này. Vui lòng thử lại.',
+    },
+    status: {
+      notStarted: 'Mới bắt đầu',
+      inProgress: 'Đang tiến triển',
+      nearCompletion: 'Sắp hoàn thành',
+      completed: 'Hoàn thành',
+      overdue: 'Quá hạn',
+    },
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  readingChallengePage: {
+    badge: 'Personal reading challenge',
+    title: 'Your own Reading Challenge',
+    description:
+      'A playful place to set a reading goal, track progress, and celebrate the finish line. This MVP lives only on the website and stores data in localStorage.',
+    localStorageLabel: 'Stored in',
+    localStorageValue: 'Current browser only',
+    scopeLabel: 'Scope',
+    scopeValue: 'Frontend only, no API calls',
+    goalLabel: 'Goal',
+    goalValue: '{target} books',
+    goalEmptyValue: 'No challenge yet',
+    storageErrorTitle: 'Browser storage is not fully available',
+    storageErrorDescription:
+      'The current screen still updates, but the data may not survive after a reload.',
+    storageErrorDismiss: 'Dismiss',
+    progressOfGoal: '{completed}/{target} books read',
+    progressDescription:
+      'Each +1 or -1 updates the bar immediately. If you lower the target, the completed count is clamped automatically.',
+    progressPercentLabel: 'Current progress',
+    progressBarLabel: 'Challenge progress',
+    completedLabel: 'Completed',
+    booksLeftValue: '{count} books left to finish',
+    targetLabelCard: 'Target',
+    startedAtValue: 'Started on {date}',
+    deadlineLabel: 'Deadline',
+    endsAtValue: 'Ends on {date}',
+    daysRemaining: '{count} days left',
+    daysDueToday: 'Due today',
+    daysOverdue: '{count} days overdue',
+    completedTitle: 'You made it!',
+    completedDescription:
+      'You reached the goal. Raise the target or start another challenge to keep the rhythm going.',
+    urgentTitle: 'Deadline is getting close',
+    urgentDescription:
+      'The challenge is still open and time is tight. A small push now can get you over the line.',
+    overdueTitle: 'The challenge is overdue',
+    overdueDescription:
+      'You can still extend the deadline or reset the progress to begin a fresh round.',
+    incrementButton: '+1 book read',
+    decrementButton: '-1',
+    resetProgressButton: 'Reset progress',
+    deleteButton: 'Delete challenge',
+    deleteConfirm: 'Are you sure you want to delete the current Reading Challenge?',
+    emptyTitle: 'No challenge has been created yet',
+    emptyDescription:
+      'Start with a small goal such as 5 books this month. As soon as you create it, the progress card, status badge, and deadline appear here.',
+    emptyBrowseBooks: 'Browse books',
+    emptyCreateButton: 'Create a challenge',
+    formCreateBadge: 'Fresh start',
+    formEditBadge: 'Edit',
+    formCreateTitle: 'Create a new reading challenge',
+    formEditTitle: 'Edit the current challenge',
+    formCreateDescription:
+      'Give it a name, choose the target, and decide how long you want to chase it.',
+    formEditDescription:
+      'You can update the title, target, or deadline without leaving the page.',
+    localOnlyChip: 'Local MVP',
+    titleLabel: 'Challenge title',
+    titlePlaceholder: 'Example: Read 5 books this month',
+    targetLabel: 'Target number of books',
+    targetPlaceholder: 'How many books do you want to finish?',
+    durationLabel: 'Timeframe',
+    presetWeek: '1 week',
+    presetWeekDescription: 'Best for a quick reading sprint.',
+    presetMonth: '1 month',
+    presetMonthDescription: 'A balanced pace for steady weekly reading.',
+    presetYear: '1 year',
+    presetYearDescription: 'Great for a longer, slower commitment.',
+    presetCustom: 'Pick an end date',
+    presetCustomDescription: 'Choose the exact deadline that fits your calendar.',
+    customEndDateLabel: 'End date',
+    previewLabel: 'Expected deadline',
+    previewValue: 'This challenge will end on {date}',
+    previewFallback: 'Pick a deadline to preview it.',
+    createButton: 'Create challenge',
+    updateButton: 'Save changes',
+    formHintTitle: 'Small tip',
+    formHintCreate:
+      'Start with an achievable target for your first run, then scale it up in later challenges.',
+    formHintEdit:
+      'If the new target is lower than the completed count, the app clamps the count automatically to stay valid.',
+    errors: {
+      titleRequired: 'Please enter a challenge title.',
+      targetInvalid: 'The target number of books must be greater than 0.',
+      endDateRequired: 'Please choose an end date for the challenge.',
+      endDateInvalid: 'The end date is not valid.',
+      endDateBeforeStart:
+        'The end date cannot be earlier than the challenge start date.',
+      unknown: 'Could not save the challenge right now. Please try again.',
+    },
+    status: {
+      notStarted: 'Just started',
+      inProgress: 'In progress',
+      nearCompletion: 'Almost there',
+      completed: 'Completed',
+      overdue: 'Overdue',
+    },
+  },
+})
+
 Object.assign(messages.vi as Record<string, unknown>, {
   wishlist: {
     badge: 'Yêu thích',
@@ -4173,5 +5241,379 @@ Object.assign(messages.en.admin as Record<string, unknown>, {
       processedAt: 'Processed at',
       adminNote: 'Admin note',
     },
+  },
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  shelves: {
+    badge: 'Kệ sách',
+    title: 'Kệ sách của bạn',
+    description:
+      'Tạo nhiều kệ sách riêng để lưu danh sách đọc, sách muốn mua sau, hoặc những tựa sách muốn gợi ý lại nhanh.',
+    hint: 'Mỗi kệ sách giúp bạn gom sách theo đúng mục đích đọc.',
+    countLabel: '{count} kệ sách đang lưu',
+    addBookBannerTitle: 'Đang chọn kệ sách cho cuốn này',
+    addBookBannerDescription:
+      'Chọn một kệ sách có sẵn hoặc tạo kệ mới để lưu sách ngay.',
+    browseMoreBooks: 'Khám phá thêm sách',
+    createPlaceholder: 'Nhập tên kệ sách mới',
+    createAction: 'Tạo kệ sách',
+    createAndSave: 'Tạo kệ và lưu sách',
+    createSuccess: 'Đã tạo kệ "{name}"',
+    createError: 'Không thể tạo kệ sách',
+    renameAction: 'Đổi tên',
+    renameSuccess: 'Đã cập nhật kệ "{name}"',
+    renameError: 'Không thể cập nhật tên kệ sách',
+    deleteConfirm: 'Bạn có chắc muốn xóa kệ "{name}" không?',
+    deleteSuccess: 'Đã xóa kệ "{name}"',
+    deleteError: 'Không thể xóa kệ sách',
+    openAction: 'Mở kệ sách',
+    saveSelectedBook: 'Lưu sách vào kệ này',
+    addToShelfError: 'Không thể thêm sách vào kệ',
+    addedToShelfSuccess: 'Đã lưu sách vào kệ "{name}"',
+    emptyTitle: 'Bạn chưa có kệ sách nào',
+    emptyDescription:
+      'Tạo kệ đầu tiên để bắt đầu lưu những tựa sách bạn muốn quay lại.',
+    emptyWithBookDescription:
+      'Tạo kệ đầu tiên để lưu ngay cuốn sách bạn vừa chọn.',
+    cardMeta: '{count} sách • Cập nhật {date}',
+    booksCountBadge: '{count} sách',
+    detailBadge: 'Chi tiết kệ sách',
+    detailMeta: '{count} sách • Cập nhật {date}',
+    emptyShelfTitle: 'Kệ sách này đang trống',
+    emptyShelfDescription:
+      'Thêm sách từ book card, trang chi tiết, hoặc tiếp tục khám phá catalog.',
+    positionLabel: 'Vị trí #{position}',
+    inStock: 'Còn {count} cuốn',
+    outOfStock: 'Tạm hết hàng',
+    openBookDetail: 'Xem chi tiết sách',
+    removeBookAction: 'Bỏ khỏi kệ',
+    removeBookSuccess: 'Đã bỏ sách khỏi kệ',
+    removeBookError: 'Không thể bỏ sách khỏi kệ',
+    reorderError: 'Không thể sắp xếp lại kệ sách',
+    backToShelves: 'Quay lại danh sách kệ',
+    loadError: 'Không thể tải dữ liệu kệ sách',
+    loginRequired: 'Vui lòng đăng nhập để dùng kệ sách',
+    addToShelfAction: 'Thêm vào kệ sách',
+    addToShelfAria: 'Thêm "{title}" vào kệ sách',
+    profileShortcut: 'Kệ sách của tôi',
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  shelves: {
+    badge: 'Shelves',
+    title: 'Your shelves',
+    description:
+      'Create multiple shelves for reading lists, future purchases, and quick personal collections you want to revisit.',
+    hint: 'Each shelf lets you group books around one clear intent.',
+    countLabel: '{count} saved shelves',
+    addBookBannerTitle: 'Choose a shelf for this book',
+    addBookBannerDescription:
+      'Pick an existing shelf or create a new one to save the selected book immediately.',
+    browseMoreBooks: 'Browse more books',
+    createPlaceholder: 'Enter a shelf name',
+    createAction: 'Create shelf',
+    createAndSave: 'Create shelf and save book',
+    createSuccess: 'Created shelf "{name}"',
+    createError: 'Could not create the shelf',
+    renameAction: 'Rename shelf',
+    renameSuccess: 'Updated shelf "{name}"',
+    renameError: 'Could not rename the shelf',
+    deleteConfirm: 'Delete the shelf "{name}"?',
+    deleteSuccess: 'Deleted shelf "{name}"',
+    deleteError: 'Could not delete the shelf',
+    openAction: 'Open shelf',
+    saveSelectedBook: 'Save selected book here',
+    addToShelfError: 'Could not add the book to this shelf',
+    addedToShelfSuccess: 'Saved the book to "{name}"',
+    emptyTitle: 'You do not have any shelves yet',
+    emptyDescription:
+      'Create your first shelf to start saving books you want to revisit.',
+    emptyWithBookDescription:
+      'Create your first shelf to save the selected book right away.',
+    cardMeta: '{count} books • Updated {date}',
+    booksCountBadge: '{count} books',
+    detailBadge: 'Shelf detail',
+    detailMeta: '{count} books • Updated {date}',
+    emptyShelfTitle: 'This shelf is empty',
+    emptyShelfDescription:
+      'Add books from book cards, the detail page, or keep browsing the catalog.',
+    positionLabel: 'Position #{position}',
+    inStock: '{count} copies left',
+    outOfStock: 'Out of stock',
+    openBookDetail: 'Open book detail',
+    removeBookAction: 'Remove from shelf',
+    removeBookSuccess: 'Removed the book from the shelf',
+    removeBookError: 'Could not remove the book from the shelf',
+    reorderError: 'Could not reorder the shelf',
+    backToShelves: 'Back to shelves',
+    loadError: 'Could not load the shelf',
+    loginRequired: 'Please sign in to use shelves',
+    addToShelfAction: 'Add to shelf',
+    addToShelfAria: 'Add "{title}" to a shelf',
+    profileShortcut: 'My shelves',
+  },
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  readingJournal: {
+    badge: 'Reading Journal',
+    title: 'Nhật ký đọc của bạn',
+    description:
+      'Ghi lại từng buổi đọc theo ngày, lưu vài dòng cảm nhận, và giữ streak đọc bằng những check-in ngắn gọn nhưng bền vững.',
+    backToProfile: 'Quay lại hồ sơ',
+    openLibrary: 'Mở thư viện số',
+    booksLoadError: 'Không thể tải danh sách sách cho journal',
+    loadError: 'Không thể tải nhật ký đọc',
+    streakLoadError: 'Không thể tải streak đọc',
+    createSuccess: 'Đã lưu entry mới vào nhật ký đọc',
+    updateSuccess: 'Đã cập nhật entry nhật ký đọc',
+    deleteSuccess: 'Đã xóa entry nhật ký đọc',
+    checkInSuccess: 'Đã check-in reading streak hôm nay',
+    createError: 'Không thể lưu entry nhật ký đọc',
+    updateError: 'Không thể cập nhật entry nhật ký đọc',
+    deleteError: 'Không thể xóa entry nhật ký đọc',
+    checkInError: 'Không thể check-in hôm nay',
+    deleteConfirm: 'Bạn có chắc muốn xóa entry này không?',
+    profileShortcut: 'Nhật ký đọc của tôi',
+    openFromBookDetail: 'Viết nhật ký',
+    openFromLibraryDetail: 'Ghi vào journal',
+    loginRequired: 'Vui lòng đăng nhập để dùng reading journal',
+    stats: {
+      entries: 'Tổng entry',
+      entriesHint: 'Tất cả ghi chú đã lưu trong journal.',
+      current: 'Current streak',
+      currentHint: 'Số ngày đang giữ nhịp đọc hiện tại.',
+      longest: 'Longest streak',
+      longestHint: 'Chuỗi ngày dài nhất bạn từng giữ được.',
+    },
+    streak: {
+      title: 'Book Streak / Daily Check-in',
+      description: 'Journal là nguồn dữ liệu gốc cho streak của bạn.',
+      current: 'Hiện tại',
+      longest: 'Dài nhất',
+      status: 'Trạng thái hôm nay',
+      checkedIn: 'Đã check-in',
+      notCheckedIn: 'Chưa check-in',
+      lastActivity: 'Ngày hoạt động gần nhất',
+      noActivity: 'Chưa có hoạt động nào',
+    },
+    composer: {
+      title: 'Tạo entry mới',
+      description: 'Chọn sách, ngày đọc, rồi lưu vài con số và ghi chú ngắn.',
+      newBadge: 'New',
+      editTitle: 'Chỉnh sửa entry',
+      editDescription: 'Bạn đang cập nhật một entry đã lưu trước đó.',
+      editBadge: 'Edit',
+    },
+    fields: {
+      book: 'Sách',
+      entryDate: 'Ngày đọc',
+      currentPage: 'Trang hiện tại',
+      progressPercent: 'Tiến độ (%)',
+      note: 'Ghi chú',
+    },
+    placeholders: {
+      book: 'Chọn một cuốn sách',
+      currentPage: 'Ví dụ 42',
+      progressPercent: 'Ví dụ 35',
+      note: 'Hôm nay bạn đọc tới đâu, thấy gì đáng nhớ, hoặc muốn quay lại điều gì?',
+    },
+    actions: {
+      saveEntry: 'Lưu entry',
+      updateEntry: 'Cập nhật entry',
+      checkInToday: 'Check-in hôm nay',
+      openBook: 'Mở trang sách',
+      editEntry: 'Sửa entry',
+      deleteEntry: 'Xóa entry',
+    },
+    filters: {
+      title: 'Bộ lọc timeline',
+      description: 'Lọc lại journal theo sách hoặc theo khoảng ngày.',
+      reset: 'Reset',
+      book: 'Theo sách',
+      allBooks: 'Tất cả sách',
+      from: 'Từ ngày',
+      to: 'Đến ngày',
+    },
+    timeline: {
+      title: 'Timeline journal',
+      description: 'Mỗi entry được nhóm theo ngày để bạn đọc lại hành trình rõ hơn.',
+      countLabel: '{count} entry trong journal',
+      dayCount: '{count} entry trong ngày này',
+      noteFallback: 'Không có ghi chú chi tiết cho entry này.',
+      currentPage: 'Trang',
+      progressPercent: 'Tiến độ',
+      updatedAt: 'Cập nhật',
+    },
+    pagination: {
+      summary: 'Trang {page}/{totalPages}',
+    },
+    validation: {
+      bookRequired: 'Vui lòng chọn một cuốn sách',
+      entryDateRequired: 'Vui lòng chọn ngày đọc',
+      currentPage: 'Trang hiện tại phải là số nguyên không âm',
+      progressPercent: 'Tiến độ phải nằm trong khoảng 0 đến 100',
+    },
+    emptyTitle: 'Journal của bạn vẫn còn trống',
+    emptyDescription:
+      'Tạo entry đầu tiên hoặc check-in hôm nay để bắt đầu gom lại hành trình đọc của bạn.',
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  readingJournal: {
+    badge: 'Reading Journal',
+    title: 'Your reading journal',
+    description:
+      'Capture each reading session by date, keep short notes, and maintain your streak with lightweight daily check-ins.',
+    backToProfile: 'Back to profile',
+    openLibrary: 'Open digital library',
+    booksLoadError: 'Could not load the journal book list',
+    loadError: 'Could not load the reading journal',
+    streakLoadError: 'Could not load the reading streak',
+    createSuccess: 'Saved a new journal entry',
+    updateSuccess: 'Updated the journal entry',
+    deleteSuccess: 'Deleted the journal entry',
+    checkInSuccess: 'Checked in for today',
+    createError: 'Could not save the journal entry',
+    updateError: 'Could not update the journal entry',
+    deleteError: 'Could not delete the journal entry',
+    checkInError: 'Could not complete today check-in',
+    deleteConfirm: 'Delete this journal entry?',
+    profileShortcut: 'My reading journal',
+    openFromBookDetail: 'Write journal entry',
+    openFromLibraryDetail: 'Add to journal',
+    loginRequired: 'Please sign in to use the reading journal',
+    stats: {
+      entries: 'Entries',
+      entriesHint: 'Every saved note across your journal.',
+      current: 'Current streak',
+      currentHint: 'How many consecutive active days you are holding now.',
+      longest: 'Longest streak',
+      longestHint: 'The best reading streak you have reached so far.',
+    },
+    streak: {
+      title: 'Book Streak / Daily Check-in',
+      description: 'The journal is the source of truth for your streak.',
+      current: 'Current',
+      longest: 'Longest',
+      status: 'Today status',
+      checkedIn: 'Checked in',
+      notCheckedIn: 'Not checked in',
+      lastActivity: 'Last activity date',
+      noActivity: 'No activity yet',
+    },
+    composer: {
+      title: 'Create a new entry',
+      description: 'Pick a book, choose the date, and save a short note with progress.',
+      newBadge: 'New',
+      editTitle: 'Edit entry',
+      editDescription: 'You are updating an entry that is already in the journal.',
+      editBadge: 'Edit',
+    },
+    fields: {
+      book: 'Book',
+      entryDate: 'Entry date',
+      currentPage: 'Current page',
+      progressPercent: 'Progress (%)',
+      note: 'Note',
+    },
+    placeholders: {
+      book: 'Choose a book',
+      currentPage: 'For example 42',
+      progressPercent: 'For example 35',
+      note: 'What did you read today, what stood out, or what do you want to revisit later?',
+    },
+    actions: {
+      saveEntry: 'Save entry',
+      updateEntry: 'Update entry',
+      checkInToday: 'Check in today',
+      openBook: 'Open book page',
+      editEntry: 'Edit entry',
+      deleteEntry: 'Delete entry',
+    },
+    filters: {
+      title: 'Timeline filters',
+      description: 'Refine the journal by book or by date range.',
+      reset: 'Reset',
+      book: 'By book',
+      allBooks: 'All books',
+      from: 'From',
+      to: 'To',
+    },
+    timeline: {
+      title: 'Journal timeline',
+      description: 'Entries are grouped by day so the reading journey stays easy to scan.',
+      countLabel: '{count} entries in the journal',
+      dayCount: '{count} entries on this day',
+      noteFallback: 'No detailed note was saved for this entry.',
+      currentPage: 'Page',
+      progressPercent: 'Progress',
+      updatedAt: 'Updated',
+    },
+    pagination: {
+      summary: 'Page {page}/{totalPages}',
+    },
+    validation: {
+      bookRequired: 'Please choose a book',
+      entryDateRequired: 'Please choose an entry date',
+      currentPage: 'Current page must be a non-negative integer',
+      progressPercent: 'Progress must stay between 0 and 100',
+    },
+    emptyTitle: 'Your journal is still empty',
+    emptyDescription:
+      'Create the first entry or check in today to start building a readable record of your sessions.',
+  },
+})
+
+Object.assign(messages.vi.book.card as Record<string, unknown>, {
+  addToShelfAria: 'Thêm "{title}" vào kệ sách',
+})
+
+Object.assign(messages.en.book.card as Record<string, unknown>, {
+  addToShelfAria: 'Add "{title}" to a shelf',
+})
+
+Object.assign(messages.vi.book.detail as Record<string, unknown>, {
+  addToShelf: 'Thêm vào kệ sách',
+})
+
+Object.assign(messages.en.book.detail as Record<string, unknown>, {
+  addToShelf: 'Add to shelf',
+})
+
+Object.assign(messages.vi.common as Record<string, unknown>, {
+  retry: 'Th\u1eed l\u1ea1i',
+})
+
+Object.assign(messages.en.common as Record<string, unknown>, {
+  retry: 'Retry',
+})
+
+Object.assign(messages.vi.admin.sidebar as Record<string, unknown>, {
+  mobileOpen: 'M\u1edf menu qu\u1ea3n tr\u1ecb',
+  mobileClose: '\u0110\u00f3ng menu qu\u1ea3n tr\u1ecb',
+  groups: {
+    overview: 'T\u1ed5ng quan',
+    catalog: 'S\u00e1ch v\u00e0 danh m\u1ee5c',
+    operations: 'V\u1eadn h\u00e0nh',
+    engagement: 'T\u01b0\u01a1ng t\u00e1c',
+    access: 'Ng\u01b0\u1eddi d\u00f9ng v\u00e0 ph\u00e2n quy\u1ec1n',
+    system: 'Thi\u1ebft l\u1eadp',
+  },
+})
+
+Object.assign(messages.en.admin.sidebar as Record<string, unknown>, {
+  mobileOpen: 'Open admin menu',
+  mobileClose: 'Close admin menu',
+  groups: {
+    overview: 'Overview',
+    catalog: 'Catalog',
+    operations: 'Operations',
+    engagement: 'Engagement',
+    access: 'Users and access',
+    system: 'Settings',
   },
 })

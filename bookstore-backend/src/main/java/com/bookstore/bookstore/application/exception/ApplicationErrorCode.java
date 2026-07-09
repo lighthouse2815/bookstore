@@ -58,6 +58,11 @@ public enum ApplicationErrorCode {
     COUPON_TYPE_NOT_MATCH("APPLICATION_COUPON_003", "coupon không đúng loại áp dụng"),
 
     BOOK_NOT_FOUND("APPLICATION_BOOK_001", "không tìm thấy book"),
+    BOOKSHELF_NOT_FOUND("APPLICATION_BOOKSHELF_001", "khong tim thay ke sach"),
+    BOOKSHELF_NAME_ALREADY_EXISTS("APPLICATION_BOOKSHELF_002", "ten ke sach da ton tai"),
+    BOOKSHELF_REORDER_INVALID("APPLICATION_BOOKSHELF_003", "thu tu sap xep ke sach khong hop le"),
+    READING_JOURNAL_ENTRY_NOT_FOUND("APPLICATION_READING_JOURNAL_001", "khong tim thay nhat ky doc"),
+    READING_JOURNAL_ENTRY_ALREADY_EXISTS("APPLICATION_READING_JOURNAL_002", "nhat ky doc da ton tai"),
 
     DIGITAL_ASSET_NOT_FOUND("APPLICATION_DIGITAL_ASSET_001", "không tìm thấy tài nguyên số"),
     DIGITAL_ASSET_PURCHASE_NOT_ALLOWED("APPLICATION_DIGITAL_ASSET_002", "tài nguyên số này không cho phép mua"),

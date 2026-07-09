@@ -122,14 +122,16 @@ Prod runtime proof:
 
 Current verified snapshot on MySQL 8:
 
-- MySQL prod smoke: `PASS`
-- Docker prod smoke: `PASS`
-- Seed idempotent: `PASS`
-- API smoke: `PASS`
-- Coupon checkout + cancel rollback smoke: `PASS`
-- Demo coupon seed now uses relative validity windows, so `GET /api/coupons/active` should return at least 1 active `DOCHEMxx` coupon whenever `APP_DEMO_SEED_ENABLED=true`.
-- Coupon smoke command set: login demo user -> `GET /api/coupons/active` -> add cart item -> checkout with coupon -> verify order detail -> cancel on smoke DB if rollback needs verification.
-- Hibernate warning `HHH90003004` from paginated collection fetch was removed by paging IDs first and loading details in a second query.
+- Date: `2026-07-09`
+- MySQL prod-like smoke from empty DB: `PASS`
+- Flyway `V1 -> V6` on `prod`: `PASS`
+- Hibernate validate on `prod`: `PASS`
+- Backend tests / compile: `PASS`
+- Audit Log / Order Timeline / Review Moderation / Export CSV / Return-Refund smoke: `PASS`
+- Return/refund duplicate guard hardening: `PASS`
+- Hibernate follow-on locking warning `HHH000444`: `PASS` after narrowing lock queries and fetching graphs separately
+- Website lint/build + main route smoke: `PASS`
+- For the detailed latest snapshot, read `D:\bookstore\docs\PROJECT_STATUS_CURRENT.md`.
 
 ## 2. Website
 

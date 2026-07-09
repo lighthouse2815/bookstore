@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
+  BookPlus,
   BookOpenText,
   ChevronRight,
   Heart,
@@ -11,6 +12,7 @@ import {
   Truck,
   Undo2,
   UserRound,
+  PencilLine,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AddToCart } from '@/components/book/add-to-cart'
@@ -115,6 +117,34 @@ export default function BookDetailPage() {
         error instanceof Error ? error.message : t('wishlist.updateError'),
       )
     }
+  }
+
+  function handleAddToShelf() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('shelves.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    navigate(`/shelves?addBook=${book.id}`)
+  }
+
+  function handleAddJournalEntry() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('readingJournal.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    navigate(`/reading-journal?bookId=${book.id}`)
   }
 
   if (isLoading) {
@@ -446,6 +476,22 @@ export default function BookDetailPage() {
                 {isFavorite
                   ? t('book.detail.removeFromWishlist')
                   : t('book.detail.addToWishlist')}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddToShelf}
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              >
+                <BookPlus className="size-4" />
+                {t('shelves.addToShelfAction')}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddJournalEntry}
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              >
+                <PencilLine className="size-4" />
+                {t('readingJournal.openFromBookDetail')}
               </button>
             </div>
 

@@ -12,12 +12,20 @@ import {
   Phone,
   Shield,
   User,
+  LibraryBig,
+  PencilLine,
   type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import {
+  StatePanel,
+  destructiveOutlineButtonClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -266,7 +274,7 @@ export default function ProfilePage() {
               <Button
                 onClick={() => void handleLogout()}
                 variant="outline"
-                className="h-11 rounded-2xl border-rose-200 px-5 text-rose-500 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-400/20 dark:bg-transparent dark:text-rose-300 dark:hover:border-rose-300/35 dark:hover:bg-rose-400/10 dark:hover:text-rose-200"
+                className={destructiveOutlineButtonClassName}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 {t('auth.profile.logout')}
@@ -287,6 +295,30 @@ export default function ProfilePage() {
                     />
                   ))}
                 </nav>
+                <Link
+                  to="/shelves"
+                  className="mt-3 flex items-center justify-between rounded-[20px] border border-primary/12 bg-primary/6 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10 dark:border-primary/20 dark:bg-primary/10"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-2xl bg-primary/12 dark:bg-primary/18">
+                      <LibraryBig className="h-4 w-4" />
+                    </span>
+                    <span>{t('shelves.profileShortcut')}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/reading-journal"
+                  className="mt-3 flex items-center justify-between rounded-[20px] border border-amber-500/12 bg-amber-500/6 px-4 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-500/10 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-2xl bg-amber-500/12 dark:bg-amber-300/18">
+                      <PencilLine className="h-4 w-4" />
+                    </span>
+                    <span>{t('readingJournal.profileShortcut')}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </aside>
 
@@ -404,7 +436,7 @@ export default function ProfilePage() {
 
                     <Button
                       type="submit"
-                      className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95"
+                      className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95`}
                       disabled={isSavingProfile || isLoading}
                     >
                       {isSavingProfile
@@ -459,7 +491,7 @@ export default function ProfilePage() {
 
                     <Button
                       type="submit"
-                      className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95"
+                      className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95`}
                       disabled={isSavingAccount || isLoading}
                     >
                       {isSavingAccount
@@ -478,46 +510,53 @@ export default function ProfilePage() {
                   </p>
 
                   {isLoadingAddresses ? (
-                    <div className="mt-6 rounded-[24px] border border-primary/10 bg-primary/4 p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-primary/10 dark:text-muted-foreground">
-                      {t('common.loading')}
-                    </div>
+                    <StatePanel
+                      title={t('common.loading')}
+                      description={pageCopy.addressDescription}
+                      minHeightClassName="min-h-[180px]"
+                      className="mt-6"
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && addressError ? (
-                    <div className="mt-6 rounded-[24px] border border-destructive/20 bg-destructive/8 p-6 text-sm text-destructive dark:bg-destructive/15">
-                      <p>{addressError}</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-4 h-10 rounded-2xl"
-                        onClick={() => {
-                          setHasLoadedAddresses(false)
-                          setAddressError(null)
-                        }}
-                      >
-                        {pageCopy.retry}
-                      </Button>
-                    </div>
+                    <StatePanel
+                      title={pageCopy.addressTitle}
+                      description={addressError}
+                      tone="error"
+                      minHeightClassName="min-h-[220px]"
+                      className="mt-6"
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={secondaryButtonClassName}
+                          onClick={() => {
+                            setHasLoadedAddresses(false)
+                            setAddressError(null)
+                          }}
+                        >
+                          {pageCopy.retry}
+                        </Button>
+                      }
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && !addressError && addresses.length === 0 ? (
-                    <div className={cn('mt-6 rounded-[24px] p-6', PROFILE_INNER_SURFACE_CLASS)}>
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-950 dark:text-foreground">
-                            {pageCopy.noAddressesTitle}
-                          </h3>
-                          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-muted-foreground">
-                            {pageCopy.noAddressesDescription}
-                          </p>
-                        </div>
+                    <StatePanel
+                      title={pageCopy.noAddressesTitle}
+                      description={pageCopy.noAddressesDescription}
+                      className="mt-6"
+                      minHeightClassName="min-h-[220px]"
+                      action={
                         <Link to="/checkout">
-                          <Button className="h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                          <Button
+                            className={`${primaryButtonClassName} bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}
+                          >
                             {pageCopy.goCheckout}
                           </Button>
                         </Link>
-                      </div>
-                    </div>
+                      }
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && !addressError && addresses.length > 0 ? (
@@ -567,7 +606,7 @@ export default function ProfilePage() {
                     <Link to="/orders">
                       <Button
                         variant="outline"
-                        className="h-10 rounded-2xl border-primary/10 px-4 text-primary hover:bg-primary/6"
+                        className={`${secondaryButtonClassName} border-primary/10 px-4 text-primary hover:bg-primary/6`}
                       >
                         {pageCopy.orderHistory}
                       </Button>
@@ -592,7 +631,7 @@ export default function ProfilePage() {
                             {pageCopy.noOrdersDescription}
                           </p>
                           <Link to="/books" className="inline-flex">
-                            <Button className="mt-4 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                            <Button className={`${primaryButtonClassName} mt-4 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}>
                               {pageCopy.shopNow}
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
@@ -624,7 +663,7 @@ export default function ProfilePage() {
                       {pageCopy.passwordDescription}
                     </p>
                     <Link to="/forgot-password" className="inline-flex">
-                      <Button className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                      <Button className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}>
                         {pageCopy.passwordAction}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>

@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.storage;
 
+import com.bookstore.bookstore.application.port.out.IFileStorageSettings;
 import com.bookstore.bookstore.domain.enums.FileProvider;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -16,7 +17,7 @@ public record FileStorageProperties(
         long presignDownloadExpireMinutes,
         long maxImageSizeMb,
         long maxDigitalFileSizeMb
-) {
+) implements IFileStorageSettings {
 
     public boolean isConfigured() {
         return hasText(bucket) && hasText(accessKey) && hasText(secretKey);

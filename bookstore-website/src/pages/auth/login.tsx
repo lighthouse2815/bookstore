@@ -256,12 +256,14 @@ export default function LoginPage() {
                     <span className="h-px flex-1 bg-white/12" />
                   </div>
 
-                  <GoogleAuthButton
-                    locale={language}
-                    text="signin_with"
-                    isLoading={loginForm.isGoogleLoading}
-                    onCredential={handleLoginWithGoogle}
-                  />
+                  {!isRegisterFace ? (
+                    <GoogleAuthButton
+                      locale={language}
+                      text="signin_with"
+                      isLoading={loginForm.isGoogleLoading}
+                      onCredential={handleLoginWithGoogle}
+                    />
+                  ) : null}
                 </form>
               }
               backContent={
@@ -335,14 +337,16 @@ export default function LoginPage() {
                     <span className="h-px flex-1 bg-white/12" />
                   </div>
 
-                  <GoogleAuthButton
-                    locale={language}
-                    text="signup_with"
-                    isLoading={registerForm.isGoogleLoading}
-                    disabled={!termsConsent.hasAcceptedTerms}
-                    disabledMessage={termsConsent.termsCopy.requiredMessage}
-                    onCredential={handleGoogleRegister}
-                  />
+                  {isRegisterFace ? (
+                    <GoogleAuthButton
+                      locale={language}
+                      text="signup_with"
+                      isLoading={registerForm.isGoogleLoading}
+                      disabled={!termsConsent.hasAcceptedTerms}
+                      disabledMessage={termsConsent.termsCopy.requiredMessage}
+                      onCredential={handleGoogleRegister}
+                    />
+                  ) : null}
                 </form>
               }
               frontSwitchText={t('auth.login.noAccount')}

@@ -55,7 +55,13 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     @Override
     public Optional<Order> findByIdForUpdate(UUID orderId) {
-        return orderJpaRepository.findByIdAndUser_DeletedAtIsNullForUpdate(orderId)
+        Optional<OrderJpaEntity> lockedOrder = orderJpaRepository.findByIdAndUser_DeletedAtIsNullForUpdate(orderId);
+        if (lockedOrder.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return orderJpaRepository.findByIdAndUser_DeletedAtIsNull(orderId)
+                .or(() -> lockedOrder)
                 .map(orderPersistenceMapper::toDomain);
     }
 

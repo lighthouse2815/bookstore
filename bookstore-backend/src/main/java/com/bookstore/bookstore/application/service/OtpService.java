@@ -8,6 +8,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.out.IEmailSender;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
+import com.bookstore.bookstore.application.port.out.IOtpSettings;
 import com.bookstore.bookstore.application.port.out.IUserOtpRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.enums.OtpPurpose;
@@ -15,7 +16,6 @@ import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.User;
 import com.bookstore.bookstore.domain.model.UserOtp;
-import com.bookstore.bookstore.infrastructure.email.OtpProperties;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -40,7 +40,7 @@ public class OtpService implements IOtpService {
     private final IUserOtpRepository userOtpRepository;
     private final IPasswordEncoder passwordEncoder;
     private final IEmailSender emailSender;
-    private final OtpProperties otpProperties;
+    private final IOtpSettings otpSettings;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -221,26 +221,26 @@ public class OtpService implements IOtpService {
     }
 
     private long resolveExpirationMinutes() {
-        return otpProperties.expirationMinutes() > 0
-                ? otpProperties.expirationMinutes()
+        return otpSettings.expirationMinutes() > 0
+                ? otpSettings.expirationMinutes()
                 : DEFAULT_EXPIRATION_MINUTES;
     }
 
     private long resolveResendCooldownSeconds() {
-        return otpProperties.resendCooldownSeconds() > 0
-                ? otpProperties.resendCooldownSeconds()
+        return otpSettings.resendCooldownSeconds() > 0
+                ? otpSettings.resendCooldownSeconds()
                 : DEFAULT_RESEND_COOLDOWN_SECONDS;
     }
 
     private long resolveResendMaxRequestsPerWindow() {
-        return otpProperties.resendMaxRequestsPerWindow() > 0
-                ? otpProperties.resendMaxRequestsPerWindow()
+        return otpSettings.resendMaxRequestsPerWindow() > 0
+                ? otpSettings.resendMaxRequestsPerWindow()
                 : DEFAULT_RESEND_MAX_REQUESTS_PER_WINDOW;
     }
 
     private long resolveResendWindowMinutes() {
-        return otpProperties.resendWindowMinutes() > 0
-                ? otpProperties.resendWindowMinutes()
+        return otpSettings.resendWindowMinutes() > 0
+                ? otpSettings.resendWindowMinutes()
                 : DEFAULT_RESEND_WINDOW_MINUTES;
     }
 

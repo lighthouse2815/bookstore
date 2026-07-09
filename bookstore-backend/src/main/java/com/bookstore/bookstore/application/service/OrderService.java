@@ -18,6 +18,7 @@ import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
+import com.bookstore.bookstore.application.port.out.ISepaySettings;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
@@ -43,7 +44,6 @@ import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
 import com.bookstore.bookstore.domain.model.StockMovement;
 import com.bookstore.bookstore.domain.model.UserAddress;
-import com.bookstore.bookstore.infrastructure.payment.SepayProperties;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -79,7 +79,7 @@ public class OrderService implements IOrderService {
     private final OrderAssembler orderAssembler;
     private final com.bookstore.bookstore.application.port.in.IDigitalLibraryService digitalLibraryService;
     private final IOrderTimelineService orderTimelineService;
-    private final SepayProperties sepayProperties;
+    private final ISepaySettings sepaySettings;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -767,7 +767,7 @@ public class OrderService implements IOrderService {
                 ? PaymentProvider.COD
                 : PaymentProvider.SEPAY;
         String merchantId = provider == PaymentProvider.SEPAY
-                ? StringUtils.trimToNull(sepayProperties.merchantId())
+                ? StringUtils.trimToNull(sepaySettings.merchantId())
                 : null;
 
         return paymentRepository.save(new Payment(

@@ -95,6 +95,29 @@ class BookRepositoryAdapterTest {
         verify(bookJpaRepository).findAllByDeletedAtIsNullAndIdIn(List.of(firstRelatedBookId, secondRelatedBookId));
     }
 
+    @Test
+    void findAllByIdsIncludingDeletedForUpdate_locksIdsBeforeFetchingGraph() {
+        UUID firstBookId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID secondBookId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        BookJpaEntity firstBookEntity = bookEntity(firstBookId);
+        BookJpaEntity secondBookEntity = bookEntity(secondBookId);
+        Book firstBook = org.mockito.Mockito.mock(Book.class);
+        Book secondBook = org.mockito.Mockito.mock(Book.class);
+
+        when(bookJpaRepository.findIdsByIdInForUpdate(List.of(firstBookId, secondBookId)))
+                .thenReturn(List.of(firstBookId, secondBookId));
+        when(bookJpaRepository.findAllByIdIn(List.of(firstBookId, secondBookId)))
+                .thenReturn(List.of(secondBookEntity, firstBookEntity));
+        when(bookPersistenceMapper.toDomain(firstBookEntity)).thenReturn(firstBook);
+        when(bookPersistenceMapper.toDomain(secondBookEntity)).thenReturn(secondBook);
+
+        List<Book> result = bookRepositoryAdapter.findAllByIdsIncludingDeletedForUpdate(List.of(secondBookId, firstBookId));
+
+        assertEquals(List.of(firstBook, secondBook), result);
+        verify(bookJpaRepository).findIdsByIdInForUpdate(List.of(firstBookId, secondBookId));
+        verify(bookJpaRepository).findAllByIdIn(List.of(firstBookId, secondBookId));
+    }
+
     private static BookJpaEntity bookEntity(UUID bookId) {
         BookJpaEntity entity = new BookJpaEntity();
         entity.setId(bookId);

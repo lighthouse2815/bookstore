@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Heart, ShoppingCart, Star } from 'lucide-react'
+import { BookPlus, Heart, ShoppingCart, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useCart } from '@/contexts/cart-context'
@@ -57,6 +57,16 @@ export function BookCard({ book }: { book: BookCardData }) {
         error instanceof Error ? error.message : t('wishlist.updateError'),
       )
     }
+  }
+
+  function handleAddToShelf() {
+    if (!isAuthenticated) {
+      toast.error(t('shelves.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    navigate(`/shelves?addBook=${book.id}`)
   }
 
   return (
@@ -135,16 +145,26 @@ export function BookCard({ book }: { book: BookCardData }) {
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              void handleQuickAddToCart()
-            }}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
-            aria-label={t('book.card.addToCartAria', { title: book.title })}
-          >
-            <ShoppingCart className="size-4" />
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={handleAddToShelf}
+              className="flex size-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-muted"
+              aria-label={t('shelves.addToShelfAria', { title: book.title })}
+            >
+              <BookPlus className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void handleQuickAddToCart()
+              }}
+              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+              aria-label={t('book.card.addToCartAria', { title: book.title })}
+            >
+              <ShoppingCart className="size-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

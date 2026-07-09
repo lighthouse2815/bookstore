@@ -89,12 +89,13 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 
 ## Latest verified runtime snapshot
 
-- Date: `2026-07-08`
-- MySQL prod smoke: `PASS`
-- Docker prod smoke: `PASS`
-- Seed idempotent: `PASS`
-- API smoke: `PASS`
-- Coupon checkout + cancel rollback on MySQL 8 smoke DB: `PASS`
-- Demo coupon seed: `PASS` (`GET /api/cart/best-coupon` tra ve coupon seed hop le khi `APP_DEMO_SEED_ENABLED=true`)
-- Hibernate pagination warning `HHH90003004`: `PASS` (page IDs truoc, fetch graph theo IDs sau; khong con apply pagination in memory)
-- Coupon smoke command set: login demo user -> add cart item -> `GET /api/cart/best-coupon` -> apply coupon seed tra ve -> checkout -> xem order -> cancel order -> doi chieu `coupon.used_count` va `books.stock_quantity` tren smoke DB local
+- Date: `2026-07-09`
+- MySQL prod-like smoke from empty DB: `PASS`
+- Flyway `V1 -> V6` on `prod`: `PASS`
+- Hibernate validate on `prod`: `PASS`
+- Backend tests / compile: `PASS`
+- Audit Log / Order Timeline / Review Moderation / Export CSV / Return-Refund smoke: `PASS`
+- Return/refund duplicate guard hardening: `PASS`
+- Hibernate follow-on locking warning `HHH000444`: `PASS`
+- Website lint/build + main route smoke: `PASS`
+- Detailed snapshot and known backlog: `D:\bookstore\docs\PROJECT_STATUS_CURRENT.md`

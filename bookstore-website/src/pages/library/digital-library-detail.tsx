@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, ExternalLink, Save } from 'lucide-react'
+import { ArrowLeft, Download, ExternalLink, PencilLine, Save } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
@@ -161,6 +161,17 @@ export default function DigitalLibraryDetailPage() {
                     <Link to={`/library/${asset.digitalAssetId}/read`}>
                       <Button type="button" className="rounded-2xl">
                         {t('library.detail.openReaderLabel')}
+                      </Button>
+                    </Link>
+
+                    <Link
+                      to={`/reading-journal?bookId=${asset.bookId}&currentPage=${
+                        asset.progress?.currentPage ?? ''
+                      }&progressPercent=${asset.progress?.progressPercent ?? ''}`}
+                    >
+                      <Button type="button" variant="outline" className="rounded-2xl">
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        {t('readingJournal.openFromLibraryDetail')}
                       </Button>
                     </Link>
 

@@ -25,9 +25,54 @@ import type {
   UpsertBookRequest,
 } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
-import { unwrapResponse } from '@/utils'
+import { getErrorMessage, unwrapResponse } from '@/utils'
 import { toPageResult } from '@/services/pagination'
 import type { PageRequest } from '@/types/pagination'
+
+type BookCatalogLoadState = BookCatalog & {
+  bookError: string | null
+  categoryError: string | null
+}
+
+export async function getBookCatalogLoadState(
+  request: SearchBooksRequest = {},
+): Promise<BookCatalogLoadState> {
+  const [bookResponsesResult, categoriesResult, authorsResult, publishersResult] =
+    await Promise.allSettled([
+      getBookResponses(request),
+      getCategoryResponses(),
+      getAuthorResponses(),
+      getPublisherResponses(),
+    ])
+
+  const categories =
+    categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
+  const referenceMaps = buildBookReferenceMaps({
+    categories,
+    authors: authorsResult.status === 'fulfilled' ? authorsResult.value : [],
+    publishers:
+      publishersResult.status === 'fulfilled' ? publishersResult.value : [],
+  })
+
+  return {
+    books:
+      bookResponsesResult.status === 'fulfilled'
+        ? bookResponsesResult.value.map((bookResponse) =>
+            mapBookResponseToBook(bookResponse, referenceMaps),
+          )
+        : [],
+    categories: getCategoryNames(categories),
+    categoryIds: getCategoryIds(categories),
+    bookError:
+      bookResponsesResult.status === 'rejected'
+        ? getErrorMessage(bookResponsesResult.reason)
+        : null,
+    categoryError:
+      categoriesResult.status === 'rejected'
+        ? getErrorMessage(categoriesResult.reason)
+        : null,
+  }
+}
 
 export async function getBookCatalog(
   request: SearchBooksRequest = {},

@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.port.out.IFileStorage;
+import com.bookstore.bookstore.application.port.out.IFileStorageSettings;
 import com.bookstore.bookstore.application.port.out.IReadingProgressRepository;
 import com.bookstore.bookstore.application.port.out.IUserDigitalAccessRepository;
 import com.bookstore.bookstore.application.result.DigitalLibraryAssetResult;
@@ -23,7 +24,6 @@ import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.ReadingProgress;
 import com.bookstore.bookstore.domain.model.UserDigitalAccess;
-import com.bookstore.bookstore.infrastructure.storage.FileStorageProperties;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,7 +45,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
     private final IReadingProgressRepository readingProgressRepository;
     private final IBookRepository bookRepository;
     private final IFileStorage fileStorage;
-    private final FileStorageProperties fileStorageProperties;
+    private final IFileStorageSettings fileStorageSettings;
 
     @Override
     @Transactional(readOnly = true)
@@ -169,7 +169,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
                 resolveBucket(sampleFileAsset),
                 sampleFileAsset.getStorageKey(),
                 sampleFileAsset.getOriginalName(),
-                Duration.ofMinutes(fileStorageProperties.resolvedPresignDownloadExpireMinutes()),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
                 false
         );
     }
@@ -184,7 +184,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
                 resolveBucket(fileAsset),
                 fileAsset.getStorageKey(),
                 fileAsset.getOriginalName(),
-                Duration.ofMinutes(fileStorageProperties.resolvedPresignDownloadExpireMinutes()),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
                 false
         );
     }
@@ -203,7 +203,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
                 resolveBucket(fileAsset),
                 fileAsset.getStorageKey(),
                 fileAsset.getOriginalName(),
-                Duration.ofMinutes(fileStorageProperties.resolvedPresignDownloadExpireMinutes()),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
                 true
         );
     }
@@ -357,7 +357,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
     }
 
     private void requireStorageConfigured() {
-        if (!fileStorageProperties.isConfigured()) {
+        if (!fileStorageSettings.isConfigured()) {
             throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_NOT_CONFIGURED);
         }
     }
@@ -385,7 +385,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
         if (fileAsset.getBucket() != null && !fileAsset.getBucket().isBlank()) {
             return fileAsset.getBucket();
         }
-        return fileStorageProperties.bucket();
+        return fileStorageSettings.bucket();
     }
 
     private void validatePageRequest(int page, int size) {

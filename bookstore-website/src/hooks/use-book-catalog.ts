@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { getBookCatalog, getBookCatalogPage } from '@/services/book-service'
+import {
+  getBookCatalogLoadState,
+  getBookCatalogPage,
+} from '@/services/book-service'
 import type { Book } from '@/types/book'
 import type { PageRequest } from '@/types/pagination'
 import { getErrorMessage } from '@/utils'
@@ -10,6 +13,8 @@ type UseBookCatalogResult = {
   categoryIds: Record<string, string>
   isLoading: boolean
   error: string | null
+  bookError: string | null
+  categoryError: string | null
 }
 
 const initialState: UseBookCatalogResult = {
@@ -18,6 +23,8 @@ const initialState: UseBookCatalogResult = {
   categoryIds: {},
   isLoading: true,
   error: null,
+  bookError: null,
+  categoryError: null,
 }
 
 export function useBookCatalog() {
@@ -28,7 +35,7 @@ export function useBookCatalog() {
 
     async function loadBookCatalog() {
       try {
-        const catalog = await getBookCatalog()
+        const catalog = await getBookCatalogLoadState()
 
         if (isCancelled) {
           return
@@ -39,24 +46,30 @@ export function useBookCatalog() {
           categories: catalog.categories,
           categoryIds: catalog.categoryIds,
           isLoading: false,
-          error: null,
+          error: catalog.bookError ?? catalog.categoryError,
+          bookError: catalog.bookError,
+          categoryError: catalog.categoryError,
         })
       } catch (error) {
         if (isCancelled) {
           return
         }
 
+        const message = getErrorMessage(error)
+
         setState({
           books: [],
           categories: [],
           categoryIds: {},
           isLoading: false,
-          error: getErrorMessage(error),
+          error: message,
+          bookError: message,
+          categoryError: message,
         })
       }
     }
 
-    loadBookCatalog()
+    void loadBookCatalog()
 
     return () => {
       isCancelled = true
