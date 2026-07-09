@@ -71,6 +71,9 @@ public class SecurityConfig {
                                 "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/chat/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/audit-logs/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/orders/*/timeline").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/reports/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/ebooks",
                                 "/api/books/**",
@@ -118,6 +121,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of(
                 "Authorization",
+                "Content-Disposition",
                 "X-Total-Count",
                 "X-Page",
                 "X-Size",

@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.assembler.ShipmentAssembler;
 import com.bookstore.bookstore.application.command.UpdateShipmentStatusCommand;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.INotificationService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IShipmentRepository;
@@ -24,16 +25,20 @@ import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.ShipmentStatus;
+import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
+import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.Shipment;
+import com.bookstore.bookstore.domain.model.User;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,6 +70,9 @@ class ShipmentServiceTest {
     @Mock
     private IDigitalLibraryService digitalLibraryService;
 
+    @Mock
+    private IOrderTimelineService orderTimelineService;
+
     @InjectMocks
     private ShipmentService shipmentService;
 
@@ -85,6 +93,53 @@ class ShipmentServiceTest {
         assertEquals(ApplicationErrorCode.SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT, exception.getErrorCode());
         verify(orderRepository, never()).save(any(Order.class));
         verify(shipmentRepository, never()).save(any(Shipment.class));
+    }
+
+    @Test
+    void assign_whenConfirmedOrder_recordsTimelineAndStartsShipping() {
+        UUID shipperId = UUID.randomUUID();
+        Order order = confirmedOrder();
+        User shipper = shipperUser(shipperId);
+        ShipmentResult expected = new ShipmentResult(
+                UUID.randomUUID(),
+                order.getId(),
+                order.getOrderCode(),
+                shipperId,
+                order.getPaymentMethod(),
+                order.getPaymentStatus(),
+                OrderStatus.SHIPPING,
+                ShipmentStatus.ASSIGNED,
+                order.getTotalAmount(),
+                order.getFinalAmount(),
+                order.getReceiverName(),
+                order.getReceiverPhone(),
+                order.getReceiverAddress(),
+                null,
+                order.getUpdatedAt(),
+                order.getUpdatedAt(),
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(orderRepository.findByIdForUpdate(order.getId())).thenReturn(Optional.of(order));
+        when(shipmentRepository.findAllByOrderId(order.getId())).thenReturn(List.of());
+        when(userRepository.findByIdActive(shipperId)).thenReturn(Optional.of(shipper));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(shipmentRepository.save(any(Shipment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(shipmentAssembler.toResult(any(Shipment.class), any(Order.class))).thenReturn(expected);
+
+        ShipmentResult result = shipmentService.assign(new AssignShipmentCommand(order.getId(), shipperId));
+
+        verify(orderTimelineService).recordStatusChanged(order, OrderStatus.CONFIRMED, OrderStatus.SHIPPING);
+        verify(orderTimelineService).recordShipmentAssigned(
+                org.mockito.ArgumentMatchers.eq(order),
+                org.mockito.ArgumentMatchers.any(Shipment.class),
+                org.mockito.ArgumentMatchers.eq("shipper.test")
+        );
+        assertEquals(OrderStatus.SHIPPING, order.getStatus());
+        assertEquals(expected, result);
     }
 
     @Test
@@ -165,6 +220,13 @@ class ShipmentServiceTest {
 
         verify(digitalLibraryService).grantPurchasedAccessForOrder(order);
         verify(notificationService).create(any());
+        verify(orderTimelineService).recordShipmentStatusChanged(
+                order,
+                shipment,
+                ShipmentStatus.DELIVERING,
+                ShipmentStatus.DELIVERED
+        );
+        verify(orderTimelineService).recordStatusChanged(order, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
         assertEquals(expected, result);
     }
 
@@ -209,6 +271,14 @@ class ShipmentServiceTest {
 
         verify(paymentRepository).save(payment);
         verify(digitalLibraryService).grantPurchasedAccessForOrder(order);
+        verify(orderTimelineService).recordShipmentStatusChanged(
+                order,
+                shipment,
+                ShipmentStatus.DELIVERING,
+                ShipmentStatus.DELIVERED
+        );
+        verify(orderTimelineService).recordStatusChanged(order, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
+        verify(orderTimelineService).recordPaymentPaid(order, payment);
         assertEquals(OrderStatus.DELIVERED, order.getStatus());
         assertEquals(PaymentStatus.PAID, order.getPaymentStatus());
         assertEquals(PaymentStatus.PAID, payment.getStatus());
@@ -262,6 +332,42 @@ class ShipmentServiceTest {
                 PaymentMethod.COD,
                 PaymentStatus.PENDING,
                 OrderStatus.SHIPPING,
+                "Receiver Name",
+                "0123456789",
+                "Receiver Address",
+                now,
+                now,
+                null
+        );
+    }
+
+    private static Order confirmedOrder() {
+        Instant now = Instant.EPOCH;
+        OrderItem item = new OrderItem(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Book Title",
+                new BigDecimal("10.00"),
+                1,
+                new BigDecimal("10.00")
+        );
+        return new Order(
+                UUID.randomUUID(),
+                "DH123",
+                UUID.randomUUID(),
+                List.of(item),
+                new BigDecimal("10.00"),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                PaymentMethod.COD,
+                PaymentStatus.PENDING,
+                OrderStatus.CONFIRMED,
                 "Receiver Name",
                 "0123456789",
                 "Receiver Address",
@@ -347,6 +453,32 @@ class ShipmentServiceTest {
                 null,
                 now,
                 now
+        );
+    }
+
+    private static User shipperUser(UUID shipperId) {
+        Instant now = Instant.EPOCH;
+        Role shipperRole = new Role(
+                UUID.randomUUID(),
+                "SHIPPER",
+                "Shipper",
+                Set.of(),
+                now,
+                now,
+                null
+        );
+        return new User(
+                shipperId,
+                "shipper.test",
+                "hashed-password",
+                "0123456789",
+                "shipper@example.com",
+                UserStatus.ACTIVE,
+                false,
+                Set.of(shipperRole),
+                now,
+                now,
+                null
         );
     }
 }

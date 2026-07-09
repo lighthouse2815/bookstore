@@ -2,6 +2,8 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.application.result.ReviewReportRowResult;
+import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.domain.model.Review;
 import com.bookstore.bookstore.infrastructure.persistence.entity.BookJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.OrderItemJpaEntity;
@@ -35,14 +37,18 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
 
     @Override
     public List<Review> findAllByBookIdActive(UUID bookId) {
-        return reviewJpaRepository.findAllByBook_IdActive(bookId).stream()
+        return reviewJpaRepository.findAllByBook_IdAndStatusActive(bookId, ReviewStatus.APPROVED).stream()
                 .map(reviewPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
     public PageSliceResult<Review> findPageByBookIdActive(UUID bookId, int page, int size) {
-        var resultPage = reviewJpaRepository.findAllByBook_IdActive(bookId, PageRequest.of(page, size));
+        var resultPage = reviewJpaRepository.findAllByBook_IdAndStatusActive(
+                bookId,
+                ReviewStatus.APPROVED,
+                PageRequest.of(page, size)
+        );
         return new PageSliceResult<>(
                 resultPage.stream()
                         .map(reviewPersistenceMapper::toDomain)
@@ -59,7 +65,7 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
             return Map.of();
         }
 
-        return reviewJpaRepository.findRatingsByBookIds(bookIds).stream()
+        return reviewJpaRepository.findRatingsByBookIdsAndStatus(bookIds, ReviewStatus.APPROVED).stream()
                 .collect(Collectors.groupingBy(
                         row -> (UUID) row[0],
                         Collectors.mapping(row -> (Integer) row[1], Collectors.toList())
@@ -79,6 +85,32 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
                 .findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
                         PageRequest.of(page, size)
                 );
+        return new PageSliceResult<>(
+                resultPage.stream()
+                        .map(reviewPersistenceMapper::toDomain)
+                        .toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
+    }
+
+    @Override
+    public PageSliceResult<Review> findPageActive(
+            int page,
+            int size,
+            ReviewStatus status,
+            UUID bookId,
+            UUID userId,
+            Integer rating
+    ) {
+        var resultPage = reviewJpaRepository.findPageActive(
+                status,
+                bookId,
+                userId,
+                rating,
+                PageRequest.of(page, size)
+        );
         return new PageSliceResult<>(
                 resultPage.stream()
                         .map(reviewPersistenceMapper::toDomain)
@@ -115,6 +147,20 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
     @Override
     public long countNewReviewsBetween(Instant fromInclusive, Instant toExclusive) {
         return reviewJpaRepository.countNewReviewsBetween(fromInclusive, toExclusive);
+    }
+
+    @Override
+    public List<ReviewReportRowResult> findReviewReportRows(ReviewStatus status) {
+        return reviewJpaRepository.findReviewReportRows(status).stream()
+                .map(row -> new ReviewReportRowResult(
+                        row.getBookTitle(),
+                        row.getUsername(),
+                        row.getRating() == null ? 0 : row.getRating(),
+                        row.getStatus(),
+                        row.getCreatedAt(),
+                        row.getModerationReason()
+                ))
+                .toList();
     }
 
     @Override

@@ -9,6 +9,7 @@ public final class ReviewRule {
     private static final int MIN_RATING = 1;
     private static final int MAX_RATING = 5;
     private static final int MAX_COMMENT_LENGTH = 1000;
+    private static final int MAX_MODERATION_REASON_LENGTH = 500;
 
     private ReviewRule() {
     }
@@ -34,6 +35,18 @@ public final class ReviewRule {
     public static void requireCanSoftDelete(Instant deletedAt) {
         if (deletedAt != null) {
             throw new DomainException(DomainErrorCode.REVIEW_ALREADY_DELETED);
+        }
+    }
+
+    public static void requireValidModerationReason(String moderationReason) {
+        if (moderationReason != null && moderationReason.length() > MAX_MODERATION_REASON_LENGTH) {
+            throw new DomainException(DomainErrorCode.INVALID_REVIEW_MODERATION_REASON, "moderationReason");
+        }
+    }
+
+    public static void requireCanModerate(Instant deletedAt) {
+        if (deletedAt != null) {
+            throw new DomainException(DomainErrorCode.DELETED_REVIEW_CANNOT_MODERATE);
         }
     }
 }

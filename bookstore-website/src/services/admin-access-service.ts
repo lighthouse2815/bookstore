@@ -2,6 +2,7 @@ import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   AdminCreateImportReceiptRequest,
+  AdminModerateReviewRequest,
   AdminCreateNotificationRequest,
   AdminCreateUserRequest,
   AdminImportReceiptResponse,
@@ -10,6 +11,7 @@ import type {
   AdminPromotionResponse,
   AdminPromotionMutationRequest,
   AdminReviewResponse,
+  AdminReviewStatus,
   AdminRoleMutationRequest,
   AdminRoleResponse,
   AdminStockMovementResponse,
@@ -248,15 +250,50 @@ export async function getAdminReviews(): Promise<AdminReviewResponse[]> {
   return unwrapResponse(response)
 }
 
+export type AdminReviewFilter = PageRequest & {
+  status?: AdminReviewStatus
+  bookId?: string
+  userId?: string
+  rating?: number
+}
+
 export async function getAdminReviewsPage(
-  params: PageRequest = {},
+  params: AdminReviewFilter = {},
 ): Promise<PageResult<AdminReviewResponse>> {
-  const request = { page: params.page ?? 0, size: params.size ?? 10 }
+  const request = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+    status: params.status || undefined,
+    bookId: params.bookId || undefined,
+    userId: params.userId || undefined,
+    rating: typeof params.rating === 'number' ? params.rating : undefined,
+  }
   const response = await api.get<ApiResponse<AdminReviewResponse[]>>(
     '/admin/reviews',
     { params: request },
   )
   return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
+export async function hideAdminReview(
+  reviewId: string,
+  data: AdminModerateReviewRequest = {},
+): Promise<AdminReviewResponse> {
+  const request = normalizeAdminModerationRequest(data)
+  const response = await api.put<ApiResponse<AdminReviewResponse>>(
+    `/admin/reviews/${reviewId}/hide`,
+    request,
+  )
+  return unwrapResponse(response)
+}
+
+export async function approveAdminReview(
+  reviewId: string,
+): Promise<AdminReviewResponse> {
+  const response = await api.put<ApiResponse<AdminReviewResponse>>(
+    `/admin/reviews/${reviewId}/approve`,
+  )
+  return unwrapResponse(response)
 }
 
 export async function deleteAdminReview(reviewId: string): Promise<void> {
@@ -393,4 +430,14 @@ function mergeAdminUsers(
     .sort((leftUser, rightUser) =>
       leftUser.username.localeCompare(rightUser.username),
     )
+}
+
+function normalizeAdminModerationRequest(
+  data: AdminModerateReviewRequest,
+): AdminModerateReviewRequest {
+  const normalizedReason = data.reason?.trim()
+
+  return {
+    reason: normalizedReason ? normalizedReason : undefined,
+  }
 }

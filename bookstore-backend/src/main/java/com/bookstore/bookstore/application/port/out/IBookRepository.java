@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.application.result.LowStockBookResult;
+import com.bookstore.bookstore.application.result.LowStockReportRowResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Book;
 import java.util.Collection;
@@ -41,6 +42,8 @@ public interface IBookRepository {
     long countLowStockBooks(int threshold);
 
     List<LowStockBookResult> findLowStockBooks(int threshold);
+
+    List<LowStockReportRowResult> findLowStockReportRows(int threshold);
 
     Book save(Book book);
 

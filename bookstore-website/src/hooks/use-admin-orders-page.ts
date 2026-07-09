@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { getAdminShippers } from '@/services/admin-access-service'
 import {
   getAdminOrder,
+  getAdminOrderTimeline,
   getAdminOrdersPage,
   updateAdminOrderStatus,
 } from '@/services/order-service'
@@ -12,7 +13,11 @@ import {
   getAdminShipments,
 } from '@/services/shipment-service'
 import type { AdminUserResponse } from '@/types/admin-access'
-import type { OrderResponse, OrderStatus } from '@/types/order'
+import type {
+  OrderResponse,
+  OrderStatus,
+  OrderTimelineEventResponse,
+} from '@/types/order'
 import type { ShipmentResponse } from '@/types/shipment'
 import { isShipmentActiveStatus } from '@/types/shipment'
 import { getErrorMessage } from '@/utils'
@@ -40,6 +45,7 @@ export function useAdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('ALL')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
+  const [selectedTimeline, setSelectedTimeline] = useState<OrderTimelineEventResponse[]>([])
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>('PENDING')
   const [selectedShipperId, setSelectedShipperId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -193,6 +199,18 @@ export function useAdminOrdersPage() {
   function handleCloseDetail() {
     setSelectedOrderId(null)
     setSelectedOrder(null)
+    setSelectedTimeline([])
+  }
+
+  async function loadOrderDetail(orderId: string) {
+    const [detail, timeline] = await Promise.all([
+      getAdminOrder(orderId),
+      getAdminOrderTimeline(orderId),
+    ])
+
+    setSelectedOrder(detail)
+    setSelectedTimeline(timeline)
+    setSelectedStatus(detail.status)
   }
 
   async function handleViewOrder(orderId: string) {
@@ -205,9 +223,7 @@ export function useAdminOrdersPage() {
     setIsDetailLoading(true)
 
     try {
-      const detail = await getAdminOrder(orderId)
-      setSelectedOrder(detail)
-      setSelectedStatus(detail.status)
+      await loadOrderDetail(orderId)
     } catch (currentError) {
       toast.error(getErrorMessage(currentError, t('checkout.error')))
       handleCloseDetail()
@@ -229,12 +245,12 @@ export function useAdminOrdersPage() {
       })
 
       toast.success(t('admin.orders.updateSuccess'))
-      setSelectedOrder(updatedOrder)
       setOrders((currentOrders) =>
         currentOrders.map((order) =>
           order.orderId === updatedOrder.orderId ? updatedOrder : order,
         ),
       )
+      await loadOrderDetail(updatedOrder.orderId)
     } catch (currentError) {
       toast.error(getErrorMessage(currentError, t('checkout.error')))
     } finally {
@@ -269,11 +285,6 @@ export function useAdminOrdersPage() {
       setShipments((currentShipments) =>
         sortShipmentsByAssignedAtDesc([assignedShipment, ...currentShipments]),
       )
-      setSelectedOrder((currentOrder) =>
-        currentOrder
-          ? { ...currentOrder, status: assignedShipment.orderStatus }
-          : currentOrder,
-      )
       setOrders((currentOrders) =>
         currentOrders.map((order) =>
           order.orderId === assignedShipment.orderId
@@ -281,6 +292,7 @@ export function useAdminOrdersPage() {
             : order,
         ),
       )
+      await loadOrderDetail(assignedShipment.orderId)
     } catch (currentError) {
       toast.error(
         getErrorMessage(
@@ -305,6 +317,7 @@ export function useAdminOrdersPage() {
     statusFilter,
     selectedOrderId,
     selectedOrder,
+    selectedTimeline,
     selectedStatus,
     selectedShipperId,
     selectedOrderActiveShipment,

@@ -430,6 +430,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     """,
                     id("shipment", i), time(i + 100), time(i + 350), time(i + 250),
                     time(i + 150), time(i + 350), orderId, shipperId);
+            seedOrderTimeline(i, orderId, userId, receiver.username(), shipperId, couponCode);
 
             insert("""
                     INSERT INTO reviews (
@@ -591,6 +592,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         minimumCounts.put("publishers", DevelopmentSeedCatalog.PUBLISHERS.size());
         minimumCounts.put("suppliers", DevelopmentSeedCatalog.SUPPLIERS.size());
         minimumCounts.put("file_assets", seedSize * 2);
+        minimumCounts.put("order_timeline_events", seedSize * 9);
 
         List.of(
                 "users", "profiles", "user_roles", "user_addresses", "user_auth_identities",
@@ -761,6 +763,165 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
 
     private static Timestamp timestamp(Instant instant) {
         return Timestamp.valueOf(LocalDateTime.ofInstant(instant, ZoneOffset.UTC));
+    }
+
+    private void seedOrderTimeline(
+            int index,
+            String orderId,
+            String userId,
+            String customerUsername,
+            String shipperId,
+            String couponCode
+    ) {
+        String orderCode = "DH2026%05d".formatted(index);
+        String couponMetadata = "{\"couponCode\":\"%s\"}".formatted(couponCode);
+        String shipmentMetadata = "{\"shipperId\":\"%s\"}".formatted(shipperId);
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 'USER', 'ORDER_CREATED', NULL,
+                    NULL, ?, ?, NULL, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 1),
+                orderId,
+                userId,
+                customerUsername,
+                "Đơn hàng đã được tạo",
+                "Đơn hàng %s đã được tạo thành công.".formatted(orderCode),
+                time(index));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 'USER', 'COUPON_APPLIED', NULL,
+                    NULL, ?, ?, ?, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 2),
+                orderId,
+                userId,
+                customerUsername,
+                "Đã áp dụng mã giảm giá",
+                "Đã áp dụng mã giảm giá %s cho đơn hàng %s.".formatted(couponCode, orderCode),
+                couponMetadata,
+                time(index + 1));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'ORDER_STATUS_CHANGED', 'PENDING',
+                    'SHIPPING', ?, ?, NULL, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 3),
+                orderId,
+                "Cập nhật trạng thái đơn hàng",
+                "Trạng thái đơn hàng chuyển từ Chờ xác nhận sang Đang giao.",
+                time(index + 100));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'SHIPMENT_ASSIGNED', NULL,
+                    'ASSIGNED', ?, ?, ?, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 4),
+                orderId,
+                "Đã phân công giao hàng",
+                "Đơn hàng %s đã được phân công giao hàng.".formatted(orderCode),
+                shipmentMetadata,
+                time(index + 100));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'SHIPMENT_STATUS_CHANGED', 'ASSIGNED',
+                    'PICKED_UP', ?, ?, ?, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 5),
+                orderId,
+                "Cập nhật trạng thái giao hàng",
+                "Trạng thái giao hàng chuyển từ Đã phân công sang Đã lấy hàng.",
+                shipmentMetadata,
+                time(index + 150));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'SHIPMENT_STATUS_CHANGED', 'PICKED_UP',
+                    'DELIVERING', ?, ?, ?, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 6),
+                orderId,
+                "Cập nhật trạng thái giao hàng",
+                "Trạng thái giao hàng chuyển từ Đã lấy hàng sang Đang giao.",
+                shipmentMetadata,
+                time(index + 250));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'SHIPMENT_STATUS_CHANGED', 'DELIVERING',
+                    'DELIVERED', ?, ?, ?, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 7),
+                orderId,
+                "Cập nhật trạng thái giao hàng",
+                "Trạng thái giao hàng chuyển từ Đang giao sang Đã giao.",
+                shipmentMetadata,
+                time(index + 350));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?, 'USER', 'PAYMENT_PAID', NULL,
+                    NULL, ?, ?, NULL, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 8),
+                orderId,
+                userId,
+                customerUsername,
+                "Thanh toán thành công",
+                "Thanh toán cho đơn hàng %s đã được xác nhận thành công.".formatted(orderCode),
+                time(index + 400));
+
+        insert("""
+                INSERT INTO order_timeline_events (
+                    id, order_id, actor_id, actor_name, actor_role, event_type, old_status,
+                    new_status, title, description, metadata, created_at
+                ) VALUES (
+                    UUID_TO_BIN(?), UUID_TO_BIN(?), NULL, NULL, NULL, 'ORDER_STATUS_CHANGED', 'SHIPPING',
+                    'DELIVERED', ?, ?, NULL, ?
+                )
+                """,
+                id("order-timeline", index * 10 + 9),
+                orderId,
+                "Cập nhật trạng thái đơn hàng",
+                "Trạng thái đơn hàng chuyển từ Đang giao sang Đã giao.",
+                time(index + 500));
     }
 
     private int seedStockQuantity(int index) {

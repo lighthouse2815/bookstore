@@ -12,6 +12,7 @@ import com.bookstore.bookstore.application.command.HandleSepayIpnCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -45,6 +46,9 @@ class PaymentServiceTest {
     @Mock
     private IDigitalLibraryService digitalLibraryService;
 
+    @Mock
+    private IOrderTimelineService orderTimelineService;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -57,6 +61,7 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
+                orderTimelineService,
                 new SepayProperties("merchant-123", null, "webhook-key")
         );
 
@@ -93,6 +98,7 @@ class PaymentServiceTest {
         verify(paymentRepository).save(payment);
         verify(orderRepository).save(order);
         verify(digitalLibraryService).grantPurchasedAccessForOrder(order);
+        verify(orderTimelineService).recordPaymentPaid(order, payment);
     }
 
     @Test
@@ -101,6 +107,7 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
+                orderTimelineService,
                 new SepayProperties("merchant-123", null, "webhook-key")
         );
 
@@ -139,6 +146,7 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
+                orderTimelineService,
                 new SepayProperties("merchant-123", null, "webhook-key")
         );
 
@@ -179,6 +187,7 @@ class PaymentServiceTest {
                 paymentRepository,
                 orderRepository,
                 digitalLibraryService,
+                orderTimelineService,
                 new SepayProperties("merchant-123", null, null)
         );
 
@@ -205,7 +214,7 @@ class PaymentServiceTest {
         );
 
         assertEquals(ApplicationErrorCode.PAYMENT_WEBHOOK_UNAUTHORIZED, exception.getErrorCode());
-        verifyNoInteractions(paymentRepository, orderRepository, digitalLibraryService);
+        verifyNoInteractions(paymentRepository, orderRepository, digitalLibraryService, orderTimelineService);
     }
 
     private static Payment payment() {

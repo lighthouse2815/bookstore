@@ -3875,3 +3875,303 @@ Object.assign(messages.en.checkout as Record<string, unknown>, {
   bestCouponDiscount: 'You save {amount}',
   bestCouponEstimate: 'Estimated total after discount: {amount}',
 })
+
+Object.assign(messages.vi.admin.sidebar as Record<string, string>, {
+  auditLogs: 'Nhật ký hệ thống',
+})
+
+Object.assign(messages.en.admin.sidebar as Record<string, string>, {
+  auditLogs: 'Audit logs',
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  auditLogsPage: {
+    title: 'Nhật ký hệ thống',
+    description:
+      'Theo dõi thao tác quan trọng của admin và staff, xem trạng thái trước/sau thay đổi và tra cứu nhanh theo hành động hoặc đối tượng.',
+    total: '{count} bản ghi',
+    actorSearch: 'Tìm theo người thao tác hoặc mô tả trong trang hiện tại',
+    action: 'Hành động',
+    targetType: 'Đối tượng',
+    from: 'Từ ngày',
+    to: 'Đến ngày',
+    detailTitle: 'Chi tiết audit log',
+    empty: 'Chưa có bản ghi phù hợp với bộ lọc hiện tại.',
+    systemActor: 'Hệ thống',
+    beforeValue: 'Dữ liệu trước thay đổi',
+    afterValue: 'Dữ liệu sau thay đổi',
+    noBeforeValue: 'Không có dữ liệu trước thay đổi.',
+    noAfterValue: 'Không có dữ liệu sau thay đổi.',
+    ipAddress: 'IP',
+    userAgent: 'User agent',
+    columns: {
+      createdAt: 'Thời gian',
+      actor: 'Người thao tác',
+      action: 'Hành động',
+      target: 'Đối tượng',
+      description: 'Mô tả',
+    },
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  auditLogsPage: {
+    title: 'Audit logs',
+    description:
+      'Review important admin and staff actions, inspect before/after values, and filter by action or target type.',
+    total: '{count} records',
+    actorSearch: 'Search current page by actor or description',
+    action: 'Action',
+    targetType: 'Target type',
+    from: 'From',
+    to: 'To',
+    detailTitle: 'Audit log details',
+    empty: 'No audit logs match the current filters.',
+    systemActor: 'System',
+    beforeValue: 'Before value',
+    afterValue: 'After value',
+    noBeforeValue: 'No previous value.',
+    noAfterValue: 'No next value.',
+    ipAddress: 'IP',
+    userAgent: 'User agent',
+    columns: {
+      createdAt: 'Created at',
+      actor: 'Actor',
+      action: 'Action',
+      target: 'Target',
+      description: 'Description',
+    },
+  },
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  orderTimeline: {
+    title: 'Tiến trình đơn hàng',
+    description:
+      'Theo dõi các mốc quan trọng của đơn hàng, thanh toán và giao hàng theo thứ tự thời gian.',
+    empty: 'Đơn hàng này chưa có sự kiện timeline nào.',
+    actorLabel: 'Người thực hiện',
+    systemActor: 'Hệ thống',
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  orderTimeline: {
+    title: 'Order timeline',
+    description:
+      'Follow important order, payment, and delivery milestones in chronological order.',
+    empty: 'This order does not have any timeline events yet.',
+    actorLabel: 'Actor',
+    systemActor: 'System',
+  },
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  returnRequests: {
+    eyebrow: 'Đổi trả đơn hàng',
+    title: 'Yêu cầu trả hàng / hoàn tiền',
+    description:
+      'Theo dõi các yêu cầu đổi trả của bạn, xem trạng thái xử lý và số tiền hoàn nội bộ nếu có.',
+    sectionTitle: 'Trả hàng / hoàn tiền',
+    sectionDescription:
+      'Khi đơn đã giao thành công, bạn có thể gửi yêu cầu trả hàng hoặc hoàn tiền để admin xem xét thủ công.',
+    createAction: 'Tạo yêu cầu',
+    cancelAction: 'Hủy yêu cầu',
+    latestRequestTitle: 'Yêu cầu gần nhất',
+    emptyForOrder: 'Đơn hàng này chưa có yêu cầu trả hàng nào.',
+    dialogTitle: 'Tạo yêu cầu trả hàng',
+    dialogDescription:
+      'Mô tả rõ vấn đề bạn gặp phải để admin có đủ thông tin xử lý nhanh hơn.',
+    reasonLabel: 'Lý do yêu cầu',
+    reasonPlaceholder:
+      'Ví dụ: sách bị rách, giao sai sản phẩm, muốn hoàn một phần tiền...',
+    submitAction: 'Gửi yêu cầu',
+    filterLabel: 'Lọc theo trạng thái',
+    allStatuses: 'Tất cả trạng thái',
+    totalCount: '{count} yêu cầu',
+    backToOrders: 'Quay lại đơn hàng',
+    empty: 'Bạn chưa có yêu cầu trả hàng nào phù hợp với bộ lọc hiện tại.',
+    viewOrder: 'Xem đơn hàng',
+    createdAt: 'Tạo lúc',
+    requestedAmount: 'Số tiền yêu cầu hoàn',
+    approvedAmount: 'Số tiền được duyệt',
+    orderAmount: 'Giá trị đơn hàng',
+    receiverName: 'Người nhận',
+    processedAt: 'Xử lý lúc',
+    processedBy: 'Người xử lý',
+    adminNote: 'Ghi chú từ admin',
+    notProvided: 'Chưa cung cấp',
+    notProcessed: 'Chưa xử lý',
+    unknown: 'Không xác định',
+    paymentSummary:
+      'Thanh toán: {paymentMethod} · Trạng thái thanh toán: {paymentStatus}',
+    createSuccess: 'Đã gửi yêu cầu trả hàng thành công.',
+    cancelSuccess: 'Đã hủy yêu cầu trả hàng.',
+    errors: {
+      load: 'Không thể tải danh sách yêu cầu trả hàng',
+      create: 'Không thể tạo yêu cầu trả hàng',
+      cancel: 'Không thể hủy yêu cầu trả hàng',
+    },
+    status: {
+      PENDING: 'Chờ xử lý',
+      APPROVED: 'Đã duyệt',
+      REJECTED: 'Đã từ chối',
+      CANCELLED: 'Đã hủy',
+    },
+  },
+})
+
+Object.assign(messages.en as Record<string, unknown>, {
+  returnRequests: {
+    eyebrow: 'Order return requests',
+    title: 'Return / refund requests',
+    description:
+      'Track your return requests, review processing status, and see any internally approved refund amount.',
+    sectionTitle: 'Return / refund',
+    sectionDescription:
+      'Once an order is delivered, you can submit a return or refund request for manual admin review.',
+    createAction: 'Create request',
+    cancelAction: 'Cancel request',
+    latestRequestTitle: 'Latest request',
+    emptyForOrder: 'This order does not have a return request yet.',
+    dialogTitle: 'Create return request',
+    dialogDescription:
+      'Describe the issue clearly so the admin has enough context to review it faster.',
+    reasonLabel: 'Reason',
+    reasonPlaceholder:
+      'Example: damaged book, wrong item delivered, requesting a partial refund...',
+    submitAction: 'Submit request',
+    filterLabel: 'Filter by status',
+    allStatuses: 'All statuses',
+    totalCount: '{count} requests',
+    backToOrders: 'Back to orders',
+    empty: 'No return requests match the current filter.',
+    viewOrder: 'View order',
+    createdAt: 'Created at',
+    requestedAmount: 'Requested refund',
+    approvedAmount: 'Approved refund',
+    orderAmount: 'Order amount',
+    receiverName: 'Receiver',
+    processedAt: 'Processed at',
+    processedBy: 'Processed by',
+    adminNote: 'Admin note',
+    notProvided: 'Not provided',
+    notProcessed: 'Not processed',
+    unknown: 'Unknown',
+    paymentSummary:
+      'Payment: {paymentMethod} · Payment status: {paymentStatus}',
+    createSuccess: 'Return request submitted successfully.',
+    cancelSuccess: 'Return request cancelled successfully.',
+    errors: {
+      load: 'Could not load return requests',
+      create: 'Could not create the return request',
+      cancel: 'Could not cancel the return request',
+    },
+    status: {
+      PENDING: 'Pending',
+      APPROVED: 'Approved',
+      REJECTED: 'Rejected',
+      CANCELLED: 'Cancelled',
+    },
+  },
+})
+
+Object.assign(messages.vi.admin.sidebar as Record<string, string>, {
+  returnRequests: 'Yêu cầu trả hàng',
+})
+
+Object.assign(messages.en.admin.sidebar as Record<string, string>, {
+  returnRequests: 'Return requests',
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  returnRequestsPage: {
+    title: 'Yêu cầu trả hàng / hoàn tiền',
+    total: '{count} yêu cầu',
+    searchPlaceholder: 'Tìm theo mã đơn, tên khách, email hoặc người nhận',
+    filterLabel: 'Trạng thái',
+    allStatuses: 'Tất cả trạng thái',
+    empty: 'Chưa có yêu cầu trả hàng nào phù hợp.',
+    detailTitle: 'Chi tiết yêu cầu',
+    reasonTitle: 'Lý do khách hàng gửi',
+    adminNoteTitle: 'Ghi chú xử lý',
+    approveAction: 'Duyệt yêu cầu',
+    rejectAction: 'Từ chối',
+    approveDialogTitle: 'Duyệt yêu cầu trả hàng',
+    rejectDialogTitle: 'Từ chối yêu cầu trả hàng',
+    restockLabel:
+      'Hoàn lại tồn kho cho các sách vật lý trong đơn sau khi duyệt yêu cầu',
+    approveSuccess: 'Đã duyệt yêu cầu trả hàng.',
+    approveError: 'Không thể duyệt yêu cầu trả hàng',
+    rejectSuccess: 'Đã từ chối yêu cầu trả hàng.',
+    rejectError: 'Không thể từ chối yêu cầu trả hàng',
+    loadError: 'Không thể tải danh sách yêu cầu trả hàng',
+    notProvided: 'Chưa cung cấp',
+    notProcessed: 'Chưa xử lý',
+    columns: {
+      orderCode: 'Mã đơn',
+      customer: 'Khách hàng',
+      requestedAmount: 'Tiền yêu cầu',
+      status: 'Trạng thái',
+      createdAt: 'Ngày tạo',
+      actions: 'Thao tác',
+    },
+    fields: {
+      customer: 'Khách hàng',
+      email: 'Email',
+      orderAmount: 'Giá trị đơn',
+      createdAt: 'Tạo lúc',
+      requestedAmount: 'Tiền yêu cầu',
+      approvedAmount: 'Tiền duyệt',
+      processedBy: 'Người xử lý',
+      processedAt: 'Xử lý lúc',
+      adminNote: 'Ghi chú admin',
+    },
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  returnRequestsPage: {
+    title: 'Return / refund requests',
+    total: '{count} requests',
+    searchPlaceholder: 'Search by order code, customer, email, or receiver',
+    filterLabel: 'Status',
+    allStatuses: 'All statuses',
+    empty: 'No return requests match the current filters.',
+    detailTitle: 'Request details',
+    reasonTitle: 'Customer reason',
+    adminNoteTitle: 'Processing note',
+    approveAction: 'Approve request',
+    rejectAction: 'Reject request',
+    approveDialogTitle: 'Approve return request',
+    rejectDialogTitle: 'Reject return request',
+    restockLabel:
+      'Restock physical books from this order after approving the request',
+    approveSuccess: 'Return request approved successfully.',
+    approveError: 'Could not approve the return request',
+    rejectSuccess: 'Return request rejected successfully.',
+    rejectError: 'Could not reject the return request',
+    loadError: 'Could not load return requests',
+    notProvided: 'Not provided',
+    notProcessed: 'Not processed',
+    columns: {
+      orderCode: 'Order code',
+      customer: 'Customer',
+      requestedAmount: 'Requested amount',
+      status: 'Status',
+      createdAt: 'Created at',
+      actions: 'Actions',
+    },
+    fields: {
+      customer: 'Customer',
+      email: 'Email',
+      orderAmount: 'Order amount',
+      createdAt: 'Created at',
+      requestedAmount: 'Requested amount',
+      approvedAmount: 'Approved amount',
+      processedBy: 'Processed by',
+      processedAt: 'Processed at',
+      adminNote: 'Admin note',
+    },
+  },
+})

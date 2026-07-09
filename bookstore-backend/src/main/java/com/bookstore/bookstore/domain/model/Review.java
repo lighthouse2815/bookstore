@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.ReviewRule;
 import com.bookstore.bookstore.domain.validation.Guard;
@@ -16,6 +17,10 @@ public class Review {
     private UUID orderItemId;
     private int rating;
     private String comment;
+    private ReviewStatus status;
+    private String moderationReason;
+    private UUID moderatedBy;
+    private Instant moderatedAt;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -27,6 +32,10 @@ public class Review {
             UUID orderItemId,
             int rating,
             String comment,
+            ReviewStatus status,
+            String moderationReason,
+            UUID moderatedBy,
+            Instant moderatedAt,
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt
@@ -37,6 +46,10 @@ public class Review {
         setOrderItemId(orderItemId);
         setRating(rating);
         setComment(comment);
+        setStatus(status);
+        setModerationReason(moderationReason);
+        setModeratedBy(moderatedBy);
+        setModeratedAt(moderatedAt);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setDeletedAt(deletedAt);
@@ -54,6 +67,30 @@ public class Review {
         Instant now = Instant.now();
         setUpdatedAt(now);
         setDeletedAt(now);
+    }
+
+    public void hide(String moderationReason, UUID moderatedBy) {
+        ReviewRule.requireCanModerate(deletedAt);
+        Instant now = Instant.now();
+        setStatus(ReviewStatus.HIDDEN);
+        setModerationReason(moderationReason);
+        setModeratedBy(moderatedBy);
+        setModeratedAt(now);
+        setUpdatedAt(now);
+    }
+
+    public void approve(UUID moderatedBy) {
+        ReviewRule.requireCanModerate(deletedAt);
+        Instant now = Instant.now();
+        setStatus(ReviewStatus.APPROVED);
+        setModerationReason(null);
+        setModeratedBy(moderatedBy);
+        setModeratedAt(now);
+        setUpdatedAt(now);
+    }
+
+    public boolean isPubliclyVisible() {
+        return deletedAt == null && status == ReviewStatus.APPROVED;
     }
 
     private void setUserId(UUID userId) {
@@ -76,6 +113,27 @@ public class Review {
     private void setComment(String comment) {
         ReviewRule.requireValidCommentLength(comment);
         this.comment = comment;
+    }
+
+    private void setStatus(ReviewStatus status) {
+        this.status = Guard.notNull(status, DomainErrorCode.INVALID_REVIEW_STATUS, "status");
+    }
+
+    private void setModerationReason(String moderationReason) {
+        ReviewRule.requireValidModerationReason(moderationReason);
+        this.moderationReason = moderationReason;
+    }
+
+    private void setModeratedBy(UUID moderatedBy) {
+        this.moderatedBy = moderatedBy;
+    }
+
+    private void setModeratedAt(Instant moderatedAt) {
+        this.moderatedAt = Guard.notInFutureOrNull(
+                moderatedAt,
+                DomainErrorCode.INVALID_REVIEW_MODERATED_AT,
+                "moderatedAt"
+        );
     }
 
     private void setCreatedAt(Instant createdAt) {

@@ -3,6 +3,8 @@ import {
   BarChart3,
   BellRing,
   BookOpen,
+  ClipboardList,
+  ArrowLeftRight,
   FileText,
   Boxes,
   Building2,
@@ -42,6 +44,11 @@ export function AdminSidebar() {
           icon: BarChart3,
         },
         {
+          label: t('admin.sidebar.auditLogs'),
+          href: '/admin/audit-logs',
+          icon: ClipboardList,
+        },
+        {
           label: t('admin.sidebar.books'),
           href: '/admin/books',
           icon: BookOpen,
@@ -65,6 +72,11 @@ export function AdminSidebar() {
           label: t('admin.sidebar.orders'),
           href: '/admin/orders',
           icon: ShoppingCart,
+        },
+        {
+          label: t('admin.sidebar.returnRequests'),
+          href: '/admin/return-requests',
+          icon: ArrowLeftRight,
         },
         {
           label: t('admin.sidebar.shipments'),

@@ -1,13 +1,18 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IOrderService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.presentation.mapper.OrderTimelineWebMapper;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
 import com.bookstore.bookstore.presentation.request.UpdateOrderStatusRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CreateOrderResponse;
 import com.bookstore.bookstore.presentation.response.OrderResponse;
+import com.bookstore.bookstore.presentation.response.OrderTimelineEventResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final IOrderService orderService;
+    private final IOrderTimelineService orderTimelineService;
     private final OrderWebMapper orderWebMapper;
+    private final OrderTimelineWebMapper orderTimelineWebMapper;
+    private final AdminAuditSupport adminAuditSupport;
 
     @PostMapping("/api/orders/checkout")
     public ResponseEntity<ApiResponse<CreateOrderResponse>> checkout(
@@ -75,6 +83,17 @@ public class OrderController {
         return ApiResponse.success(orderWebMapper.toResponse(orderService.getMyOrder(userId, id)));
     }
 
+    @GetMapping("/api/orders/{id}/timeline")
+    public ApiResponse<List<OrderTimelineEventResponse>> getMyOrderTimeline(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID id
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ApiResponse.success(orderTimelineService.getMyTimeline(userId, id).stream()
+                .map(orderTimelineWebMapper::toResponse)
+                .toList());
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/orders")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> getAll(
@@ -102,13 +121,38 @@ public class OrderController {
         return ApiResponse.success(orderWebMapper.toResponse(orderService.getById(id)));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @GetMapping("/api/admin/orders/{id}/timeline")
+    public ApiResponse<List<OrderTimelineEventResponse>> getOrderTimeline(@PathVariable UUID id) {
+        return ApiResponse.success(orderTimelineService.getOrderTimeline(id).stream()
+                .map(orderTimelineWebMapper::toResponse)
+                .toList());
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/orders/{id}/status")
     public ApiResponse<OrderResponse> updateStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateOrderStatusRequest request
     ) {
+        OrderResponse before = orderWebMapper.toResponse(orderService.getById(id));
         var result = orderService.updateStatus(orderWebMapper.toUpdateStatusCommand(id, request));
-        return ApiResponse.success(orderWebMapper.toResponse(result));
+        OrderResponse response = orderWebMapper.toResponse(result);
+        String action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
+                ? "ORDER_CANCELLED"
+                : "ORDER_STATUS_UPDATED";
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                action,
+                "ORDER",
+                response.orderId(),
+                "Cập nhật trạng thái đơn hàng " + response.orderCode() + " sang " + response.status(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 }

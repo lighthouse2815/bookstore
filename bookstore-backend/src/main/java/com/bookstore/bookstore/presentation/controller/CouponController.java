@@ -7,6 +7,8 @@ import com.bookstore.bookstore.presentation.request.UpdateCouponRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CouponResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +36,7 @@ public class CouponController {
 
     private final ICouponService couponService;
     private final CouponWebMapper couponWebMapper;
+    private final AdminAuditSupport adminAuditSupport;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CouponResponse>>> getAll(
@@ -56,24 +61,66 @@ public class CouponController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CouponResponse>> create(@Valid @RequestBody CreateCouponRequest request) {
+    public ResponseEntity<ApiResponse<CouponResponse>> create(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
+            @Valid @RequestBody CreateCouponRequest request
+    ) {
         var result = couponService.create(couponWebMapper.toCreateCommand(request));
+        CouponResponse response = couponWebMapper.toResponse(result);
+        adminAuditSupport.recordCreate(
+                jwt,
+                httpServletRequest,
+                "COUPON_CREATED",
+                "COUPON",
+                response.id(),
+                "Tạo coupon " + response.code(),
+                response
+        );
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(couponWebMapper.toResponse(result)));
+                .body(ApiResponse.success(response));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<CouponResponse> update(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateCouponRequest request
     ) {
+        CouponResponse before = couponWebMapper.toResponse(couponService.getById(id));
         var result = couponService.update(couponWebMapper.toUpdateCommand(id, request));
-        return ApiResponse.success(couponWebMapper.toResponse(result));
+        CouponResponse response = couponWebMapper.toResponse(result);
+        adminAuditSupport.recordUpdate(
+                jwt,
+                httpServletRequest,
+                "COUPON_UPDATED",
+                "COUPON",
+                response.id(),
+                "Cập nhật coupon " + response.code(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
+    public ApiResponse<Void> delete(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
+            @PathVariable UUID id
+    ) {
+        CouponResponse before = couponWebMapper.toResponse(couponService.getById(id));
         couponService.delete(couponWebMapper.toDeleteCommand(id));
+        adminAuditSupport.recordDelete(
+                jwt,
+                httpServletRequest,
+                "COUPON_DELETED",
+                "COUPON",
+                id,
+                "Xóa coupon " + before.code(),
+                before
+        );
         return ApiResponse.success("Deleted", null);
     }
 }

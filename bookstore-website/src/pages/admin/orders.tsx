@@ -5,6 +5,7 @@ import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import { PaginationControls } from '@/components/common/pagination-controls'
 import { AdminLayout } from '@/components/layout/admin-layout'
+import { OrderTimelineList } from '@/components/order/order-timeline-list'
 import { useLanguage } from '@/contexts/language-context'
 import {
   adminOrderStatusOptions,
@@ -54,6 +55,7 @@ export default function AdminOrdersPage() {
     statusFilter,
     selectedOrderId,
     selectedOrder,
+    selectedTimeline,
     selectedStatus,
     selectedShipperId,
     selectedOrderActiveShipment,
@@ -476,6 +478,27 @@ export default function AdminOrdersPage() {
                         )}
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border p-5">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">
+                        {t('orderTimeline.title')}
+                      </h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t('orderTimeline.description')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <OrderTimelineList
+                      emptyLabel={t('orderTimeline.empty')}
+                      events={selectedTimeline}
+                      showActor
+                    />
                   </div>
                 </div>
               </div>
