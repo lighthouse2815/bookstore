@@ -84,3 +84,4 @@ yarn-error.log*
 **/*.sln.docstates
 .DS_Store
 Thumbs.db
+bookstore-backend/$log
