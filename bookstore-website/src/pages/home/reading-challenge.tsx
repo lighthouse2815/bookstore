@@ -226,8 +226,8 @@ export default function ReadingChallengePage() {
                   </div>
                   <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-[linear-gradient(90deg,#f43f5e,#fb7185,#38bdf8)] transition-[width] duration-300"
-                      style={{ width: `${progressPercent}%` }}
+                      className="motion-progress-fill h-full rounded-full bg-[linear-gradient(90deg,#f43f5e,#fb7185,#38bdf8)]"
+                      style={{ transform: `scaleX(${progressPercent / 100})` }}
                     />
                   </div>
                 </div>

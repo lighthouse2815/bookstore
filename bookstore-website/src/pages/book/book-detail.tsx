@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner'
 import { AddToCart } from '@/components/book/add-to-cart'
 import { BookCard } from '@/components/book/book-card'
+import { StatePanel, SurfaceCard } from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useAuth } from '@/contexts/auth-context'
@@ -152,11 +153,7 @@ export default function BookDetailPage() {
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('common.loading')}
-            </p>
-          </div>
+          <StatePanel title={t('common.loading')} />
         </main>
         <Footer />
       </div>
@@ -168,14 +165,11 @@ export default function BookDetailPage() {
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('book.listing.errorTitle')}
-            </p>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              {error}
-            </p>
-          </div>
+          <StatePanel
+            tone="error"
+            title={t('book.listing.errorTitle')}
+            description={error}
+          />
         </main>
         <Footer />
       </div>
@@ -499,7 +493,7 @@ export default function BookDetailPage() {
           </section>
 
           <aside className="order-4 space-y-4 xl:pt-1">
-            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+            <SurfaceCard className="p-5">
               <div className="mb-4 flex items-center gap-2">
                 <TicketPercent className="size-5 text-primary" />
                 <h2 className="font-heading text-xl font-bold">
@@ -551,9 +545,9 @@ export default function BookDetailPage() {
                   </p>
                 )}
               </div>
-            </section>
+            </SurfaceCard>
 
-            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+            <SurfaceCard className="p-5">
               <h2 className="mb-4 font-heading text-xl font-bold">
                 {t('book.detail.commitmentsTitle', { brand: brandName })}
               </h2>
@@ -575,7 +569,7 @@ export default function BookDetailPage() {
                   text={t('book.detail.commitmentSupport')}
                 />
               </div>
-            </section>
+            </SurfaceCard>
           </aside>
         </section>
 
@@ -816,11 +810,10 @@ export default function BookDetailPage() {
                   </article>
                 ))
               ) : (
-                <div className="rounded-3xl border border-dashed border-border px-6 py-10 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {t('book.detail.reviewEmpty')}
-                  </p>
-                </div>
+                <StatePanel
+                  minHeightClassName="min-h-[160px]"
+                  title={t('book.detail.reviewEmpty')}
+                />
               )}
             </div>
           </div>

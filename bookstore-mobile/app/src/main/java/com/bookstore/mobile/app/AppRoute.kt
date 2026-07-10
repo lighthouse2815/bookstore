@@ -15,10 +15,30 @@ sealed class AppRoute(val route: String) {
         fun create(bookId: String) = "bookDetail/$bookId"
     }
     data object Cart : AppRoute("cart")
-    data object Checkout : AppRoute("checkout")
-    data object OrderSuccess : AppRoute("orderSuccess/{orderId}?orderCode={orderCode}&totalAmount={totalAmount}") {
-        fun create(orderId: String, orderCode: String, totalAmount: Double): String {
-            return "orderSuccess/${Uri.encode(orderId)}?orderCode=${Uri.encode(orderCode)}&totalAmount=$totalAmount"
+    data object Checkout : AppRoute("checkout?itemIds={itemIds}") {
+        fun create(itemIds: List<String>): String {
+            return "checkout?itemIds=${Uri.encode(itemIds.joinToString(","))}"
+        }
+    }
+    data object OrderSuccess : AppRoute(
+        "orderSuccess/{orderId}?orderCode={orderCode}&totalAmount={totalAmount}&paymentMethod={paymentMethod}&paymentStatus={paymentStatus}&orderStatus={orderStatus}&transferContent={transferContent}",
+    ) {
+        fun create(
+            orderId: String,
+            orderCode: String,
+            totalAmount: Double,
+            paymentMethod: String,
+            paymentStatus: String,
+            orderStatus: String?,
+            transferContent: String?,
+        ): String {
+            return "orderSuccess/${Uri.encode(orderId)}" +
+                "?orderCode=${Uri.encode(orderCode)}" +
+                "&totalAmount=$totalAmount" +
+                "&paymentMethod=${Uri.encode(paymentMethod)}" +
+                "&paymentStatus=${Uri.encode(paymentStatus)}" +
+                "&orderStatus=${Uri.encode(orderStatus.orEmpty())}" +
+                "&transferContent=${Uri.encode(transferContent.orEmpty())}"
         }
     }
     data object Orders : AppRoute("orders")

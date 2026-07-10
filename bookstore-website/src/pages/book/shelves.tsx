@@ -261,7 +261,7 @@ export default function ShelvesPage() {
                 return (
                   <article
                     key={shelf.id}
-                    className="rounded-[28px] border border-primary/10 bg-white/92 p-5 shadow-[0_16px_48px_rgba(137,92,255,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_16px_48px_rgba(0,0,0,0.24)]"
+                    className="motion-card rounded-[28px] border border-primary/10 bg-white/92 p-5 shadow-[0_16px_48px_rgba(137,92,255,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_16px_48px_rgba(0,0,0,0.24)]"
                   >
                     {isEditing ? (
                       <div className="space-y-3">

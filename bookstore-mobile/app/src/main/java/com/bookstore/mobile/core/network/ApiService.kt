@@ -17,9 +17,11 @@ import com.bookstore.mobile.feature.book.data.dto.PublisherDto
 import com.bookstore.mobile.feature.cart.data.dto.AddToCartRequest
 import com.bookstore.mobile.feature.cart.data.dto.CartDto
 import com.bookstore.mobile.feature.cart.data.dto.UpdateCartItemRequest
+import com.bookstore.mobile.feature.checkout.data.dto.BestCouponSuggestionDto
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutRequest
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutResponse
 import com.bookstore.mobile.feature.order.data.dto.OrderDto
+import com.bookstore.mobile.feature.order.data.dto.OrderTimelineEventDto
 import com.bookstore.mobile.feature.profile.data.dto.CreateUserAddressRequest
 import com.bookstore.mobile.feature.profile.data.dto.ProfileDto
 import com.bookstore.mobile.feature.profile.data.dto.UpdateProfileRequest
@@ -104,6 +106,12 @@ interface ApiService {
     @DELETE("api/cart/items")
     suspend fun clearCart(): ApiResponse<JsonElement>
 
+    @GET("api/cart/best-coupon")
+    suspend fun getBestCoupon(
+        @Query("itemIds") itemIds: List<String>,
+        @Query("shippingMethod") shippingMethod: String,
+    ): ApiResponse<BestCouponSuggestionDto>
+
     @GET("api/user-addresses")
     suspend fun getAddresses(): ApiResponse<List<UserAddressDto>>
 
@@ -118,4 +126,7 @@ interface ApiService {
 
     @GET("api/orders/{id}")
     suspend fun getOrder(@Path("id") id: String): ApiResponse<OrderDto>
+
+    @GET("api/orders/{id}/timeline")
+    suspend fun getOrderTimeline(@Path("id") id: String): ApiResponse<List<OrderTimelineEventDto>>
 }

@@ -189,15 +189,30 @@ fun AppNavHost(
                 )
                 CartScreen(
                     viewModel = viewModel,
-                    onCheckout = { navController.navigate(AppRoute.Checkout.route) },
+                    onCheckout = { itemIds ->
+                        navController.navigate(AppRoute.Checkout.create(itemIds))
+                    },
                 )
             }
 
-            composable(AppRoute.Checkout.route) {
+            composable(
+                route = AppRoute.Checkout.route,
+                arguments = listOf(
+                    navArgument("itemIds") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+            ) { entry ->
+                val selectedCartItemIds = Uri.decode(entry.arguments?.getString("itemIds").orEmpty())
+                    .split(",")
+                    .map(String::trim)
+                    .filter(String::isNotBlank)
                 val viewModel: CheckoutViewModel = viewModel(
                     factory = AppViewModelFactory { CheckoutViewModel(container.checkoutRepository) },
                 )
                 CheckoutScreen(
+                    selectedCartItemIds = selectedCartItemIds,
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     onSuccess = { result ->
@@ -206,6 +221,10 @@ fun AppNavHost(
                                 orderId = result.orderId,
                                 orderCode = result.orderCode,
                                 totalAmount = result.totalAmount,
+                                paymentMethod = result.paymentMethod,
+                                paymentStatus = result.paymentStatus,
+                                orderStatus = result.orderStatus,
+                                transferContent = result.transferContent,
                             ),
                         )
                     },
@@ -224,15 +243,39 @@ fun AppNavHost(
                         type = NavType.FloatType
                         defaultValue = 0f
                     },
+                    navArgument("paymentMethod") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("paymentStatus") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("orderStatus") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("transferContent") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
                 ),
             ) { entry ->
                 val orderId = Uri.decode(entry.arguments?.getString("orderId").orEmpty())
                 val orderCode = Uri.decode(entry.arguments?.getString("orderCode").orEmpty())
                 val totalAmount = entry.arguments?.getFloat("totalAmount")?.toDouble() ?: 0.0
+                val paymentMethod = Uri.decode(entry.arguments?.getString("paymentMethod").orEmpty())
+                val paymentStatus = Uri.decode(entry.arguments?.getString("paymentStatus").orEmpty())
+                val orderStatus = Uri.decode(entry.arguments?.getString("orderStatus").orEmpty())
+                val transferContent = Uri.decode(entry.arguments?.getString("transferContent").orEmpty())
                 OrderSuccessScreen(
                     orderId = orderId,
                     orderCode = orderCode,
                     totalAmount = totalAmount,
+                    paymentMethod = paymentMethod,
+                    paymentStatus = paymentStatus,
+                    orderStatus = orderStatus,
+                    transferContent = transferContent,
                     onOrdersClick = {
                         navController.navigate(AppRoute.Orders.route) {
                             popUpTo(AppRoute.Home.route)

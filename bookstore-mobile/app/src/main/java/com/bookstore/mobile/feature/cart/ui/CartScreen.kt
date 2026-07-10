@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +31,7 @@ import com.bookstore.mobile.shared.ui.PriceText
 @Composable
 fun CartScreen(
     viewModel: CartViewModel,
-    onCheckout: () -> Unit,
+    onCheckout: (List<String>) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
@@ -55,12 +56,40 @@ fun CartScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Da chon ${state.selectedItems.size}/${state.cart?.items.orEmpty().size} san pham",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Button(onClick = viewModel::toggleSelectAll) {
+                            Text(
+                                if (state.selectedItemIds.containsAll(state.cart?.items.orEmpty().map { it.id })) {
+                                    "Bo chon tat ca"
+                                } else {
+                                    "Chon tat ca"
+                                },
+                            )
+                        }
+                    }
+                }
                 items(state.cart?.items.orEmpty(), key = { it.id }) { item ->
-                    CartItemRow(
-                        item = item,
-                        onQuantityChange = { quantity -> viewModel.updateQuantity(item.id, quantity) },
-                        onRemove = { viewModel.remove(item.id) },
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = item.id in state.selectedItemIds,
+                            onCheckedChange = { viewModel.toggleSelection(item.id) },
+                        )
+                        CartItemRow(
+                            item = item,
+                            onQuantityChange = { quantity -> viewModel.updateQuantity(item.id, quantity) },
+                            onRemove = { viewModel.remove(item.id) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
             Row(
@@ -72,10 +101,12 @@ fun CartScreen(
             ) {
                 Column {
                     Text("Tong tien", fontWeight = FontWeight.SemiBold)
-                    PriceText(state.cart?.totalAmount ?: 0.0)
+                    PriceText(state.selectedTotalAmount)
                 }
-                Button(onClick = onCheckout) {
-                    Text("Checkout")
+                Button(
+                    onClick = { viewModel.checkoutSelected()?.let(onCheckout) },
+                ) {
+                    Text("Thanh toan (${state.selectedItems.size})")
                 }
             }
         }

@@ -4,6 +4,15 @@ import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import { PaginationControls } from '@/components/common/pagination-controls'
+import {
+  PageHeader,
+  StatePanel,
+  SummaryField,
+  SurfaceCard,
+  formControlClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+} from '@/components/common/page-shell'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { OrderTimelineList } from '@/components/order/order-timeline-list'
 import { useLanguage } from '@/contexts/language-context'
@@ -81,16 +90,12 @@ export default function AdminOrdersPage() {
   return (
     <AdminLayout>
       <div>
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground">
-            {t('admin.orders.title')}
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            {t('admin.orders.totalOrders', {
-              count: formatNumber(totalCount),
-            })}
-          </p>
-        </div>
+        <PageHeader
+          title={t('admin.orders.title')}
+          description={t('admin.orders.totalOrders', {
+            count: formatNumber(totalCount),
+          })}
+        />
 
         <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
           <div className="relative">
@@ -99,17 +104,17 @@ export default function AdminOrdersPage() {
               placeholder={t('admin.orders.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearchTermChange}
-              className="pl-10"
+              className={`${formControlClassName} pl-10`}
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="orderStatusFilter">{t('admin.orders.filterLabel')}</Label>
             <select
               id="orderStatusFilter"
               value={statusFilter}
               onChange={handleStatusFilterChange}
-              className="mt-2 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              className={`w-full ${formControlClassName}`}
             >
               <option value="ALL">{t('admin.orders.allStatuses')}</option>
               {adminOrderStatusOptions.map((status) => (
@@ -121,14 +126,14 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-lg border border-border bg-card">
+        <SurfaceCard className="mt-8 overflow-hidden p-0">
           {isLoading ? (
-            <div className="px-6 py-8 text-center">
-              <p className="text-muted-foreground">{t('common.loading')}</p>
+            <div className="p-6">
+              <StatePanel title={t('common.loading')} />
             </div>
           ) : error ? (
-            <div className="px-6 py-8 text-center">
-              <p className="font-semibold text-foreground">{error}</p>
+            <div className="p-6">
+              <StatePanel tone="error" title={error} />
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -206,8 +211,8 @@ export default function AdminOrdersPage() {
           )}
 
           {!isLoading && !error && filteredOrders.length === 0 && (
-            <div className="px-6 py-8 text-center">
-              <p className="text-muted-foreground">{t('orders.emptyDescription')}</p>
+            <div className="p-6">
+              <StatePanel title={t('orders.emptyDescription')} minHeightClassName="min-h-[160px]" />
             </div>
           )}
 
@@ -219,12 +224,12 @@ export default function AdminOrdersPage() {
               onPageChange={handlePageChange}
             />
           ) : null}
-        </div>
+        </SurfaceCard>
 
         {selectedOrderId && (
-          <div className="mt-8 rounded-2xl border border-border bg-card p-6">
+          <SurfaceCard className="mt-8 p-6">
             {isDetailLoading || !selectedOrder ? (
-              <p className="text-muted-foreground">{t('common.loading')}</p>
+              <StatePanel title={t('common.loading')} minHeightClassName="min-h-[180px]" />
             ) : (
               <div className="space-y-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -245,6 +250,7 @@ export default function AdminOrdersPage() {
                       type="button"
                       variant="outline"
                       onClick={handleCloseDetail}
+                      className={secondaryButtonClassName}
                     >
                       {t('common.close')}
                     </Button>
@@ -343,7 +349,7 @@ export default function AdminOrdersPage() {
 
                         <Button
                           type="button"
-                          className="w-full"
+                          className={`${primaryButtonClassName} w-full`}
                           onClick={() => void handleUpdateStatus()}
                           disabled={isUpdating}
                         >
@@ -503,7 +509,7 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
             )}
-          </div>
+          </SurfaceCard>
         )}
       </div>
     </AdminLayout>
@@ -511,12 +517,5 @@ export default function AdminOrdersPage() {
 }
 
 function DetailCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-muted/40 p-4">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 font-medium text-foreground">{value}</p>
-    </div>
-  )
+  return <SummaryField label={label} value={value} />
 }

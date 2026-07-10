@@ -3,6 +3,11 @@ import { useMemo, useState } from 'react'
 import { BookCard } from '@/components/book/book-card'
 import { PaginationControls } from '@/components/common/pagination-controls'
 import {
+  PageHeader,
+  StatePanel,
+  SurfaceCard,
+} from '@/components/common/page-shell'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -84,20 +89,17 @@ export function BookListing() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold tracking-tight">
-          {t('book.listing.title')}
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          {t('book.listing.resultCount', {
-            count: formatNumber(totalCount),
-          })}
-        </p>
-      </div>
+      <PageHeader
+        className="mb-6"
+        title={t('book.listing.title')}
+        description={t('book.listing.resultCount', {
+          count: formatNumber(totalCount),
+        })}
+      />
 
       <div className="grid gap-8 lg:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
+          <SurfaceCard className="overflow-hidden">
             <div className="border-b border-border/60 p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -211,18 +213,16 @@ export function BookListing() {
                     />
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-center">
-                    <p className="font-medium">
-                      {t('book.listing.categoryEmptyTitle')}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t('book.listing.categoryEmptyDescription')}
-                    </p>
-                  </div>
+                  <StatePanel
+                    minHeightClassName="min-h-[150px]"
+                    title={t('book.listing.categoryEmptyTitle')}
+                    description={t('book.listing.categoryEmptyDescription')}
+                    className="px-4 py-5"
+                  />
                 )}
               </div>
             </div>
-          </div>
+          </SurfaceCard>
         </aside>
 
         <div>
@@ -249,20 +249,13 @@ export function BookListing() {
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
-              <p className="font-heading text-lg font-semibold">
-                {t('common.loading')}
-              </p>
-            </div>
+            <StatePanel title={t('common.loading')} />
           ) : error ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
-              <p className="font-heading text-lg font-semibold">
-                {t('book.listing.errorTitle')}
-              </p>
-              <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                {error || t('book.listing.errorDescription')}
-              </p>
-            </div>
+            <StatePanel
+              tone="error"
+              title={t('book.listing.errorTitle')}
+              description={error || t('book.listing.errorDescription')}
+            />
           ) : filteredBooks.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
               {filteredBooks.map((book) => (
@@ -270,25 +263,21 @@ export function BookListing() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
-              <p className="font-heading text-lg font-semibold">
-                {t('book.listing.emptyTitle')}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('book.listing.emptyDescription')}
-              </p>
-            </div>
+            <StatePanel
+              title={t('book.listing.emptyTitle')}
+              description={t('book.listing.emptyDescription')}
+            />
           )}
 
           {!isLoading && !error && totalCount > 0 ? (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card/70">
+            <SurfaceCard tone="nested" className="mt-6 overflow-hidden">
               <PaginationControls
                 page={page}
                 size={pageSize}
                 totalCount={totalCount}
                 onPageChange={handlePageChange}
               />
-            </div>
+            </SurfaceCard>
           ) : null}
         </div>
       </div>

@@ -226,7 +226,12 @@ export default function GiftFinderPage() {
     await submit()
 
     requestAnimationFrame(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)')
+        .matches
+        ? 'auto'
+        : 'smooth'
+
+      resultsRef.current?.scrollIntoView({ behavior, block: 'start' })
     })
   }
 
@@ -265,8 +270,8 @@ export default function GiftFinderPage() {
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${progressPercent}%` }}
+                    className="motion-progress-fill h-full rounded-full bg-primary"
+                    style={{ transform: `scaleX(${progressPercent / 100})` }}
                   />
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -526,7 +531,7 @@ export default function GiftFinderPage() {
                   ) : null}
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="motion-result grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {recommendations.map((recommendation) => (
                     <GiftRecommendationCard
                       key={recommendation.book.id}
@@ -584,7 +589,7 @@ function GiftRecommendationCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/92 shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
+    <article className="motion-card overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/92 shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
       <Link to={`/books/${book.id}`} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img

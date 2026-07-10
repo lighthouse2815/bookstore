@@ -1,5 +1,6 @@
 import { palette } from '@/src/config';
 import type { ShipmentStatus } from '@/src/types/shipment';
+import { getAllowedShipmentTransitions } from '@/src/lib/shipment-workflow';
 
 export const shipmentStatusMeta: Record<
   ShipmentStatus,
@@ -38,23 +39,13 @@ export const shipmentStatusMeta: Record<
 };
 
 export function getNextShipmentActions(status: ShipmentStatus) {
-  switch (status) {
-    case 'ASSIGNED':
-      return [
-        { status: 'PICKED_UP' as const, label: 'Lay hang', icon: 'package-variant-closed' },
-        { status: 'FAILED' as const, label: 'Bao that bai', icon: 'alert-circle-outline' },
-      ];
-    case 'PICKED_UP':
-      return [
-        { status: 'DELIVERING' as const, label: 'Bat dau giao', icon: 'truck-fast-outline' },
-        { status: 'FAILED' as const, label: 'Bao that bai', icon: 'alert-circle-outline' },
-      ];
-    case 'DELIVERING':
-      return [
-        { status: 'DELIVERED' as const, label: 'Giao thanh cong', icon: 'check-decagram-outline' },
-        { status: 'FAILED' as const, label: 'Bao that bai', icon: 'alert-circle-outline' },
-      ];
-    default:
-      return [];
-  }
+  return getAllowedShipmentTransitions(status).map((nextStatus) => shipmentActionMeta[nextStatus]);
 }
+
+const shipmentActionMeta: Record<ShipmentStatus, { status: ShipmentStatus; label: string; icon: string }> = {
+  ASSIGNED: { status: 'ASSIGNED', label: 'Da giao ship', icon: 'clipboard-check-outline' },
+  PICKED_UP: { status: 'PICKED_UP', label: 'Lay hang', icon: 'package-variant-closed' },
+  DELIVERING: { status: 'DELIVERING', label: 'Bat dau giao', icon: 'truck-fast-outline' },
+  DELIVERED: { status: 'DELIVERED', label: 'Giao thanh cong', icon: 'check-decagram-outline' },
+  FAILED: { status: 'FAILED', label: 'Bao that bai', icon: 'alert-circle-outline' },
+};

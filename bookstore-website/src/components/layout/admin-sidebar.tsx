@@ -20,7 +20,7 @@ const SIDEBAR_GROUPS = [
   {
     id: 'overview',
     labelKey: 'admin.sidebar.groups.overview',
-    routeIds: ['dashboard', 'audit-logs'],
+    routeIds: ['dashboard', 'reports', 'audit-logs'],
   },
   {
     id: 'catalog',
@@ -81,7 +81,7 @@ export function AdminSidebar({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-[min(20rem,calc(100vw-1rem))] max-w-xs flex-col border-r border-border bg-card/96 backdrop-blur transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-72 lg:max-w-none lg:translate-x-0',
+        'motion-drawer fixed inset-y-0 left-0 z-40 flex w-[min(20rem,calc(100vw-1rem))] max-w-xs flex-col border-r border-border bg-card/96 backdrop-blur lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-72 lg:max-w-none lg:translate-x-0',
         isOpen ? 'translate-x-0' : '-translate-x-full',
       )}
     >

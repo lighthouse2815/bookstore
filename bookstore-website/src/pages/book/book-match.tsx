@@ -180,7 +180,12 @@ export default function BookMatchPage() {
     await submit()
 
     requestAnimationFrame(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)')
+        .matches
+        ? 'auto'
+        : 'smooth'
+
+      resultsRef.current?.scrollIntoView({ behavior, block: 'start' })
     })
   }
 
@@ -219,8 +224,8 @@ export default function BookMatchPage() {
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${progressPercent}%` }}
+                    className="motion-progress-fill h-full rounded-full bg-primary"
+                    style={{ transform: `scaleX(${progressPercent / 100})` }}
                   />
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
@@ -452,11 +457,11 @@ export default function BookMatchPage() {
                   ) : null}
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="motion-result grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {recommendations.map((recommendation) => (
                     <div
                       key={recommendation.book.id}
-                      className="space-y-3 rounded-[1.5rem] border border-border/70 bg-card/90 p-3 shadow-sm"
+                      className="motion-card space-y-3 rounded-[1.5rem] border border-border/70 bg-card/90 p-3 shadow-sm"
                     >
                       <BookCard book={recommendation.book} />
                       {recommendation.reasons.length > 0 ? (

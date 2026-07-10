@@ -21,6 +21,12 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/common/button'
+import {
+  PageHeader,
+  StatePanel,
+  SurfaceCard,
+  primaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useCart } from '@/contexts/cart-context'
@@ -207,35 +213,32 @@ export default function CartPage() {
       <Header />
       <main className="flex-1 bg-gradient-to-b from-background via-background to-primary/5">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="mb-2 font-heading text-3xl font-bold">
-              {t('cart.title')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('cart.itemCount', { count: formatNumber(items.length) })}
-            </p>
-          </div>
+          <PageHeader
+            className="mb-8"
+            title={t('cart.title')}
+            description={t('cart.itemCount', {
+              count: formatNumber(items.length),
+            })}
+          />
 
         {isLoading ? (
-          <div className="py-12 text-center">
-            <p className="text-lg text-muted-foreground">
-              {t('common.loading')}
-            </p>
-          </div>
+          <StatePanel title={t('common.loading')} />
         ) : items.length === 0 ? (
-          <div className="py-12 text-center">
-            <ShoppingCart className="mx-auto mb-4 size-12 text-muted-foreground" />
-            <p className="mb-4 text-lg text-muted-foreground">
-              {t('cart.emptyTitle')}
-            </p>
-            <Link to="/books">
-              <Button>{t('common.continueShopping')}</Button>
-            </Link>
-          </div>
+          <StatePanel
+            icon={<ShoppingCart className="size-12 text-primary" />}
+            title={t('cart.emptyTitle')}
+            action={
+              <Link to="/books">
+                <Button className={primaryButtonClassName}>
+                  {t('common.continueShopping')}
+                </Button>
+              </Link>
+            }
+          />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
             <section className="space-y-5">
-              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <SurfaceCard className="overflow-hidden p-0">
                 <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold">
                     <SelectionCheckbox
@@ -291,9 +294,9 @@ export default function CartPage() {
                     />
                   ))}
                 </div>
-              </div>
+              </SurfaceCard>
 
-              <div className="grid gap-4 rounded-2xl border border-border bg-card/80 p-4 shadow-sm sm:grid-cols-3">
+              <SurfaceCard tone="muted" className="grid gap-4 p-4 sm:grid-cols-3">
                 <CartBenefit
                   icon={<ShieldCheck className="size-6" />}
                   title={t('cart.qualityTitle')}
@@ -309,10 +312,13 @@ export default function CartPage() {
                   title={t('cart.deliveryTitle')}
                   description={t('cart.deliveryDescription')}
                 />
-              </div>
+              </SurfaceCard>
             </section>
 
-            <aside className="h-fit rounded-2xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-24">
+            <SurfaceCard
+              as="aside"
+              className="h-fit p-6 lg:sticky lg:top-24"
+            >
               <div className="mb-6 flex items-center gap-4">
                 <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <ShoppingBag className="size-6" />
@@ -453,7 +459,7 @@ export default function CartPage() {
                 type="button"
                 onClick={handleCheckoutSelected}
                 disabled={selectedItems.length === 0}
-                className="h-12 w-full rounded-xl text-base font-bold"
+                className={`${primaryButtonClassName} h-12 w-full text-base font-bold`}
               >
                 {t('cart.checkoutSelected')}
                 <ArrowRight className="ml-2 size-5" />
@@ -463,7 +469,7 @@ export default function CartPage() {
                 <LockKeyhole className="size-4" />
                 {t('cart.secureCheckout')}
               </p>
-            </aside>
+            </SurfaceCard>
           </div>
         )}
         </div>

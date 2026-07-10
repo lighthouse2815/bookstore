@@ -83,6 +83,17 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, UUID
 
     List<ReviewJpaEntity> findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc();
 
+    @Query("""
+            select r
+            from ReviewJpaEntity r
+            where r.user.id = :userId
+              and r.deletedAt is null
+              and r.book.deletedAt is null
+              and r.user.deletedAt is null
+            order by r.createdAt desc, r.id desc
+            """)
+    List<ReviewJpaEntity> findAllByUserIdActive(@Param("userId") UUID userId);
+
     Page<ReviewJpaEntity> findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc(
             Pageable pageable
     );

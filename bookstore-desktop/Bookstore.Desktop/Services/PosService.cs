@@ -14,14 +14,19 @@ public class PosService
         this.apiClient = apiClient;
     }
 
-    public async Task<OrderResponse> CreateOrderAsync(IReadOnlyList<PosCartItemModel> items, string paymentMethod, string? couponCode)
+    public async Task<OrderResponse> CreateOrderAsync(
+        IReadOnlyList<PosCartItemModel> items,
+        string paymentMethod,
+        string? couponCode,
+        string? customerName,
+        string? customerPhone)
     {
         var request = new CreatePosOrderRequest
         {
-            CustomerName = "Khách lẻ",
-            CustomerPhone = null,
+            CustomerName = NormalizeOptional(customerName),
+            CustomerPhone = NormalizeOptional(customerPhone),
             PaymentMethod = paymentMethod,
-            CouponCode = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode.Trim(),
+            CouponCode = NormalizeOptional(couponCode),
             Items = items.Select(item => new CreatePosOrderItemRequest
             {
                 BookId = item.BookId,
@@ -32,5 +37,10 @@ public class PosService
         var element = await apiClient.PostAsync("/api/staff/pos/orders", request);
         return element.Deserialize<OrderResponse>(JsonHelper.Options)
             ?? throw new InvalidOperationException("Backend không trả thông tin đơn POS.");
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

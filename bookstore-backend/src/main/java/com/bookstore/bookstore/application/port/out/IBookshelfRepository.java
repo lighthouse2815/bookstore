@@ -22,6 +22,8 @@ public interface IBookshelfRepository {
 
     List<BookshelfItem> findAllItemsByShelfIdActive(UUID shelfId);
 
+    List<BookshelfItem> findAllItemsByShelfIdsActive(Collection<UUID> shelfIds);
+
     Optional<BookshelfItem> findItemByShelfIdAndBookId(UUID shelfId, UUID bookId);
 
     Bookshelf save(Bookshelf bookshelf);

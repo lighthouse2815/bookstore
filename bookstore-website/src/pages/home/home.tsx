@@ -13,8 +13,10 @@ import {
   secondaryLinkButtonClassName,
 } from '@/components/common/page-shell'
 import { FunDiscoverySection } from '@/components/home/fun-discovery-section'
+import { PersonalizedRecommendations } from '@/components/home/personalized-recommendations'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalog } from '@/hooks/use-book-catalog'
 import { getBookCoverUrl } from '@/utils/book-cover'
@@ -48,6 +50,7 @@ function CatalogStateCard({
 
 export default function HomePage() {
   const { t, formatNumber } = useLanguage()
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const { books, categories, isLoading, bookError, categoryError } =
     useBookCatalog()
   const hasBookError = Boolean(bookError)
@@ -272,6 +275,10 @@ export default function HomePage() {
         </section>
 
         <FunDiscoverySection />
+
+        <PersonalizedRecommendations
+          enabled={isAuthenticated && !isAuthLoading}
+        />
 
         <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mb-6 flex items-end justify-between">

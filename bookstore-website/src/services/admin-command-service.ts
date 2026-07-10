@@ -6,6 +6,7 @@ import { getAdminPaletteRoutes } from '@/utils/admin-route-registry'
 
 type BuildAdminCommandItemsOptions = {
   pathname: string
+  recentRouteHrefs?: string[]
   roles: UserRole[]
   t: TranslationFn
   theme: Theme
@@ -13,11 +14,13 @@ type BuildAdminCommandItemsOptions = {
 
 export function buildAdminCommandItems({
   pathname,
+  recentRouteHrefs = [],
   roles,
   t,
   theme,
 }: BuildAdminCommandItemsOptions): AdminCommandItem[] {
-  const routeItems = getAdminPaletteRoutes({ pathname, roles, t }).map((route) => ({
+  const paletteRoutes = getAdminPaletteRoutes({ pathname, roles, t })
+  const routeItems = paletteRoutes.map((route) => ({
     id: route.id,
     kind: 'route' as const,
     group: 'navigation' as const,
@@ -28,6 +31,21 @@ export function buildAdminCommandItems({
     href: route.href,
     isActive: route.isActive,
   }))
+
+  const recentRouteItems = recentRouteHrefs
+    .map((href) => paletteRoutes.find((route) => route.href === href))
+    .filter((route): route is NonNullable<typeof route> => Boolean(route))
+    .map((route) => ({
+      id: `recent-${route.id}`,
+      kind: 'route' as const,
+      group: 'recent' as const,
+      label: route.label,
+      subtitle: t('admin.commandPalette.recentRouteSubtitle'),
+      icon: route.icon,
+      keywords: [route.label, route.href, ...(route.keywords ?? [])],
+      href: route.href,
+      isActive: route.isActive,
+    }))
 
   const actionItems: AdminCommandItem[] = [
     {
@@ -77,7 +95,66 @@ export function buildAdminCommandItems({
     },
   ]
 
-  return [...routeItems, ...actionItems]
+  return [...recentRouteItems, ...routeItems, ...actionItems]
+}
+
+const RECENT_ADMIN_ROUTE_STORAGE_KEY = 'bookstore-admin-recent-routes'
+const MAX_RECENT_ADMIN_ROUTES = 5
+
+export function getRecentAdminRouteHrefs(): string[] {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(RECENT_ADMIN_ROUTE_STORAGE_KEY)
+    if (!storedValue) {
+      return []
+    }
+
+    const parsedValue: unknown = JSON.parse(storedValue)
+    if (!Array.isArray(parsedValue)) {
+      return []
+    }
+
+    return parsedValue
+      .filter((value): value is string =>
+        typeof value === 'string' && value.startsWith('/admin'),
+      )
+      .slice(0, MAX_RECENT_ADMIN_ROUTES)
+  } catch {
+    return []
+  }
+}
+
+export function saveRecentAdminRoute(href: string): string[] {
+  const normalizedHref = normalizeRecentAdminRouteHref(href)
+
+  if (typeof window === 'undefined' || !normalizedHref.startsWith('/admin')) {
+    return getRecentAdminRouteHrefs()
+  }
+
+  const recentRoutes = [
+    normalizedHref,
+    ...getRecentAdminRouteHrefs().filter(
+      (recentHref) => recentHref !== normalizedHref,
+    ),
+  ].slice(0, MAX_RECENT_ADMIN_ROUTES)
+
+  try {
+    window.localStorage.setItem(
+      RECENT_ADMIN_ROUTE_STORAGE_KEY,
+      JSON.stringify(recentRoutes),
+    )
+  } catch {
+    return getRecentAdminRouteHrefs()
+  }
+
+  return recentRoutes
+}
+
+function normalizeRecentAdminRouteHref(href: string) {
+  return href === '/admin/dashboard' ? '/admin' : href
 }
 
 export function filterAdminCommandItems(
@@ -176,6 +253,10 @@ function compareMatches(
 
 function getBasePriority(command: AdminCommandItem) {
   let priority = command.kind === 'route' ? 20 : 0
+
+  if (command.group === 'recent') {
+    priority += 15
+  }
 
   if (command.isActive) {
     priority += 5

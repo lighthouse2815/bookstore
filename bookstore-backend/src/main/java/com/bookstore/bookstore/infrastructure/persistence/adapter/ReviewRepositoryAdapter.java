@@ -80,6 +80,13 @@ public class ReviewRepositoryAdapter implements IReviewRepository {
     }
 
     @Override
+    public List<Review> findAllByUserIdActive(UUID userId) {
+        return reviewJpaRepository.findAllByUserIdActive(userId).stream()
+                .map(reviewPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public PageSliceResult<Review> findPageActive(int page, int size) {
         var resultPage = reviewJpaRepository
                 .findAllByDeletedAtIsNullAndBook_DeletedAtIsNullAndUser_DeletedAtIsNullOrderByCreatedAtDesc(

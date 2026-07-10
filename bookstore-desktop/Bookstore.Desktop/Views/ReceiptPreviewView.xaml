@@ -7,8 +7,43 @@
                 <TextBlock Text="{Binding Receipt.StoreName}" FontSize="24" FontWeight="SemiBold" TextAlignment="Center" />
                 <TextBlock Text="{Binding Receipt.OrderCode, StringFormat=Mã đơn: {0}}" Margin="0,14,0,0" />
                 <TextBlock Text="{Binding Receipt.CreatedAtText, StringFormat=Ngày giờ: {0}}" />
-                <TextBlock Text="{Binding Receipt.StaffName, StringFormat=Nhân viên: {0}}" />
-                <TextBlock Text="{Binding Receipt.PaymentMethod, StringFormat=Thanh toán: {0}}" Margin="0,0,0,12" />
+                <TextBlock Text="{Binding Receipt.StaffName, StringFormat=Nhân viên: {0}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Receipt.HasStaffName}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding Receipt.CustomerName, StringFormat=Khách hàng: {0}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Receipt.HasCustomerName}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding Receipt.CustomerPhone, StringFormat=SĐT: {0}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Receipt.HasCustomerPhone}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding Receipt.PaymentMethodText, StringFormat=Thanh toán: {0}}" Margin="0,0,0,12" />
 
                 <ItemsControl ItemsSource="{Binding Receipt.Items}">
                     <ItemsControl.ItemTemplate>
@@ -38,8 +73,28 @@
                     <TextBlock Text="Tổng cộng" FontSize="18" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding Receipt.FinalText}" DockPanel.Dock="Right" FontSize="18" FontWeight="SemiBold" />
                 </DockPanel>
+                <StackPanel Margin="0,8,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Receipt.HasCashReceived}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <DockPanel>
+                        <TextBlock Text="Tiền khách đưa" />
+                        <TextBlock Text="{Binding Receipt.CashReceivedText}" DockPanel.Dock="Right" />
+                    </DockPanel>
+                    <DockPanel Margin="0,4,0,0">
+                        <TextBlock Text="Tiền thừa" />
+                        <TextBlock Text="{Binding Receipt.ChangeAmountText}" DockPanel.Dock="Right" />
+                    </DockPanel>
+                </StackPanel>
 
-                <Button Content="In hóa đơn demo"
+                <Button Content="Xuất hóa đơn .txt"
                         Height="38"
                         Margin="0,18,0,0"
                         Command="{Binding PrintDemoCommand}" />

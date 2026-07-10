@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -19,6 +18,11 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/components/common/button'
 import { PaginationControls } from '@/components/common/pagination-controls'
+import {
+  StatePanel,
+  SurfaceCard,
+  primaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -111,13 +115,9 @@ export default function MyOrdersPage() {
           />
 
           {isLoading ? (
-            <StatePanel>
-              <p className="text-slate-500">{t('common.loading')}</p>
-            </StatePanel>
+            <StatePanel title={t('common.loading')} />
           ) : error ? (
-            <StatePanel tone="error">
-              <p className="font-semibold">{error}</p>
-            </StatePanel>
+            <StatePanel tone="error" title={error} />
           ) : orders.length === 0 ? (
             <EmptyOrdersPanel
               title={t('orders.emptyTitle')}
@@ -251,7 +251,7 @@ function OrderHistoryCard({
   const createdTimeLabel = formatTime(locale, order.createdAt)
 
   return (
-    <SurfacePanel>
+    <SurfaceCard className="p-6">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <span className="flex size-[62px] shrink-0 items-center justify-center rounded-[20px] bg-[linear-gradient(180deg,rgba(124,92,255,0.12)_0%,rgba(124,92,255,0.04)_100%)] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
@@ -334,7 +334,7 @@ function OrderHistoryCard({
         isCancelled={order.status === 'CANCELLED'}
         locale={locale}
       />
-    </SurfacePanel>
+    </SurfaceCard>
   )
 }
 
@@ -464,7 +464,7 @@ function EmptyOrdersPanel({
   ctaLabel: string
 }) {
   return (
-    <SurfacePanel>
+    <SurfaceCard className="p-6">
       <div className="flex flex-col items-center gap-6 py-8 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
         <div className="flex items-center gap-5">
           <PromoBookIllustration />
@@ -479,13 +479,13 @@ function EmptyOrdersPanel({
         </div>
 
         <Link to="/books">
-          <Button className="h-12 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-6 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+          <Button className={`${primaryButtonClassName} h-12 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-6 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}>
             <BookOpen className="mr-2 h-4 w-4" />
             {ctaLabel}
           </Button>
         </Link>
       </div>
-    </SurfacePanel>
+    </SurfaceCard>
   )
 }
 
@@ -499,7 +499,7 @@ function DiscoverMorePanel({
   ctaLabel: string
 }) {
   return (
-    <SurfacePanel className="overflow-hidden">
+    <SurfaceCard className="overflow-hidden p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-5">
           <PromoBookIllustration />
@@ -512,54 +512,13 @@ function DiscoverMorePanel({
         </div>
 
         <Link to="/books">
-          <Button className="h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_16px_30px_rgba(109,76,255,0.22)] hover:opacity-95">
+          <Button className={`${primaryButtonClassName} bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_16px_30px_rgba(109,76,255,0.22)] hover:opacity-95`}>
             <Sparkles className="mr-2 h-4 w-4" />
             {ctaLabel}
           </Button>
         </Link>
       </div>
-    </SurfacePanel>
-  )
-}
-
-function StatePanel({
-  children,
-  tone = 'default',
-}: {
-  children: ReactNode
-  tone?: 'default' | 'error'
-}) {
-  return (
-    <SurfacePanel>
-      <div
-        className={cn(
-          'rounded-[24px] border border-dashed px-6 py-12 text-center',
-          tone === 'default' && 'border-primary/12 bg-primary/4',
-          tone === 'error' && 'border-destructive/20 bg-destructive/5 text-destructive',
-        )}
-      >
-        {children}
-      </div>
-    </SurfacePanel>
-  )
-}
-
-function SurfacePanel({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
-  return (
-    <section
-      className={cn(
-        'rounded-[28px] border border-primary/10 bg-white/92 p-6 shadow-[0_14px_38px_rgba(137,92,255,0.08)] backdrop-blur',
-        className,
-      )}
-    >
-      {children}
-    </section>
+    </SurfaceCard>
   )
 }
 

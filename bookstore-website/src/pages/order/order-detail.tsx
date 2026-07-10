@@ -16,6 +16,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { Badge } from '@/components/common/badge'
+import {
+  StatePanel,
+  SurfaceCard,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { Input } from '@/components/common/input'
@@ -149,7 +155,7 @@ export default function OrderDetailPage() {
             <Link to="/orders">
               <Button
                 variant="outline"
-                className="h-11 rounded-2xl border-primary/15 px-5 text-primary hover:bg-primary/6"
+                className={`${secondaryButtonClassName} border-primary/15 text-primary hover:bg-primary/6`}
               >
                 <Clock3 className="mr-2 h-4 w-4" />
                 {t('orderDetail.orderHistory')}
@@ -158,17 +164,12 @@ export default function OrderDetailPage() {
           </div>
 
           {isLoading ? (
-            <SurfacePanel>
-              <div className="rounded-[24px] border border-dashed border-primary/15 bg-primary/4 px-6 py-12 text-center text-slate-500">
-                {t('common.loading')}
-              </div>
-            </SurfacePanel>
+            <StatePanel title={t('common.loading')} />
           ) : error || !order ? (
-            <SurfacePanel>
-              <div className="rounded-[24px] border border-dashed border-destructive/20 bg-destructive/5 px-6 py-12 text-center font-semibold text-destructive">
-                {error || t('notFound.description')}
-              </div>
-            </SurfacePanel>
+            <StatePanel
+              tone="error"
+              title={error || t('notFound.description')}
+            />
           ) : (
             <OrderDetailContent
               formatCurrency={formatCurrency}
@@ -457,14 +458,9 @@ function SurfacePanel({
   className?: string
 }) {
   return (
-    <section
-      className={cn(
-        'rounded-[28px] border border-primary/10 bg-white/92 p-6 shadow-[0_14px_38px_rgba(137,92,255,0.08)] backdrop-blur',
-        className,
-      )}
-    >
+    <SurfaceCard className={cn('p-6', className)}>
       {children}
-    </section>
+    </SurfaceCard>
   )
 }
 
@@ -488,7 +484,7 @@ function SectionHeading({
           <Icon className="h-5 w-5" />
         </span>
       )}
-      <h2 className="font-heading text-[1.9rem] font-bold text-slate-950">{title}</h2>
+      <h2 className="font-heading text-[1.9rem] font-bold text-foreground">{title}</h2>
     </div>
   )
 }
@@ -509,7 +505,7 @@ function DetailTile({
   return (
     <div
       className={cn(
-        'rounded-[18px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(249,245,255,0.94)_100%)] px-4 py-4 sm:px-5',
+        'rounded-[18px] border border-border/70 bg-background/80 px-4 py-4 sm:px-5 dark:bg-background/55',
         tileClassName,
       )}
     >
@@ -638,7 +634,7 @@ function ReturnRequestPanel({
           <Button
             type="button"
             onClick={onOpenCreateDialog}
-            className="h-11 rounded-2xl px-5"
+            className={primaryButtonClassName}
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" />
             {t('returnRequests.createAction')}
@@ -648,13 +644,15 @@ function ReturnRequestPanel({
 
       <div className="mt-6">
         {isReturnLoading ? (
-          <div className="rounded-[24px] border border-dashed border-primary/15 bg-primary/4 px-6 py-10 text-center text-slate-500">
-            {t('common.loading')}
-          </div>
+          <StatePanel
+            minHeightClassName="min-h-[160px]"
+            title={t('common.loading')}
+          />
         ) : latestReturnRequest == null ? (
-          <div className="rounded-[24px] border border-dashed border-primary/15 bg-primary/4 px-6 py-10 text-center text-slate-500">
-            {t('returnRequests.emptyForOrder')}
-          </div>
+          <StatePanel
+            minHeightClassName="min-h-[160px]"
+            title={t('returnRequests.emptyForOrder')}
+          />
         ) : (
           <div className="rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(249,245,255,0.94)_100%)] p-5 shadow-[0_12px_30px_rgba(137,92,255,0.06)]">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -694,7 +692,7 @@ function ReturnRequestPanel({
                   variant="outline"
                   onClick={onCancelReturnRequest}
                   disabled={isCancellingReturnRequest}
-                  className="h-11 rounded-2xl border-primary/15 px-5 text-primary hover:bg-primary/6"
+                  className={`${secondaryButtonClassName} border-primary/15 text-primary hover:bg-primary/6`}
                 >
                   {isCancellingReturnRequest
                     ? t('common.processing')
@@ -784,10 +782,10 @@ function ReturnRequestDialog({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4">
-      <div className="w-full max-w-2xl rounded-[28px] border border-primary/10 bg-white p-6 shadow-2xl">
+      <div className="w-full max-w-2xl rounded-[28px] border border-border/70 bg-card p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-heading text-3xl font-bold text-slate-950">
+            <h2 className="font-heading text-3xl font-bold text-foreground">
               {t('returnRequests.dialogTitle')}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">

@@ -9,6 +9,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   buildAdminCommandItems,
   filterAdminCommandItems,
+  getRecentAdminRouteHrefs,
+  saveRecentAdminRoute,
 } from '@/services/admin-command-service'
 import type { AdminCommandItem } from '@/types/admin-command'
 import { useAuth } from '@/contexts/auth-context'
@@ -38,6 +40,9 @@ export function useAdminCommandPalette(): UseAdminCommandPaletteResult {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQueryState] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
+  const [recentRouteHrefs, setRecentRouteHrefs] = useState(
+    getRecentAdminRouteHrefs,
+  )
   const deferredQuery = useDeferredValue(query)
   const roles = user?.roles ?? []
 
@@ -46,20 +51,21 @@ export function useAdminCommandPalette(): UseAdminCommandPaletteResult {
       filterAdminCommandItems(
         buildAdminCommandItems({
           pathname: location.pathname,
+          recentRouteHrefs,
           roles,
           t,
           theme,
         }),
         deferredQuery,
       ),
-    [deferredQuery, location.pathname, roles, t, theme],
+    [deferredQuery, location.pathname, recentRouteHrefs, roles, t, theme],
   )
 
   useEffect(() => {
     function handleWindowKeyDown(event: KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setIsOpen((currentIsOpen) => !currentIsOpen)
+        setIsOpen(true)
         return
       }
 
@@ -75,6 +81,7 @@ export function useAdminCommandPalette(): UseAdminCommandPaletteResult {
   }, [])
 
   useEffect(() => {
+    setRecentRouteHrefs(saveRecentAdminRoute(location.pathname))
     setIsOpen(false)
     setQueryState('')
     setHighlightedIndex(0)

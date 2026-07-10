@@ -21,6 +21,8 @@ public interface IReviewRepository {
 
     List<Review> findAllActive();
 
+    List<Review> findAllByUserIdActive(UUID userId);
+
     PageSliceResult<Review> findPageActive(int page, int size);
 
     PageSliceResult<Review> findPageActive(

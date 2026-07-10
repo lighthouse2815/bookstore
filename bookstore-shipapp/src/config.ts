@@ -1,6 +1,10 @@
-const defaultBaseUrl = 'http://localhost:8080/api';
+import { Platform } from 'react-native';
+import { getApiConfigurationError } from '@/src/lib/api-configuration';
 
-export const apiBaseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL ?? defaultBaseUrl).replace(/\/+$/, '');
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+
+export const apiConfigurationError = getApiConfigurationError(configuredApiBaseUrl, Platform.OS);
+export const apiBaseUrl = apiConfigurationError ? null : configuredApiBaseUrl!.replace(/\/+$/, '');
 
 export const palette = {
   background: '#F3F7FB',

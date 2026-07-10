@@ -78,6 +78,17 @@ public class BookshelfRepositoryAdapter implements IBookshelfRepository {
     }
 
     @Override
+    public List<BookshelfItem> findAllItemsByShelfIdsActive(Collection<UUID> shelfIds) {
+        if (shelfIds == null || shelfIds.isEmpty()) {
+            return List.of();
+        }
+
+        return bookshelfItemJpaRepository.findAllByShelfIdsActive(shelfIds).stream()
+                .map(bookshelfItemPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<BookshelfItem> findItemByShelfIdAndBookId(UUID shelfId, UUID bookId) {
         return bookshelfItemJpaRepository.findByShelfIdAndBookId(shelfId, bookId)
                 .map(bookshelfItemPersistenceMapper::toDomain);

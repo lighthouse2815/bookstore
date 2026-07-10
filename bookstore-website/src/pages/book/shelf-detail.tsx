@@ -13,6 +13,11 @@ import {
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '@/components/common/button'
 import { Input } from '@/components/common/input'
+import {
+  StatePanel,
+  SurfaceCard,
+  primaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -247,24 +252,17 @@ export default function ShelfDetailPage() {
           </div>
 
           {isLoading ? (
-            <section className="rounded-[28px] border border-dashed border-border bg-card/80 px-6 py-16 text-center">
-              <p className="font-heading text-lg font-semibold">
-                {t('common.loading')}
-              </p>
-            </section>
+            <StatePanel title={t('common.loading')} />
           ) : error || !bookshelf ? (
-            <section className="rounded-[28px] border border-dashed border-border bg-card/80 px-6 py-16 text-center">
-              <LibraryBig className="mx-auto size-12 text-primary/70" />
-              <h1 className="mt-5 font-heading text-2xl font-bold">
-                {t('shelves.loadError')}
-              </h1>
-              <p className="mt-3 text-muted-foreground">
-                {error ?? t('shelves.loadError')}
-              </p>
-            </section>
+            <StatePanel
+              tone="error"
+              icon={<LibraryBig className="size-12" />}
+              title={t('shelves.loadError')}
+              description={error ?? t('shelves.loadError')}
+            />
           ) : (
             <>
-              <section className="rounded-[32px] border border-primary/12 bg-white/88 p-6 shadow-[0_24px_80px_rgba(137,92,255,0.12)] backdrop-blur dark:border-white/10 dark:bg-card/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)]">
+              <SurfaceCard className="p-6">
                 <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                   <div className="space-y-4">
                     <span className="inline-flex items-center gap-2 rounded-full bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:bg-primary/18">
@@ -313,24 +311,20 @@ export default function ShelfDetailPage() {
                   <Button
                     type="submit"
                     disabled={isSaving || !renameValue.trim()}
-                    className="h-12 rounded-2xl px-5"
+                    className={`${primaryButtonClassName} h-12`}
                   >
                     <PencilLine className="mr-2 size-4" />
                     {t('shelves.renameAction')}
                   </Button>
                 </form>
-              </section>
+              </SurfaceCard>
 
               {bookshelf.items.length === 0 ? (
-                <section className="rounded-[28px] border border-dashed border-border bg-card/80 px-6 py-16 text-center shadow-sm">
-                  <LibraryBig className="mx-auto size-12 text-primary/70" />
-                  <h2 className="mt-5 font-heading text-2xl font-bold text-slate-950 dark:text-foreground">
-                    {t('shelves.emptyShelfTitle')}
-                  </h2>
-                  <p className="mt-3 text-muted-foreground">
-                    {t('shelves.emptyShelfDescription')}
-                  </p>
-                </section>
+                <StatePanel
+                  icon={<LibraryBig className="size-12 text-primary" />}
+                  title={t('shelves.emptyShelfTitle')}
+                  description={t('shelves.emptyShelfDescription')}
+                />
               ) : (
                 <section className="grid gap-5 lg:grid-cols-2">
                   {bookshelf.items.map((item, index) => (
@@ -401,7 +395,7 @@ function ShelfBookCard({
     typeof item.book.rating === 'number' && !Number.isNaN(item.book.rating)
 
   return (
-    <article className="overflow-hidden rounded-[28px] border border-primary/10 bg-white/92 shadow-[0_18px_50px_rgba(137,92,255,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
+    <SurfaceCard as="article" className="overflow-hidden p-0">
       <div className="grid gap-0 sm:grid-cols-[180px_minmax(0,1fr)]">
         <Link
           to={`/books/${item.book.id}`}
@@ -506,6 +500,6 @@ function ShelfBookCard({
           </div>
         </div>
       </div>
-    </article>
+    </SurfaceCard>
   )
 }

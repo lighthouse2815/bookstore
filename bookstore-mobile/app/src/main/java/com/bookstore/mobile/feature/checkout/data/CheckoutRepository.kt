@@ -5,8 +5,10 @@ import com.bookstore.mobile.core.util.ResultState
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutRequest
 import com.bookstore.mobile.feature.profile.data.dto.CreateUserAddressRequest
 import com.bookstore.mobile.shared.model.Address
+import com.bookstore.mobile.shared.model.BestCouponSuggestion
 import com.bookstore.mobile.shared.model.Cart
 import com.bookstore.mobile.shared.model.CheckoutResult
+import com.bookstore.mobile.feature.checkout.checkoutOrderStatusOrPending
 
 class CheckoutRepository(
     private val apiClient: ApiClient,
@@ -33,19 +35,27 @@ class CheckoutRepository(
         ).data?.toModel() ?: error("Dia chi khong hop le")
     }
 
-    suspend fun checkout(
-        addressId: String,
-        bookCouponCode: String?,
-        note: String?,
-    ): ResultState<CheckoutResult> = call("Dat hang that bai") {
+    suspend fun getBestCoupon(
+        cartItemIds: List<String>,
+        shippingMethod: String,
+    ): ResultState<BestCouponSuggestion> = call("Khong lay duoc goi y ma giam gia") {
+        require(cartItemIds.isNotEmpty()) { "Can chon san pham de tim ma giam gia" }
+        apiClient.service().getBestCoupon(cartItemIds, shippingMethod).data?.toModel()
+            ?: error("Goi y ma giam gia khong hop le")
+    }
+
+    suspend fun checkout(request: CheckoutRequest): ResultState<CheckoutResult> = call("Dat hang that bai") {
+        require(request.cartItemIds.isNotEmpty()) { "Can chon it nhat mot san pham de dat hang" }
         val dto = apiClient.service().checkout(
-            CheckoutRequest(
-                addressId = addressId,
-                bookCouponCode = bookCouponCode?.trim()?.ifBlank { null },
-                shippingCouponCode = null,
-                note = note?.trim()?.ifBlank { null },
+            request.copy(
+                bookCouponCode = request.bookCouponCode?.trim()?.ifBlank { null },
+                shippingCouponCode = request.shippingCouponCode?.trim()?.ifBlank { null },
+                note = request.note?.trim()?.ifBlank { null },
             ),
         ).data ?: error("Phan hoi dat hang khong hop le")
+        val orderStatus = checkoutOrderStatusOrPending(runCatching {
+            apiClient.service().getOrder(dto.orderId).data?.status
+        }.getOrNull())
         CheckoutResult(
             orderId = dto.orderId,
             orderCode = dto.orderCode,
@@ -53,6 +63,7 @@ class CheckoutRepository(
             paymentStatus = dto.paymentStatus,
             totalAmount = dto.totalAmount,
             transferContent = dto.transferContent,
+            orderStatus = orderStatus,
         )
     }
 

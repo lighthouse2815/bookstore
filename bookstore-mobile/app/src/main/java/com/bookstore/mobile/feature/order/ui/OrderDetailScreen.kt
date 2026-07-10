@@ -40,9 +40,10 @@ fun OrderDetailScreen(
         when {
             state.isLoading -> LoadingView()
             state.errorMessage != null -> ErrorView(
-                message = state.errorMessage ?: "",
+                message = state.errorMessage.orEmpty(),
                 onRetry = { viewModel.load(orderId) },
             )
+
             state.order != null -> {
                 val order = state.order!!
                 LazyColumn(
@@ -56,7 +57,8 @@ fun OrderDetailScreen(
                                 modifier = Modifier.padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                Text("Don ${order.id}", fontWeight = FontWeight.SemiBold)
+                                Text("Ma don: ${order.orderCode}", fontWeight = FontWeight.SemiBold)
+                                Text("Order ID: ${order.id}", style = MaterialTheme.typography.bodySmall)
                                 Text("Ngay dat: ${formatDateTime(order.createdAt)}")
                                 Text("Trang thai: ${order.status}")
                                 Text("Thanh toan: ${order.paymentMethod} - ${order.paymentStatus}")
@@ -93,6 +95,39 @@ fun OrderDetailScreen(
                                 SummaryRow("Phi ship", order.shippingFee)
                                 SummaryRow("Giam gia", order.couponDiscount + order.shippingDiscount)
                                 SummaryRow("Tong", order.totalAmount)
+                            }
+                        }
+                    }
+                    item {
+                        Text("Hanh trinh don hang", style = MaterialTheme.typography.titleLarge)
+                    }
+                    item {
+                        Card {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                when {
+                                    state.isTimelineLoading -> Text("Dang tai hanh trinh don hang...")
+                                    state.timelineErrorMessage != null -> Text(
+                                        "Khong tai duoc hanh trinh: ${state.timelineErrorMessage}",
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+
+                                    state.timeline.isEmpty() -> Text("Chua co moc hanh trinh nao.")
+                                    else -> state.timeline.forEach { event ->
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(event.title, fontWeight = FontWeight.SemiBold)
+                                            event.description?.takeIf { it.isNotBlank() }?.let { description ->
+                                                Text(description)
+                                            }
+                                            Text(
+                                                formatDateTime(event.createdAt),
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

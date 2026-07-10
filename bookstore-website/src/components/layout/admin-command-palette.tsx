@@ -32,6 +32,7 @@ export function AdminCommandPalette({ palette }: AdminCommandPaletteProps) {
   const navigationCommands = commands.filter(
     (command) => command.group === 'navigation',
   )
+  const recentCommands = commands.filter((command) => command.group === 'recent')
   const actionCommands = commands.filter((command) => command.group === 'action')
 
   function handleInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -61,11 +62,11 @@ export function AdminCommandPalette({ palette }: AdminCommandPaletteProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-slate-950/45 px-4 py-8 backdrop-blur-sm"
+      className="motion-overlay fixed inset-0 z-[80] bg-slate-950/45 px-4 py-8 backdrop-blur-sm"
       onClick={close}
     >
       <div
-        className="mx-auto flex max-h-[min(44rem,calc(100vh-4rem))] w-full max-w-3xl flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-[0_32px_100px_rgba(15,23,42,0.32)]"
+        className="motion-dialog mx-auto flex max-h-[min(44rem,calc(100vh-4rem))] w-full max-w-3xl flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-[0_32px_100px_rgba(15,23,42,0.32)]"
         onClick={(event) => {
           event.stopPropagation()
         }}
@@ -110,14 +111,30 @@ export function AdminCommandPalette({ palette }: AdminCommandPaletteProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {navigationCommands.length > 0 ? (
-                <CommandGroup title={t('admin.commandPalette.navigationGroup')}>
-                  {navigationCommands.map((command, index) => (
+              {recentCommands.length > 0 ? (
+                <CommandGroup title={t('admin.commandPalette.recentGroup')}>
+                  {recentCommands.map((command) => (
                     <CommandRow
                       key={command.id}
                       command={command}
-                      isHighlighted={highlightedIndex === index}
-                      onHover={() => setHighlightedIndex(index)}
+                      isHighlighted={highlightedIndex === commands.indexOf(command)}
+                      onHover={() => setHighlightedIndex(commands.indexOf(command))}
+                      onSelect={() => {
+                        void executeCommand(command)
+                      }}
+                    />
+                  ))}
+                </CommandGroup>
+              ) : null}
+
+              {navigationCommands.length > 0 ? (
+                <CommandGroup title={t('admin.commandPalette.navigationGroup')}>
+                  {navigationCommands.map((command) => (
+                    <CommandRow
+                      key={command.id}
+                      command={command}
+                      isHighlighted={highlightedIndex === commands.indexOf(command)}
+                      onHover={() => setHighlightedIndex(commands.indexOf(command))}
                       onSelect={() => {
                         void executeCommand(command)
                       }}
@@ -128,16 +145,12 @@ export function AdminCommandPalette({ palette }: AdminCommandPaletteProps) {
 
               {actionCommands.length > 0 ? (
                 <CommandGroup title={t('admin.commandPalette.actionsGroup')}>
-                  {actionCommands.map((command, index) => (
+                  {actionCommands.map((command) => (
                     <CommandRow
                       key={command.id}
                       command={command}
-                      isHighlighted={
-                        highlightedIndex === navigationCommands.length + index
-                      }
-                      onHover={() =>
-                        setHighlightedIndex(navigationCommands.length + index)
-                      }
+                      isHighlighted={highlightedIndex === commands.indexOf(command)}
+                      onHover={() => setHighlightedIndex(commands.indexOf(command))}
                       onSelect={() => {
                         void executeCommand(command)
                       }}
@@ -196,8 +209,9 @@ function CommandRow({
       onMouseEnter={onHover}
       onFocus={onHover}
       onClick={onSelect}
+      data-highlighted={isHighlighted ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors',
+        'motion-command-row flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left',
         isHighlighted
           ? 'bg-primary/8 text-foreground'
           : 'hover:bg-muted/65 text-foreground',

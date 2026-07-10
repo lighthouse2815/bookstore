@@ -79,4 +79,15 @@ public interface ReadingJournalEntryJpaRepository extends JpaRepository<ReadingJ
             order by e.entryDate desc
             """)
     List<LocalDate> findDistinctEntryDatesByUserIdActive(@Param("userId") UUID userId);
+
+    @EntityGraph(attributePaths = {"user", "book"})
+    @Query("""
+            select e
+            from ReadingJournalEntryJpaEntity e
+            where e.user.id = :userId
+              and e.deletedAt is null
+              and e.book.deletedAt is null
+            order by e.entryDate desc, e.updatedAt desc, e.id desc
+            """)
+    List<ReadingJournalEntryJpaEntity> findAllByUserIdActive(@Param("userId") UUID userId);
 }

@@ -3,7 +3,6 @@ import {
   Activity,
   AlertTriangle,
   Clock3,
-  Download,
   Package,
   RefreshCw,
   ShoppingCart,
@@ -30,8 +29,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Badge } from '@/components/common/badge'
-import { Button } from '@/components/common/button'
-import { Input } from '@/components/common/input'
+import { Button, buttonVariants } from '@/components/common/button'
 import { StatePanel } from '@/components/common/page-shell'
 import {
   Select,
@@ -41,9 +39,7 @@ import {
   SelectValue,
 } from '@/components/common/select'
 import { useAdminDashboardPage } from '@/hooks/use-admin-dashboard-page'
-import { useAdminReportExports } from '@/hooks/use-admin-report-exports'
 import { AdminLayout } from '@/components/layout/admin-layout'
-import type { AdminReviewStatus } from '@/types/admin-access'
 import type {
   AdminDashboardRevenueFilter,
   DashboardSummary,
@@ -100,10 +96,7 @@ export default function AdminDashboard() {
     hasData,
     refresh,
   } = useAdminDashboardPage()
-  const reportExports = useAdminReportExports()
-
   const copy = dashboardCopy[language]
-  const exportCopy = reportExports.copy
   const summaryCards = getSummaryCards(summary, copy, {
     formatCurrency,
     formatNumber,
@@ -212,213 +205,20 @@ export default function AdminDashboard() {
         </section>
 
         <DashboardSectionCard
-          title={exportCopy.sectionTitle}
-          description={exportCopy.sectionDescription}
+          title={t('admin.reportsPage.dashboardTitle')}
+          description={t('admin.reportsPage.dashboardDescription')}
+          action={
+            <Link
+              to="/admin/reports"
+              className={cn(buttonVariants(), 'h-11 rounded-2xl px-4')}
+            >
+              {t('admin.reportsPage.openCenter')}
+            </Link>
+          }
         >
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <ReportExportCard
-              title={exportCopy.cards.orders.title}
-              description={exportCopy.cards.orders.description}
-              action={
-                <Button
-                  className="w-full rounded-2xl sm:w-auto"
-                  onClick={() => void reportExports.exportOrders()}
-                  disabled={reportExports.activeExportKey === 'orders'}
-                >
-                  {reportExports.activeExportKey === 'orders' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {reportExports.activeExportKey === 'orders'
-                    ? exportCopy.buttons.exporting
-                    : exportCopy.buttons.export}
-                </Button>
-              }
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FilterField label={exportCopy.filters.from}>
-                  <Input
-                    type="date"
-                    value={reportExports.ordersFrom}
-                    onChange={(event) =>
-                      reportExports.setOrdersFrom(event.target.value)
-                    }
-                  />
-                </FilterField>
-                <FilterField label={exportCopy.filters.to}>
-                  <Input
-                    type="date"
-                    value={reportExports.ordersTo}
-                    onChange={(event) =>
-                      reportExports.setOrdersTo(event.target.value)
-                    }
-                  />
-                </FilterField>
-                <FilterField
-                  label={exportCopy.filters.status}
-                  className="sm:col-span-2"
-                >
-                  <Select
-                    value={reportExports.orderStatus || '__ALL__'}
-                    onValueChange={(value) =>
-                      reportExports.setOrderStatus(
-                        value === '__ALL__' ? '' : (value as OrderStatus),
-                      )
-                    }
-                  >
-                    <SelectTrigger className="h-10 rounded-xl bg-background/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__ALL__">
-                        {exportCopy.allStatuses}
-                      </SelectItem>
-                      {(
-                        [
-                          'PENDING',
-                          'CONFIRMED',
-                          'SHIPPING',
-                          'DELIVERED',
-                          'CANCELLED',
-                        ] as OrderStatus[]
-                      ).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {getOrderStatusLabel(status, t)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FilterField>
-              </div>
-            </ReportExportCard>
-
-            <ReportExportCard
-              title={exportCopy.cards.revenue.title}
-              description={exportCopy.cards.revenue.description}
-              action={
-                <Button
-                  className="w-full rounded-2xl sm:w-auto"
-                  onClick={() => void reportExports.exportRevenue()}
-                  disabled={reportExports.activeExportKey === 'revenue'}
-                >
-                  {reportExports.activeExportKey === 'revenue' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {reportExports.activeExportKey === 'revenue'
-                    ? exportCopy.buttons.exporting
-                    : exportCopy.buttons.export}
-                </Button>
-              }
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FilterField label={exportCopy.filters.from}>
-                  <Input
-                    type="date"
-                    value={reportExports.revenueFrom}
-                    onChange={(event) =>
-                      reportExports.setRevenueFrom(event.target.value)
-                    }
-                  />
-                </FilterField>
-                <FilterField label={exportCopy.filters.to}>
-                  <Input
-                    type="date"
-                    value={reportExports.revenueTo}
-                    onChange={(event) =>
-                      reportExports.setRevenueTo(event.target.value)
-                    }
-                  />
-                </FilterField>
-              </div>
-            </ReportExportCard>
-
-            <ReportExportCard
-              title={exportCopy.cards.lowStock.title}
-              description={exportCopy.cards.lowStock.description}
-              action={
-                <Button
-                  className="w-full rounded-2xl sm:w-auto"
-                  onClick={() => void reportExports.exportLowStock()}
-                  disabled={reportExports.activeExportKey === 'low-stock'}
-                >
-                  {reportExports.activeExportKey === 'low-stock' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {reportExports.activeExportKey === 'low-stock'
-                    ? exportCopy.buttons.exporting
-                    : exportCopy.buttons.export}
-                </Button>
-              }
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FilterField label={exportCopy.filters.threshold}>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={reportExports.lowStockThreshold}
-                    onChange={(event) =>
-                      reportExports.setLowStockThreshold(event.target.value)
-                    }
-                  />
-                </FilterField>
-              </div>
-            </ReportExportCard>
-
-            <ReportExportCard
-              title={exportCopy.cards.reviews.title}
-              description={exportCopy.cards.reviews.description}
-              action={
-                <Button
-                  className="w-full rounded-2xl sm:w-auto"
-                  onClick={() => void reportExports.exportReviews()}
-                  disabled={reportExports.activeExportKey === 'reviews'}
-                >
-                  {reportExports.activeExportKey === 'reviews' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {reportExports.activeExportKey === 'reviews'
-                    ? exportCopy.buttons.exporting
-                    : exportCopy.buttons.export}
-                </Button>
-              }
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FilterField label={exportCopy.filters.status}>
-                  <Select
-                    value={reportExports.reviewStatus || '__ALL__'}
-                    onValueChange={(value) =>
-                      reportExports.setReviewStatus(
-                        value === '__ALL__' ? '' : (value as AdminReviewStatus),
-                      )
-                    }
-                  >
-                    <SelectTrigger className="h-10 rounded-xl bg-background/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__ALL__">
-                        {exportCopy.allStatuses}
-                      </SelectItem>
-                      {(
-                        ['PENDING', 'APPROVED', 'HIDDEN'] as AdminReviewStatus[]
-                      ).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {exportCopy.reviewStatuses[status]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FilterField>
-              </div>
-            </ReportExportCard>
-          </div>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            {t('admin.reportsPage.dashboardHint')}
+          </p>
         </DashboardSectionCard>
 
         <DashboardSectionCard
@@ -778,57 +578,6 @@ export default function AdminDashboard() {
         </section>
       </div>
     </AdminLayout>
-  )
-}
-
-function ReportExportCard({
-  title,
-  description,
-  action,
-  children,
-}: {
-  title: string
-  description: string
-  action: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="rounded-[28px] border border-border/60 bg-background/40 p-5">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-xl">
-            <h3 className="font-heading text-xl font-semibold text-foreground">
-              {title}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {description}
-            </p>
-          </div>
-          <div className="shrink-0">{action}</div>
-        </div>
-
-        <div>{children}</div>
-      </div>
-    </div>
-  )
-}
-
-function FilterField({
-  label,
-  className,
-  children,
-}: {
-  label: string
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <label className={cn('block space-y-2', className)}>
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </label>
   )
 }
 

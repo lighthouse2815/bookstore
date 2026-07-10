@@ -52,6 +52,14 @@ export const ADMIN_ROUTE_DEFINITIONS: AdminRouteDefinition[] = [
     keywords: ['audit', 'logs', 'nhat ky', 'lich su'],
   },
   {
+    id: 'reports',
+    labelKey: 'admin.sidebar.reports',
+    href: '/admin/reports',
+    icon: BarChart3,
+    allowedRoles: ['ADMIN'],
+    keywords: ['reports', 'bao cao', 'csv', 'exports'],
+  },
+  {
     id: 'books',
     labelKey: 'admin.sidebar.books',
     href: '/admin/books',

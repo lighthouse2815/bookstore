@@ -24,5 +24,7 @@ public interface IReadingJournalRepository {
 
     List<LocalDate> findDistinctEntryDatesByUserIdActive(UUID userId);
 
+    List<ReadingJournalEntry> findAllByUserIdActive(UUID userId);
+
     ReadingJournalEntry save(ReadingJournalEntry entry);
 }

@@ -229,7 +229,7 @@ async function getPublisherResponses(): Promise<PublisherResponse[]> {
   return unwrapResponse(response)
 }
 
-async function getBookReferenceData(): Promise<BookReferenceData> {
+export async function getBookReferenceData(): Promise<BookReferenceData> {
   const [categoriesResult, authorsResult, publishersResult] =
     await Promise.allSettled([
       getCategoryResponses(),
@@ -246,7 +246,7 @@ async function getBookReferenceData(): Promise<BookReferenceData> {
   }
 }
 
-function mapBookResponseToBook(
+export function mapBookResponseToBook(
   bookResponse: BookResponse,
   referenceMaps: BookReferenceMaps,
 ): Book {
@@ -435,7 +435,7 @@ function mapBookReviewResponseToBookReview(
   }
 }
 
-type BookReferenceMaps = {
+export type BookReferenceMaps = {
   authorMap: Map<string, string>
   categoryMap: Map<string, string>
   publisherMap: Map<string, string>

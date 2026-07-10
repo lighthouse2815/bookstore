@@ -20,7 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {isSidebarOpen ? (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-sm lg:hidden"
+          className="motion-overlay fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-sm lg:hidden"
           aria-label={t('admin.sidebar.mobileClose')}
           onClick={() => setIsSidebarOpen(false)}
         />

@@ -43,6 +43,17 @@ public interface BookshelfItemJpaRepository extends JpaRepository<BookshelfItemJ
     @Query("""
             select i
             from BookshelfItemJpaEntity i
+            where i.shelf.id in :shelfIds
+              and i.shelf.deletedAt is null
+              and i.deletedAt is null
+            order by i.shelf.id, i.sortOrder asc, i.createdAt asc, i.id asc
+            """)
+    List<BookshelfItemJpaEntity> findAllByShelfIdsActive(@Param("shelfIds") Collection<UUID> shelfIds);
+
+    @EntityGraph(attributePaths = {"shelf", "book"})
+    @Query("""
+            select i
+            from BookshelfItemJpaEntity i
             where i.shelf.id = :shelfId
               and i.book.id = :bookId
             """)

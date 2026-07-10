@@ -634,7 +634,7 @@ function JournalEntryCard({
   onDelete: () => void
 }) {
   return (
-    <article className="overflow-hidden rounded-[28px] border border-primary/10 bg-white/92 shadow-[0_16px_48px_rgba(50,88,160,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_16px_48px_rgba(0,0,0,0.24)]">
+    <article className="motion-card overflow-hidden rounded-[28px] border border-primary/10 bg-white/92 shadow-[0_16px_48px_rgba(50,88,160,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_16px_48px_rgba(0,0,0,0.24)]">
       <div className="grid gap-0 lg:grid-cols-[180px_minmax(0,1fr)]">
         <button
           type="button"

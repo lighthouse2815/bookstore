@@ -153,8 +153,12 @@
 
                 <Grid Grid.Column="0">
                     <TextBox x:Name="SearchBox"
-                             Style="{StaticResource LargeSearchBoxStyle}"
-                             Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}" />
+                              Style="{StaticResource LargeSearchBoxStyle}"
+                              Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <TextBlock Text="&#xE721;"
                                FontFamily="Segoe MDL2 Assets"
                                FontSize="20"
@@ -302,19 +306,29 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <TextBlock Text="&#xE8A5;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="20"
-                                   Foreground="{StaticResource ScreenBlueBrush}"
-                                   Margin="0,0,10,0"
-                                   VerticalAlignment="Center" />
-                        <TextBlock Text="Thông tin đơn hàng"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="#243753"
-                                   VerticalAlignment="Center" />
-                    </StackPanel>
+                    <DockPanel Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource WhiteButtonStyle}"
+                                Height="38"
+                                Padding="14,0"
+                                IsEnabled="{Binding CanReprint}"
+                                Command="{Binding ReprintCommand}">
+                            <TextBlock Text="Xuất lại .txt" />
+                        </Button>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A5;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="20"
+                                       Foreground="{StaticResource ScreenBlueBrush}"
+                                       Margin="0,0,10,0"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Thông tin đơn hàng"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="#243753"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DockPanel>
 
                     <Border Grid.Row="1"
                             Style="{StaticResource CardStyle}"
@@ -363,11 +377,13 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                                 <Grid.RowDefinitions>
+                                     <RowDefinition Height="Auto" />
+                                     <RowDefinition Height="Auto" />
+                                     <RowDefinition Height="Auto" />
+                                     <RowDefinition Height="Auto" />
+                                     <RowDefinition Height="Auto" />
+                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
                                            Text="Ngày tạo:"
@@ -399,7 +415,7 @@
                                            Width="110"
                                            Foreground="#5E6F8E"
                                            FontSize="15" />
-                                <Border Grid.Row="2"
+                                 <Border Grid.Row="2"
                                         Grid.Column="1"
                                         Margin="0,14,0,0"
                                         Padding="10,4"
@@ -440,9 +456,35 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
-                                    </TextBlock>
-                                </Border>
-                            </Grid>
+                                     </TextBlock>
+                                 </Border>
+
+                                 <TextBlock Grid.Row="3"
+                                            Margin="0,14,0,0"
+                                            Text="Khách hàng:"
+                                            Width="110"
+                                            Foreground="#5E6F8E"
+                                            FontSize="15" />
+                                 <TextBlock Grid.Row="3"
+                                            Grid.Column="1"
+                                            Margin="0,14,0,0"
+                                            Text="{Binding SelectedOrder.CustomerName, TargetNullValue=--}"
+                                            FontSize="15"
+                                            Foreground="#334968" />
+
+                                 <TextBlock Grid.Row="4"
+                                            Margin="0,14,0,0"
+                                            Text="Số điện thoại:"
+                                            Width="110"
+                                            Foreground="#5E6F8E"
+                                            FontSize="15" />
+                                 <TextBlock Grid.Row="4"
+                                            Grid.Column="1"
+                                            Margin="0,14,0,0"
+                                            Text="{Binding SelectedOrder.CustomerPhone, TargetNullValue=--}"
+                                            FontSize="15"
+                                            Foreground="#334968" />
+                             </Grid>
                         </Grid>
                     </Border>
 

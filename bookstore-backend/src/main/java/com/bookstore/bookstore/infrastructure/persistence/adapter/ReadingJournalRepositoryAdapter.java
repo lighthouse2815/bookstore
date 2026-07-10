@@ -75,6 +75,13 @@ public class ReadingJournalRepositoryAdapter implements IReadingJournalRepositor
     }
 
     @Override
+    public List<ReadingJournalEntry> findAllByUserIdActive(UUID userId) {
+        return readingJournalEntryJpaRepository.findAllByUserIdActive(userId).stream()
+                .map(readingJournalPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public ReadingJournalEntry save(ReadingJournalEntry entry) {
         ReadingJournalEntryJpaEntity entity = readingJournalEntryJpaRepository.findById(entry.getId())
                 .orElseGet(ReadingJournalEntryJpaEntity::new);

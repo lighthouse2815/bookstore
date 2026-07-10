@@ -94,7 +94,7 @@ export default function CouponGamePage() {
         </section>
 
         <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-12 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:px-8">
-          <div className="rounded-[2rem] border border-amber-200/70 bg-white/86 p-6 shadow-[0_28px_70px_rgba(250,204,21,0.12)] backdrop-blur sm:p-8">
+          <div className="min-w-0 rounded-[2rem] border border-amber-200/70 bg-white/86 p-6 shadow-[0_28px_70px_rgba(250,204,21,0.12)] backdrop-blur sm:p-8">
             {showErrorState ? (
               <StatePanel
                 title={t('couponGamePage.errorTitle')}
@@ -141,7 +141,7 @@ export default function CouponGamePage() {
                 </div>
 
                 <div className="mt-8 flex justify-center">
-                  <div className="relative size-[min(84vw,420px)]">
+                  <div className="relative size-[min(76vw,420px)] sm:size-[min(84vw,420px)]">
                     <div className="absolute left-1/2 top-2 z-10 -translate-x-1/2">
                       <div className="h-0 w-0 border-x-[16px] border-b-[28px] border-x-transparent border-b-slate-900 drop-shadow-[0_10px_18px_rgba(15,23,42,0.18)]" />
                     </div>
@@ -187,7 +187,7 @@ export default function CouponGamePage() {
             )}
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="min-w-0 rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -210,7 +210,7 @@ export default function CouponGamePage() {
 
             {couponSummary ? (
               <>
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-5">
+                <div className="motion-result mt-5 rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
                       {getCouponTypeLabel(couponSummary, t)}

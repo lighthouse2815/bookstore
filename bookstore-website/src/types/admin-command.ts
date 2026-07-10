@@ -31,7 +31,7 @@ export type AdminCommandActionId =
 export type AdminCommandItem = {
   id: string
   kind: 'route' | 'action'
-  group: 'navigation' | 'action'
+  group: 'recent' | 'navigation' | 'action'
   label: string
   subtitle: string
   icon: LucideIcon

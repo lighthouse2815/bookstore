@@ -22,6 +22,7 @@ import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
 import {
   StatePanel,
+  SurfaceCard,
   destructiveOutlineButtonClassName,
   primaryButtonClassName,
   secondaryButtonClassName,
@@ -730,12 +731,12 @@ function SurfacePanel({
   id: string
 }) {
   return (
-    <section
+    <SurfaceCard
       id={id}
-      className="rounded-[30px] border border-primary/10 bg-white/88 p-6 shadow-[0_18px_50px_rgba(137,92,255,0.08)] backdrop-blur dark:border-white/10 dark:bg-card/90 dark:shadow-[0_18px_50px_rgba(0,0,0,0.26)]"
+      className="p-6"
     >
       {children}
-    </section>
+    </SurfaceCard>
   )
 }
 

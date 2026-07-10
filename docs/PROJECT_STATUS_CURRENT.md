@@ -1,6 +1,6 @@
 # PROJECT_STATUS_CURRENT
 
-Last updated: `2026-07-09`
+Last updated: `2026-07-10`
 
 ## 1. Current backend migration baseline
 
@@ -160,3 +160,12 @@ Current project status after this pass:
 - Backend prod-like smoke: `STABLE`
 - Website build + main route smoke: `STABLE`
 - Remaining work: mostly backlog / recheck items, not active release blockers for the verified scope above
+
+## 9. Roadmap C CI
+
+- `.github/workflows/ci.yml` runs for pull requests and pushes to `main`.
+- A change-filter job runs the matching application job only when its app directory or a workflow file changes. Existing backend and website CI remain in the same workflow.
+- Mobile (`bookstore-mobile`): Java `21`, Gradle cache, `./gradlew testDebugUnitTest` (`8` tests) and `./gradlew assembleDebug`; publishes the debug APK artifact.
+- Desktop (`bookstore-desktop/Bookstore.Desktop`): Windows runner with .NET SDK/runtime `8.0.x`, `dotnet restore`, `dotnet test --configuration Release` (`9` tests), `dotnet build --configuration Release --no-restore`, and a `win-x64` publish artifact. No `DOTNET_ROLL_FORWARD=Major` is used.
+- Shipapp (`bookstore-shipapp`): Node `20`, npm cache, `npm ci`, `npm run test` (`6` tests), `npm run typecheck`, and `npx expo export --platform android`; publishes the Android Expo export artifact. CI supplies only `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8080/api`.
+- Runtime/device smoke for mobile, desktop, and shipapp remains: `PENDING`.

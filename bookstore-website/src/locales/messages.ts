@@ -168,6 +168,24 @@ export const messages = {
         dailyLimit: '1 lượt mỗi ngày',
       },
     },
+    recommendations: {
+      title: 'Dành cho bạn',
+      subtitle: 'Gợi ý dựa trên sở thích và hành trình đọc của bạn.',
+      loading: 'Đang tải gợi ý dành cho bạn',
+      reasons: {
+        PURCHASE_HISTORY: 'Tương tự sách đã mua',
+        FAVORITE_CATEGORY: 'Thể loại bạn thường đọc',
+        FAVORITE_AUTHOR: 'Tác giả bạn yêu thích',
+        WISHLIST_SIGNAL: 'Từ danh sách yêu thích',
+        BOOKSHELF_SIGNAL: 'Từ kệ sách của bạn',
+        HIGH_RATING_REVIEW: 'Dựa trên đánh giá cao của bạn',
+        READING_JOURNAL_SIGNAL: 'Dựa trên nhật ký đọc',
+        POPULAR_PICK: 'Được nhiều người chọn',
+        HIGH_RATING: 'Được đánh giá cao',
+        NEW_RELEASE: 'Sách mới phát hành',
+        FALLBACK_POPULAR: 'Gợi ý phổ biến',
+      },
+    },
     couponGamePage: {
       badge: 'Vui nhẹ nhưng có quà',
       title: 'Vòng quay may mắn săn coupon',
@@ -1817,6 +1835,24 @@ export const messages = {
           'Spin the wheel to reveal one active public coupon. The code is shown for manual copy and use in the existing cart or checkout flow.',
         button: 'Open the wheel',
         dailyLimit: '1 spin per day',
+      },
+    },
+    recommendations: {
+      title: 'Picked for you',
+      subtitle: 'Recommendations based on your preferences and reading journey.',
+      loading: 'Loading personalized recommendations',
+      reasons: {
+        PURCHASE_HISTORY: 'Similar to books you bought',
+        FAVORITE_CATEGORY: 'A category you often read',
+        FAVORITE_AUTHOR: 'An author you enjoy',
+        WISHLIST_SIGNAL: 'From your wishlist',
+        BOOKSHELF_SIGNAL: 'From your bookshelf',
+        HIGH_RATING_REVIEW: 'Based on your high ratings',
+        READING_JOURNAL_SIGNAL: 'Based on your reading journal',
+        POPULAR_PICK: 'Popular with readers',
+        HIGH_RATING: 'Highly rated',
+        NEW_RELEASE: 'New release',
+        FALLBACK_POPULAR: 'Popular pick',
       },
     },
     couponGamePage: {
@@ -4562,6 +4598,8 @@ Object.assign(messages.vi.admin as Record<string, unknown>, {
     openButton: 'Lệnh nhanh',
     shortcutBadge: 'Ctrl/Cmd K',
     title: 'Quick Command Palette',
+    recentGroup: 'Trang gần đây',
+    recentRouteSubtitle: 'Mở lại màn hình admin gần đây',
     description:
       'Tìm nhanh màn hình admin hoặc thao tác shell mà không cần rời bàn phím.',
     placeholder: 'Tìm màn hình, thao tác hoặc từ khóa...',
@@ -4596,6 +4634,8 @@ Object.assign(messages.en.admin as Record<string, unknown>, {
     openButton: 'Quick commands',
     shortcutBadge: 'Ctrl/Cmd K',
     title: 'Quick Command Palette',
+    recentGroup: 'Recent pages',
+    recentRouteSubtitle: 'Reopen a recently visited admin screen',
     description:
       'Jump across admin routes or trigger shell actions without leaving the keyboard.',
     placeholder: 'Search routes, actions, or keywords...',
@@ -4946,10 +4986,38 @@ Object.assign(messages.en.checkout as Record<string, unknown>, {
 
 Object.assign(messages.vi.admin.sidebar as Record<string, string>, {
   auditLogs: 'Nhật ký hệ thống',
+  reports: 'Báo cáo',
 })
 
 Object.assign(messages.en.admin.sidebar as Record<string, string>, {
   auditLogs: 'Audit logs',
+  reports: 'Reports',
+})
+
+Object.assign(messages.vi.admin as Record<string, unknown>, {
+  reportsPage: {
+    title: 'Báo cáo',
+    description:
+      'Tải báo cáo CSV theo nhu cầu vận hành mà không làm quá tải trang tổng quan.',
+    dashboardTitle: 'Báo cáo vận hành',
+    dashboardDescription: 'Mở trung tâm báo cáo để chọn bộ lọc và tải CSV.',
+    dashboardHint:
+      'Đơn hàng, doanh thu, tồn kho thấp và review đều có bộ lọc riêng trong Trung tâm báo cáo.',
+    openCenter: 'Mở trung tâm báo cáo',
+  },
+})
+
+Object.assign(messages.en.admin as Record<string, unknown>, {
+  reportsPage: {
+    title: 'Reports',
+    description:
+      'Download operational CSV reports without crowding the main dashboard.',
+    dashboardTitle: 'Operational reports',
+    dashboardDescription: 'Open the report center to choose filters and download CSV files.',
+    dashboardHint:
+      'Orders, revenue, low stock, and reviews each have focused filters in the Report Center.',
+    openCenter: 'Open report center',
+  },
 })
 
 Object.assign(messages.vi.admin as Record<string, unknown>, {

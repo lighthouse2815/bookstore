@@ -53,6 +53,7 @@ const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
 const AdminAuditLogsPage = lazy(() => import('@/pages/admin/audit-logs'))
+const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
 const AdminDigitalAssetsPage = lazy(() => import('@/pages/admin/digital-assets'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
@@ -413,6 +414,16 @@ function AppRouteContent() {
             <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
               <LazyPage>
                 <AdminAuditLogsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminReportsPage />
               </LazyPage>
             </ProtectedRoute>
           }
