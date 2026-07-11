@@ -4,7 +4,7 @@ React 19 + Vite 8 storefront/admin frontend for the bookstore project.
 
 ## Tooling
 
-- Node.js 20+
+- Node.js 22.13+
 - npm
 - React 19
 - TypeScript

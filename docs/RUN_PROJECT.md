@@ -14,7 +14,7 @@ Tai lieu nay la entrypoint de chay cac module trong `D:\bookstore` theo trang th
 
 - Docker Desktop
 - Java 21
-- Node.js 20+
+- Node.js 22.13+
 - npm
 - Android Studio + Android SDK
 - .NET 8 SDK on Windows

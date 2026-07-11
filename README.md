@@ -14,7 +14,7 @@ Huong dan chay cac du an trong `D:\bookstore` bang terminal.
 
 - Docker Desktop
 - Java 21
-- Node.js 20+
+- Node.js 22.13+
 - npm
 - Android Studio + Android SDK
 - .NET 8 SDK tren Windows
