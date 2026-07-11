@@ -19,6 +19,8 @@ data class OrderDetailUiState(
     val timeline: List<OrderTimelineEvent> = emptyList(),
     val errorMessage: String? = null,
     val timelineErrorMessage: String? = null,
+    val isCancellingOrder: Boolean = false,
+    val cancelErrorMessage: String? = null,
 )
 
 class OrderDetailViewModel(
@@ -63,6 +65,25 @@ class OrderDetailViewModel(
             }
 
             else -> _uiState.update { it.copy(isTimelineLoading = false) }
+        }
+    }
+
+    fun cancelOrder(orderId: String, reason: String) {
+        if (reason.trim().isEmpty() || _uiState.value.isCancellingOrder) {
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCancellingOrder = true, cancelErrorMessage = null) }
+            when (val result = orderRepository.cancelOrder(orderId, reason)) {
+                is ResultState.Success -> {
+                    _uiState.update { it.copy(order = result.data, isCancellingOrder = false) }
+                    loadTimeline(orderId)
+                }
+                is ResultState.Error -> _uiState.update {
+                    it.copy(isCancellingOrder = false, cancelErrorMessage = result.message)
+                }
+                else -> _uiState.update { it.copy(isCancellingOrder = false) }
+            }
         }
     }
 }

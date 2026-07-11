@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.command.UpdateProfileCommand;
@@ -155,6 +156,32 @@ class ProfileServiceTest {
         );
 
         assertEquals(ApplicationErrorCode.FILE_ASSET_ACCESS_DENIED, exception.getErrorCode());
+    }
+
+    @Test
+    void restoreForUser_restoresDeletedProfile() {
+        UUID userId = UUID.randomUUID();
+        Instant deletedAt = Instant.now().minusSeconds(60);
+        Profile deletedProfile = new Profile(
+                UUID.randomUUID(),
+                userId,
+                "Tran",
+                "An",
+                null,
+                Gender.OTHER,
+                LocalDate.of(1998, 1, 1),
+                deletedAt,
+                deletedAt,
+                deletedAt
+        );
+        when(userRepository.findByIdActive(userId)).thenReturn(Optional.of(user(userId)));
+        when(profileRepository.findByUserIdIncludingDeleted(userId)).thenReturn(Optional.of(deletedProfile));
+        when(profileRepository.save(any(Profile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Profile restoredProfile = profileService.restoreForUser(userId);
+
+        assertNull(restoredProfile.getDeletedAt());
+        verify(profileRepository).save(deletedProfile);
     }
 
     private static Profile profile(UUID userId, FileAsset avatarFileAsset) {

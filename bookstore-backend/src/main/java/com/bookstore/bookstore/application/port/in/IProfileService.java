@@ -17,6 +17,8 @@ public interface IProfileService {
 
     Profile getByIdIncludingDeleted(UUID profileId);
 
+    Profile restoreForUser(UUID userId);
+
     Profile update(UpdateProfileCommand command);
 
     void delete(UUID profileId);

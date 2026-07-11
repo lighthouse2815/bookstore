@@ -39,6 +39,23 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
             """)
     Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNullForUpdate(@Param("id") UUID id);
 
+    @EntityGraph(attributePaths = "items")
+    Optional<OrderJpaEntity> findByUser_IdAndIdempotencyKey(UUID userId, String idempotencyKey);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "items")
+    @Query("""
+            select o
+            from OrderJpaEntity o
+            where o.user.id = :userId
+              and o.idempotencyKey = :idempotencyKey
+              and o.user.deletedAt is null
+            """)
+    Optional<OrderJpaEntity> findByUserIdAndIdempotencyKeyForUpdate(
+            @Param("userId") UUID userId,
+            @Param("idempotencyKey") String idempotencyKey
+    );
+
 
     @EntityGraph(attributePaths = "items")
     List<OrderJpaEntity> findAllByUserIdAndUser_DeletedAtIsNull(UUID userId);

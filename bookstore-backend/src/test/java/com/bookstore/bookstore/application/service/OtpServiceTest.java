@@ -67,6 +67,7 @@ class OtpServiceTest {
                 emailSender,
                 new OtpProperties(
                         OTP_EXPIRATION_MINUTES,
+                        5,
                         OTP_RESEND_COOLDOWN_SECONDS,
                         OTP_RESEND_MAX_REQUESTS_PER_WINDOW,
                         OTP_RESEND_WINDOW_MINUTES
@@ -229,7 +230,7 @@ class OtpServiceTest {
                 otpService.verifyRegistrationOtp(new VerifyOtpCommand(user.getEmail(), "000000"))
         );
 
-        verify(userOtpRepository, never()).save(any(UserOtp.class));
+        verify(userOtpRepository).save(any(UserOtp.class));
         verify(userRepository, never()).save(any(User.class));
         assertEquals(ApplicationErrorCode.OTP_INVALID, exception.getErrorCode());
     }

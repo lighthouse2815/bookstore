@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.port.in.ICouponService;
@@ -17,7 +18,10 @@ import com.bookstore.bookstore.domain.enums.FileStatus;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookImage;
+import com.bookstore.bookstore.domain.model.Author;
+import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.domain.model.FileAsset;
+import com.bookstore.bookstore.domain.model.Publisher;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -76,6 +80,42 @@ class BookQueryServiceTest {
         assertEquals(1L, result.ratingSummary().starBreakdown().get(4));
         assertEquals(0L, result.ratingSummary().starBreakdown().get(3));
         assertEquals(3L, result.soldCount());
+    }
+
+    @Test
+    void getPageDetail_includesSoftDeletedBookReferences() {
+        UUID bookId = UUID.randomUUID();
+        Book book = book(bookId);
+        Instant deletedAt = Instant.now().minusSeconds(60);
+        Author deletedAuthor = new Author(
+                book.getAuthorId(), "Author", "Biography", null, null, null,
+                deletedAt, deletedAt, deletedAt
+        );
+        Publisher deletedPublisher = new Publisher(
+                book.getPublisherId(), "Publisher", "Description", null,
+                deletedAt, deletedAt, deletedAt
+        );
+        Category deletedCategory = new Category(
+                book.getCategoryId(), "Category", "Description", null, null,
+                deletedAt, deletedAt, deletedAt
+        );
+        when(bookRepository.findByIdActive(bookId)).thenReturn(Optional.of(book));
+        when(reviewRepository.findRatingsByBookIds(List.of(bookId))).thenReturn(Map.of());
+        when(orderRepository.countDeliveredQuantityByBookIds(List.of(bookId))).thenReturn(Map.of());
+        when(authorRepository.findByIdIncludingDeleted(book.getAuthorId())).thenReturn(Optional.of(deletedAuthor));
+        when(publisherRepository.findByIdIncludingDeleted(book.getPublisherId())).thenReturn(Optional.of(deletedPublisher));
+        when(categoryRepository.findByIdIncludingDeleted(book.getCategoryId())).thenReturn(Optional.of(deletedCategory));
+        when(couponService.getPublicActivePromotions(org.mockito.ArgumentMatchers.any(Instant.class))).thenReturn(List.of());
+        when(bookRepository.findRelatedActiveByCategoryId(book.getCategoryId(), bookId, 8)).thenReturn(List.of());
+
+        var result = bookQueryService.getPageDetail(bookId, 8);
+
+        assertEquals(deletedAuthor, result.author());
+        assertEquals(deletedPublisher, result.publisher());
+        assertEquals(List.of(deletedCategory), result.categoryTrail());
+        verify(authorRepository).findByIdIncludingDeleted(book.getAuthorId());
+        verify(publisherRepository).findByIdIncludingDeleted(book.getPublisherId());
+        verify(categoryRepository).findByIdIncludingDeleted(book.getCategoryId());
     }
 
     private static Book book(UUID bookId) {

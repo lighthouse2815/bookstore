@@ -2,6 +2,14 @@ package com.bookstore.bookstore.application.exception;
 
 public enum ApplicationErrorCode {
 
+    AUTH_INVALID_CREDENTIALS("AUTH_INVALID_CREDENTIALS", "Thong tin dang nhap khong hop le"),
+    AUTH_RATE_LIMITED("AUTH_RATE_LIMITED", "Ban da thu qua nhieu lan. Vui long thu lai sau."),
+    AUTH_SESSION_EXPIRED("AUTH_SESSION_EXPIRED", "Phien dang nhap da het han"),
+    AUTH_SESSION_REVOKED("AUTH_SESSION_REVOKED", "Phien dang nhap khong con hieu luc"),
+    AUTH_REFRESH_REUSE_DETECTED("AUTH_REFRESH_REUSE_DETECTED", "Phien dang nhap khong con hieu luc"),
+    AUTH_CSRF_INVALID("AUTH_CSRF_INVALID", "Yeu cau bao mat khong hop le"),
+    OTP_LOCKED("AUTH_OTP_LOCKED", "Ma xac thuc khong hop le"),
+
     INVALID_ARGUMENT("APPLICATION_001", "%s không được null"),
 
     INVALID_AUTH_PASSWORD("APPLICATION_AUTH_001", "password không được null"),
@@ -85,6 +93,9 @@ public enum ApplicationErrorCode {
 
     ORDER_NOT_FOUND("APPLICATION_ORDER_001", "không tìm thấy đơn hàng"),
     ORDER_PAYMENT_NOT_PAID("APPLICATION_ORDER_002", "đơn hàng thanh toán online chưa được thanh toán"),
+    ORDER_IDEMPOTENCY_PAYLOAD_MISMATCH("APPLICATION_ORDER_003", "Idempotency-Key đã được dùng cho dữ liệu checkout khác"),
+    ORDER_CANCELLATION_NOT_ALLOWED("APPLICATION_ORDER_004", "đơn hàng không còn ở trạng thái có thể hủy"),
+    ORDER_PAID_REFUND_REQUIRED("ORDER_PAID_REFUND_REQUIRED", "đơn hàng đã thanh toán phải được xử lý qua quy trình hoàn tiền"),
 
     RETURN_REQUEST_NOT_FOUND("APPLICATION_RETURN_REQUEST_001", "không tìm thấy yêu cầu trả hàng"),
     RETURN_REQUEST_ORDER_NOT_DELIVERED("APPLICATION_RETURN_REQUEST_002", "chỉ có thể tạo yêu cầu trả hàng cho đơn đã giao"),
@@ -93,12 +104,28 @@ public enum ApplicationErrorCode {
     RETURN_REQUEST_REFUND_AMOUNT_INVALID("APPLICATION_RETURN_REQUEST_005", "số tiền hoàn không hợp lệ"),
     RETURN_REQUEST_REJECT_NOTE_REQUIRED("APPLICATION_RETURN_REQUEST_006", "lý do từ chối không được để trống"),
 
+    REFUND_NOT_FOUND("REFUND_NOT_FOUND", "không tìm thấy yêu cầu hoàn tiền"),
+    REFUND_ORDER_NOT_PAID("REFUND_ORDER_NOT_PAID", "chỉ có thể hoàn tiền đơn đã thanh toán"),
+    REFUND_AMOUNT_INVALID("REFUND_AMOUNT_INVALID", "số tiền hoàn không hợp lệ"),
+    REFUND_AMOUNT_EXCEEDS_REMAINING("REFUND_AMOUNT_EXCEEDS_REMAINING", "số tiền hoàn vượt quá số tiền còn có thể hoàn"),
+    REFUND_INVALID_TRANSITION("REFUND_INVALID_TRANSITION", "chuyển trạng thái hoàn tiền không hợp lệ"),
+    REFUND_EVIDENCE_REQUIRED("REFUND_EVIDENCE_REQUIRED", "hoàn tiền thành công phải có mã đối soát và bằng chứng"),
+    REFUND_FAILURE_REASON_REQUIRED("REFUND_FAILURE_REASON_REQUIRED", "lý do hoàn tiền thất bại không được để trống"),
+    REFUND_RETURN_REQUEST_INVALID("REFUND_RETURN_REQUEST_INVALID", "yêu cầu trả hàng không hợp lệ để hoàn tiền"),
+    REFUND_CURRENCY_INVALID("REFUND_CURRENCY_INVALID", "loại tiền hoàn không được hỗ trợ"),
+
+    OUTBOX_EVENT_NOT_FOUND("OUTBOX_EVENT_NOT_FOUND", "không tìm thấy sự kiện outbox"),
+    OUTBOX_EVENT_RETRY_NOT_ALLOWED("OUTBOX_EVENT_RETRY_NOT_ALLOWED", "sự kiện outbox không thể retry ở trạng thái hiện tại"),
+    OUTBOX_PAYLOAD_INVALID("OUTBOX_PAYLOAD_INVALID", "dữ liệu outbox không hợp lệ hoặc chứa thông tin nhạy cảm"),
+
     SHIPMENT_NOT_FOUND("APPLICATION_SHIPMENT_001", "không tìm thấy phiếu giao hàng"),
     SHIPMENT_ORDER_NOT_READY("APPLICATION_SHIPMENT_002", "đơn hàng không ở trạng thái sẵn sàng giao"),
     SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT("APPLICATION_SHIPMENT_003", "đơn hàng đang có phiếu giao hàng chưa kết thúc"),
 
     PAYMENT_WEBHOOK_UNAUTHORIZED("APPLICATION_PAYMENT_001", "sepay webhook không hợp lệ"),
     PAYMENT_NOT_FOUND("APPLICATION_PAYMENT_002", "không tìm thấy thanh toán"),
+    PAYMENT_RECONCILIATION_NOT_FOUND("APPLICATION_PAYMENT_003", "không tìm thấy vấn đề đối soát thanh toán"),
+    PAYMENT_RECONCILIATION_NOT_OPEN("APPLICATION_PAYMENT_004", "vấn đề đối soát không còn ở trạng thái mở"),
 
     USER_ADDRESS_NOT_FOUND("APPLICATION_USER_ADDRESS_001", "không tìm thấy địa chỉ nhận hàng"),
 

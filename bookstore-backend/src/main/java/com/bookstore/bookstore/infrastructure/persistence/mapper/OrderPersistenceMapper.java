@@ -48,7 +48,9 @@ public class OrderPersistenceMapper {
                 entity.getReceiverAddress(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
-                entity.getCancelledAt()
+                entity.getCancelledAt(),
+                entity.getIdempotencyKey(),
+                entity.getCheckoutFingerprint()
         );
     }
 
@@ -84,6 +86,8 @@ public class OrderPersistenceMapper {
         entity.setCreatedAt(order.getCreatedAt());
         entity.setUpdatedAt(order.getUpdatedAt());
         entity.setCancelledAt(order.getCancelledAt());
+        entity.setIdempotencyKey(order.getIdempotencyKey());
+        entity.setCheckoutFingerprint(order.getCheckoutFingerprint());
 
         Map<UUID, OrderItemJpaEntity> currentItems = entity.getItems().stream()
                 .collect(Collectors.toMap(OrderItemJpaEntity::getId, Function.identity()));

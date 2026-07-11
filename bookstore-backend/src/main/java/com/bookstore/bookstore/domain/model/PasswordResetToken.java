@@ -12,6 +12,7 @@ public class PasswordResetToken {
     private UUID id;
     private UUID userId;
     private String tokenHash;
+    private String requestIp;
     private Instant expiresAt;
     private Instant usedAt;
     private Instant createdAt;
@@ -24,9 +25,22 @@ public class PasswordResetToken {
             Instant usedAt,
             Instant createdAt
     ) {
+        this(id, userId, tokenHash, null, expiresAt, usedAt, createdAt);
+    }
+
+    public PasswordResetToken(
+            UUID id,
+            UUID userId,
+            String tokenHash,
+            String requestIp,
+            Instant expiresAt,
+            Instant usedAt,
+            Instant createdAt
+    ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_PASSWORD_RESET_TOKEN_ID, "id");
         setUserId(userId);
         setTokenHash(tokenHash);
+        this.requestIp = normalize(requestIp, 64);
         setUsedAt(usedAt);
         setCreatedAt(createdAt);
         setExpiresAt(expiresAt);
@@ -114,5 +128,16 @@ public class PasswordResetToken {
                 "createdAt"
         );
         this.createdAt = validCreatedAt;
+    }
+
+    private String normalize(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
     }
 }

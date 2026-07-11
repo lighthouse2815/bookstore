@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/types/api'
 import type {
   CreateOrderRequest,
   CreateOrderResponse,
+  CancelOrderRequest,
   OrderResponse,
   OrderTimelineEventResponse,
   UpdateOrderStatusRequest,
@@ -23,6 +24,7 @@ type BackendCreateOrderRequest = {
 
 export async function createOrder(
   payload: CreateOrderRequest,
+  idempotencyKey: string,
 ): Promise<CreateOrderResponse> {
   const requestBody: BackendCreateOrderRequest = {
     cartItemIds: payload.cartItemIds,
@@ -37,6 +39,11 @@ export async function createOrder(
   const response = await api.post<ApiResponse<CreateOrderResponse>>(
     '/orders/checkout',
     requestBody,
+    {
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+    },
   )
   return unwrapResponse(response)
 }
@@ -63,6 +70,17 @@ export async function getOrderById(orderId: string): Promise<OrderResponse> {
 
 export async function getMyOrder(id: string): Promise<OrderResponse> {
   return getOrderById(id)
+}
+
+export async function cancelMyOrder(
+  id: string,
+  data: CancelOrderRequest,
+): Promise<OrderResponse> {
+  const response = await api.put<ApiResponse<OrderResponse>>(
+    `/orders/${id}/cancel`,
+    data,
+  )
+  return unwrapResponse(response)
 }
 
 export async function getAdminOrders(): Promise<OrderResponse[]> {

@@ -13,6 +13,7 @@ export function useOrderConfirmationPage() {
   const orderId = searchParams.get('orderId')
   const initialOrderCode = searchParams.get('orderCode')?.trim() || ''
   const initialTransferContent = searchParams.get('transferContent')?.trim() || ''
+  const initialPaymentExpiresAt = searchParams.get('paymentExpiresAt')?.trim() || null
   const initialPaymentMethod = useMemo(
     () => normalizePaymentMethod(searchParams.get('paymentMethod')),
     [searchParams],
@@ -123,6 +124,7 @@ export function useOrderConfirmationPage() {
     totalAmount: order?.finalAmount ?? initialTotalAmount ?? 0,
     paymentMethod,
     paymentStatus,
+    paymentExpiresAt: order?.paymentExpiresAt ?? initialPaymentExpiresAt,
     isLoading,
     isPolling,
     error,
@@ -145,6 +147,7 @@ function normalizePaymentStatus(
     case 'PAID':
     case 'FAILED':
     case 'CANCELLED':
+    case 'EXPIRED':
       return paymentStatus
     case 'UNPAID':
       return 'PENDING'
@@ -160,7 +163,8 @@ function isTerminalPaymentStatus(paymentStatus: PaymentStatus) {
   return (
     paymentStatus === 'PAID' ||
     paymentStatus === 'FAILED' ||
-    paymentStatus === 'CANCELLED'
+    paymentStatus === 'CANCELLED' ||
+    paymentStatus === 'EXPIRED'
   )
 }
 

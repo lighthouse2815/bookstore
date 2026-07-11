@@ -8,7 +8,8 @@ public record UpdateCategoryCommand(
         UUID categoryId,
         String name,
         String description,
-        UUID parentId
+        UUID parentId,
+        UUID imageFileAssetId
 ) {
     public UpdateCategoryCommand {
         if (categoryId == null) {

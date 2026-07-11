@@ -11,6 +11,9 @@ import com.bookstore.bookstore.application.command.VerifyOtpCommand;
 import com.bookstore.bookstore.application.result.LoginResult;
 import com.bookstore.bookstore.application.result.PasswordResetTokenResult;
 import com.bookstore.bookstore.application.result.RegisterResult;
+import com.bookstore.bookstore.application.result.SessionResult;
+import java.util.List;
+import java.util.UUID;
 
 public interface IAuthService {
 
@@ -23,6 +26,12 @@ public interface IAuthService {
     LoginResult refresh(RefreshAccessTokenCommand command);
 
     void logout(LogoutCommand command);
+
+    void logoutAll(UUID userId);
+
+    List<SessionResult> getSessions(UUID userId, UUID currentSessionId);
+
+    void revokeSession(UUID userId, UUID sessionId, UUID currentSessionId);
 
     void requestPasswordResetOtp(RequestPasswordResetOtpCommand command);
 

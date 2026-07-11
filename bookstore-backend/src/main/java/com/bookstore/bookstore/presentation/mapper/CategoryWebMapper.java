@@ -17,7 +17,8 @@ public class CategoryWebMapper {
         return new CreateCategoryCommand(
                 request.name(),
                 request.description(),
-                request.parentId()
+                request.parentId(),
+                request.imageFileAssetId()
         );
     }
 
@@ -26,7 +27,8 @@ public class CategoryWebMapper {
                 categoryId,
                 request.name(),
                 request.description(),
-                request.parentId()
+                request.parentId(),
+                request.imageFileAssetId()
         );
     }
 
@@ -40,6 +42,8 @@ public class CategoryWebMapper {
                 category.getName(),
                 category.getDescription(),
                 category.getParentId(),
+                category.getImageFileAssetId(),
+                category.getImageUrl(),
                 category.getCreatedAt(),
                 category.getUpdatedAt()
         );

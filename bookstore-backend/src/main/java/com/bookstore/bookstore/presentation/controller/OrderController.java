@@ -5,6 +5,7 @@ import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.presentation.mapper.OrderTimelineWebMapper;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
+import com.bookstore.bookstore.presentation.request.CancelOrderRequest;
 import com.bookstore.bookstore.presentation.request.UpdateOrderStatusRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CreateOrderResponse;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,10 +45,11 @@ public class OrderController {
     @PostMapping("/api/orders/checkout")
     public ResponseEntity<ApiResponse<CreateOrderResponse>> checkout(
             @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateOrderRequest request
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        var result = orderService.checkout(orderWebMapper.toCreateOrderCommand(userId, request));
+        var result = orderService.checkout(orderWebMapper.toCreateOrderCommand(userId, request, idempotencyKey));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(orderWebMapper.toCreateOrderResponse(result)));
     }
@@ -92,6 +95,18 @@ public class OrderController {
         return ApiResponse.success(orderTimelineService.getMyTimeline(userId, id).stream()
                 .map(orderTimelineWebMapper::toResponse)
                 .toList());
+    }
+
+    @PutMapping("/api/orders/{id}/cancel")
+    public ApiResponse<OrderResponse> cancelMyOrder(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID id,
+            @Valid @RequestBody CancelOrderRequest request
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ApiResponse.success(orderWebMapper.toResponse(orderService.cancelMyOrder(
+                new com.bookstore.bookstore.application.command.CancelOrderCommand(userId, id, request.reason())
+        )));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

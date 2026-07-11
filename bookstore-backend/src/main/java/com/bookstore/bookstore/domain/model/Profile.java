@@ -72,6 +72,11 @@ public class Profile {
         setDeletedAt(now);
     }
 
+    public void restore() {
+        setDeletedAt(null);
+        setUpdatedAt(Instant.now());
+    }
+
     private void setUserId(UUID userId) {
         this.userId = Guard.notNull(userId, DomainErrorCode.INVALID_PROFILE_USER_ID, "userId");
     }

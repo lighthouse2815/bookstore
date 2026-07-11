@@ -14,6 +14,7 @@ import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,6 @@ public class ProfileService implements IProfileService {
         return profileRepository.findAllIncludingDeleted();
     }
 
-    // TODO : chuc nang tao acc lai khi da xoa + khoi phuc
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Profile create(Profile profile) {
@@ -74,6 +74,33 @@ public class ProfileService implements IProfileService {
 
         return profileRepository.findByIdIncludingDeleted(profileId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PROFILE_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Profile restoreForUser(UUID userId) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        if (userRepository.findByIdActive(userId).isEmpty()) {
+            throw new ApplicationException(ApplicationErrorCode.PROFILE_USER_NOT_FOUND);
+        }
+
+        Profile existingProfile = profileRepository.findByUserIdIncludingDeleted(userId).orElse(null);
+        if (existingProfile == null) {
+            Instant now = Instant.now();
+            return create(new Profile(
+                    UUID.randomUUID(), userId, null, null, null, null, null, now, now, null
+            ));
+        }
+
+        if (existingProfile.getDeletedAt() != null) {
+            existingProfile.restore();
+            return profileRepository.save(existingProfile);
+        }
+
+        return existingProfile;
     }
 
     @Override

@@ -32,6 +32,7 @@ data class OrderDto(
     val createdAt: String,
     val updatedAt: String,
     val cancelledAt: String? = null,
+    val paymentExpiresAt: String? = null,
 ) {
     fun toModel(): Order = Order(
         id = orderId,

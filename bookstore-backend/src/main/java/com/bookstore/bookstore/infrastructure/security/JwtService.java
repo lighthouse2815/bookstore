@@ -26,6 +26,11 @@ public class JwtService implements IJwtService {
 
     @Override
     public String generateAccessToken(User user) {
+        return generateAccessToken(user, null);
+    }
+
+    @Override
+    public String generateAccessToken(User user, java.util.UUID sessionId) {
         Instant now = Instant.now();
 
         List<String> roles = user.getRoles()
@@ -33,13 +38,16 @@ public class JwtService implements IJwtService {
                 .map(Role::getName)
                 .toList();
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .subject(user.getId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plus(jwtProperties.expirationMinutes(), ChronoUnit.MINUTES))
                 .claim("username", user.getUsername())
-                .claim("roles", roles)
-                .build();
+                .claim("roles", roles);
+        if (sessionId != null) {
+            claimsBuilder.claim("sid", sessionId.toString());
+        }
+        JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

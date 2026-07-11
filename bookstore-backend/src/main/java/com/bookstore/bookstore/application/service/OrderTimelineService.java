@@ -11,11 +11,13 @@ import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.PurchaseItemType;
+import com.bookstore.bookstore.domain.enums.RefundStatus;
 import com.bookstore.bookstore.domain.enums.ShipmentStatus;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.OrderTimelineEvent;
 import com.bookstore.bookstore.domain.model.Payment;
+import com.bookstore.bookstore.domain.model.Refund;
 import com.bookstore.bookstore.domain.model.ReturnRequest;
 import com.bookstore.bookstore.domain.model.Shipment;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,6 +62,7 @@ public class OrderTimelineService implements IOrderTimelineService {
     private static final String EVENT_RETURN_REJECTED = "RETURN_REJECTED";
     private static final String EVENT_RETURN_CANCELLED = "RETURN_CANCELLED";
     private static final String EVENT_REFUND_INTERNAL_APPROVED = "REFUND_INTERNAL_APPROVED";
+    private static final String EVENT_REFUND_STATE_CHANGED = "REFUND_STATE_CHANGED";
     private static final String EVENT_STOCK_RESTOCKED_FROM_RETURN = "STOCK_RESTOCKED_FROM_RETURN";
 
     private final IOrderTimelineEventRepository orderTimelineEventRepository;
@@ -469,6 +472,29 @@ public class OrderTimelineService implements IOrderTimelineService {
                 null,
                 toMetadata(metadata),
                 offset(resolveReturnRequestEventTime(returnRequest), 1)
+        ));
+    }
+
+    @Override
+    public void recordRefundStateChanged(Order order, Refund refund, RefundStatus previousStatus) {
+        if (order == null || refund == null) {
+            return;
+        }
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("refundId", refund.getId());
+        metadata.put("amount", refund.getAmount());
+        metadata.put("currency", refund.getCurrency());
+        metadata.put("method", refund.getMethod().name());
+        metadata.put("externalReference", refund.getExternalReference());
+        enqueue(newEvent(
+                order,
+                EVENT_REFUND_STATE_CHANGED,
+                "Cập nhật hoàn tiền",
+                "Yêu cầu hoàn tiền cho đơn " + order.getOrderCode() + " chuyển sang trạng thái " + refund.getStatus() + ".",
+                previousStatus == null ? null : previousStatus.name(),
+                refund.getStatus().name(),
+                toMetadata(metadata),
+                refund.getUpdatedAt()
         ));
     }
 

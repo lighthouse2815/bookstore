@@ -61,6 +61,8 @@ export type LoginResponse = {
   refreshToken: string
 }
 
+export type WebLoginResponse = Omit<LoginResponse, 'refreshToken'>
+
 export type RegisterResponse = {
   username: string
   createdAt: string
@@ -69,6 +71,18 @@ export type RegisterResponse = {
 export type PasswordResetTokenResponse = {
   resetToken: string
   expiresAt: string
+}
+
+export type SessionResponse = {
+  sessionId: string
+  deviceName: string | null
+  deviceId: string | null
+  userAgent: string | null
+  ipAddress: string | null
+  createdAt: string
+  lastUsedAt: string | null
+  expiresAt: string
+  currentSession: boolean
 }
 
 export type UserMeResponse = {

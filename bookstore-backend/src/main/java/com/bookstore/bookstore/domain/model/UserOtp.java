@@ -14,6 +14,9 @@ public class UserOtp {
     private UUID userId;
     private OtpPurpose purpose;
     private String otpHash;
+    private int attemptCount;
+    private int maxAttempts;
+    private Instant lastAttemptAt;
     private Instant expiresAt;
     private Instant verifiedAt;
     private Instant invalidatedAt;
@@ -31,10 +34,30 @@ public class UserOtp {
             Instant createdAt,
             Instant updatedAt
     ) {
+        this(id, userId, purpose, otpHash, 0, 5, null, expiresAt, verifiedAt, invalidatedAt, createdAt, updatedAt);
+    }
+
+    public UserOtp(
+            UUID id,
+            UUID userId,
+            OtpPurpose purpose,
+            String otpHash,
+            int attemptCount,
+            int maxAttempts,
+            Instant lastAttemptAt,
+            Instant expiresAt,
+            Instant verifiedAt,
+            Instant invalidatedAt,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_USER_OTP_ID, "id");
         setUserId(userId);
         setPurpose(purpose);
         setOtpHash(otpHash);
+        this.attemptCount = Math.max(0, attemptCount);
+        this.maxAttempts = Math.max(1, maxAttempts);
+        this.lastAttemptAt = Guard.notInFutureOrNull(lastAttemptAt, DomainErrorCode.INVALID_USER_OTP_UPDATED_AT, "lastAttemptAt");
         setVerifiedAt(verifiedAt);
         setInvalidatedAt(invalidatedAt);
         setUpdatedAt(updatedAt);
@@ -59,6 +82,20 @@ public class UserOtp {
     public void invalidate(Instant invalidatedAt) {
         setInvalidatedAt(invalidatedAt);
         setUpdatedAt(invalidatedAt);
+    }
+
+    public void recordFailedAttempt(Instant attemptedAt) {
+        Instant validAttemptedAt = Guard.notInFuture(attemptedAt, DomainErrorCode.INVALID_USER_OTP_UPDATED_AT, "attemptedAt");
+        this.attemptCount++;
+        this.lastAttemptAt = validAttemptedAt;
+        setUpdatedAt(validAttemptedAt);
+        if (attemptCount >= maxAttempts) {
+            invalidate(validAttemptedAt);
+        }
+    }
+
+    public boolean isAttemptLimitReached() {
+        return attemptCount >= maxAttempts;
     }
 
     private void setUserId(UUID userId) {

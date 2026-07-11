@@ -227,7 +227,6 @@ public class ReturnRequestService implements IReturnRequestService {
         }
 
         orderTimelineService.recordReturnApproved(order, savedRequest);
-        orderTimelineService.recordRefundInternalApproved(order, savedRequest);
         if (restockedQuantity > 0) {
             orderTimelineService.recordStockRestockedFromReturn(order, savedRequest, restockedQuantity);
         }

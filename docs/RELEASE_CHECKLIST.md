@@ -8,6 +8,7 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - [ ] `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD` dung
 - [ ] MySQL dang chay
 - [ ] Flyway migrate PASS tren profile `prod`
+- [ ] Flyway da ap dung lien tuc den `V14__add_refund_ledger_and_transactional_outbox.sql`; khong sua hoac bo qua migration cu
 - [ ] `spring.jpa.hibernate.ddl-auto=validate` van giu o `prod`
 - [ ] `http://localhost:8080/actuator/health` tra `{"status":"UP"}` tren runtime `prod`
 - [ ] `spring.jpa.open-in-view=false` van startup va smoke PASS
@@ -21,6 +22,10 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - [ ] `APP_DEMO_USER_PASSWORD` da set neu can chay `seed` profile hoac demo seed tren `prod`
 - [ ] `.\mvnw.cmd --% test` PASS
 - [ ] `.\mvnw.cmd --% -DskipTests compile` PASS
+- [ ] `mvnw.cmd clean -Ptestcontainers verify` PASS on a machine with Docker Desktop running, with `0` MySQL tests skipped (the profile now fails fast when Docker is unavailable)
+- [ ] JaCoCo bundle coverage gate PASS: line >= 45%, branch >= 30%; report at `bookstore-backend/target/site/jacoco/index.html`
+- [ ] QR expiry/cancel/late-IPN smoke follows `docs/SMOKE_TEST_FLOW.md`
+- [ ] API contract and terminal-state behavior checked against `docs/ORDER_PAYMENT_API_CONTRACT.md` and `docs/ORDER_PAYMENT_STATE_TRANSITIONS.md`
 - [ ] Best-coupon + coupon apply smoke PASS tren DB smoke rieng, khong can insert coupon thu cong
 - [ ] Demo accounts / flow docs da cap nhat trong `docs/DEMO_SCRIPT.md`
 
@@ -30,9 +35,11 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - [ ] `VITE_API_BASE_URL` dung
 - [ ] `VITE_GOOGLE_CLIENT_ID` dung neu demo Google login
 - [ ] Thong tin bank transfer trong env chi la demo placeholder, khong phai secret that
-- [ ] `npm run lint` PASS
-- [ ] `npm run build` PASS
-- [ ] `npm test` PASS
+- [ ] `corepack enable; pnpm install --frozen-lockfile` PASS
+- [ ] `pnpm lint` PASS
+- [ ] `pnpm build` PASS
+- [ ] `pnpm test` PASS
+- [ ] `pnpm smoke:staging` PASS voi tai khoan staging disposable; ket qua ghi trong `docs/STAGING_SMOKE_REPORT.md`
 - [ ] Login duoc
 - [ ] Cart/checkout duoc
 
@@ -43,6 +50,7 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - [ ] Cart update/remove dung `itemId`
 - [ ] Checkout gui `bookCouponCode/shippingCouponCode` dung
 - [ ] `.\gradlew.bat assembleDebug` PASS
+- [ ] `.\gradlew.bat testDebugUnitTest` va `.\gradlew.bat assembleRelease` PASS
 
 ## Ship app
 
@@ -52,12 +60,14 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - [ ] Shipper xem duoc shipment da duoc admin gan
 - [ ] Khong dung `localhost` tren dien thoai that
 - [ ] `npm run typecheck` PASS
-- [ ] Ghi chu: repo hien chi co `typecheck`, khong co script `build` rieng
+- [ ] `npm test` va `npx expo export --platform android` PASS
+- [ ] Ghi chu: repo hien chi co Expo export, khong co script `build` rieng
 
 ## Desktop
 
 - [ ] Project target `.NET 8`
 - [ ] `dotnet build` PASS
+- [ ] .NET 8 runtime co san (system-wide hoac user-local voi `DOTNET_ROOT`/`DOTNET_ROOT_X64`) va `dotnet test` PASS
 - [ ] Login/API call duoc
 - [ ] POS tao don duoc
 - [ ] Receipt export `.txt` duoc neu can demo
@@ -99,3 +109,18 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 - Hibernate follow-on locking warning `HHH000444`: `PASS`
 - Website lint/build + main route smoke: `PASS`
 - Detailed snapshot and known backlog: `D:\bookstore\docs\PROJECT_STATUS_CURRENT.md`
+## Authentication/session release additions
+
+- [ ] Production has explicit `CORS_ALLOWED_ORIGINS`; it never contains `*` when credentials are enabled.
+- [ ] `AUTH_WEB_COOKIE_SECURE=true`, HTTPS is enforced, and `AUTH_WEB_COOKIE_SAME_SITE` matches the deployment topology.
+- [ ] `AUTH_TRUSTED_PROXY_ENABLED` is false unless controlled proxy CIDRs are set and verified.
+- [ ] Browser DevTools confirms no refresh token in Local/Session/IndexedDB and confirms the refresh cookie is HttpOnly/Secure/SameSite as configured.
+- [ ] Password reset, OTP lockout, login throttle, Google login, logout-all and cross-device session revoke are smoke-tested on staging.
+
+## Refund/outbox release additions
+
+- [ ] Flyway is continuous through `V14__add_refund_ledger_and_transactional_outbox.sql`; existing migrations were not edited.
+- [ ] `GOOGLE_CLIENT_ID` and at least one of `SEPAY_WEBHOOK_API_KEY` / `SEPAY_SECRET_KEY` are set without logging their values.
+- [ ] `OUTBOX_ENABLED=true`; `/actuator/health` reports acceptable `outbox` pending/failed/dead counts.
+- [ ] Admin refund flow is smoke-tested with a paid disposable order, manual bank reference, evidence, failure/retry, and partial amount protection.
+- [ ] The team reviewed `REFUND_STATE_TRANSITIONS.md`, `TRANSACTIONAL_OUTBOX.md`, and `OPERATIONS_RUNBOOK.md`.

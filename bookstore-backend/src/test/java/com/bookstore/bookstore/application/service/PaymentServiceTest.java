@@ -13,12 +13,15 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.application.port.in.IPaymentReconciliationService;
+import com.bookstore.bookstore.application.port.in.ITransactionalOutboxService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.domain.enums.PaymentReconciliationIssueType;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -49,6 +52,12 @@ class PaymentServiceTest {
     @Mock
     private IOrderTimelineService orderTimelineService;
 
+    @Mock
+    private IPaymentReconciliationService paymentReconciliationService;
+
+    @Mock
+    private ITransactionalOutboxService transactionalOutboxService;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -62,7 +71,9 @@ class PaymentServiceTest {
                 orderRepository,
                 digitalLibraryService,
                 orderTimelineService,
-                new SepayProperties("merchant-123", null, "webhook-key")
+                new SepayProperties("merchant-123", null, "webhook-key"),
+                paymentReconciliationService,
+                transactionalOutboxService
         );
 
         Payment payment = payment();
@@ -86,7 +97,7 @@ class PaymentServiceTest {
 
         when(paymentRepository.findByTransactionId("TXN-001")).thenReturn(Optional.empty());
         when(paymentRepository.findByReferenceCode("REF-001")).thenReturn(Optional.empty());
-        when(paymentRepository.findPendingSepayByOrderCodeForUpdate("DH123")).thenReturn(Optional.of(payment));
+        when(paymentRepository.findSepayByOrderCodeForUpdate("DH123")).thenReturn(Optional.of(payment));
         when(orderRepository.findByIdForUpdate(payment.getOrderId())).thenReturn(Optional.of(order));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -108,7 +119,9 @@ class PaymentServiceTest {
                 orderRepository,
                 digitalLibraryService,
                 orderTimelineService,
-                new SepayProperties("merchant-123", null, "webhook-key")
+                new SepayProperties("merchant-123", null, "webhook-key"),
+                paymentReconciliationService,
+                transactionalOutboxService
         );
 
         Payment existingPayment = payment();
@@ -134,7 +147,7 @@ class PaymentServiceTest {
 
         paymentService.handleSepayIpn(command);
 
-        verify(paymentRepository, never()).findPendingSepayByOrderCodeForUpdate(any());
+        verify(paymentRepository, never()).findSepayByOrderCodeForUpdate(any());
         verify(paymentRepository, never()).save(any(Payment.class));
         verify(orderRepository, never()).save(any(Order.class));
         verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(any(Order.class));
@@ -147,7 +160,9 @@ class PaymentServiceTest {
                 orderRepository,
                 digitalLibraryService,
                 orderTimelineService,
-                new SepayProperties("merchant-123", null, "webhook-key")
+                new SepayProperties("merchant-123", null, "webhook-key"),
+                paymentReconciliationService,
+                transactionalOutboxService
         );
 
         Payment existingPayment = payment();
@@ -174,8 +189,8 @@ class PaymentServiceTest {
 
         paymentService.handleSepayIpn(command);
 
-        verify(paymentRepository, never()).findPendingSepayByOrderCodeForUpdate(any());
-        verify(paymentRepository, never()).findPendingSepayByTransferContentInContentForUpdate(any());
+        verify(paymentRepository, never()).findSepayByOrderCodeForUpdate(any());
+        verify(paymentRepository, never()).findSepayByTransferContentInContentForUpdateAnyStatus(any());
         verify(paymentRepository, never()).save(any(Payment.class));
         verify(orderRepository, never()).save(any(Order.class));
         verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(any(Order.class));
@@ -188,7 +203,9 @@ class PaymentServiceTest {
                 orderRepository,
                 digitalLibraryService,
                 orderTimelineService,
-                new SepayProperties("merchant-123", null, null)
+                new SepayProperties("merchant-123", null, null),
+                paymentReconciliationService,
+                transactionalOutboxService
         );
 
         HandleSepayIpnCommand command = new HandleSepayIpnCommand(
@@ -215,6 +232,37 @@ class PaymentServiceTest {
 
         assertEquals(ApplicationErrorCode.PAYMENT_WEBHOOK_UNAUTHORIZED, exception.getErrorCode());
         verifyNoInteractions(paymentRepository, orderRepository, digitalLibraryService, orderTimelineService);
+    }
+
+    @Test
+    void handleSepayIpn_afterPaymentExpiry_createsIssueWithoutRevivingOrder() {
+        paymentService = new PaymentService(
+                paymentRepository, orderRepository, digitalLibraryService, orderTimelineService,
+                new SepayProperties("merchant-123", null, "webhook-key"), paymentReconciliationService, transactionalOutboxService
+        );
+        Payment payment = payment();
+        payment.markExpired(Instant.EPOCH.plusSeconds(2));
+        Order order = order(payment.getOrderId());
+        HandleSepayIpnCommand command = new HandleSepayIpnCommand(
+                "Apikey webhook-key", null, "TXN-LATE", "SEPAY", null, null, null,
+                "DH123", "DH123", "in", null, new BigDecimal("10.00"), "REF-LATE", null
+        );
+        when(paymentRepository.findByTransactionId("TXN-LATE")).thenReturn(Optional.empty());
+        when(paymentRepository.findByReferenceCode("REF-LATE")).thenReturn(Optional.empty());
+        when(paymentRepository.findSepayByOrderCodeForUpdate("DH123")).thenReturn(Optional.of(payment));
+        when(orderRepository.findByIdForUpdate(payment.getOrderId())).thenReturn(Optional.of(order));
+
+        paymentService.handleSepayIpn(command);
+
+        verify(paymentReconciliationService).recordIssue(
+                payment, order, PaymentReconciliationIssueType.PAYMENT_AFTER_EXPIRY,
+                new BigDecimal("10.00"), "TXN-LATE", "SePay xác nhận tiền sau khi đơn hàng không còn ở trạng thái có thể thanh toán"
+        );
+        assertEquals(PaymentStatus.EXPIRED, payment.getStatus());
+        assertEquals("TXN-LATE", payment.getTransactionId());
+        verify(paymentRepository).save(payment);
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(any(Order.class));
     }
 
     private static Payment payment() {

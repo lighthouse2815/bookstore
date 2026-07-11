@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
@@ -56,6 +58,11 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
     Optional<UserJpaEntity> findById(UUID userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @Query("select u from UserJpaEntity u where u.id = :userId")
+    Optional<UserJpaEntity> findByIdForUpdate(@Param("userId") UUID userId);
 
     boolean existsById(UUID userId);
 

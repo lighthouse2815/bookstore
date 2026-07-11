@@ -2,6 +2,7 @@ package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,8 +15,8 @@ import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
-import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.application.port.in.ITransactionalOutboxService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
@@ -23,6 +24,7 @@ import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
+import com.bookstore.bookstore.infrastructure.payment.PaymentExpiryProperties;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
@@ -96,7 +98,7 @@ class OrderServiceTest {
     private IStockMovementRepository stockMovementRepository;
 
     @Mock
-    private INotificationService notificationService;
+    private ITransactionalOutboxService transactionalOutboxService;
 
     @Mock
     private OrderAssembler orderAssembler;
@@ -106,6 +108,9 @@ class OrderServiceTest {
 
     @Mock
     private IOrderTimelineService orderTimelineService;
+
+    @Mock
+    private OrderCancellationService orderCancellationService;
 
     private OrderService orderService;
 
@@ -121,11 +126,13 @@ class OrderServiceTest {
                 couponRepository,
                 couponUsageRepository,
                 stockMovementRepository,
-                notificationService,
+                transactionalOutboxService,
                 orderAssembler,
                 digitalLibraryService,
                 orderTimelineService,
-                new SepayProperties("merchant-123", null, null)
+                new SepayProperties("merchant-123", null, null),
+                new PaymentExpiryProperties(20, true, 60_000L, 100),
+                orderCancellationService
         );
     }
 
@@ -148,7 +155,7 @@ class OrderServiceTest {
         );
 
         when(userAddressRepository.findByIdAndUserIdActive(address.getId(), userId)).thenReturn(Optional.of(address));
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserIdForUpdate(userId)).thenReturn(Optional.of(cart));
         when(bookRepository.findAllByIdsIncludingDeletedForUpdate(List.of(book.getId()))).thenReturn(List.of(book));
         when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -175,6 +182,7 @@ class OrderServiceTest {
         verify(paymentRepository).save(paymentCaptor.capture());
         assertEquals(PaymentProvider.SEPAY, paymentCaptor.getValue().getProvider());
         assertEquals(PaymentStatus.PENDING, paymentCaptor.getValue().getStatus());
+        assertNotNull(paymentCaptor.getValue().getExpiresAt());
         assertEquals(new BigDecimal("30020.00"), paymentCaptor.getValue().getAmount());
         assertEquals(orderCaptor.getValue().getOrderCode(), paymentCaptor.getValue().getReferenceCode());
         assertEquals(orderCaptor.getValue().getOrderCode(), paymentCaptor.getValue().getTransferContent());
@@ -193,7 +201,7 @@ class OrderServiceTest {
         ArgumentCaptor<Cart> cartCaptor = ArgumentCaptor.forClass(Cart.class);
         verify(cartRepository).save(cartCaptor.capture());
         assertEquals(0, cartCaptor.getValue().getItems().size());
-        verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(transactionalOutboxService).enqueue(org.mockito.ArgumentMatchers.any());
         verify(digitalLibraryService, never()).grantPurchasedAccessForOrder(org.mockito.ArgumentMatchers.any());
         verify(orderTimelineService).recordOrderCreated(orderCaptor.getValue());
         verify(orderTimelineService).recordPaymentPending(orderCaptor.getValue(), paymentCaptor.getValue());
@@ -202,6 +210,74 @@ class OrderServiceTest {
         assertEquals(PaymentMethod.BANK_TRANSFER_QR, result.paymentMethod());
         assertEquals(PaymentStatus.PENDING, result.paymentStatus());
         assertEquals(new BigDecimal("30020.00"), result.totalAmount());
+    }
+
+    @Test
+    void checkout_replaysExistingOrderForSameIdempotencyKeyWithoutTouchingCart() {
+        UUID userId = UUID.randomUUID();
+        CreateOrderCommand command = new CreateOrderCommand(
+                userId,
+                List.of(UUID.randomUUID()),
+                UUID.randomUUID(),
+                ShippingMethod.DELIVERY,
+                PaymentMethod.BANK_TRANSFER_QR,
+                "book10",
+                null,
+                "Giao giờ hành chính",
+                UUID.randomUUID().toString()
+        );
+        Order existingOrder = org.mockito.Mockito.mock(Order.class);
+        Payment existingPayment = org.mockito.Mockito.mock(Payment.class);
+        UUID orderId = UUID.randomUUID();
+
+        when(existingOrder.getCheckoutFingerprint()).thenReturn(command.checkoutFingerprint());
+        when(existingOrder.getId()).thenReturn(orderId);
+        when(existingOrder.getOrderCode()).thenReturn("DH-REPLAY-001");
+        when(existingOrder.getPaymentMethod()).thenReturn(PaymentMethod.BANK_TRANSFER_QR);
+        when(existingOrder.getTotalAmount()).thenReturn(new BigDecimal("120000.00"));
+        when(existingPayment.getStatus()).thenReturn(PaymentStatus.PENDING);
+        when(existingPayment.getTransferContent()).thenReturn("DH-REPLAY-001");
+        when(orderRepository.findByUserIdAndIdempotencyKey(userId, command.idempotencyKey()))
+                .thenReturn(Optional.of(existingOrder));
+        when(paymentRepository.findByOrderId(orderId)).thenReturn(Optional.of(existingPayment));
+
+        CreateOrderResult result = orderService.checkout(command);
+
+        assertEquals(orderId, result.orderId());
+        assertEquals("DH-REPLAY-001", result.orderCode());
+        assertEquals(PaymentStatus.PENDING, result.paymentStatus());
+        assertNull(result.paymentExpiresAt());
+        assertEquals("DH-REPLAY-001", result.transferContent());
+        verify(cartRepository, never()).findByUserIdForUpdate(userId);
+        verify(orderRepository, never()).save(org.mockito.ArgumentMatchers.any(Order.class));
+        verify(paymentRepository, never()).save(org.mockito.ArgumentMatchers.any(Payment.class));
+        verify(stockMovementRepository, never()).save(org.mockito.ArgumentMatchers.any(StockMovement.class));
+    }
+
+    @Test
+    void checkout_rejectsReusingIdempotencyKeyWithDifferentPayload() {
+        UUID userId = UUID.randomUUID();
+        CreateOrderCommand command = new CreateOrderCommand(
+                userId,
+                List.of(UUID.randomUUID()),
+                UUID.randomUUID(),
+                ShippingMethod.DELIVERY,
+                PaymentMethod.COD,
+                null,
+                null,
+                null,
+                UUID.randomUUID().toString()
+        );
+        Order existingOrder = org.mockito.Mockito.mock(Order.class);
+        when(existingOrder.getCheckoutFingerprint()).thenReturn("a".repeat(64));
+        when(orderRepository.findByUserIdAndIdempotencyKey(userId, command.idempotencyKey()))
+                .thenReturn(Optional.of(existingOrder));
+
+        ApplicationException exception = assertThrows(ApplicationException.class, () -> orderService.checkout(command));
+
+        assertEquals(ApplicationErrorCode.ORDER_IDEMPOTENCY_PAYLOAD_MISMATCH, exception.getErrorCode());
+        verify(cartRepository, never()).findByUserIdForUpdate(userId);
+        verifyNoInteractions(paymentRepository, stockMovementRepository, couponRepository, couponUsageRepository);
     }
 
     @Test
@@ -230,7 +306,7 @@ class OrderServiceTest {
                 null
         );
 
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserIdForUpdate(userId)).thenReturn(Optional.of(cart));
         when(digitalAssetRepository.findAllByIdsActive(List.of(digitalAssetId))).thenReturn(List.of(digitalAsset));
         when(bookRepository.findAllByIdsIncludingDeleted(List.of(book.getId()))).thenReturn(List.of(book));
         when(bookRepository.findAllByIdsIncludingDeletedForUpdate(List.of(book.getId()))).thenReturn(List.of(book));
@@ -256,7 +332,7 @@ class OrderServiceTest {
         verifyNoInteractions(userAddressRepository);
         verifyNoInteractions(stockMovementRepository);
         verify(bookRepository, never()).save(org.mockito.ArgumentMatchers.any(Book.class));
-        verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(transactionalOutboxService).enqueue(org.mockito.ArgumentMatchers.any());
         verify(orderTimelineService).recordOrderCreated(savedOrder);
         verify(orderTimelineService).recordPaymentPending(
                 org.mockito.ArgumentMatchers.eq(savedOrder),
@@ -264,6 +340,8 @@ class OrderServiceTest {
         );
         assertEquals(new BigDecimal("5.00"), result.totalAmount());
         assertEquals(PaymentStatus.PENDING, result.paymentStatus());
+        assertNotNull(result.paymentExpiresAt());
+        verify(paymentRepository).save(org.mockito.ArgumentMatchers.argThat(payment -> payment.getExpiresAt() != null));
     }
 
     @Test
@@ -287,7 +365,7 @@ class OrderServiceTest {
         );
 
         when(userAddressRepository.findByIdAndUserIdActive(address.getId(), userId)).thenReturn(Optional.of(address));
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserIdForUpdate(userId)).thenReturn(Optional.of(cart));
         when(bookRepository.findAllByIdsIncludingDeletedForUpdate(List.of(book.getId()))).thenReturn(List.of(book));
         when(couponRepository.findByCodeActiveForUpdate("BOOK10")).thenReturn(Optional.of(coupon));
         when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
@@ -361,14 +439,17 @@ class OrderServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderAssembler.toResult(org.mockito.ArgumentMatchers.any(Order.class)))
+        when(orderAssembler.toResult(
+                org.mockito.ArgumentMatchers.any(Order.class),
+                org.mockito.ArgumentMatchers.isNull()
+        ))
                 .thenAnswer(invocation -> toResult(invocation.getArgument(0)));
 
         OrderResult result = orderService.updateStatus(new UpdateOrderStatusCommand(order.getId(), OrderStatus.DELIVERED));
 
         verify(paymentRepository).save(payment);
         verify(digitalLibraryService).grantPurchasedAccessForOrder(order);
-        verify(notificationService).create(org.mockito.ArgumentMatchers.any());
+        verify(transactionalOutboxService).enqueue(org.mockito.ArgumentMatchers.any());
         verify(orderTimelineService).recordStatusChanged(order, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
         verify(orderTimelineService).recordPaymentPaid(order, payment);
         assertEquals(PaymentStatus.PAID, payment.getStatus());
@@ -411,119 +492,68 @@ class OrderServiceTest {
     }
 
     @Test
-    void updateStatus_cancelled_restoresPhysicalStockAndRevokesAccess() {
-        UUID userId = UUID.randomUUID();
-        Book book = book(new BigDecimal("10.00"), 8);
+    void updateStatus_cancelled_delegatesToSharedCancellationFlow() {
         Order order = order(
-                userId,
-                List.of(new OrderItem(
-                        UUID.randomUUID(),
-                        PurchaseItemType.PHYSICAL_BOOK,
-                        book.getId(),
-                        null,
-                        book.getTitle(),
-                        new BigDecimal("10.00"),
-                        2,
-                        new BigDecimal("20.00")
-                )),
-                PaymentMethod.COD,
-                PaymentStatus.PENDING,
-                OrderStatus.PENDING,
-                new BigDecimal("30000")
+                UUID.randomUUID(),
+                List.of(new OrderItem(UUID.randomUUID(), UUID.randomUUID(), "Book", BigDecimal.TEN, 1, BigDecimal.TEN)),
+                PaymentMethod.COD, PaymentStatus.PENDING, OrderStatus.PENDING, BigDecimal.ZERO
         );
-
-        when(orderRepository.findByIdForUpdate(order.getId())).thenReturn(Optional.of(order));
-        when(bookRepository.findAllByIdsIncludingDeletedForUpdate(List.of(book.getId()))).thenReturn(List.of(book));
-        when(stockMovementRepository.save(org.mockito.ArgumentMatchers.any(StockMovement.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(bookRepository.save(org.mockito.ArgumentMatchers.any(Book.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderAssembler.toResult(org.mockito.ArgumentMatchers.any(Order.class)))
+        order.cancel();
+        when(orderCancellationService.cancelPendingByAdmin(order.getId(), "Được quản trị viên hủy"))
+                .thenReturn(order);
+        when(orderAssembler.toResult(
+                org.mockito.ArgumentMatchers.any(Order.class),
+                org.mockito.ArgumentMatchers.isNull()
+        ))
                 .thenAnswer(invocation -> toResult(invocation.getArgument(0)));
 
         OrderResult result = orderService.updateStatus(new UpdateOrderStatusCommand(order.getId(), OrderStatus.CANCELLED));
 
-        ArgumentCaptor<StockMovement> stockCaptor = ArgumentCaptor.forClass(StockMovement.class);
-        verify(stockMovementRepository).save(stockCaptor.capture());
-        assertEquals(StockMovementType.CANCEL_ORDER, stockCaptor.getValue().getType());
-        assertEquals(8, stockCaptor.getValue().getBeforeQuantity());
-        assertEquals(10, stockCaptor.getValue().getAfterQuantity());
-
-        verify(bookRepository).save(book);
-        verify(digitalLibraryService).revokePurchasedAccessForOrder(order.getId());
-        verify(notificationService).create(org.mockito.ArgumentMatchers.any());
-        verify(orderTimelineService).recordOrderCancelled(order, null);
-        verify(orderTimelineService).recordStockRolledBack(order);
-        assertEquals(10, book.getStockQuantity());
-        assertEquals(OrderStatus.CANCELLED, order.getStatus());
-        assertNotNull(order.getCancelledAt());
+        verify(orderCancellationService).cancelPendingByAdmin(order.getId(), "Được quản trị viên hủy");
         assertEquals(OrderStatus.CANCELLED, result.status());
     }
 
     @Test
-    void updateStatus_cancelled_rollsBackCouponUsageOncePerAppliedCoupon() {
+    void cancelMyOrder_delegatesOwnerAndReasonToSharedCancellationFlow() {
         UUID userId = UUID.randomUUID();
-        UUID bookCouponId = UUID.randomUUID();
-        UUID shippingCouponId = UUID.randomUUID();
-        Order order = new Order(
-                UUID.randomUUID(),
-                "DH-TEST-COUPON",
-                userId,
-                List.of(new OrderItem(
-                        UUID.randomUUID(),
-                        PurchaseItemType.DIGITAL_ASSET,
-                        UUID.randomUUID(),
-                        UUID.randomUUID(),
-                        "Ebook",
-                        new BigDecimal("20.00"),
-                        1,
-                        new BigDecimal("20.00")
-                )),
-                new BigDecimal("20.00"),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                new BigDecimal("20.00"),
-                bookCouponId,
-                "BOOK10",
-                shippingCouponId,
-                "SHIP10",
-                PaymentMethod.COD,
-                PaymentStatus.PENDING,
-                OrderStatus.PENDING,
-                "Receiver Name",
-                "0900000000",
-                "Receiver Address",
-                Instant.EPOCH,
-                Instant.EPOCH,
-                null
-        );
-        Coupon bookCoupon = coupon(bookCouponId, "BOOK10", 3);
-        Coupon shippingCoupon = coupon(shippingCouponId, "SHIP10", 2);
-
-        when(orderRepository.findByIdForUpdate(order.getId())).thenReturn(Optional.of(order));
-        when(couponRepository.findByIdIncludingDeletedForUpdate(bookCouponId)).thenReturn(Optional.of(bookCoupon));
-        when(couponRepository.findByIdIncludingDeletedForUpdate(shippingCouponId)).thenReturn(Optional.of(shippingCoupon));
-        when(couponRepository.save(org.mockito.ArgumentMatchers.any(Coupon.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderRepository.save(org.mockito.ArgumentMatchers.any(Order.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderAssembler.toResult(org.mockito.ArgumentMatchers.any(Order.class)))
+        UUID orderId = UUID.randomUUID();
+        Order order = order(userId, List.of(new OrderItem(UUID.randomUUID(), UUID.randomUUID(), "Book", BigDecimal.TEN, 1, BigDecimal.TEN)),
+                PaymentMethod.COD, PaymentStatus.PENDING, OrderStatus.PENDING, BigDecimal.ZERO);
+        order.cancel();
+        when(orderCancellationService.cancelOwnedPending(userId, orderId, "Không còn nhu cầu"))
+                .thenReturn(order);
+        when(orderAssembler.toResult(
+                org.mockito.ArgumentMatchers.any(Order.class),
+                org.mockito.ArgumentMatchers.isNull()
+        ))
                 .thenAnswer(invocation -> toResult(invocation.getArgument(0)));
 
-        OrderResult result = orderService.updateStatus(new UpdateOrderStatusCommand(order.getId(), OrderStatus.CANCELLED));
+        OrderResult result = orderService.cancelMyOrder(new com.bookstore.bookstore.application.command.CancelOrderCommand(
+                userId, orderId, "Không còn nhu cầu"
+        ));
 
-        assertEquals(2, bookCoupon.getUsedCount());
-        assertEquals(1, shippingCoupon.getUsedCount());
-        verify(couponRepository).save(bookCoupon);
-        verify(couponRepository).save(shippingCoupon);
-        verify(couponUsageRepository).deleteByOrderId(order.getId());
-        verify(orderTimelineService).recordOrderCancelled(order, null);
-        verify(orderTimelineService).recordCouponRolledBack(order, "BOOK10");
-        verify(orderTimelineService).recordCouponRolledBack(order, "SHIP10");
+        verify(orderCancellationService).cancelOwnedPending(userId, orderId, "Không còn nhu cầu");
         assertEquals(OrderStatus.CANCELLED, result.status());
+    }
+
+    @Test
+    void getMyOrders_includesPaymentExpiryInEveryOrderResult() {
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        Instant expiresAt = Instant.now().plusSeconds(1);
+        Order order = org.mockito.Mockito.mock(Order.class);
+        Payment payment = org.mockito.Mockito.mock(Payment.class);
+        OrderResult expected = org.mockito.Mockito.mock(OrderResult.class);
+        when(order.getId()).thenReturn(orderId);
+        when(payment.getExpiresAt()).thenReturn(expiresAt);
+        when(orderRepository.findByUserId(userId)).thenReturn(List.of(order));
+        when(paymentRepository.findByOrderId(orderId)).thenReturn(Optional.of(payment));
+        when(orderAssembler.toResult(order, expiresAt)).thenReturn(expected);
+
+        List<OrderResult> result = orderService.getMyOrders(userId);
+
+        assertEquals(List.of(expected), result);
+        verify(orderAssembler).toResult(order, expiresAt);
     }
 
     private static Cart cart(UUID userId) {

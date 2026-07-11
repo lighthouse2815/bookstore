@@ -4,7 +4,12 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { uploadManagedFile } from '@/services/file-service'
-import { updateCurrentUser } from '@/services/auth-service'
+import {
+  getSessions,
+  logoutAllDevices,
+  revokeSession,
+  updateCurrentUser,
+} from '@/services/auth-service'
 import { getMyOrders } from '@/services/order-service'
 import {
   getCurrentProfile,
@@ -12,6 +17,7 @@ import {
 } from '@/services/profile-service'
 import type { OrderResponse } from '@/types/order'
 import type { ProfileResponse } from '@/types/profile'
+import type { SessionResponse } from '@/types/auth'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -38,6 +44,9 @@ export function useProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingAccount, setIsSavingAccount] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [sessions, setSessions] = useState<SessionResponse[]>([])
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false)
+  const [sessionError, setSessionError] = useState<string | null>(null)
   const [accountForm, setAccountForm] = useState<AccountFormState>({
     username: user?.username ?? '',
     email: user?.email ?? '',
@@ -158,6 +167,38 @@ export function useProfilePage() {
     navigate('/')
   }
 
+  async function loadSessions() {
+    setIsLoadingSessions(true)
+    try {
+      setSessions(await getSessions())
+      setSessionError(null)
+    } catch (error) {
+      setSessionError(getErrorMessage(error, t('checkout.error')))
+    } finally {
+      setIsLoadingSessions(false)
+    }
+  }
+
+  async function handleRevokeSession(sessionId: string) {
+    try {
+      await revokeSession(sessionId)
+      await loadSessions()
+      toast.success('Đã thu hồi phiên đăng nhập')
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('checkout.error')))
+    }
+  }
+
+  async function handleLogoutAllDevices() {
+    try {
+      await logoutAllDevices()
+      await logout()
+      navigate('/login')
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('checkout.error')))
+    }
+  }
+
   async function handleSaveAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSavingAccount(true)
@@ -202,6 +243,9 @@ export function useProfilePage() {
     isLoading,
     isSavingAccount,
     isSavingProfile,
+    sessions,
+    isLoadingSessions,
+    sessionError,
     accountForm,
     profileForm,
     handleAccountChange,
@@ -209,6 +253,9 @@ export function useProfilePage() {
     handleProfileAvatarFileChange,
     handleProfileGenderChange,
     handleLogout,
+    loadSessions,
+    handleRevokeSession,
+    handleLogoutAllDevices,
     handleSaveAccount,
     handleSaveProfile,
     avatarLabel: t('auth.profile.avatarLabel'),

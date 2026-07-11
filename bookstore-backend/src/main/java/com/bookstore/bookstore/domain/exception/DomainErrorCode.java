@@ -371,6 +371,8 @@ public enum DomainErrorCode {
     ORDER_PAYMENT_TOTAL_MISMATCH("DOMAIN_ORDER_037", "tong tien thanh toán không khớp tạm tính, phi ship va giảm giá"),
     INVALID_ORDER_ITEM_TYPE("DOMAIN_ORDER_038", "%s không được null"),
     INVALID_ORDER_ITEM_DIGITAL_ASSET_ID("DOMAIN_ORDER_039", "%s không được null"),
+    INVALID_ORDER_IDEMPOTENCY_KEY("DOMAIN_ORDER_040", "%s không được để trống"),
+    INVALID_ORDER_CHECKOUT_FINGERPRINT("DOMAIN_ORDER_041", "%s không được để trống"),
 
     INVALID_RETURN_REQUEST_ID("DOMAIN_RETURN_REQUEST_001", "%s không được null"),
     INVALID_RETURN_REQUEST_ORDER_ID("DOMAIN_RETURN_REQUEST_002", "%s không được null"),
@@ -418,6 +420,8 @@ public enum DomainErrorCode {
     INVALID_PAYMENT_CREATED_AT("DOMAIN_PAYMENT_012", "%s không được nằm trong tương lai"),
     INVALID_PAYMENT_UPDATED_AT("DOMAIN_PAYMENT_013", "%s không được nằm trong tương lai"),
     INVALID_PAYMENT_AUDIT_ORDER("DOMAIN_PAYMENT_014", "%s không được sớm hơn %s"),
+    INVALID_PAYMENT_EXPIRES_AT("DOMAIN_PAYMENT_015", "%s không được sớm hơn %s"),
+    INVALID_PAYMENT_EXPIRED_AT("DOMAIN_PAYMENT_016", "%s không được nằm trong tương lai"),
 
     INVALID_ROLE_ID("DOMAIN_ROLE_001", "%s không được null"),
     INVALID_ROLE_NAME("DOMAIN_ROLE_002", "%s không được null"),

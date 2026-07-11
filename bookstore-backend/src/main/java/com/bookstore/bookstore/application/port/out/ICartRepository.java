@@ -8,5 +8,7 @@ public interface ICartRepository {
 
     Optional<Cart> findByUserId(UUID userId);
 
+    Optional<Cart> findByUserIdForUpdate(UUID userId);
+
     Cart save(Cart cart);
 }

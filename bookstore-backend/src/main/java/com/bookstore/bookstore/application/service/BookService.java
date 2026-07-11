@@ -174,10 +174,6 @@ public class BookService implements IBookService {
         bookRepository.save(currentBook);
     }
 
-    public void xemchitietsach(){
-        // TODO : the loai, tac gia , nha xuat ban bi xoa thi van cho hien, dung ham getAllIncludingDeleted
-    }
-
     private void requireActiveCategory(UUID categoryId) {
         categoryRepository.findByIdActive(categoryId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));

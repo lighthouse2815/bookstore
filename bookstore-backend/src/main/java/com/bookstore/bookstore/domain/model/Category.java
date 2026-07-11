@@ -14,6 +14,7 @@ public class Category {
     private String name;
     private String description;
     private UUID parentId;
+    private FileAsset imageFileAsset;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -23,6 +24,7 @@ public class Category {
             String name,
             String description,
             UUID parentId,
+            FileAsset imageFileAsset,
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt
@@ -31,16 +33,28 @@ public class Category {
         setName(name);
         setDescription(description);
         setParentId(parentId);
+        setImageFileAsset(imageFileAsset);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setDeletedAt(deletedAt);
     }
 
-    public void updateCategory(String name, String description, UUID parentId) {
-        CategoryRule.requireCanUpdate(deletedAt, this.name, this.description, this.parentId, name, description, parentId);
+    public void updateCategory(String name, String description, UUID parentId, FileAsset imageFileAsset) {
+        CategoryRule.requireCanUpdate(
+                deletedAt,
+                this.name,
+                this.description,
+                this.parentId,
+                getImageFileAssetId(),
+                name,
+                description,
+                parentId,
+                imageFileAsset == null ? null : imageFileAsset.getId()
+        );
         setName(name);
         setDescription(description);
         setParentId(parentId);
+        setImageFileAsset(imageFileAsset);
         setUpdatedAt(Instant.now());
     }
 
@@ -67,6 +81,18 @@ public class Category {
             );
         }
         this.parentId = parentId;
+    }
+
+    public UUID getImageFileAssetId() {
+        return imageFileAsset == null ? null : imageFileAsset.getId();
+    }
+
+    public String getImageUrl() {
+        return imageFileAsset == null ? null : imageFileAsset.getPublicUrl();
+    }
+
+    private void setImageFileAsset(FileAsset imageFileAsset) {
+        this.imageFileAsset = imageFileAsset;
     }
 
     private void setCreatedAt(Instant createdAt) {

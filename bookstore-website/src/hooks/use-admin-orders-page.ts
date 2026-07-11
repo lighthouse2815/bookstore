@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
 import { getAdminShippers } from '@/services/admin-access-service'
@@ -36,6 +37,7 @@ const PAGE_SIZE = 10
 
 export function useAdminOrdersPage() {
   const { t } = useLanguage()
+  const [searchParams] = useSearchParams()
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [page, setPage] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
@@ -78,6 +80,16 @@ export function useAdminOrdersPage() {
   }, [orders, searchTerm, statusFilter])
 
   useEffect(() => {
+    const requestedOrderId = searchParams.get('orderId')
+    if (!requestedOrderId || selectedOrderId !== null || orders.length === 0) {
+      return
+    }
+    if (orders.some((order) => order.orderId === requestedOrderId)) {
+      void handleViewOrder(requestedOrderId)
+    }
+  }, [orders, searchParams, selectedOrderId])
+
+  useEffect(() => {
     let isCancelled = false
 
     async function loadOrders() {
@@ -118,7 +130,7 @@ export function useAdminOrdersPage() {
     return () => {
       isCancelled = true
     }
-  }, [page, t])
+  }, [page, searchParams, t])
 
   useEffect(() => {
     if (

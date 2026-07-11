@@ -12,6 +12,7 @@ import {
   ScrollText,
   UserRound,
   WalletCards,
+  XCircle,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/common/button'
@@ -108,6 +109,10 @@ const PAYMENT_STATUS_TONES: Record<
     tileClassName: 'border-amber-100 bg-amber-50/70',
     iconClassName: 'text-amber-500',
   },
+  EXPIRED: {
+    tileClassName: 'border-slate-200 bg-slate-50/80',
+    iconClassName: 'text-slate-500',
+  },
 }
 
 export default function OrderDetailPage() {
@@ -121,17 +126,25 @@ export default function OrderDetailPage() {
     isReturnLoading,
     canCreateReturnRequest,
     canCancelReturnRequest,
+    canCancelOrder,
     isCreateDialogOpen,
     returnReason,
     requestedRefundAmount,
     isSubmittingReturnRequest,
     isCancellingReturnRequest,
+    isCancelOrderDialogOpen,
+    cancelOrderReason,
+    isCancellingOrder,
     openCreateDialog,
     closeCreateDialog,
     handleSubmitReturnRequest,
     handleCancelReturnRequest,
+    openCancelOrderDialog,
+    closeCancelOrderDialog,
+    handleCancelOrder,
     setReturnReason,
     setRequestedRefundAmount,
+    setCancelOrderReason,
   } = useOrderDetailPage()
 
   return (
@@ -181,10 +194,12 @@ export default function OrderDetailPage() {
               isReturnLoading={isReturnLoading}
               canCreateReturnRequest={canCreateReturnRequest}
               canCancelReturnRequest={canCancelReturnRequest}
+              canCancelOrder={canCancelOrder}
               isSubmittingReturnRequest={isSubmittingReturnRequest}
               isCancellingReturnRequest={isCancellingReturnRequest}
               onOpenCreateDialog={openCreateDialog}
               onCancelReturnRequest={handleCancelReturnRequest}
+              onOpenCancelOrderDialog={openCancelOrderDialog}
               t={t}
             />
           )}
@@ -204,6 +219,16 @@ export default function OrderDetailPage() {
         />
       ) : null}
 
+      {isCancelOrderDialogOpen ? (
+        <CancelOrderDialog
+          reason={cancelOrderReason}
+          isSubmitting={isCancellingOrder}
+          onClose={closeCancelOrderDialog}
+          onReasonChange={setCancelOrderReason}
+          onSubmit={handleCancelOrder}
+        />
+      ) : null}
+
       <Footer />
     </div>
   )
@@ -219,10 +244,12 @@ function OrderDetailContent({
   isReturnLoading,
   canCreateReturnRequest,
   canCancelReturnRequest,
+  canCancelOrder,
   isSubmittingReturnRequest,
   isCancellingReturnRequest,
   onOpenCreateDialog,
   onCancelReturnRequest,
+  onOpenCancelOrderDialog,
   t,
 }: {
   formatCurrency: (value: number) => string
@@ -234,10 +261,12 @@ function OrderDetailContent({
   isReturnLoading: boolean
   canCreateReturnRequest: boolean
   canCancelReturnRequest: boolean
+  canCancelOrder: boolean
   isSubmittingReturnRequest: boolean
   isCancellingReturnRequest: boolean
   onOpenCreateDialog: () => void
   onCancelReturnRequest: () => void
+  onOpenCancelOrderDialog: () => void
   t: (key: string, params?: Record<string, number | string>) => string
 }) {
   const orderTone = ORDER_STATUS_TONES[order.status]
@@ -342,6 +371,28 @@ function OrderDetailContent({
           </div>
         </SurfacePanel>
       </section>
+
+      {canCancelOrder ? (
+        <SurfacePanel>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <SectionHeading icon={XCircle} title="Hủy đơn hàng" variant="plain" />
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Đơn đang chờ thanh toán. Hàng tồn và ưu đãi sẽ được hoàn lại sau khi hủy.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onOpenCancelOrderDialog}
+              className="border-rose-200 text-rose-700 hover:bg-rose-50"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Hủy đơn
+            </Button>
+          </div>
+        </SurfacePanel>
+      ) : null}
 
       <ReturnRequestPanel
         canCancelReturnRequest={canCancelReturnRequest}
@@ -758,6 +809,65 @@ function ReturnRequestPanel({
         )}
       </div>
     </SurfacePanel>
+  )
+}
+
+function CancelOrderDialog({
+  reason,
+  isSubmitting,
+  onClose,
+  onReasonChange,
+  onSubmit,
+}: {
+  reason: string
+  isSubmitting: boolean
+  onClose: () => void
+  onReasonChange: (value: string) => void
+  onSubmit: () => void
+}) {
+  const isReasonValid = reason.trim().length > 0 && reason.trim().length <= 500
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4">
+      <div className="w-full max-w-xl rounded-[28px] border border-border/70 bg-card p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-3xl font-bold text-foreground">Xác nhận hủy đơn</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Vui lòng cho biết lý do. Hành động này không thể khôi phục đơn hàng.
+            </p>
+          </div>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
+            Đóng
+          </Button>
+        </div>
+        <div className="mt-6 space-y-2">
+          <Label htmlFor="cancel-order-reason">Lý do hủy đơn</Label>
+          <Textarea
+            id="cancel-order-reason"
+            value={reason}
+            onChange={(event) => onReasonChange(event.currentTarget.value)}
+            maxLength={500}
+            placeholder="Ví dụ: Tôi không còn nhu cầu mua sách"
+            disabled={isSubmitting}
+          />
+          <p className="text-xs text-muted-foreground">{reason.trim().length}/500 ký tự</p>
+        </div>
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Quay lại
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onSubmit}
+            disabled={!isReasonValid || isSubmitting}
+          >
+            {isSubmitting ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
 

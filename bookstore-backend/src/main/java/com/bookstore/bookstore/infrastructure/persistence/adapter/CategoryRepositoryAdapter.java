@@ -6,6 +6,7 @@ import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.CategoryPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CategoryJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Repository;
 public class CategoryRepositoryAdapter implements ICategoryRepository {
 
     private final CategoryJpaRepository categoryJpaRepository;
+    private final FileAssetJpaRepository fileAssetJpaRepository;
     private final CategoryPersistenceMapper categoryPersistenceMapper;
 
     @Override
@@ -79,7 +81,10 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
         CategoryJpaEntity entity = categoryJpaRepository.findById(category.getId())
                 .orElseGet(CategoryJpaEntity::new);
 
-        categoryPersistenceMapper.copyToEntity(entity, category);
+        var imageFileAsset = category.getImageFileAssetId() == null
+                ? null
+                : fileAssetJpaRepository.getReferenceById(category.getImageFileAssetId());
+        categoryPersistenceMapper.copyToEntity(entity, category, imageFileAsset);
         return categoryPersistenceMapper.toDomain(categoryJpaRepository.save(entity));
     }
 

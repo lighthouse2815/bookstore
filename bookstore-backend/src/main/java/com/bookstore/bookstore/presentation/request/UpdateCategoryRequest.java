@@ -6,7 +6,8 @@ public record UpdateCategoryRequest(
         @NotBlank(message = "name không được để trống")
         String name,
         String description,
-        java.util.UUID parentId
+        java.util.UUID parentId,
+        java.util.UUID imageFileAssetId
 ) {
 }
 

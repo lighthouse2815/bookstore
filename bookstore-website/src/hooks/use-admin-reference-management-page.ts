@@ -42,6 +42,8 @@ export type ReferenceFormState = {
   description: string
   avatarFileAssetId: string
   avatarPreviewUrl: string
+  referenceImageFileAssetId: string
+  referenceImagePreviewUrl: string
   birthYear: string
   deathYear: string
 }
@@ -52,6 +54,8 @@ const initialFormState: ReferenceFormState = {
   description: '',
   avatarFileAssetId: '',
   avatarPreviewUrl: '',
+  referenceImageFileAssetId: '',
+  referenceImagePreviewUrl: '',
   birthYear: '',
   deathYear: '',
 }
@@ -71,7 +75,7 @@ export function useAdminReferenceManagementPage(
   const [selectedItem, setSelectedItem] = useState<ReferenceItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isUploadingReferenceImage, setIsUploadingReferenceImage] = useState(false)
   const [page, setPage] = useState(0)
   const [serverTotalCount, setServerTotalCount] = useState(0)
 
@@ -187,29 +191,38 @@ export function useAdminReferenceManagementPage(
     }))
   }
 
-  async function handleAuthorAvatarFileChange(file: File | null) {
+  async function handleReferenceImageFileChange(file: File | null) {
     if (!file) {
       return
     }
 
-    setIsUploadingAvatar(true)
+    setIsUploadingReferenceImage(true)
 
     try {
+      const purpose = getReferenceImagePurpose(sectionKey)
       const uploadedFile = await uploadManagedFile(file, {
-        purpose: 'AUTHOR_AVATAR',
+        purpose,
         visibility: 'PUBLIC',
-        authorId: form.id ?? undefined,
+        authorId: sectionKey === 'authors' ? form.id ?? undefined : undefined,
       })
 
       setForm((currentForm) => ({
         ...currentForm,
-        avatarFileAssetId: uploadedFile.id,
-        avatarPreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+        ...(sectionKey === 'authors'
+          ? {
+              avatarFileAssetId: uploadedFile.id,
+              avatarPreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            }
+          : {
+              referenceImageFileAssetId: uploadedFile.id,
+              referenceImagePreviewUrl:
+                uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            }),
       }))
     } catch (currentError) {
       toast.error(getErrorMessage(currentError, t('checkout.error')))
     } finally {
-      setIsUploadingAvatar(false)
+      setIsUploadingReferenceImage(false)
     }
   }
 
@@ -252,6 +265,8 @@ export function useAdminReferenceManagementPage(
         sectionKey === 'authors' && 'avatarUrl' in item
           ? item.avatarUrl ?? ''
           : '',
+      referenceImageFileAssetId: getReferenceImageFileAssetId(sectionKey, item),
+      referenceImagePreviewUrl: getReferenceImageUrl(sectionKey, item),
       birthYear:
         sectionKey === 'authors' && 'birthYear' in item && item.birthYear
           ? String(item.birthYear)
@@ -311,11 +326,13 @@ export function useAdminReferenceManagementPage(
             await updateCategory(form.id, {
               name: form.name.trim(),
               description: form.description.trim() || null,
+              imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           } else {
             await createCategory({
               name: form.name.trim(),
               description: form.description.trim() || null,
+              imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           }
           break
@@ -343,11 +360,13 @@ export function useAdminReferenceManagementPage(
             await updatePublisher(form.id, {
               name: form.name.trim(),
               description: form.description.trim() || null,
+              logoFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           } else {
             await createPublisher({
               name: form.name.trim(),
               description: form.description.trim() || null,
+              logoFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           }
           break
@@ -412,10 +431,10 @@ export function useAdminReferenceManagementPage(
     page,
     pageSize: PAGE_SIZE,
     isDialogLocked: dialogMode === 'delete' && isDeleting,
-    isUploadingAvatar,
+    isUploadingReferenceImage,
     handleSearchTermChange,
     handleFormChange,
-    handleAuthorAvatarFileChange,
+    handleReferenceImageFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -426,6 +445,49 @@ export function useAdminReferenceManagementPage(
     handleDeleteConfirm,
     handlePageChange: setPage,
   }
+}
+
+function getReferenceImagePurpose(sectionKey: ReferenceSectionKey) {
+  switch (sectionKey) {
+    case 'categories':
+      return 'CATEGORY_IMAGE' as const
+    case 'authors':
+      return 'AUTHOR_AVATAR' as const
+    case 'publishers':
+      return 'PUBLISHER_LOGO' as const
+  }
+}
+
+export function getReferenceImageFileAssetId(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+) {
+  if (sectionKey === 'authors' && 'avatarFileAssetId' in item) {
+    return item.avatarFileAssetId ?? ''
+  }
+  if (sectionKey === 'categories' && 'imageFileAssetId' in item) {
+    return item.imageFileAssetId ?? ''
+  }
+  if (sectionKey === 'publishers' && 'logoFileAssetId' in item) {
+    return item.logoFileAssetId ?? ''
+  }
+  return ''
+}
+
+export function getReferenceImageUrl(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+) {
+  if (sectionKey === 'authors' && 'avatarUrl' in item) {
+    return item.avatarUrl ?? ''
+  }
+  if (sectionKey === 'categories' && 'imageUrl' in item) {
+    return item.imageUrl ?? ''
+  }
+  if (sectionKey === 'publishers' && 'logoUrl' in item) {
+    return item.logoUrl ?? ''
+  }
+  return ''
 }
 
 function getSectionPage(sectionKey: ReferenceSectionKey, page: number, size: number) {

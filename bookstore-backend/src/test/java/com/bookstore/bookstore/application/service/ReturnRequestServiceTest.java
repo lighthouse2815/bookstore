@@ -244,7 +244,6 @@ class ReturnRequestServiceTest {
         assertEquals(new BigDecimal("80000"), result.approvedRefundAmount());
         assertEquals(10, book.getStockQuantity());
         verify(orderTimelineService).recordReturnApproved(order, returnRequest);
-        verify(orderTimelineService).recordRefundInternalApproved(order, returnRequest);
         verify(orderTimelineService).recordStockRestockedFromReturn(order, returnRequest, 2);
         verify(notificationService).create(argThat(command ->
                 command.userId().equals(userId)

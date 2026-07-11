@@ -86,6 +86,19 @@ VITE_GOOGLE_CLIENT_ID=<set in env if used>
 
 ## 5. Readiness and smoke
 
+### Payment-expiry environment variables
+
+Set these backend variables for the QR-payment lifecycle. `BANK_TRANSFER_EXPIRATION_MINUTES` must be from `5` to `1440`; do not set the values in application code.
+
+```text
+BANK_TRANSFER_EXPIRATION_MINUTES=20
+PAYMENT_EXPIRY_JOB_ENABLED=true
+PAYMENT_EXPIRY_JOB_DELAY_MS=60000
+PAYMENT_EXPIRY_JOB_BATCH_SIZE=100
+```
+
+Before release, run `mvnw.cmd -Ptestcontainers verify` with Docker Desktop running. The profile starts MySQL 8 and exercises the checkout/cancel/expiry/IPN lock and deduplication harness.
+
 Sau khi deploy backend:
 
 ```powershell

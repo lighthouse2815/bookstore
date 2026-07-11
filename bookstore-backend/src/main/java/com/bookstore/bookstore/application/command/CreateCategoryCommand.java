@@ -7,7 +7,8 @@ import java.util.UUID;
 public record CreateCategoryCommand(
         String name,
         String description,
-        UUID parentId
+        UUID parentId,
+        UUID imageFileAssetId
 ) {
     public CreateCategoryCommand {
         if (name == null || name.isBlank()) {

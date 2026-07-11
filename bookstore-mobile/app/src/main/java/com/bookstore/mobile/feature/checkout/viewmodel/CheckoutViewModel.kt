@@ -6,6 +6,7 @@ import com.bookstore.mobile.core.util.ResultState
 import com.bookstore.mobile.feature.checkout.CheckoutAddressPlan
 import com.bookstore.mobile.feature.checkout.CheckoutCouponCodes
 import com.bookstore.mobile.feature.checkout.CheckoutSubmissionDecision
+import com.bookstore.mobile.feature.checkout.CheckoutIdempotencyKeyStore
 import com.bookstore.mobile.feature.checkout.applyBestCouponSuggestion
 import com.bookstore.mobile.feature.checkout.buildCheckoutSubmission
 import com.bookstore.mobile.feature.checkout.data.CheckoutRepository
@@ -56,6 +57,7 @@ data class CheckoutUiState(
 class CheckoutViewModel(
     private val checkoutRepository: CheckoutRepository,
 ) : ViewModel() {
+    private val checkoutIdempotencyKeys = CheckoutIdempotencyKeyStore()
     private val _uiState = MutableStateFlow(CheckoutUiState())
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
 
@@ -237,7 +239,16 @@ class CheckoutViewModel(
                         addressPlan.phone,
                         addressPlan.address,
                     )) {
-                    is ResultState.Success -> result.data.id
+                    is ResultState.Success -> {
+                        _uiState.update { state ->
+                            state.copy(
+                                selectedAddressId = result.data.id,
+                                isCreatingNewAddress = false,
+                                addresses = state.addresses + result.data,
+                            )
+                        }
+                        result.data.id
+                    }
                     is ResultState.Error -> {
                         _uiState.update { it.copy(isSubmitting = false, errorMessage = result.message) }
                         return@launch
@@ -253,10 +264,13 @@ class CheckoutViewModel(
                 is CheckoutAddressPlan.Existing -> addressPlan.addressId
             }
 
-            when (
-                val result = checkoutRepository.checkout(readyDecision.plan.toRequest(addressId))
-            ) {
+            val checkoutRequest = readyDecision.plan.toRequest(addressId)
+            when (val result = checkoutRepository.checkout(
+                checkoutRequest,
+                checkoutIdempotencyKeys.keyFor(checkoutRequest),
+            )) {
                 is ResultState.Success -> {
+                    checkoutIdempotencyKeys.clear()
                     _uiState.update { it.copy(isSubmitting = false, checkoutResult = result.data) }
                     onSuccess(result.data)
                 }

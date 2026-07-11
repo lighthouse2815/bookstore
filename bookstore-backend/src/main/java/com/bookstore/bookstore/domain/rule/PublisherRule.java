@@ -14,14 +14,18 @@ public final class PublisherRule {
             Instant deletedAt,
             String currentName,
             String currentDescription,
+            java.util.UUID currentLogoFileAssetId,
             String newName,
-            String newDescription
+            String newDescription,
+            java.util.UUID newLogoFileAssetId
     ) {
         if (deletedAt != null) {
             throw new DomainException(DomainErrorCode.PUBLISHER_ALREADY_DELETED);
         }
 
-        if (Objects.equals(currentName, newName) && Objects.equals(currentDescription, newDescription)) {
+        if (Objects.equals(currentName, newName)
+                && Objects.equals(currentDescription, newDescription)
+                && Objects.equals(currentLogoFileAssetId, newLogoFileAssetId)) {
             throw new DomainException(DomainErrorCode.PUBLISHER_DATA_NOT_CHANGED);
         }
     }

@@ -12,6 +12,8 @@ public interface IUserOtpRepository {
 
     Optional<UserOtp> findLatestPendingByUserIdAndPurpose(UUID userId, OtpPurpose purpose);
 
+    Optional<UserOtp> findLatestPendingByUserIdAndPurposeForUpdate(UUID userId, OtpPurpose purpose);
+
     Optional<UserOtp> findOldestByUserIdAndPurposeCreatedAfter(UUID userId, OtpPurpose purpose, Instant createdAfter);
 
     long countByUserIdAndPurposeCreatedAfter(UUID userId, OtpPurpose purpose, Instant createdAfter);

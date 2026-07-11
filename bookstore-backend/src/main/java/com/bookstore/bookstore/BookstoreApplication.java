@@ -3,8 +3,10 @@ package com.bookstore.bookstore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @ConfigurationPropertiesScan
+@EnableScheduling
 @SpringBootApplication
 public class BookstoreApplication {
 
@@ -13,5 +15,3 @@ public class BookstoreApplication {
 	}
 
 }
-
-// TODO : THEM TRUONG IMG CHO DANH MUC, TAC GIA, NXB

@@ -26,6 +26,8 @@ export type UpsertBookImageRequest = {
 export type UpsertCategoryRequest = {
   name: string
   description?: string | null
+  parentId?: string | null
+  imageFileAssetId?: string | null
 }
 
 export type UpsertAuthorRequest = {
@@ -39,6 +41,7 @@ export type UpsertAuthorRequest = {
 export type UpsertPublisherRequest = {
   name: string
   description?: string | null
+  logoFileAssetId?: string | null
 }
 
 // Response types
@@ -92,6 +95,8 @@ export type CategoryResponse = {
   name: string
   description: string | null
   parentId: string | null
+  imageFileAssetId: string | null
+  imageUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -112,6 +117,8 @@ export type PublisherResponse = {
   id: string
   name: string
   description: string | null
+  logoFileAssetId: string | null
+  logoUrl: string | null
   createdAt: string
   updatedAt: string
 }

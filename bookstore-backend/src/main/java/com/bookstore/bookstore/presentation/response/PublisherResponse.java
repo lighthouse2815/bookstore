@@ -7,6 +7,8 @@ public record PublisherResponse(
         UUID id,
         String name,
         String description,
+        UUID logoFileAssetId,
+        String logoUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

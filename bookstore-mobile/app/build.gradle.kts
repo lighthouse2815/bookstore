@@ -70,6 +70,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     testImplementation("junit:junit:4.13.2")

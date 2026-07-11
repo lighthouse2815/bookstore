@@ -44,9 +44,13 @@ class CheckoutRepository(
             ?: error("Goi y ma giam gia khong hop le")
     }
 
-    suspend fun checkout(request: CheckoutRequest): ResultState<CheckoutResult> = call("Dat hang that bai") {
+    suspend fun checkout(
+        request: CheckoutRequest,
+        idempotencyKey: String,
+    ): ResultState<CheckoutResult> = call("Dat hang that bai") {
         require(request.cartItemIds.isNotEmpty()) { "Can chon it nhat mot san pham de dat hang" }
         val dto = apiClient.service().checkout(
+            idempotencyKey,
             request.copy(
                 bookCouponCode = request.bookCouponCode?.trim()?.ifBlank { null },
                 shippingCouponCode = request.shippingCouponCode?.trim()?.ifBlank { null },

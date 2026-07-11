@@ -71,6 +71,7 @@ export function useOrderResource(
   const [timeline, setTimeline] = useState<OrderTimelineEventResponse[]>([])
   const [isLoading, setIsLoading] = useState(Boolean(orderId))
   const [error, setError] = useState<string | null>(null)
+  const [refreshVersion, setRefreshVersion] = useState(0)
 
   useEffect(() => {
     if (!orderId) {
@@ -119,12 +120,13 @@ export function useOrderResource(
     return () => {
       isCancelled = true
     }
-  }, [options.missingError, orderId, t])
+  }, [options.missingError, orderId, refreshVersion, t])
 
   return {
     order,
     timeline,
     isLoading,
     error,
+    refresh: () => setRefreshVersion((current) => current + 1),
   }
 }

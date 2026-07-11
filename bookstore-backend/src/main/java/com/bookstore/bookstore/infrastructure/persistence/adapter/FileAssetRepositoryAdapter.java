@@ -69,6 +69,16 @@ public class FileAssetRepositoryAdapter implements IFileAssetRepository {
         );
         addUsageReferenceIfPresent(
                 usageReferences,
+                "categories.image_file_asset_id",
+                fileAssetJpaRepository.countCategoryImageUsages(fileAssetId)
+        );
+        addUsageReferenceIfPresent(
+                usageReferences,
+                "publishers.logo_file_asset_id",
+                fileAssetJpaRepository.countPublisherLogoUsages(fileAssetId)
+        );
+        addUsageReferenceIfPresent(
+                usageReferences,
                 "digital_assets.file_asset_id",
                 fileAssetJpaRepository.countDigitalAssetMainUsages(fileAssetId)
         );

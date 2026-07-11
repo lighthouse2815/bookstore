@@ -57,6 +57,11 @@ const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
 const AdminDigitalAssetsPage = lazy(() => import('@/pages/admin/digital-assets'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminPaymentReconciliationPage = lazy(
+  () => import('@/pages/admin/payment-reconciliation'),
+)
+const AdminRefundsPage = lazy(() => import('@/pages/admin/refunds'))
+const AdminOutboxPage = lazy(() => import('@/pages/admin/outbox'))
 const AdminReturnRequestsPage = lazy(
   () => import('@/pages/admin/return-requests'),
 )
@@ -454,6 +459,36 @@ function AppRouteContent() {
             <ProtectedRoute requiredRole="ADMIN">
               <LazyPage>
                 <AdminOrdersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/payment-reconciliation"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminPaymentReconciliationPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/refunds"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminRefundsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/outbox"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminOutboxPage />
               </LazyPage>
             </ProtectedRoute>
           }

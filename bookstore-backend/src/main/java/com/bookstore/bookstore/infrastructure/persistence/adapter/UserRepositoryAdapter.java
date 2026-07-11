@@ -107,6 +107,12 @@ public class UserRepositoryAdapter implements IUserRepository {
     }
 
     @Override
+    public Optional<User> findByIdIncludingDeletedForUpdate(UUID userId) {
+        return userJpaRepository.findByIdForUpdate(userId)
+                .map(userPersistenceMapper::toDomain);
+    }
+
+    @Override
     public long countActiveUsers() {
         return userJpaRepository.countByDeletedAtIsNull();
     }

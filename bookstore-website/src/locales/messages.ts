@@ -1573,6 +1573,9 @@ export const messages = {
         emptyAuthors: 'Chưa có author nào',
         emptyPublishers: 'Chưa có publisher nào',
         biography: 'Tiểu sử',
+        categoryImage: 'Ảnh danh mục',
+        publisherLogo: 'Logo nhà xuất bản',
+        imageUploadHint: 'Chọn ảnh JPG, PNG hoặc WebP.',
         sections: {
           categories: 'Category',
           authors: 'Author',
@@ -3232,6 +3235,9 @@ orders: {
         emptyAuthors: 'No authors yet',
         emptyPublishers: 'No publishers yet',
         biography: 'Biography',
+        categoryImage: 'Category image',
+        publisherLogo: 'Publisher logo',
+        imageUploadHint: 'Choose a JPG, PNG, or WebP image.',
         sections: {
           categories: 'Categories',
           authors: 'Authors',
@@ -4061,6 +4067,7 @@ Object.assign(messages.vi.paymentMethods as Record<string, string>, {
 Object.assign(messages.vi.paymentStatus as Record<string, string>, {
   PENDING: 'Chờ thanh toán',
   CANCELLED: 'Đã hủy',
+  EXPIRED: 'Đã hết hạn',
 })
 
 Object.assign(messages.en.paymentMethods as Record<string, string>, {
@@ -4070,6 +4077,19 @@ Object.assign(messages.en.paymentMethods as Record<string, string>, {
 Object.assign(messages.en.paymentStatus as Record<string, string>, {
   PENDING: 'Waiting for payment',
   CANCELLED: 'Cancelled',
+  EXPIRED: 'Expired',
+})
+
+Object.assign(messages.vi.admin.sidebar as Record<string, string>, {
+  paymentReconciliation: 'Đối soát thanh toán',
+  refunds: 'Hoàn tiền',
+  outbox: 'Transactional outbox',
+})
+
+Object.assign(messages.en.admin.sidebar as Record<string, string>, {
+  paymentReconciliation: 'Payment reconciliation',
+  refunds: 'Refunds',
+  outbox: 'Transactional outbox',
 })
 
 Object.assign(messages.vi.header.nav as Record<string, string>, {

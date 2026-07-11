@@ -1,10 +1,8 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/types/api'
-import type { LoginResponse } from '@/types/auth'
+import type { WebLoginResponse } from '@/types/auth'
 
-const ACCESS_TOKEN_KEY = 'accessToken'
-const REFRESH_TOKEN_KEY = 'refreshToken'
 const AUTH_USER_KEY = 'auth_user'
 const DEPLOY_STARTUP_READY_KEY = 'deploy_startup_backend_ready_at'
 const DEPLOY_STARTUP_READY_TTL_MS = 5 * 60 * 1000
@@ -14,6 +12,7 @@ const apiBaseURL =
 
 const api = axios.create({
   baseURL: apiBaseURL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,6 +23,15 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 }
 
 let refreshPromise: Promise<string | null> | null = null
+let accessToken: string | null = null
+
+export function setAccessToken(token: string | null) {
+  accessToken = token
+}
+
+export function getAccessToken() {
+  return accessToken
+}
 
 function isLocalHostname(hostname: string) {
   return (
@@ -38,9 +46,42 @@ function isLocalHostname(hostname: string) {
 }
 
 function clearSession() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  accessToken = null
+  // Remove values left by releases before HttpOnly refresh cookies. New tokens are never persisted.
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
   localStorage.removeItem(AUTH_USER_KEY)
+}
+
+function readCookie(name: string) {
+  if (typeof document === 'undefined') return null
+
+  const prefix = `${name}=`
+  return document.cookie
+    .split(';')
+    .map((value) => value.trim())
+    .find((value) => value.startsWith(prefix))
+    ?.slice(prefix.length) ?? null
+}
+
+async function ensureCsrfToken() {
+  if (readCookie('BOOKSTORE_CSRF')) return
+
+  await axios.get(`${apiBaseURL}/auth/web/csrf`, {
+    withCredentials: true,
+  })
+}
+
+async function postWebAuth<T>(path: string, data?: unknown) {
+  await ensureCsrfToken()
+  const csrfToken = readCookie('BOOKSTORE_CSRF')
+  return axios.post<ApiResponse<T>>(`${apiBaseURL}${path}`, data, {
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+    },
+  })
 }
 
 function readRecentBackendReadyTimestamp() {
@@ -70,10 +111,8 @@ function readRecentBackendReadyTimestamp() {
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY)
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`
   }
 
   return config
@@ -95,6 +134,7 @@ api.interceptors.response.use(
       error.response?.status !== 401 ||
       requestUrl.includes('/auth/login') ||
       requestUrl.includes('/auth/google') ||
+      requestUrl.includes('/auth/web/') ||
       requestUrl.includes('/auth/register') ||
       requestUrl.includes('/auth/forgot-password/') ||
       requestUrl.includes('/otp/request') ||
@@ -128,28 +168,13 @@ api.interceptors.response.use(
 )
 
 async function getFreshAccessToken() {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-
-  if (!refreshToken) {
-    return null
-  }
-
   if (!refreshPromise) {
-    refreshPromise = axios
-      .post<ApiResponse<LoginResponse>>(
-        `${apiBaseURL}/auth/refresh`,
-        { refreshToken },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      )
+    refreshPromise = postWebAuth<WebLoginResponse>('/auth/web/refresh')
       .then((response) => {
         const session = response.data.data
+        if (!session?.accessToken) return null
 
-        localStorage.setItem(ACCESS_TOKEN_KEY, session.accessToken)
-        localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken)
+        accessToken = session.accessToken
 
         return session.accessToken
       })
@@ -163,6 +188,27 @@ async function getFreshAccessToken() {
   }
 
   return refreshPromise
+}
+
+export async function refreshWebAccessToken() {
+  return getFreshAccessToken()
+}
+
+export async function webLogin<T>(data: unknown) {
+  return postWebAuth<T>('/auth/web/login', data)
+}
+
+export async function webGoogleLogin<T>(data: unknown) {
+  return postWebAuth<T>('/auth/web/google', data)
+}
+
+export async function webLogout() {
+  await postWebAuth<null>('/auth/web/logout')
+  clearSession()
+}
+
+export function clearWebSession() {
+  clearSession()
 }
 
 export function shouldUseDeployStartupGate() {

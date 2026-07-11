@@ -22,6 +22,7 @@ import { PaginationControls } from '@/components/common/pagination-controls'
 import { Textarea } from '@/components/common/textarea'
 import {
   getReferenceDescription,
+  getReferenceImageUrl,
   useAdminReferenceManagementPage,
   type ReferenceItem,
   type ReferenceSectionKey,
@@ -135,10 +136,10 @@ export function AdminReferenceManagementPage({
     page,
     pageSize,
     isDialogLocked,
-    isUploadingAvatar,
+    isUploadingReferenceImage,
     handleSearchTermChange,
     handleFormChange,
-    handleAuthorAvatarFileChange,
+    handleReferenceImageFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -157,6 +158,17 @@ export function AdminReferenceManagementPage({
       : t('common.description')
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
+  const imageLabel = t(
+    sectionKey === 'authors'
+      ? 'auth.profile.avatarUrl'
+      : sectionKey === 'categories'
+        ? 'admin.references.categoryImage'
+        : 'admin.references.publisherLogo',
+  )
+  const imagePreviewUrl =
+    sectionKey === 'authors'
+      ? form.avatarPreviewUrl
+      : form.referenceImagePreviewUrl
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -243,45 +255,48 @@ export function AdminReferenceManagementPage({
                 />
               </div>
 
+              <div>
+                <Label htmlFor={`${sectionKey}-image-upload`}>{imageLabel}</Label>
+                <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div
+                    className={cn(
+                      'flex size-20 items-center justify-center overflow-hidden border border-border/60 bg-background/70 text-lg font-semibold text-primary',
+                      sectionKey === 'authors' ? 'rounded-full' : 'rounded-[20px]',
+                    )}
+                  >
+                    {imagePreviewUrl ? (
+                      <img
+                        src={getBookCoverUrl(imagePreviewUrl)}
+                        alt={form.name || t('common.name')}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      id={`${sectionKey}-image-upload`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) =>
+                        void handleReferenceImageFileChange(
+                          event.currentTarget.files?.[0] ?? null,
+                        )
+                      }
+                      className="h-12 rounded-2xl bg-background/60"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {isUploadingReferenceImage
+                        ? t('common.processing')
+                        : t('admin.references.imageUploadHint')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {sectionKey === 'authors' ? (
                 <>
-                  <div>
-                    <Label htmlFor="author-avatar-upload">
-                      {t('auth.profile.avatarUrl')}
-                    </Label>
-                    <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background/70 text-lg font-semibold text-primary">
-                        {form.avatarPreviewUrl ? (
-                          <img
-                            src={getBookCoverUrl(form.avatarPreviewUrl)}
-                            alt={form.name || t('common.name')}
-                            className="size-full object-cover"
-                          />
-                        ) : (
-                          <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          id="author-avatar-upload"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={(event) =>
-                            void handleAuthorAvatarFileChange(
-                              event.currentTarget.files?.[0] ?? null,
-                            )
-                          }
-                          className="h-12 rounded-2xl bg-background/60"
-                        />
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {isUploadingAvatar
-                            ? t('common.processing')
-                            : t('admin.references.biography')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="author-birth-year">
@@ -436,6 +451,7 @@ export function AdminReferenceManagementPage({
                   </div>
                 ) : (
                   paginatedItems.map((item) => {
+                    const imageUrl = getReferenceImageUrl(sectionKey, item)
                     return (
                       <div
                         key={item.id}
@@ -444,13 +460,21 @@ export function AdminReferenceManagementPage({
                         <div className="flex min-w-0 items-center gap-4">
                           <div
                             className={cn(
-                              'flex size-18 shrink-0 items-center justify-center rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+                              'flex size-18 shrink-0 items-center justify-center overflow-hidden rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
                               visual.tileClassName,
                             )}
                           >
-                            <ItemIcon
-                              className={cn('h-8 w-8', visual.tileIconClassName)}
-                            />
+                            {imageUrl ? (
+                              <img
+                                src={getBookCoverUrl(imageUrl)}
+                                alt={item.name}
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              <ItemIcon
+                                className={cn('h-8 w-8', visual.tileIconClassName)}
+                              />
+                            )}
                           </div>
 
                           <div className="min-w-0">

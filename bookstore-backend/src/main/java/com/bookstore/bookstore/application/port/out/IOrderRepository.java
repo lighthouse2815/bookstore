@@ -23,6 +23,10 @@ public interface IOrderRepository {
 
     Optional<Order> findByIdForUpdate(UUID orderId);
 
+    Optional<Order> findByUserIdAndIdempotencyKey(UUID userId, String idempotencyKey);
+
+    Optional<Order> findByUserIdAndIdempotencyKeyForUpdate(UUID userId, String idempotencyKey);
+
     List<Order> findByUserId(UUID userId);
 
     PageSliceResult<Order> findPageByUserId(UUID userId, int page, int size);

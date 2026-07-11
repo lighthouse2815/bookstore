@@ -87,7 +87,7 @@ class AuthServiceTokenFlowTest {
         User user = user();
         when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", user.getPasswordHash())).thenReturn(true);
-        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
+        when(jwtService.generateAccessToken(eq(user), any(UUID.class))).thenReturn("access-token");
         when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class)))
                 .thenAnswer(invocation -> ((Instant) invocation.getArgument(0)).plus(30, ChronoUnit.DAYS));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -117,8 +117,9 @@ class AuthServiceTokenFlowTest {
         );
 
         when(refreshTokenRepository.findByTokenHash(hashToken("old-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
-        when(userRepository.findByIdIncludingDeleted(user.getId())).thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
+        when(userRepository.findByIdIncludingDeletedForUpdate(user.getId())).thenReturn(Optional.of(user));
+        when(refreshTokenRepository.findByTokenHashForUpdate(hashToken("old-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
+        when(jwtService.generateAccessToken(eq(user), any(UUID.class))).thenReturn("new-access-token");
         when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class)))
                 .thenAnswer(invocation -> ((Instant) invocation.getArgument(0)).plus(30, ChronoUnit.DAYS));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -146,13 +147,15 @@ class AuthServiceTokenFlowTest {
         );
 
         when(refreshTokenRepository.findByTokenHash(hashToken("expired-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
+        when(userRepository.findByIdIncludingDeletedForUpdate(user.getId())).thenReturn(Optional.of(user));
+        when(refreshTokenRepository.findByTokenHashForUpdate(hashToken("expired-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
 
         ApplicationException exception = assertThrows(
                 ApplicationException.class,
                 () -> authService.refresh(new RefreshAccessTokenCommand("expired-refresh-token"))
         );
 
-        assertEquals(ApplicationErrorCode.AUTH_REFRESH_TOKEN_EXPIRED, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_SESSION_EXPIRED, exception.getErrorCode());
     }
 
     @Test
@@ -168,6 +171,7 @@ class AuthServiceTokenFlowTest {
         );
 
         when(refreshTokenRepository.findByTokenHash(hashToken("logout-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
+        when(refreshTokenRepository.findByTokenHashForUpdate(hashToken("logout-refresh-token"))).thenReturn(Optional.of(currentRefreshToken));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         authService.logout(new LogoutCommand("logout-refresh-token"));
@@ -206,8 +210,8 @@ class AuthServiceTokenFlowTest {
                 null,
                 Instant.now().minus(1, ChronoUnit.MINUTES)
         );
-        when(passwordResetTokenRepository.findByTokenHash(any(String.class))).thenReturn(Optional.of(passwordResetToken));
-        when(userRepository.findByIdIncludingDeleted(user.getId())).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByTokenHashForUpdate(any(String.class))).thenReturn(Optional.of(passwordResetToken));
+        when(userRepository.findByIdIncludingDeletedForUpdate(user.getId())).thenReturn(Optional.of(user));
         when(passwordResetTokenRepository.save(any(PasswordResetToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(passwordEncoder.encode("new-password")).thenReturn("hashed-new-password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -218,7 +222,9 @@ class AuthServiceTokenFlowTest {
         ArgumentCaptor<PasswordResetToken> tokenCaptor = ArgumentCaptor.forClass(PasswordResetToken.class);
         verify(passwordResetTokenRepository).save(tokenCaptor.capture());
         verify(userRepository).save(userCaptor.capture());
-        verify(refreshTokenRepository).revokeAllByUserId(user.getId());
+        verify(refreshTokenRepository).revokeAllByUserId(
+                eq(user.getId()), any(Instant.class), eq(com.bookstore.bookstore.domain.enums.RefreshTokenRevokeReason.PASSWORD_RESET)
+        );
         assertTrue(tokenCaptor.getValue().isUsed());
         assertEquals("hashed-new-password", userCaptor.getValue().getPasswordHash());
     }

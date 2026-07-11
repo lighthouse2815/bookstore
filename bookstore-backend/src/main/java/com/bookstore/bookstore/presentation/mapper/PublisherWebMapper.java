@@ -16,7 +16,8 @@ public class PublisherWebMapper {
     public CreatePublisherCommand toCreateCommand(CreatePublisherRequest request) {
         return new CreatePublisherCommand(
                 request.name(),
-                request.description()
+                request.description(),
+                request.logoFileAssetId()
         );
     }
 
@@ -24,7 +25,8 @@ public class PublisherWebMapper {
         return new UpdatePublisherCommand(
                 publisherId,
                 request.name(),
-                request.description()
+                request.description(),
+                request.logoFileAssetId()
         );
     }
 
@@ -37,6 +39,8 @@ public class PublisherWebMapper {
                 publisher.getId(),
                 publisher.getName(),
                 publisher.getDescription(),
+                publisher.getLogoFileAssetId(),
+                publisher.getLogoUrl(),
                 publisher.getCreatedAt(),
                 publisher.getUpdatedAt()
         );

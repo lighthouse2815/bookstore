@@ -77,6 +77,9 @@ jobs:
       - name: Compile backend
         run: ./mvnw -DskipTests compile
 
+      - name: Run MySQL concurrency tests
+        run: ./mvnw -Ptestcontainers verify
+
   website:
     needs: changes
     if: needs.changes.outputs.website == 'true'
@@ -94,14 +97,20 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install website dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint website
-        run: npm run lint
+        run: pnpm lint
+
+      - name: Test website
+        run: pnpm test
 
       - name: Build website
-        run: npm run build
+        run: pnpm build
 
   shipapp:
     needs: changes
@@ -210,6 +219,9 @@ jobs:
 
       - name: Assemble mobile debug build
         run: ./gradlew assembleDebug
+
+      - name: Assemble mobile release build
+        run: ./gradlew assembleRelease
 
       - name: Upload mobile debug APK
         if: success()

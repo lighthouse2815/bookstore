@@ -38,6 +38,20 @@ public interface FileAssetJpaRepository extends JpaRepository<FileAssetJpaEntity
     long countAuthorAvatarUsages(@Param("fileAssetId") UUID fileAssetId);
 
     @Query("""
+            select count(c)
+            from CategoryJpaEntity c
+            where c.imageFileAsset.id = :fileAssetId
+            """)
+    long countCategoryImageUsages(@Param("fileAssetId") UUID fileAssetId);
+
+    @Query("""
+            select count(p)
+            from PublisherJpaEntity p
+            where p.logoFileAsset.id = :fileAssetId
+            """)
+    long countPublisherLogoUsages(@Param("fileAssetId") UUID fileAssetId);
+
+    @Query("""
             select count(da)
             from DigitalAssetJpaEntity da
             where da.fileAsset.id = :fileAssetId

@@ -9,4 +9,8 @@ public interface IOtpSettings {
     long resendMaxRequestsPerWindow();
 
     long resendWindowMinutes();
+
+    default long maxAttempts() {
+        return 5;
+    }
 }

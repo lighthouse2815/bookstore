@@ -39,6 +39,9 @@ const SIDEBAR_GROUPS = [
     labelKey: 'admin.sidebar.groups.operations',
     routeIds: [
       'orders',
+      'payment-reconciliation',
+      'refunds',
+      'outbox',
       'return-requests',
       'shipments',
       'import-receipts',

@@ -196,7 +196,7 @@ public class FileAssetService implements IFileAssetService {
 
     private void validateVisibility(FilePurpose purpose, FileVisibility visibility) {
         boolean shouldBePublic = switch (purpose) {
-            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE -> true;
+            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, CATEGORY_IMAGE, PUBLISHER_LOGO, REVIEW_IMAGE -> true;
             case EBOOK_FILE, SAMPLE_FILE, INVOICE -> false;
         };
 
@@ -212,7 +212,7 @@ public class FileAssetService implements IFileAssetService {
     private void validateContentType(FilePurpose purpose, String contentType) {
         String normalizedContentType = contentType == null ? "" : contentType.trim().toLowerCase();
         Set<String> allowedTypes = switch (purpose) {
-            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE -> IMAGE_CONTENT_TYPES;
+            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, CATEGORY_IMAGE, PUBLISHER_LOGO, REVIEW_IMAGE -> IMAGE_CONTENT_TYPES;
             case EBOOK_FILE, SAMPLE_FILE -> DIGITAL_CONTENT_TYPES;
             case INVOICE -> INVOICE_CONTENT_TYPES;
         };
@@ -224,7 +224,7 @@ public class FileAssetService implements IFileAssetService {
 
     private void validateSize(FilePurpose purpose, Long sizeBytes) {
         long maxBytes = switch (purpose) {
-            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE ->
+            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, CATEGORY_IMAGE, PUBLISHER_LOGO, REVIEW_IMAGE ->
                     fileStorageSettings.resolvedMaxImageSizeMb() * 1024L * 1024L;
             case EBOOK_FILE, SAMPLE_FILE, INVOICE ->
                     fileStorageSettings.resolvedMaxDigitalFileSizeMb() * 1024L * 1024L;
@@ -247,6 +247,8 @@ public class FileAssetService implements IFileAssetService {
             case AUTHOR_AVATAR -> command.authorId() != null
                     ? "public/authors/" + command.authorId() + "/avatar/" + suffix
                     : "tmp/" + command.requesterId() + "/author-avatars/" + suffix;
+            case CATEGORY_IMAGE -> "tmp/" + command.requesterId() + "/category-images/" + suffix;
+            case PUBLISHER_LOGO -> "tmp/" + command.requesterId() + "/publisher-logos/" + suffix;
             case REVIEW_IMAGE -> command.reviewId() != null
                     ? "public/reviews/" + command.reviewId() + "/" + suffix
                     : "tmp/" + command.requesterId() + "/review-images/" + suffix;

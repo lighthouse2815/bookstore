@@ -13,6 +13,7 @@ public class Publisher {
     private UUID id;
     private String name;
     private String description;
+    private FileAsset logoFileAsset;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -21,6 +22,7 @@ public class Publisher {
             UUID id,
             String name,
             String description,
+            FileAsset logoFileAsset,
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt
@@ -28,15 +30,25 @@ public class Publisher {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_PUBLISHER_ID, "id");
         setName(name);
         setDescription(description);
+        setLogoFileAsset(logoFileAsset);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setDeletedAt(deletedAt);
     }
 
-    public void updatePublisher(String name, String description) {
-        PublisherRule.requireCanUpdate(deletedAt, this.name, this.description, name, description);
+    public void updatePublisher(String name, String description, FileAsset logoFileAsset) {
+        PublisherRule.requireCanUpdate(
+                deletedAt,
+                this.name,
+                this.description,
+                getLogoFileAssetId(),
+                name,
+                description,
+                logoFileAsset == null ? null : logoFileAsset.getId()
+        );
         setName(name);
         setDescription(description);
+        setLogoFileAsset(logoFileAsset);
         setUpdatedAt(Instant.now());
     }
 
@@ -53,6 +65,18 @@ public class Publisher {
 
     private void setDescription(String description) {
         this.description = description;
+    }
+
+    public UUID getLogoFileAssetId() {
+        return logoFileAsset == null ? null : logoFileAsset.getId();
+    }
+
+    public String getLogoUrl() {
+        return logoFileAsset == null ? null : logoFileAsset.getPublicUrl();
+    }
+
+    private void setLogoFileAsset(FileAsset logoFileAsset) {
+        this.logoFileAsset = logoFileAsset;
     }
 
     private void setCreatedAt(Instant createdAt) {

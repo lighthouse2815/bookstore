@@ -21,6 +21,7 @@ import com.bookstore.mobile.feature.checkout.data.dto.BestCouponSuggestionDto
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutRequest
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutResponse
 import com.bookstore.mobile.feature.order.data.dto.OrderDto
+import com.bookstore.mobile.feature.order.data.dto.CancelOrderRequest
 import com.bookstore.mobile.feature.order.data.dto.OrderTimelineEventDto
 import com.bookstore.mobile.feature.profile.data.dto.CreateUserAddressRequest
 import com.bookstore.mobile.feature.profile.data.dto.ProfileDto
@@ -31,6 +32,7 @@ import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -119,7 +121,10 @@ interface ApiService {
     suspend fun createAddress(@Body request: CreateUserAddressRequest): ApiResponse<UserAddressDto>
 
     @POST("api/orders/checkout")
-    suspend fun checkout(@Body request: CheckoutRequest): ApiResponse<CheckoutResponse>
+    suspend fun checkout(
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CheckoutRequest,
+    ): ApiResponse<CheckoutResponse>
 
     @GET("api/orders/my")
     suspend fun getOrders(): ApiResponse<List<OrderDto>>
@@ -129,4 +134,10 @@ interface ApiService {
 
     @GET("api/orders/{id}/timeline")
     suspend fun getOrderTimeline(@Path("id") id: String): ApiResponse<List<OrderTimelineEventDto>>
+
+    @PUT("api/orders/{id}/cancel")
+    suspend fun cancelOrder(
+        @Path("id") id: String,
+        @Body request: CancelOrderRequest,
+    ): ApiResponse<OrderDto>
 }

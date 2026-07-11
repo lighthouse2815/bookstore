@@ -8,6 +8,9 @@ import com.bookstore.bookstore.infrastructure.persistence.entity.PaymentJpaEntit
 import com.bookstore.bookstore.infrastructure.persistence.mapper.PaymentPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.PaymentJpaRepository;
 import java.util.Optional;
+import java.time.Instant;
+import java.util.List;
+import org.springframework.data.domain.PageRequest;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -26,8 +29,20 @@ public class PaymentRepositoryAdapter implements IPaymentRepository {
     }
 
     @Override
+    public Optional<Payment> findByIdForUpdate(UUID paymentId) {
+        return paymentJpaRepository.findByIdForUpdate(paymentId)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
     public Optional<Payment> findByOrderId(UUID orderId) {
         return paymentJpaRepository.findByOrderId(orderId)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Payment> findByOrderIdForUpdate(UUID orderId) {
+        return paymentJpaRepository.findByOrderIdForUpdate(orderId)
                 .map(paymentPersistenceMapper::toDomain);
     }
 
@@ -81,6 +96,30 @@ public class PaymentRepositoryAdapter implements IPaymentRepository {
                         PaymentStatus.PENDING
                 )
                 .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Payment> findSepayByOrderCodeForUpdate(String orderCode) {
+        return paymentJpaRepository.findSepayByOrderCodeForUpdate(orderCode, PaymentProvider.SEPAY)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Payment> findSepayByTransferContentInContentForUpdateAnyStatus(String content) {
+        return paymentJpaRepository.findSepayByTransferContentInContentForUpdateAnyStatus(content, PaymentProvider.SEPAY)
+                .map(paymentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<UUID> findPendingExpiredIds(Instant now, int limit) {
+        if (now == null || limit <= 0) {
+            return List.of();
+        }
+        return paymentJpaRepository.findPendingExpiredIds(
+                PaymentStatus.PENDING,
+                now,
+                PageRequest.of(0, limit)
+        );
     }
 
     @Override

@@ -11,6 +11,8 @@ import com.bookstore.bookstore.application.command.VerifyOtpCommand;
 import com.bookstore.bookstore.application.result.LoginResult;
 import com.bookstore.bookstore.application.result.PasswordResetTokenResult;
 import com.bookstore.bookstore.application.result.RegisterResult;
+import com.bookstore.bookstore.application.result.SessionResult;
+import com.bookstore.bookstore.application.command.AuthRequestMetadata;
 import com.bookstore.bookstore.presentation.request.GoogleLoginRequest;
 import com.bookstore.bookstore.presentation.request.LoginRequest;
 import com.bookstore.bookstore.presentation.request.LogoutRequest;
@@ -34,24 +36,27 @@ public class AuthWebMapper {
         );
     }
 
-    public LoginCommand toLoginCommand(LoginRequest request) {
-        return new LoginCommand(request.username(), request.password());
+    public LoginCommand toLoginCommand(LoginRequest request, AuthRequestMetadata metadata) {
+        return new LoginCommand(request.username(), request.password(), metadata);
     }
 
     public GoogleLoginCommand toGoogleLoginCommand(GoogleLoginRequest request) {
         return new GoogleLoginCommand(request.idToken());
     }
 
-    public RefreshAccessTokenCommand toRefreshCommand(RefreshTokenRequest request) {
-        return new RefreshAccessTokenCommand(request.refreshToken());
+    public RefreshAccessTokenCommand toRefreshCommand(RefreshTokenRequest request, AuthRequestMetadata metadata) {
+        return new RefreshAccessTokenCommand(request.refreshToken(), metadata);
     }
 
-    public LogoutCommand toLogoutCommand(LogoutRequest request) {
-        return new LogoutCommand(request.refreshToken());
+    public LogoutCommand toLogoutCommand(LogoutRequest request, AuthRequestMetadata metadata) {
+        return new LogoutCommand(request.refreshToken(), metadata);
     }
 
-    public RequestPasswordResetOtpCommand toRequestPasswordResetOtpCommand(RequestPasswordResetOtpRequest request) {
-        return new RequestPasswordResetOtpCommand(request.email());
+    public RequestPasswordResetOtpCommand toRequestPasswordResetOtpCommand(
+            RequestPasswordResetOtpRequest request,
+            AuthRequestMetadata metadata
+    ) {
+        return new RequestPasswordResetOtpCommand(request.email(), metadata);
     }
 
     public VerifyOtpCommand toVerifyOtpCommand(VerifyOtpRequest request) {
@@ -78,5 +83,12 @@ public class AuthWebMapper {
 
     public PasswordResetTokenResponse toPasswordResetTokenResponse(PasswordResetTokenResult result) {
         return new PasswordResetTokenResponse(result.resetToken(), result.expiresAt());
+    }
+
+    public com.bookstore.bookstore.presentation.response.SessionResponse toSessionResponse(SessionResult result) {
+        return new com.bookstore.bookstore.presentation.response.SessionResponse(
+                result.sessionId(), result.deviceName(), result.deviceId(), result.userAgent(), result.ipAddress(),
+                result.createdAt(), result.lastUsedAt(), result.expiresAt(), result.currentSession()
+        );
     }
 }

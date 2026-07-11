@@ -37,11 +37,16 @@ export default function OrderConfirmationPage() {
     totalAmount,
     paymentMethod,
     paymentStatus,
+    paymentExpiresAt,
     isLoading,
     isPolling,
     error,
   } = useOrderConfirmationPage()
   const isBankTransferOrder = paymentMethod === 'BANK_TRANSFER_QR'
+  const remainingPaymentSeconds = usePaymentExpiryCountdown(
+    paymentExpiresAt,
+    paymentStatus,
+  )
   const [hasQrImageError, setHasQrImageError] = useState(false)
   const bankInfo = useMemo(() => {
     const bankName = readConfiguredValue(
@@ -161,6 +166,13 @@ export default function OrderConfirmationPage() {
                       {transferT('pollingNotice')}
                     </p>
                   )}
+                  {isBankTransferOrder &&
+                  paymentStatus === 'PENDING' &&
+                  remainingPaymentSeconds != null ? (
+                    <p className="mt-3 text-sm font-semibold text-rose-700">
+                      Thời gian thanh toán còn lại: {formatRemainingTime(remainingPaymentSeconds)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -519,9 +531,48 @@ function getStatusMeta(
       iconClassName: 'text-slate-700',
       badgeClassName: 'bg-slate-200 text-slate-800',
     },
+    EXPIRED: {
+      title: 'Đơn hàng đã hết hạn thanh toán',
+      description: 'Đơn hàng đã được hủy để hoàn lại tồn kho và ưu đãi đã giữ.',
+      icon: XCircle,
+      containerClassName: 'border-slate-200 bg-slate-50/80',
+      iconContainerClassName: 'bg-slate-200',
+      iconClassName: 'text-slate-700',
+      badgeClassName: 'bg-slate-200 text-slate-800',
+    },
   }
 
   return config[paymentStatus]
+}
+
+function usePaymentExpiryCountdown(
+  paymentExpiresAt: string | null,
+  paymentStatus: PaymentStatus,
+) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!paymentExpiresAt || paymentStatus !== 'PENDING') {
+      return
+    }
+
+    setNow(Date.now())
+    const intervalId = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(intervalId)
+  }, [paymentExpiresAt, paymentStatus])
+
+  if (!paymentExpiresAt || paymentStatus !== 'PENDING') {
+    return null
+  }
+
+  const expiry = Date.parse(paymentExpiresAt)
+  return Number.isFinite(expiry) ? Math.max(0, Math.ceil((expiry - now) / 1000)) : null
+}
+
+function formatRemainingTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+  const remainderSeconds = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`
 }
 
 function readConfiguredValue(value: string | undefined) {
@@ -585,4 +636,3 @@ function buildFallbackQrUrl(
     return normalizedFallbackUrl
   }
 }
-

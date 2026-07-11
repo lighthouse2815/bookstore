@@ -19,6 +19,8 @@ public interface IUserRepository {
 
     Optional<User> findByIdIncludingDeleted(UUID userId);
 
+    Optional<User> findByIdIncludingDeletedForUpdate(UUID userId);
+
     Optional<User> findByUsernameActive(String username);
 
     Optional<User> findByUsernameIncludingDeleted(String username);

@@ -119,6 +119,8 @@ class FileAssetServiceTest {
         List<FilePurpose> adminOnlyPurposes = List.of(
                 FilePurpose.BOOK_IMAGE,
                 FilePurpose.AUTHOR_AVATAR,
+                FilePurpose.CATEGORY_IMAGE,
+                FilePurpose.PUBLISHER_LOGO,
                 FilePurpose.EBOOK_FILE,
                 FilePurpose.SAMPLE_FILE
         );
@@ -473,11 +475,11 @@ class FileAssetServiceTest {
 
     private static PresignUploadCommand nonAdminCommand(UUID requesterId, FilePurpose purpose) {
         FileVisibility visibility = switch (purpose) {
-            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE -> FileVisibility.PUBLIC;
+            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, CATEGORY_IMAGE, PUBLISHER_LOGO, REVIEW_IMAGE -> FileVisibility.PUBLIC;
             case EBOOK_FILE, SAMPLE_FILE, INVOICE -> FileVisibility.PRIVATE;
         };
         String contentType = switch (purpose) {
-            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, REVIEW_IMAGE -> "image/jpeg";
+            case BOOK_IMAGE, USER_AVATAR, AUTHOR_AVATAR, CATEGORY_IMAGE, PUBLISHER_LOGO, REVIEW_IMAGE -> "image/jpeg";
             case EBOOK_FILE, SAMPLE_FILE, INVOICE -> "application/pdf";
         };
 

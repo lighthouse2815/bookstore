@@ -81,15 +81,16 @@ Tu thu muc `bookstore-website`:
 
 ```powershell
 cd D:\bookstore\bookstore-website
-npm install
-npm run dev
+corepack enable
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 Build production:
 
 ```powershell
 cd D:\bookstore\bookstore-website
-npm run build
+pnpm build
 ```
 
 Website mac dinh:
@@ -101,8 +102,10 @@ http://localhost:5173
 Luu y:
 
 - Truoc khi chay web, dam bao da copy `.env.example` thanh `.env` trong `D:\bookstore\bookstore-website`.
+- Website dung pnpm 11.11.0 theo `packageManager` va `pnpm-lock.yaml`; khong chay `npm install` de tranh lam lech lockfile.
 - Bien `VITE_API_BASE_URL` nen tro den backend, thuong la `http://localhost:8080/api`.
 - Backend can cho phep CORS voi `http://localhost:5173`.
+- Website authentication uses an HttpOnly refresh cookie. Do not add refresh or access tokens to `localStorage`; see [AUTH_SESSION_SECURITY.md](docs/AUTH_SESSION_SECURITY.md) and [AUTH_API_CONTRACT.md](docs/AUTH_API_CONTRACT.md).
 
 ## 4. Chay Mobile Android
 
@@ -184,8 +187,9 @@ docker-compose up -d
 
 ```powershell
 cd D:\bookstore\bookstore-website
-npm install
-npm run dev
+corepack enable
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 ### Mobile

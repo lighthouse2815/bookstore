@@ -236,6 +236,7 @@ class BookServiceTest {
                 "Category",
                 "Category Description",
                 null,
+                null,
                 now,
                 now,
                 null
@@ -263,6 +264,7 @@ class BookServiceTest {
                 publisherId,
                 "Publisher",
                 "Publisher Description",
+                null,
                 now,
                 now,
                 null

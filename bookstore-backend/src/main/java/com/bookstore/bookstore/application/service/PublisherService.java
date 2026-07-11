@@ -8,6 +8,9 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IPublisherService;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Publisher;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PublisherService implements IPublisherService {
 
     private final IPublisherRepository publisherRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Publisher> getAll() {
@@ -69,6 +73,7 @@ public class PublisherService implements IPublisherService {
 
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
+        FileAsset logoFileAsset = resolveLogoFileAsset(command.logoFileAssetId());
 
         if (publisherRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.PUBLISHER_NAME_ALREADY_EXISTS);
@@ -79,6 +84,7 @@ public class PublisherService implements IPublisherService {
                 UUID.randomUUID(),
                 name,
                 description,
+                logoFileAsset,
                 now,
                 now,
                 null
@@ -99,12 +105,13 @@ public class PublisherService implements IPublisherService {
 
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
+        FileAsset logoFileAsset = resolveLogoFileAsset(command.logoFileAssetId());
 
         if (!currentPublisher.getName().equals(name) && publisherRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.PUBLISHER_NAME_ALREADY_EXISTS);
         }
 
-        currentPublisher.updatePublisher(name, description);
+        currentPublisher.updatePublisher(name, description, logoFileAsset);
         return publisherRepository.save(currentPublisher);
     }
 
@@ -120,6 +127,18 @@ public class PublisherService implements IPublisherService {
 
         currentPublisher.softDelete();
         publisherRepository.save(currentPublisher);
+    }
+
+    private FileAsset resolveLogoFileAsset(UUID logoFileAssetId) {
+        if (logoFileAssetId == null) {
+            return null;
+        }
+
+        return fileAssetPolicyService.requireActiveAsset(
+                logoFileAssetId,
+                FilePurpose.PUBLISHER_LOGO,
+                FileVisibility.PUBLIC
+        );
     }
 
     private void validatePageRequest(int page, int size) {

@@ -28,6 +28,12 @@ public class PasswordResetTokenRepositoryAdapter implements IPasswordResetTokenR
     }
 
     @Override
+    public Optional<PasswordResetToken> findByTokenHashForUpdate(String tokenHash) {
+        return passwordResetTokenJpaRepository.findByTokenHashForUpdate(tokenHash)
+                .map(passwordResetTokenPersistenceMapper::toDomain);
+    }
+
+    @Override
     public void markUnusedByUserIdAsUsed(UUID userId, Instant usedAt) {
         passwordResetTokenJpaRepository.markUnusedByUserIdAsUsed(userId, usedAt);
     }

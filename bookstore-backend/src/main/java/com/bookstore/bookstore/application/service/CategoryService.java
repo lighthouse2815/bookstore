@@ -8,7 +8,10 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICategoryService;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Category;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryService implements ICategoryService {
 
     private final ICategoryRepository categoryRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Category> getAll() {
@@ -71,6 +75,7 @@ public class CategoryService implements ICategoryService {
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
         UUID parentId = command.parentId();
+        FileAsset imageFileAsset = resolveImageFileAsset(command.imageFileAssetId());
 
         if (categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
@@ -84,6 +89,7 @@ public class CategoryService implements ICategoryService {
                 name,
                 description,
                 parentId,
+                imageFileAsset,
                 now,
                 now,
                 null
@@ -105,13 +111,14 @@ public class CategoryService implements ICategoryService {
         String name = StringUtils.trimToNull(command.name());
         String description = StringUtils.trimToNull(command.description());
         UUID parentId = command.parentId();
+        FileAsset imageFileAsset = resolveImageFileAsset(command.imageFileAssetId());
 
         if (!currentCategory.getName().equals(name) && categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
         }
 
         requireActiveParentCategory(parentId, currentCategory.getId());
-        currentCategory.updateCategory(name, description, parentId);
+        currentCategory.updateCategory(name, description, parentId, imageFileAsset);
         return categoryRepository.save(currentCategory);
     }
 
@@ -136,9 +143,21 @@ public class CategoryService implements ICategoryService {
         if (Objects.equals(parentId, categoryId)) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "parentId");
         }
-        if (!categoryRepository.existsByIdIncludingDeleted(parentId)) {
+        if (categoryRepository.findByIdActive(parentId).isEmpty()) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND);
         }
+    }
+
+    private FileAsset resolveImageFileAsset(UUID imageFileAssetId) {
+        if (imageFileAssetId == null) {
+            return null;
+        }
+
+        return fileAssetPolicyService.requireActiveAsset(
+                imageFileAssetId,
+                FilePurpose.CATEGORY_IMAGE,
+                FileVisibility.PUBLIC
+        );
     }
 
     private void validatePageRequest(int page, int size) {

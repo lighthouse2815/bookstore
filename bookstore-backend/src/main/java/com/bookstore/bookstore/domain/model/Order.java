@@ -41,6 +41,8 @@ public class Order {
     private Instant createdAt;
     private Instant updatedAt;
     private Instant cancelledAt;
+    private String idempotencyKey;
+    private String checkoutFingerprint;
 
     public Order(
             UUID id,
@@ -185,6 +187,60 @@ public class Order {
         OrderRule.requireCancelledStateConsistent(this.status, this.cancelledAt);
     }
 
+    public Order(
+            UUID id,
+            String orderCode,
+            UUID userId,
+            List<OrderItem> items,
+            BigDecimal productTotal,
+            BigDecimal shippingFee,
+            BigDecimal shippingDiscount,
+            BigDecimal couponDiscount,
+            BigDecimal totalAmount,
+            UUID bookCouponId,
+            String bookCouponCode,
+            UUID shippingCouponId,
+            String shippingCouponCode,
+            PaymentMethod paymentMethod,
+            PaymentStatus paymentStatus,
+            OrderStatus status,
+            String receiverName,
+            String receiverPhone,
+            String receiverAddress,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant cancelledAt,
+            String idempotencyKey,
+            String checkoutFingerprint
+    ) {
+        this(
+                id,
+                orderCode,
+                userId,
+                items,
+                productTotal,
+                shippingFee,
+                shippingDiscount,
+                couponDiscount,
+                totalAmount,
+                bookCouponId,
+                bookCouponCode,
+                shippingCouponId,
+                shippingCouponCode,
+                paymentMethod,
+                paymentStatus,
+                status,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                createdAt,
+                updatedAt,
+                cancelledAt
+        );
+        setIdempotencyKey(idempotencyKey);
+        setCheckoutFingerprint(checkoutFingerprint);
+    }
+
     public void updateStatus(OrderStatus nextStatus) {
         OrderRule.requireStatusChanged(this.status, nextStatus);
 
@@ -202,11 +258,19 @@ public class Order {
     }
 
     public void cancel() {
+        cancel(Instant.now());
+    }
+
+    public void cancel(Instant cancelledAt) {
         OrderRule.requireCanCancel(status);
-        Instant now = Instant.now();
+        Instant timestamp = Guard.notInFuture(
+                cancelledAt,
+                DomainErrorCode.INVALID_ORDER_CANCELLED_AT,
+                "cancelledAt"
+        );
         setStatus(OrderStatus.CANCELLED);
-        setUpdatedAt(now);
-        setCancelledAt(now);
+        setUpdatedAt(timestamp);
+        setCancelledAt(timestamp);
     }
 
     public void confirm() {
@@ -229,6 +293,26 @@ public class Order {
 
     public void markPaymentPaid(Instant updatedAt) {
         setPaymentStatus(PaymentStatus.PAID);
+        setUpdatedAt(updatedAt);
+    }
+
+    public void markPaymentCancelled(Instant updatedAt) {
+        markPaymentTerminal(PaymentStatus.CANCELLED, updatedAt);
+    }
+
+    public void markPaymentExpired(Instant updatedAt) {
+        markPaymentTerminal(PaymentStatus.EXPIRED, updatedAt);
+    }
+
+    private void markPaymentTerminal(PaymentStatus nextPaymentStatus, Instant updatedAt) {
+        if (paymentStatus != PaymentStatus.PENDING) {
+            throw new DomainException(
+                    DomainErrorCode.INVALID_ORDER_PAYMENT_STATUS,
+                    paymentStatus,
+                    nextPaymentStatus
+            );
+        }
+        setPaymentStatus(nextPaymentStatus);
         setUpdatedAt(updatedAt);
     }
 
@@ -440,5 +524,21 @@ public class Order {
                 DomainErrorCode.INVALID_ORDER_AUDIT_ORDER
         );
         this.cancelledAt = validCancelledAt;
+    }
+
+    private void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = Guard.notBlankOrNull(
+                idempotencyKey,
+                DomainErrorCode.INVALID_ORDER_IDEMPOTENCY_KEY,
+                "idempotencyKey"
+        );
+    }
+
+    private void setCheckoutFingerprint(String checkoutFingerprint) {
+        this.checkoutFingerprint = Guard.notBlankOrNull(
+                checkoutFingerprint,
+                DomainErrorCode.INVALID_ORDER_CHECKOUT_FINGERPRINT,
+                "checkoutFingerprint"
+        );
     }
 }

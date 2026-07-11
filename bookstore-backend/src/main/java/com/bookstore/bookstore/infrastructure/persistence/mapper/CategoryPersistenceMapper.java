@@ -2,10 +2,15 @@ package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
+import com.bookstore.bookstore.infrastructure.persistence.entity.FileAssetJpaEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CategoryPersistenceMapper {
+
+    private final FileAssetPersistenceMapper fileAssetPersistenceMapper;
 
     public Category toDomain(CategoryJpaEntity entity) {
         if (entity == null) {
@@ -16,7 +21,8 @@ public class CategoryPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getDescription(),
-                null, // parentId not supported by entity
+                entity.getParentId(),
+                fileAssetPersistenceMapper.toDomain(entity.getImageFileAsset()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getDeletedAt()
@@ -29,13 +35,18 @@ public class CategoryPersistenceMapper {
         return entity;
     }
 
-    public void copyToEntity(CategoryJpaEntity entity, Category category) {
+    public void copyToEntity(CategoryJpaEntity entity, Category category, FileAssetJpaEntity imageFileAsset) {
         entity.setId(category.getId());
         entity.setName(category.getName());
         entity.setDescription(category.getDescription());
-        // parentId not supported by entity - ignored
+        entity.setParentId(category.getParentId());
+        entity.setImageFileAsset(imageFileAsset);
         entity.setCreatedAt(category.getCreatedAt());
         entity.setUpdatedAt(category.getUpdatedAt());
         entity.setDeletedAt(category.getDeletedAt());
+    }
+
+    public void copyToEntity(CategoryJpaEntity entity, Category category) {
+        copyToEntity(entity, category, null);
     }
 }

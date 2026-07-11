@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.port.out.IRefreshTokenRepository;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
@@ -26,6 +27,9 @@ class CurrentUserJwtAuthenticationConverterTest {
 
     @Mock
     private IUserRepository userRepository;
+
+    @Mock
+    private IRefreshTokenRepository refreshTokenRepository;
 
     @InjectMocks
     private CurrentUserJwtAuthenticationConverter converter;

@@ -16,7 +16,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class OrderWebMapper {
 
-    public CreateOrderCommand toCreateOrderCommand(UUID userId, CreateOrderRequest request) {
+    public CreateOrderCommand toCreateOrderCommand(
+            UUID userId,
+            CreateOrderRequest request,
+            String idempotencyKey
+    ) {
         return new CreateOrderCommand(
                 userId,
                 request.cartItemIds(),
@@ -25,7 +29,8 @@ public class OrderWebMapper {
                 request.paymentMethod(),
                 request.bookCouponCode(),
                 request.shippingCouponCode(),
-                request.note()
+                request.note(),
+                idempotencyKey
         );
     }
 
@@ -40,7 +45,8 @@ public class OrderWebMapper {
                 result.paymentMethod(),
                 result.paymentStatus(),
                 result.totalAmount(),
-                result.transferContent()
+                result.transferContent(),
+                result.paymentExpiresAt()
         );
     }
 
@@ -73,7 +79,8 @@ public class OrderWebMapper {
                 result.receiverAddress(),
                 result.createdAt(),
                 result.updatedAt(),
-                result.cancelledAt()
+                result.cancelledAt(),
+                result.paymentExpiresAt()
         );
     }
 

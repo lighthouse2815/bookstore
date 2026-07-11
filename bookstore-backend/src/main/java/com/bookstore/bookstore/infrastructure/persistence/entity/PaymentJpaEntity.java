@@ -22,7 +22,8 @@ import lombok.Setter;
         indexes = {
                 @Index(name = "idx_payments_order_id", columnList = "order_id"),
                 @Index(name = "idx_payments_reference_code", columnList = "reference_code"),
-                @Index(name = "idx_payments_transaction_id", columnList = "transaction_id")
+                @Index(name = "idx_payments_transaction_id", columnList = "transaction_id"),
+                @Index(name = "idx_payments_pending_expires_at", columnList = "status,expires_at")
         }
 )
 @Getter
@@ -71,4 +72,10 @@ public class PaymentJpaEntity {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
+    @Column(name = "expired_at")
+    private Instant expiredAt;
 }

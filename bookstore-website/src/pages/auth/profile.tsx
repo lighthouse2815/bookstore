@@ -44,6 +44,7 @@ type ProfileSection =
   | 'address-panel'
   | 'orders-panel'
   | 'password-panel'
+  | 'security-panel'
 
 const STATUS_VARIANTS: Record<
   OrderStatus,
@@ -82,6 +83,12 @@ export default function ProfilePage() {
     handleLogout,
     handleSaveAccount,
     handleSaveProfile,
+    sessions,
+    isLoadingSessions,
+    sessionError,
+    loadSessions,
+    handleRevokeSession,
+    handleLogoutAllDevices,
     avatarLabel,
   } = useProfilePage()
   const [activeMenu, setActiveMenu] = useState<ProfileSection>('personal-panel')
@@ -130,12 +137,19 @@ export default function ProfilePage() {
     }
   }, [activeMenu, hasLoadedAddresses, t])
 
+  useEffect(() => {
+    if (activeMenu === 'security-panel') {
+      void loadSessions()
+    }
+  }, [activeMenu])
+
   const pageCopy = {
     personal: t('auth.profile.personalTitle'),
     account: t('auth.profile.loginPanelTitle'),
     address: t('auth.profile.addressMenuTitle'),
     orders: t('auth.profile.ordersTitle'),
     password: t('auth.profile.passwordMenuTitle'),
+    security: 'Bảo mật & thiết bị',
     chooseImage: t('auth.profile.chooseImage'),
     imageHint: t('auth.profile.imageHint'),
     orderHistory: t('orders.title'),
@@ -194,6 +208,11 @@ export default function ProfilePage() {
       id: 'password-panel',
       icon: KeyRound,
       label: pageCopy.password,
+    },
+    {
+      id: 'security-panel',
+      icon: Shield,
+      label: pageCopy.security,
     },
   ]
 
@@ -670,6 +689,88 @@ export default function ProfilePage() {
                       </Button>
                     </Link>
                   </div>
+                </SurfacePanel>
+              ) : null}
+
+              {activeMenu === 'security-panel' ? (
+                <SurfacePanel id="security-panel">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <PanelHeading icon={Shield} title="Bảo mật & thiết bị" />
+                      <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-muted-foreground">
+                        Quản lý các thiết bị đang có quyền truy cập tài khoản của bạn.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={destructiveOutlineButtonClassName}
+                      onClick={() => {
+                        if (window.confirm('Đăng xuất khỏi tất cả thiết bị?')) {
+                          void handleLogoutAllDevices()
+                        }
+                      }}
+                    >
+                      Đăng xuất mọi thiết bị
+                    </Button>
+                  </div>
+
+                  {isLoadingSessions ? (
+                    <p className="mt-6 text-sm text-slate-500 dark:text-muted-foreground">Đang tải phiên đăng nhập…</p>
+                  ) : null}
+
+                  {sessionError ? (
+                    <StatePanel
+                      title="Không tải được phiên đăng nhập"
+                      description={sessionError}
+                      className="mt-6"
+                      minHeightClassName="min-h-[180px]"
+                      action={<Button type="button" variant="outline" className={secondaryButtonClassName} onClick={() => void loadSessions()}>Thử lại</Button>}
+                    />
+                  ) : null}
+
+                  {!isLoadingSessions && !sessionError && sessions.length === 0 ? (
+                    <StatePanel
+                      title="Không có phiên đang hoạt động"
+                      description="Các phiên mới sẽ xuất hiện ở đây sau khi bạn đăng nhập."
+                      className="mt-6"
+                      minHeightClassName="min-h-[180px]"
+                    />
+                  ) : null}
+
+                  {!isLoadingSessions && !sessionError && sessions.length > 0 ? (
+                    <div className="mt-6 grid gap-3">
+                      {sessions.map((session) => (
+                        <article key={session.sessionId} className={cn('flex flex-col gap-4 rounded-[22px] p-5 sm:flex-row sm:items-center sm:justify-between', PROFILE_INNER_SURFACE_CLASS)}>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="truncate font-semibold text-slate-950 dark:text-foreground">
+                                {session.deviceName || session.userAgent || 'Thiết bị không xác định'}
+                              </h3>
+                              {session.currentSession ? <Badge className="rounded-full">Thiết bị này</Badge> : null}
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-muted-foreground">
+                              {session.ipAddress || 'IP không rõ'} · Dùng gần nhất {session.lastUsedAt ? formatDate(session.lastUsedAt) : formatDate(session.createdAt)}
+                            </p>
+                          </div>
+                          {!session.currentSession ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={destructiveOutlineButtonClassName}
+                              onClick={() => {
+                                if (window.confirm('Thu hồi phiên trên thiết bị này?')) {
+                                  void handleRevokeSession(session.sessionId)
+                                }
+                              }}
+                            >
+                              Thu hồi
+                            </Button>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
                 </SurfacePanel>
               ) : null}
             </div>

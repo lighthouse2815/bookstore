@@ -8,6 +8,7 @@ import {
   createReturnRequest,
   getMyReturnRequestsPage,
 } from '@/services/return-request-service'
+import { cancelMyOrder } from '@/services/order-service'
 import type { ReturnRequestResponse } from '@/types/return-request'
 import { getErrorMessage } from '@/utils'
 
@@ -27,6 +28,10 @@ export function useOrderDetailPage() {
     useState(false)
   const [isCancellingReturnRequest, setIsCancellingReturnRequest] =
     useState(false)
+  const [isCancelOrderDialogOpen, setIsCancelOrderDialogOpen] =
+    useState(false)
+  const [cancelOrderReason, setCancelOrderReason] = useState('')
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false)
 
   useEffect(() => {
     if (!id) {
@@ -80,6 +85,10 @@ export function useOrderDetailPage() {
       latestReturnRequest.status === 'CANCELLED')
 
   const canCancelReturnRequest = latestReturnRequest?.status === 'PENDING'
+  const canCancelOrder =
+    orderResource.order?.status === 'PENDING' &&
+    (orderResource.order.paymentStatus === 'PENDING' ||
+      orderResource.order.paymentStatus === 'UNPAID')
 
   function openCreateDialog() {
     setIsCreateDialogOpen(true)
@@ -143,22 +152,59 @@ export function useOrderDetailPage() {
     }
   }
 
+  function openCancelOrderDialog() {
+    setIsCancelOrderDialogOpen(true)
+  }
+
+  function closeCancelOrderDialog() {
+    if (!isCancellingOrder) {
+      setIsCancelOrderDialogOpen(false)
+    }
+  }
+
+  async function handleCancelOrder() {
+    if (!id || !canCancelOrder || isCancellingOrder) {
+      return
+    }
+
+    setIsCancellingOrder(true)
+    try {
+      await cancelMyOrder(id, { reason: cancelOrderReason })
+      setCancelOrderReason('')
+      setIsCancelOrderDialogOpen(false)
+      orderResource.refresh()
+      toast.success('Đã hủy đơn hàng.')
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError, 'Không thể hủy đơn hàng.'))
+    } finally {
+      setIsCancellingOrder(false)
+    }
+  }
+
   return {
     ...orderResource,
     latestReturnRequest,
     isReturnLoading,
     canCreateReturnRequest,
     canCancelReturnRequest,
+    canCancelOrder,
     isCreateDialogOpen,
     returnReason,
     requestedRefundAmount,
     isSubmittingReturnRequest,
     isCancellingReturnRequest,
+    isCancelOrderDialogOpen,
+    cancelOrderReason,
+    isCancellingOrder,
     openCreateDialog,
     closeCreateDialog,
     handleSubmitReturnRequest,
     handleCancelReturnRequest,
+    openCancelOrderDialog,
+    closeCancelOrderDialog,
+    handleCancelOrder,
     setReturnReason,
     setRequestedRefundAmount,
+    setCancelOrderReason,
   }
 }

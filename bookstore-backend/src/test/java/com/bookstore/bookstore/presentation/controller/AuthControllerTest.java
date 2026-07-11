@@ -11,6 +11,8 @@ import com.bookstore.bookstore.application.result.LoginResult;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
+import com.bookstore.bookstore.infrastructure.security.WebAuthCsrfFilter;
+import com.bookstore.bookstore.presentation.support.ClientRequestMetadataResolver;
 import com.bookstore.bookstore.presentation.mapper.AuthWebMapper;
 import java.util.Set;
 import java.util.UUID;
@@ -24,7 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, AuthWebMapper.class})
+@Import({SecurityConfig.class, AuthWebMapper.class, ClientRequestMetadataResolver.class, WebAuthCsrfFilter.class})
 @TestPropertySource(properties = {
         "app.jwt.secret=01234567890123456789012345678901",
         "app.jwt.expiration-minutes=60",

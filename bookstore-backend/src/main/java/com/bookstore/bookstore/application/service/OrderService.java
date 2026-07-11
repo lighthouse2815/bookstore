@@ -2,15 +2,16 @@ package com.bookstore.bookstore.application.service;
 
 import com.bookstore.bookstore.application.assembler.OrderAssembler;
 import com.bookstore.bookstore.application.command.CreateOrderCommand;
+import com.bookstore.bookstore.application.command.CancelOrderCommand;
 import com.bookstore.bookstore.application.command.CreateNotificationCommand;
 import com.bookstore.bookstore.application.command.CreatePosOrderCommand;
 import com.bookstore.bookstore.application.command.CreatePosOrderItemCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
-import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.application.port.in.ITransactionalOutboxService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
@@ -18,6 +19,7 @@ import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
+import com.bookstore.bookstore.application.port.out.IPaymentExpirySettings;
 import com.bookstore.bookstore.application.port.out.ISepaySettings;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
@@ -75,11 +77,13 @@ public class OrderService implements IOrderService {
     private final ICouponRepository couponRepository;
     private final ICouponUsageRepository couponUsageRepository;
     private final IStockMovementRepository stockMovementRepository;
-    private final INotificationService notificationService;
+    private final ITransactionalOutboxService transactionalOutboxService;
     private final OrderAssembler orderAssembler;
     private final com.bookstore.bookstore.application.port.in.IDigitalLibraryService digitalLibraryService;
     private final IOrderTimelineService orderTimelineService;
     private final ISepaySettings sepaySettings;
+    private final IPaymentExpirySettings paymentExpirySettings;
+    private final OrderCancellationService orderCancellationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -88,9 +92,26 @@ public class OrderService implements IOrderService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        Cart cart = cartRepository.findByUserId(command.userId())
+        String checkoutFingerprint = command.checkoutFingerprint();
+        var existingCheckout = orderRepository.findByUserIdAndIdempotencyKey(
+                command.userId(),
+                command.idempotencyKey()
+        );
+        if (existingCheckout.isPresent()) {
+            return replayExistingCheckout(existingCheckout.get(), checkoutFingerprint);
+        }
+
+        Cart cart = cartRepository.findByUserIdForUpdate(command.userId())
                 .filter(currentCart -> !currentCart.getItems().isEmpty())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_EMPTY));
+
+        existingCheckout = orderRepository.findByUserIdAndIdempotencyKeyForUpdate(
+                command.userId(),
+                command.idempotencyKey()
+        );
+        if (existingCheckout.isPresent()) {
+            return replayExistingCheckout(existingCheckout.get(), checkoutFingerprint);
+        }
 
         validatePaymentMethod(command.paymentMethod());
         List<CartItem> checkoutItems = resolveCheckoutItems(cart, command.cartItemIds());
@@ -213,7 +234,9 @@ public class OrderService implements IOrderService {
                 userAddress.getReceiverAddress(),
                 now,
                 now,
-                null
+                null,
+                command.idempotencyKey(),
+                checkoutFingerprint
         );
 
         Order savedOrder = orderRepository.save(order);
@@ -229,7 +252,7 @@ public class OrderService implements IOrderService {
                 .forEach(bookRepository::save);
         checkoutItems.forEach(item -> cart.removeItemById(item.getId()));
         cartRepository.save(cart);
-        notificationService.create(newOrderNotification(savedOrder));
+        enqueueNotification(savedOrder, "ORDER_CREATED", newOrderNotification(savedOrder));
         orderTimelineService.recordOrderCreated(savedOrder);
         orderTimelineService.recordCouponsApplied(savedOrder);
         orderTimelineService.recordPaymentPending(savedOrder, savedPayment);
@@ -239,7 +262,26 @@ public class OrderService implements IOrderService {
                 savedOrder.getPaymentMethod(),
                 savedPayment.getStatus(),
                 savedOrder.getTotalAmount(),
-                savedPayment.getTransferContent()
+                savedPayment.getTransferContent(),
+                savedPayment.getExpiresAt()
+        );
+    }
+
+    private CreateOrderResult replayExistingCheckout(Order order, String checkoutFingerprint) {
+        if (!Objects.equals(order.getCheckoutFingerprint(), checkoutFingerprint)) {
+            throw new ApplicationException(ApplicationErrorCode.ORDER_IDEMPOTENCY_PAYLOAD_MISMATCH);
+        }
+
+        Payment payment = paymentRepository.findByOrderId(order.getId())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PAYMENT_NOT_FOUND));
+        return new CreateOrderResult(
+                order.getId(),
+                order.getOrderCode(),
+                order.getPaymentMethod(),
+                payment.getStatus(),
+                order.getTotalAmount(),
+                payment.getTransferContent(),
+                payment.getExpiresAt()
         );
     }
 
@@ -359,7 +401,7 @@ public class OrderService implements IOrderService {
         saveAppliedCoupon(appliedBookCoupon, command.staffUserId(), savedOrder.getId(), couponDiscount, now);
         stockMovements.forEach(stockMovementRepository::save);
         booksById.values().forEach(bookRepository::save);
-        notificationService.create(newOrderNotification(savedOrder));
+        enqueueNotification(savedOrder, "ORDER_CREATED", newOrderNotification(savedOrder));
         if (paymentStatus == PaymentStatus.PAID) {
             digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
         }
@@ -380,7 +422,7 @@ public class OrderService implements IOrderService {
     @Transactional(readOnly = true)
     public List<OrderResult> getMyOrders(UUID userId) {
         return orderRepository.findByUserId(userId).stream()
-                .map(orderAssembler::toResult)
+                .map(this::toOrderResultWithPaymentExpiry)
                 .toList();
     }
 
@@ -392,7 +434,7 @@ public class OrderService implements IOrderService {
         }
 
         validatePageRequest(page, size);
-        return orderRepository.findPageByUserId(userId, page, size).map(orderAssembler::toResult);
+        return orderRepository.findPageByUserId(userId, page, size).map(this::toOrderResultWithPaymentExpiry);
     }
 
     @Override
@@ -400,7 +442,7 @@ public class OrderService implements IOrderService {
     public OrderResult getMyOrder(UUID userId, UUID orderId) {
         return orderRepository.findById(orderId)
                 .filter(order -> order.getUserId().equals(userId))
-                .map(orderAssembler::toResult)
+                .map(this::toOrderResultWithPaymentExpiry)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
     }
 
@@ -408,7 +450,7 @@ public class OrderService implements IOrderService {
     @Transactional(readOnly = true)
     public List<OrderResult> getAll() {
         return orderRepository.findAll().stream()
-                .map(orderAssembler::toResult)
+                .map(this::toOrderResultWithPaymentExpiry)
                 .toList();
     }
 
@@ -416,7 +458,7 @@ public class OrderService implements IOrderService {
     @Transactional(readOnly = true)
     public PageSliceResult<OrderResult> getAll(int page, int size) {
         validatePageRequest(page, size);
-        return orderRepository.findPageAll(page, size).map(orderAssembler::toResult);
+        return orderRepository.findPageAll(page, size).map(this::toOrderResultWithPaymentExpiry);
     }
 
     @Override
@@ -427,7 +469,7 @@ public class OrderService implements IOrderService {
         }
 
         return orderRepository.findById(orderId)
-                .map(orderAssembler::toResult)
+                .map(this::toOrderResultWithPaymentExpiry)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
     }
 
@@ -438,6 +480,13 @@ public class OrderService implements IOrderService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
+        if (command.status() == OrderStatus.CANCELLED) {
+            return toOrderResultWithPaymentExpiry(orderCancellationService.cancelPendingByAdmin(
+                    command.orderId(),
+                    "Được quản trị viên hủy"
+            ));
+        }
+
         Order currentOrder = orderRepository.findByIdForUpdate(command.orderId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
 
@@ -445,34 +494,16 @@ public class OrderService implements IOrderService {
         PaymentStatus oldPaymentStatus = currentOrder.getPaymentStatus();
         requirePaymentReadyForStatusUpdate(currentOrder, command.status());
         currentOrder.updateStatus(command.status());
-        if (command.status() == OrderStatus.CANCELLED) {
-            rollbackCancelledOrder(currentOrder);
-        }
         Payment settledPayment = null;
         if (command.status() == OrderStatus.DELIVERED && currentOrder.getPaymentMethod() == PaymentMethod.COD) {
             settledPayment = settleCodPaymentOnDelivery(currentOrder);
         }
         Order savedOrder = orderRepository.save(currentOrder);
-        if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
-            digitalLibraryService.revokePurchasedAccessForOrder(savedOrder.getId());
-        }
         if (savedOrder.getStatus() == OrderStatus.DELIVERED && savedOrder.getPaymentMethod() == PaymentMethod.COD) {
             digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
         }
-        notificationService.create(newOrderStatusNotification(savedOrder));
-        if (savedOrder.getStatus() == OrderStatus.CANCELLED) {
-            orderTimelineService.recordOrderCancelled(savedOrder, null);
-            orderTimelineService.recordStockRolledBack(savedOrder);
-            if (savedOrder.getBookCouponCode() != null) {
-                orderTimelineService.recordCouponRolledBack(savedOrder, savedOrder.getBookCouponCode());
-            }
-            if (savedOrder.getShippingCouponCode() != null
-                    && !Objects.equals(savedOrder.getShippingCouponId(), savedOrder.getBookCouponId())) {
-                orderTimelineService.recordCouponRolledBack(savedOrder, savedOrder.getShippingCouponCode());
-            }
-        } else {
-            orderTimelineService.recordStatusChanged(savedOrder, oldStatus, savedOrder.getStatus());
-        }
+        enqueueNotification(savedOrder, "ORDER_STATUS_CHANGED_" + savedOrder.getStatus(), newOrderStatusNotification(savedOrder));
+        orderTimelineService.recordStatusChanged(savedOrder, oldStatus, savedOrder.getStatus());
         if (oldPaymentStatus != savedOrder.getPaymentStatus()
                 && savedOrder.getPaymentStatus() == PaymentStatus.PAID) {
             Payment paymentForTimeline = settledPayment != null
@@ -482,7 +513,26 @@ public class OrderService implements IOrderService {
                 orderTimelineService.recordPaymentPaid(savedOrder, paymentForTimeline);
             }
         }
-        return orderAssembler.toResult(savedOrder);
+        return toOrderResultWithPaymentExpiry(savedOrder);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderResult cancelMyOrder(CancelOrderCommand command) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+        return toOrderResultWithPaymentExpiry(orderCancellationService.cancelOwnedPending(
+                command.userId(),
+                command.orderId(),
+                command.reason()
+        ));
+    }
+
+    private OrderResult toOrderResultWithPaymentExpiry(Order order) {
+        return orderAssembler.toResult(order, paymentRepository.findByOrderId(order.getId())
+                .map(Payment::getExpiresAt)
+                .orElse(null));
     }
 
     private List<CartItem> resolveCheckoutItems(Cart cart, List<UUID> selectedCartItemIds) {
@@ -662,46 +712,6 @@ public class OrderService implements IOrderService {
         ));
     }
 
-    private void rollbackCancelledOrder(Order order) {
-        Map<UUID, Book> booksById = loadPhysicalOrderBooks(order);
-        Instant now = Instant.now();
-
-        for (OrderItem item : order.getItems().stream().filter(orderItem -> orderItem.getItemType() == PurchaseItemType.PHYSICAL_BOOK).toList()) {
-            Book book = booksById.get(item.getBookId());
-            int beforeQuantity = book.getStockQuantity();
-            book.increaseStock(item.getQuantity());
-            int afterQuantity = book.getStockQuantity();
-
-            stockMovementRepository.save(new StockMovement(
-                    UUID.randomUUID(),
-                    book.getId(),
-                    StockMovementType.CANCEL_ORDER,
-                    item.getQuantity(),
-                    beforeQuantity,
-                    afterQuantity,
-                    order.getId(),
-                    "ORDER",
-                    null,
-                    now,
-                    order.getUserId()
-            ));
-        }
-
-        booksById.values().forEach(bookRepository::save);
-
-        UUID bookCouponId = order.getBookCouponId();
-        UUID shippingCouponId = order.getShippingCouponId();
-        if (bookCouponId != null) {
-            rollbackCouponUsage(bookCouponId, now);
-        }
-        if (shippingCouponId != null && !shippingCouponId.equals(bookCouponId)) {
-            rollbackCouponUsage(shippingCouponId, now);
-        }
-        if (bookCouponId != null || shippingCouponId != null) {
-            couponUsageRepository.deleteByOrderId(order.getId());
-        }
-    }
-
     private void requirePaymentReadyForStatusUpdate(Order order, OrderStatus nextStatus) {
         if (order.getPaymentMethod() != PaymentMethod.BANK_TRANSFER_QR) {
             return;
@@ -769,6 +779,9 @@ public class OrderService implements IOrderService {
         String merchantId = provider == PaymentProvider.SEPAY
                 ? StringUtils.trimToNull(sepaySettings.merchantId())
                 : null;
+        Instant expiresAt = provider == PaymentProvider.SEPAY
+                ? createdAt.plusSeconds(paymentExpirySettings.bankTransferExpirationMinutes() * 60L)
+                : null;
 
         return paymentRepository.save(new Payment(
                 UUID.randomUUID(),
@@ -783,7 +796,9 @@ public class OrderService implements IOrderService {
                 null,
                 null,
                 createdAt,
-                createdAt
+                createdAt,
+                expiresAt,
+                null
         ));
     }
 
@@ -838,40 +853,6 @@ public class OrderService implements IOrderService {
         return payment;
     }
 
-    private void rollbackCouponUsage(UUID couponId, Instant rolledBackAt) {
-        Coupon coupon = couponRepository.findByIdIncludingDeletedForUpdate(couponId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.COUPON_NOT_FOUND));
-        coupon.rollbackUsage(rolledBackAt);
-        couponRepository.save(coupon);
-    }
-
-    private Map<UUID, Book> loadPhysicalOrderBooks(Order order) {
-        List<UUID> bookIds = order.getItems().stream()
-                .filter(item -> item.getItemType() == PurchaseItemType.PHYSICAL_BOOK)
-                .map(OrderItem::getBookId)
-                .toList();
-        if (bookIds.isEmpty()) {
-            return new LinkedHashMap<>();
-        }
-
-        Map<UUID, Book> booksById = bookRepository.findAllByIdsIncludingDeletedForUpdate(
-                        bookIds
-                ).stream()
-                .collect(
-                        LinkedHashMap::new,
-                        (map, book) -> map.put(book.getId(), book),
-                        Map::putAll
-                );
-
-        for (OrderItem item : order.getItems().stream().filter(currentItem -> currentItem.getItemType() == PurchaseItemType.PHYSICAL_BOOK).toList()) {
-            if (!booksById.containsKey(item.getBookId())) {
-                throw new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND);
-            }
-        }
-
-        return booksById;
-    }
-
     private UserAddress createDigitalOrderAddress(UUID userId) {
         Instant now = Instant.now();
         return new UserAddress(
@@ -897,6 +878,17 @@ public class OrderService implements IOrderService {
                 order.getId(),
                 "/orders/" + order.getId()
         );
+    }
+
+    private void enqueueNotification(Order order, String eventType, CreateNotificationCommand notification) {
+        transactionalOutboxService.enqueue(new com.bookstore.bookstore.application.command.EnqueueOutboxEventCommand(
+                "ORDER", order.getId(), eventType,
+                new com.bookstore.bookstore.application.command.OutboxNotificationPayload(
+                        notification.userId(), notification.title(), notification.content(), notification.type(),
+                        notification.targetType(), notification.targetId(), notification.link()
+                ),
+                order.getId() + "|notification|" + eventType
+        ));
     }
 
     private CreateNotificationCommand newOrderStatusNotification(Order order) {

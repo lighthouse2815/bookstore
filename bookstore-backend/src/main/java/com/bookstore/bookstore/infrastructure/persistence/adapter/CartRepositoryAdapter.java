@@ -35,6 +35,12 @@ public class CartRepositoryAdapter implements ICartRepository {
     }
 
     @Override
+    public Optional<Cart> findByUserIdForUpdate(UUID userId) {
+        return cartJpaRepository.findByUserIdForUpdate(userId)
+                .map(cartPersistenceMapper::toDomain);
+    }
+
+    @Override
     public Cart save(Cart cart) {
         CartJpaEntity entity = cartJpaRepository.findById(cart.getId())
                 .orElseGet(CartJpaEntity::new);

@@ -65,6 +65,19 @@ class OrderTest {
         assertEquals(DomainErrorCode.DELIVERED_ORDER_CANNOT_BE_CANCELLED, exception.getErrorCode());
     }
 
+    @Test
+    void expiryCancellation_keepsOrderAndPaymentSnapshotsConsistent() {
+        Order order = order(OrderStatus.PENDING);
+        Instant expiredAt = Instant.EPOCH.plusSeconds(1);
+
+        order.cancel(expiredAt);
+        order.markPaymentExpired(expiredAt);
+
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
+        assertEquals(PaymentStatus.EXPIRED, order.getPaymentStatus());
+        assertEquals(expiredAt, order.getCancelledAt());
+    }
+
     private static Order order(OrderStatus status) {
         Instant now = Instant.EPOCH;
         OrderItem item = new OrderItem(

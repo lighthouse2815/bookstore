@@ -39,6 +39,12 @@ public class UserOtpRepositoryAdapter implements IUserOtpRepository {
     }
 
     @Override
+    public Optional<UserOtp> findLatestPendingByUserIdAndPurposeForUpdate(UUID userId, OtpPurpose purpose) {
+        return userOtpJpaRepository.findTopByUserIdAndPurposeAndVerifiedAtIsNullAndInvalidatedAtIsNullOrderByCreatedAtDesc(userId, purpose)
+                .map(userOtpPersistenceMapper::toDomain);
+    }
+
+    @Override
     public Optional<UserOtp> findOldestByUserIdAndPurposeCreatedAfter(UUID userId, OtpPurpose purpose, Instant createdAfter) {
         return userOtpJpaRepository
                 .findFirstByUserIdAndPurposeAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(

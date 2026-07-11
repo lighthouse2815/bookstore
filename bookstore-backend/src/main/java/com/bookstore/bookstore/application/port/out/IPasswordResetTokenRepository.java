@@ -9,6 +9,8 @@ public interface IPasswordResetTokenRepository {
 
     Optional<PasswordResetToken> findByTokenHash(String tokenHash);
 
+    Optional<PasswordResetToken> findByTokenHashForUpdate(String tokenHash);
+
     void markUnusedByUserIdAsUsed(UUID userId, Instant usedAt);
 
     PasswordResetToken save(PasswordResetToken passwordResetToken);

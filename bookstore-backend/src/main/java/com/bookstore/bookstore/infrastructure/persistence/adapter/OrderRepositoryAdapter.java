@@ -66,6 +66,18 @@ public class OrderRepositoryAdapter implements IOrderRepository {
     }
 
     @Override
+    public Optional<Order> findByUserIdAndIdempotencyKey(UUID userId, String idempotencyKey) {
+        return orderJpaRepository.findByUser_IdAndIdempotencyKey(userId, idempotencyKey)
+                .map(orderPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Order> findByUserIdAndIdempotencyKeyForUpdate(UUID userId, String idempotencyKey) {
+        return orderJpaRepository.findByUserIdAndIdempotencyKeyForUpdate(userId, idempotencyKey)
+                .map(orderPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<Order> findByUserId(UUID userId) {
         return orderJpaRepository.findAllByUserIdAndUser_DeletedAtIsNull(userId).stream()
                 .map(orderPersistenceMapper::toDomain)

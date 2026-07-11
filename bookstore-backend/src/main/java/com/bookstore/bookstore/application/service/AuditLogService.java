@@ -167,7 +167,7 @@ public class AuditLogService implements IAuditLogService {
         }
 
         if (node instanceof ObjectNode objectNode) {
-            var fields = objectNode.fields();
+            var fields = objectNode.properties().iterator();
             while (fields.hasNext()) {
                 var entry = fields.next();
                 if (isSensitiveField(entry.getKey())) {

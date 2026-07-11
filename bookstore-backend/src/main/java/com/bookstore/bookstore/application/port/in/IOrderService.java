@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.in;
 
 import com.bookstore.bookstore.application.command.CreateOrderCommand;
+import com.bookstore.bookstore.application.command.CancelOrderCommand;
 import com.bookstore.bookstore.application.command.CreatePosOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
@@ -29,4 +30,6 @@ public interface IOrderService {
     OrderResult getById(UUID orderId);
 
     OrderResult updateStatus(UpdateOrderStatusCommand command);
+
+    OrderResult cancelMyOrder(CancelOrderCommand command);
 }

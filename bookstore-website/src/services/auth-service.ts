@@ -1,35 +1,32 @@
-import api from './api'
+import api, { webGoogleLogin, webLogin, webLogout } from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   GoogleLoginRequest,
   LoginRequest,
-  LoginResponse,
+  WebLoginResponse,
   LogoutRequest,
   PasswordResetTokenResponse,
-  RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
   RequestPasswordResetOtpRequest,
   RequestRegistrationOtpRequest,
   ResetPasswordRequest,
+  SessionResponse,
   UpdateUserRequest,
   UserMeResponse,
   VerifyOtpRequest,
 } from '@/types/auth'
 import { unwrapResponse } from '@/utils'
 
-export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', data)
+export async function login(data: LoginRequest): Promise<WebLoginResponse> {
+  const response = await webLogin<WebLoginResponse>(data)
   return unwrapResponse(response)
 }
 
 export async function loginWithGoogle(
   data: GoogleLoginRequest,
-): Promise<LoginResponse> {
-  const response = await api.post<ApiResponse<LoginResponse>>(
-    '/auth/google',
-    data,
-  )
+): Promise<WebLoginResponse> {
+  const response = await webGoogleLogin<WebLoginResponse>(data)
   return unwrapResponse(response)
 }
 
@@ -77,18 +74,21 @@ export async function resetPassword(
   await api.post<ApiResponse<null>>('/auth/forgot-password/reset', data)
 }
 
-export async function refreshAccessToken(
-  data: RefreshTokenRequest,
-): Promise<LoginResponse> {
-  const response = await api.post<ApiResponse<LoginResponse>>(
-    '/auth/refresh',
-    data,
-  )
+export async function logout(_data?: LogoutRequest): Promise<void> {
+  await webLogout()
+}
+
+export async function getSessions(): Promise<SessionResponse[]> {
+  const response = await api.get<ApiResponse<SessionResponse[]>>('/auth/sessions')
   return unwrapResponse(response)
 }
 
-export async function logout(data: LogoutRequest): Promise<void> {
-  await api.post<ApiResponse<null>>('/auth/logout', data)
+export async function revokeSession(sessionId: string): Promise<void> {
+  await api.delete<ApiResponse<null>>(`/auth/sessions/${sessionId}`)
+}
+
+export async function logoutAllDevices(): Promise<void> {
+  await api.post<ApiResponse<null>>('/auth/logout-all')
 }
 
 export async function getCurrentUser(): Promise<UserMeResponse> {

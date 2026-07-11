@@ -17,6 +17,7 @@ public class PasswordResetTokenPersistenceMapper {
                 entity.getId(),
                 entity.getUser().getId(),
                 entity.getTokenHash(),
+                entity.getRequestIp(),
                 entity.getExpiresAt(),
                 entity.getUsedAt(),
                 entity.getCreatedAt()
@@ -27,6 +28,7 @@ public class PasswordResetTokenPersistenceMapper {
         entity.setId(passwordResetToken.getId());
         entity.setUser(user);
         entity.setTokenHash(passwordResetToken.getTokenHash());
+        entity.setRequestIp(passwordResetToken.getRequestIp());
         entity.setExpiresAt(passwordResetToken.getExpiresAt());
         entity.setUsedAt(passwordResetToken.getUsedAt());
         entity.setCreatedAt(passwordResetToken.getCreatedAt());

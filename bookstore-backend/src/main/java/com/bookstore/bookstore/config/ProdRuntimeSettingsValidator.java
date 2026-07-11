@@ -53,6 +53,23 @@ public class ProdRuntimeSettingsValidator {
             throw new IllegalStateException("CORS_ALLOWED_ORIGINS không được chứa '*' khi chạy production");
         }
 
+        if (!environment.getProperty("app.auth.web.cookie-secure", Boolean.class, false)) {
+            throw new IllegalStateException("AUTH_WEB_COOKIE_SECURE phải=true khi chạy production HTTPS");
+        }
+        String sameSite = requireNonBlank("app.auth.web.cookie-same-site", "Thiếu biến production: AUTH_WEB_COOKIE_SAME_SITE");
+        if (!Set.of("Lax", "Strict", "None").contains(sameSite)) {
+            throw new IllegalStateException("AUTH_WEB_COOKIE_SAME_SITE chỉ nhận Lax, Strict hoặc None");
+        }
+        requireNonBlank("app.google.client-id", "Thiếu biến production: GOOGLE_CLIENT_ID");
+        String webhookApiKey = environment.getProperty("app.sepay.webhook-api-key");
+        String secretKey = environment.getProperty("app.sepay.secret-key");
+        if ((webhookApiKey == null || webhookApiKey.isBlank()) && (secretKey == null || secretKey.isBlank())) {
+            throw new IllegalStateException("Thiếu biến production: SEPAY_WEBHOOK_API_KEY hoặc SEPAY_SECRET_KEY");
+        }
+        if (environment.getProperty("app.auth.trusted-proxy.enabled", Boolean.class, false)) {
+            requireNonBlank("app.auth.trusted-proxy.cidrs", "Thiếu biến production: AUTH_TRUSTED_PROXY_CIDRS");
+        }
+
         if (environment.getProperty("app.admin.seed-enabled", Boolean.class, false)) {
             requireNonBlank("app.admin.username", "Thiếu cấu hình production khi APP_ADMIN_SEED_ENABLED=true: ADMIN_USERNAME");
             String adminPassword = requireNonBlank(

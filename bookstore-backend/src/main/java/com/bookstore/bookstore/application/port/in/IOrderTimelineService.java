@@ -5,6 +5,7 @@ import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.ShipmentStatus;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.Payment;
+import com.bookstore.bookstore.domain.model.Refund;
 import com.bookstore.bookstore.domain.model.ReturnRequest;
 import com.bookstore.bookstore.domain.model.Shipment;
 import java.util.List;
@@ -45,6 +46,8 @@ public interface IOrderTimelineService {
     void recordReturnCancelled(Order order, ReturnRequest returnRequest);
 
     void recordRefundInternalApproved(Order order, ReturnRequest returnRequest);
+
+    void recordRefundStateChanged(Order order, Refund refund, com.bookstore.bookstore.domain.enums.RefundStatus previousStatus);
 
     void recordStockRestockedFromReturn(Order order, ReturnRequest returnRequest, int totalQuantity);
 }

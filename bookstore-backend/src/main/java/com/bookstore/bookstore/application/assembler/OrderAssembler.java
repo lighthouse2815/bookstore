@@ -4,12 +4,17 @@ import com.bookstore.bookstore.application.result.OrderItemResult;
 import com.bookstore.bookstore.application.result.OrderResult;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.OrderItem;
+import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderAssembler {
 
     public OrderResult toResult(Order order) {
+        return toResult(order, null);
+    }
+
+    public OrderResult toResult(Order order, Instant paymentExpiresAt) {
         return new OrderResult(
                 order.getId(),
                 order.getOrderCode(),
@@ -38,7 +43,8 @@ public class OrderAssembler {
                 order.getReceiverAddress(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                order.getCancelledAt()
+                order.getCancelledAt(),
+                paymentExpiresAt
         );
     }
 

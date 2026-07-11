@@ -78,6 +78,10 @@ class ProdRuntimeSettingsValidatorTest {
         environment.setProperty("DB_PASSWORD", "StrongDbPassword!234");
         environment.setProperty("app.jwt.secret", "0123456789abcdefghijklmnopqrstuvwxyz");
         environment.setProperty("app.cors.allowed-origins", "https://bookstore.example.com");
+        environment.setProperty("app.auth.web.cookie-secure", "true");
+        environment.setProperty("app.auth.web.cookie-same-site", "Lax");
+        environment.setProperty("app.google.client-id", "google-client-id.apps.googleusercontent.com");
+        environment.setProperty("app.sepay.webhook-api-key", "webhook-key");
         environment.setProperty("app.admin.seed-enabled", "false");
         environment.setProperty("app.seed.enabled", "false");
         return environment;

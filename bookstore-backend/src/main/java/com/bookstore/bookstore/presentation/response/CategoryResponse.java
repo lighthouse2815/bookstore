@@ -8,6 +8,8 @@ public record CategoryResponse(
         String name,
         String description,
         UUID parentId,
+        UUID imageFileAssetId,
+        String imageUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

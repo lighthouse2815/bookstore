@@ -14,7 +14,7 @@ export type OrderPaymentMethod =
   | 'VNPAY'
   | 'MOMO'
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED'
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED'
 
 export type OrderPaymentStatus = PaymentStatus | 'UNPAID' | 'REFUNDED'
 
@@ -39,10 +39,15 @@ export type CreateOrderResponse = {
   paymentStatus: PaymentStatus
   totalAmount: number
   transferContent: string
+  paymentExpiresAt: string | null
 }
 
 export type UpdateOrderStatusRequest = {
   status: OrderStatus
+}
+
+export type CancelOrderRequest = {
+  reason: string
 }
 
 export type OrderItemResponse = {
@@ -83,6 +88,7 @@ export type OrderResponse = {
   createdAt: string
   updatedAt: string
   cancelledAt: string | null
+  paymentExpiresAt: string | null
 }
 
 export type OrderTimelineEventType =

@@ -22,6 +22,7 @@ data class CheckoutResponse(
     val paymentStatus: String,
     val totalAmount: Double,
     val transferContent: String? = null,
+    val paymentExpiresAt: String? = null,
 )
 
 @Serializable

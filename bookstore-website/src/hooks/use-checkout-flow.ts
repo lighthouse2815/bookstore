@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -16,7 +17,7 @@ import { createOrder } from '@/services/order-service'
 import type { UserAddressResponse } from '@/types/address'
 import type { BestCouponSuggestion } from '@/types/cart'
 import type { CouponResponse, CouponType } from '@/types/coupon'
-import type { PaymentMethod, ShippingMethod } from '@/types/order'
+import type { CreateOrderRequest, PaymentMethod, ShippingMethod } from '@/types/order'
 import {
   calculateCouponDiscount,
   findCouponByCode,
@@ -55,6 +56,13 @@ const initialFormData: CheckoutFormState = {
   note: '',
 }
 
+type CheckoutAttempt = {
+  addressSignature: string | null
+  createdAddressId: string | null
+  requestSignature: string | null
+  idempotencyKey: string | null
+}
+
 export function useCheckoutFlow() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -74,6 +82,12 @@ export function useCheckoutFlow() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>(DEFAULT_PAYMENT_METHOD)
   const [formData, setFormData] = useState(initialFormData)
+  const checkoutAttemptRef = useRef<CheckoutAttempt>({
+    addressSignature: null,
+    createdAddressId: null,
+    requestSignature: null,
+    idempotencyKey: null,
+  })
 
   const selectedCartItemIds = useMemo(() => {
     const value = searchParams.get('items')
@@ -385,10 +399,21 @@ export function useCheckoutFlow() {
     setLoading(true)
 
     try {
+      const addressSignature = shouldCreateAddress
+        ? [formData.fullName, formData.phone, buildReceiverAddress(formData)]
+            .map((value) => value.trim())
+            .join('|')
+        : null
+      const retryAddressId =
+        addressSignature !== null &&
+        checkoutAttemptRef.current.addressSignature === addressSignature
+          ? checkoutAttemptRef.current.createdAddressId
+          : null
       const addressId = !requiresAddress
         ? null
         : shouldCreateAddress
-          ? (
+          ? retryAddressId ??
+            (
               await createAddress({
                 receiverName: formData.fullName,
                 receiverPhone: formData.phone,
@@ -396,6 +421,13 @@ export function useCheckoutFlow() {
               })
             ).id
           : selectedAddressId
+      if (addressSignature !== null && addressId !== null) {
+        checkoutAttemptRef.current = {
+          ...checkoutAttemptRef.current,
+          addressSignature,
+          createdAddressId: addressId,
+        }
+      }
       const normalizedBookCouponCode =
         normalizeCouponCode(formData.bookCouponCode) || null
       const normalizedShippingCouponCode = hasPhysicalItems
@@ -408,7 +440,7 @@ export function useCheckoutFlow() {
         return
       }
 
-      const order = await createOrder({
+      const checkoutRequest: CreateOrderRequest = {
         cartItemIds: orderCartItemIds,
         addressId,
         shippingMethod: hasPhysicalItems ? shippingMethod : 'PICKUP',
@@ -416,9 +448,30 @@ export function useCheckoutFlow() {
         bookCouponCode: normalizedBookCouponCode,
         shippingCouponCode: normalizedShippingCouponCode,
         note: formData.note.trim() || null,
+      }
+      const requestSignature = JSON.stringify({
+        ...checkoutRequest,
+        cartItemIds: [...checkoutRequest.cartItemIds].sort(),
       })
+      const idempotencyKey =
+        checkoutAttemptRef.current.requestSignature === requestSignature
+          ? checkoutAttemptRef.current.idempotencyKey ?? createIdempotencyKey()
+          : createIdempotencyKey()
+      checkoutAttemptRef.current = {
+        ...checkoutAttemptRef.current,
+        requestSignature,
+        idempotencyKey,
+      }
+
+      const order = await createOrder(checkoutRequest, idempotencyKey)
 
       await refreshCart()
+      checkoutAttemptRef.current = {
+        addressSignature: null,
+        createdAddressId: null,
+        requestSignature: null,
+        idempotencyKey: null,
+      }
       toast.success(t('checkout.success'))
 
       const nextSearchParams = new URLSearchParams({
@@ -427,6 +480,7 @@ export function useCheckoutFlow() {
         paymentMethod: order.paymentMethod,
         transferContent: order.transferContent,
         totalAmount: String(order.totalAmount),
+        paymentExpiresAt: order.paymentExpiresAt ?? '',
       })
 
       navigate(`/order-confirmation?${nextSearchParams.toString()}`, {
@@ -471,6 +525,10 @@ export function useCheckoutFlow() {
     applySuggestedCoupon,
     handleSubmit,
   }
+}
+
+function createIdempotencyKey() {
+  return crypto.randomUUID()
 }
 
 function buildReceiverAddress(formData: CheckoutFormState) {
