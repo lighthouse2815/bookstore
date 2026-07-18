@@ -1,63 +1,63 @@
-# Bookstore Monorepo
+# Kho mã nguồn Bookstore
 
-Huong dan chay cac du an trong `D:\bookstore` bang terminal.
+Hướng dẫn chạy các dự án trong `D:\bookstore` bằng terminal.
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
-- `bookstore-backend`: Spring Boot backend + MySQL
-- `bookstore-website`: React + Vite website
-- `bookstore-mobile`: Android app
-- `bookstore-desktop`: WPF desktop app
-- `bookstore-shipapp`: ship app rieng, khong nam trong scope README nay
+- `bookstore-backend`: backend Spring Boot và MySQL
+- `bookstore-website`: website React và Vite
+- `bookstore-mobile`: ứng dụng Android
+- `bookstore-desktop`: ứng dụng desktop WPF
+- `bookstore-shipapp`: ứng dụng giao hàng riêng, không thuộc phạm vi của README này
 
-## Yeu cau moi truong
+## Yêu cầu môi trường
 
 - Docker Desktop
 - Java 21
-- Node.js 22.13+
-- npm
-- Android Studio + Android SDK
-- .NET 8 SDK tren Windows
+- Node.js 22.13 trở lên
+- pnpm 11.11.0 thông qua Corepack
+- Android Studio và Android SDK
+- .NET 8 SDK trên Windows
 
-## 1. Chay Docker MySQL
+## 1. Chạy MySQL bằng Docker
 
-Mo terminal tai thu muc backend:
+Mở terminal tại thư mục backend:
 
 ```powershell
 cd D:\bookstore\bookstore-backend
 docker-compose up -d
 ```
 
-Kiem tra container:
+Kiểm tra container:
 
 ```powershell
 docker ps
 ```
 
-Dung MySQL:
+Dừng MySQL:
 
 ```powershell
 cd D:\bookstore\bookstore-backend
 docker-compose down
 ```
 
-## 2. Chay Backend
+## 2. Chạy backend
 
-Tu thu muc `bookstore-backend`:
+Từ thư mục `bookstore-backend`:
 
 ```powershell
 cd D:\bookstore\bookstore-backend
 .\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Neu muon compile nhanh bo qua test:
+Nếu muốn biên dịch nhanh và bỏ qua kiểm thử:
 
 ```powershell
 cd D:\bookstore\bookstore-backend
 .\mvnw.cmd --% -q -DskipTests compile
 ```
 
-Backend mac dinh:
+Địa chỉ backend mặc định:
 
 ```txt
 http://localhost:8080
@@ -69,15 +69,15 @@ Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Luu y:
+Lưu ý:
 
-- Truoc khi chay backend, dam bao da copy `.env.example` thanh `.env` trong `D:\bookstore\bookstore-backend`.
-- Backend dung MySQL trong Docker, nen thuong phai chay `docker-compose up -d` truoc.
-- Local development nen chay voi profile `dev`; production can set `SPRING_PROFILES_ACTIVE=prod` va phai cung cap `JWT_SECRET`, `DB_USER`, `DB_PASSWORD` tu environment.
+- Trước khi chạy backend, hãy bảo đảm đã sao chép `.env.example` thành `.env` trong `D:\bookstore\bookstore-backend`.
+- Backend sử dụng MySQL trong Docker, vì vậy thường phải chạy `docker-compose up -d` trước.
+- Môi trường phát triển cục bộ nên dùng profile `dev`. Môi trường production cần đặt `SPRING_PROFILES_ACTIVE=prod` và cung cấp `JWT_SECRET`, `DB_USER`, `DB_PASSWORD` qua biến môi trường.
 
-## 3. Chay Website
+## 3. Chạy website
 
-Tu thu muc `bookstore-website`:
+Từ thư mục `bookstore-website`:
 
 ```powershell
 cd D:\bookstore\bookstore-website
@@ -86,72 +86,72 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Build production:
+Biên dịch bản production:
 
 ```powershell
 cd D:\bookstore\bookstore-website
 pnpm build
 ```
 
-Website mac dinh:
+Địa chỉ website mặc định:
 
 ```txt
 http://localhost:5173
 ```
 
-Luu y:
+Lưu ý:
 
-- Truoc khi chay web, dam bao da copy `.env.example` thanh `.env` trong `D:\bookstore\bookstore-website`.
-- Website dung pnpm 11.11.0 theo `packageManager` va `pnpm-lock.yaml`; khong chay `npm install` de tranh lam lech lockfile.
-- Bien `VITE_API_BASE_URL` nen tro den backend, thuong la `http://localhost:8080/api`.
-- Backend can cho phep CORS voi `http://localhost:5173`.
-- Website authentication uses an HttpOnly refresh cookie. Do not add refresh or access tokens to `localStorage`; see [AUTH_SESSION_SECURITY.md](docs/AUTH_SESSION_SECURITY.md) and [AUTH_API_CONTRACT.md](docs/AUTH_API_CONTRACT.md).
+- Trước khi chạy website, hãy bảo đảm đã sao chép `.env.example` thành `.env` trong `D:\bookstore\bookstore-website`.
+- Website sử dụng pnpm 11.11.0 theo trường `packageManager` và file `pnpm-lock.yaml`. Không chạy `npm install` để tránh làm lệch lockfile.
+- Biến `VITE_API_BASE_URL` nên trỏ đến backend, thường là `http://localhost:8080/api`.
+- Backend cần cho phép CORS với `http://localhost:5173`.
+- Website dùng refresh cookie HttpOnly để xác thực. Không lưu refresh token hoặc access token trong `localStorage`; xem [AUTH_SESSION_SECURITY.md](docs/AUTH_SESSION_SECURITY.md) và [AUTH_API_CONTRACT.md](docs/AUTH_API_CONTRACT.md).
 
-## 4. Chay Mobile Android
+## 4. Chạy ứng dụng Android
 
-### Cach 1: Chay bang Android Studio
+### Cách 1: Chạy bằng Android Studio
 
 ```powershell
 cd D:\bookstore\bookstore-mobile
 ```
 
-Sau do mo thu muc nay bang Android Studio, doi sync Gradle, chon emulator hoac may that roi bam Run.
+Sau đó mở thư mục này bằng Android Studio, đợi đồng bộ Gradle, chọn trình giả lập hoặc thiết bị thật rồi bấm Run.
 
-### Cach 2: Build bang terminal
+### Cách 2: Biên dịch bằng terminal
 
 ```powershell
 cd D:\bookstore\bookstore-mobile
 .\gradlew.bat assembleDebug
 ```
 
-Cai APK vao may/emulator:
+Cài APK vào thiết bị hoặc trình giả lập:
 
 ```powershell
 cd D:\bookstore\bookstore-mobile
 .\gradlew.bat installDebug
 ```
 
-APK debug nam o:
+APK debug nằm tại:
 
 ```txt
 D:\bookstore\bookstore-mobile\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-Luu y:
+Lưu ý:
 
-- `installDebug` can co emulator dang chay hoac dien thoai da ket noi.
-- Neu dung Android emulator de goi backend local, thuong dung host `10.0.2.2:8080`.
-- Neu dung dien thoai that, base URL phai la IP LAN cua may chay backend, vi du `http://192.168.1.10:8080`.
+- Lệnh `installDebug` cần có trình giả lập đang chạy hoặc điện thoại đã kết nối.
+- Nếu dùng trình giả lập Android để gọi backend cục bộ, thường dùng địa chỉ `10.0.2.2:8080`.
+- Nếu dùng điện thoại thật, base URL phải là địa chỉ IP LAN của máy chạy backend, ví dụ `http://192.168.1.10:8080`.
 
-## 5. Chay Desktop
+## 5. Chạy ứng dụng desktop
 
-Desktop app nam trong project:
+Ứng dụng desktop nằm trong dự án:
 
 ```txt
 D:\bookstore\bookstore-desktop\Bookstore.Desktop
 ```
 
-Chay bang terminal:
+Chạy bằng terminal:
 
 ```powershell
 cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
@@ -160,20 +160,20 @@ dotnet build
 dotnet run
 ```
 
-Luu y:
+Lưu ý:
 
-- Can Windows va .NET 8 SDK.
-- App desktop goi backend qua `http://localhost:8080` theo mac dinh.
-- Neu can doi backend URL, doi trong man hinh cai dat cua app sau khi dang nhap.
+- Cần Windows và .NET 8 SDK.
+- Ứng dụng desktop gọi backend qua `http://localhost:8080` theo mặc định.
+- Nếu cần đổi URL backend, hãy thay đổi trong màn hình cài đặt của ứng dụng sau khi đăng nhập.
 
-## Thu tu chay de demo full he thong
+## Thứ tự chạy để demo toàn hệ thống
 
-1. Chay MySQL bang Docker.
-2. Chay backend.
-3. Chay website hoac desktop.
-4. Neu can mobile, chay emulator truoc roi build/install app.
+1. Chạy MySQL bằng Docker.
+2. Chạy backend.
+3. Chạy website hoặc ứng dụng desktop.
+4. Nếu cần ứng dụng mobile, hãy chạy trình giả lập trước rồi biên dịch hoặc cài đặt ứng dụng.
 
-## Lenh nhanh
+## Lệnh nhanh
 
 ### Backend
 

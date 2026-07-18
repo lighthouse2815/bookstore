@@ -1,11 +1,11 @@
 # Bookstore Mobile
 
-Android native demo app cho khach hang mua sach, goi truc tiep Spring Boot backend hien co.
+Ứng dụng Android thuần dùng để demo quy trình mua sách của khách hàng và gọi trực tiếp đến backend Spring Boot hiện có.
 
-## Cong nghe
+## Công nghệ
 
 - Kotlin
-- Android native
+- Android thuần
 - Jetpack Compose
 - Material 3
 - MVVM + StateFlow
@@ -17,101 +17,101 @@ Android native demo app cho khach hang mua sach, goi truc tiep Spring Boot backe
 - Coil
 - Gradle Kotlin DSL
 
-## Chay backend
+## Chạy backend
 
-Tu thu muc `bookstore-backend/`:
+Từ thư mục `bookstore-backend/`:
 
 ```powershell
 docker-compose up -d
-mvn spring-boot:run
+.\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Backend mac dinh chay tai:
+Backend mặc định chạy tại:
 
 ```txt
 http://localhost:8080
 ```
 
-Lenh kiem tra build backend:
+Lệnh kiểm tra bản biên dịch backend:
 
 ```powershell
-mvn -q -DskipTests compile
+.\mvnw.cmd --% -q -DskipTests compile
 ```
 
-## Mo va chay mobile
+## Mở và chạy ứng dụng mobile
 
-1. Mo thu muc `bookstore-mobile/` bang Android Studio.
-2. Doi sync Gradle xong.
-3. Chon emulator Android.
-4. Run app `app`.
+1. Mở thư mục `bookstore-mobile/` bằng Android Studio.
+2. Đợi đồng bộ Gradle hoàn tất.
+3. Chọn trình giả lập Android hoặc thiết bị thật.
+4. Chạy target `app`.
 
-Hoac build debug APK bang PowerShell:
+Hoặc biên dịch APK debug bằng PowerShell:
 
 ```powershell
 cd D:\bookstore\bookstore-mobile
 .\gradlew.bat assembleDebug
 ```
 
-APK debug nam o:
+APK debug nằm tại:
 
 ```txt
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## API base URL
+## Base URL của API
 
-Mac dinh ban build hien tai dung may that:
-
-```txt
-http://192.168.x.x:8080
-```
-
-Ghi chu:
-
-- Android emulator dung `10.0.2.2` de goi `localhost` cua may host.
-- Neu doi Wi-Fi/IP LAN, vao link `Cai dat API cho may that` tren man Login hoac vao `Profile > Settings` sau khi dang nhap, doi base URL thanh IP LAN cua may chay backend, vi du:
+Bản build hiện tại mặc định dùng địa chỉ dành cho thiết bị thật:
 
 ```txt
 http://192.168.x.x:8080
 ```
 
-## Luong demo
+Ghi chú:
 
-1. Login hoac Register.
-2. Register se tao user `INACTIVE`, backend gui OTP email, sau do nhap OTP de kich hoat.
-3. Xem Home va danh sach sach.
-4. Xem chi tiet sach.
-5. Them sach vao gio.
-6. Cap nhat/xoa item trong gio.
-7. Checkout bang dia chi giao hang.
-8. Xem man hinh dat hang thanh cong.
-9. Xem danh sach don hang va chi tiet don.
-10. Xem/cap nhat profile co ban va logout.
+- Trình giả lập Android dùng `10.0.2.2` để gọi `localhost` của máy host.
+- Nếu đổi Wi-Fi hoặc địa chỉ IP LAN, hãy chọn `Cài đặt API cho máy thật` trên màn hình đăng nhập hoặc vào `Hồ sơ > Cài đặt` sau khi đăng nhập. Sau đó đổi base URL thành địa chỉ IP LAN của máy chạy backend, ví dụ:
 
-## Tai khoan demo
+```txt
+http://192.168.x.x:8080
+```
 
-Co 2 cach demo tai khoan customer tren mobile:
+## Luồng demo
 
-1. Dung seed dataset:
-   - Chay backend voi profile `seed`.
-   - Tai khoan customer dau tien: `minhanh.nguyen`
-   - Password dung gia tri `APP_DEMO_USER_PASSWORD` trong `bookstore-backend/.env`
-2. Tu tao tai khoan moi trong app:
-   - Dang ky email moi trong app
-   - Nhap OTP duoc backend gui qua email
-   - Dang nhap bang email va mat khau vua tao
+1. Đăng nhập hoặc đăng ký.
+2. Khi đăng ký, backend tạo người dùng ở trạng thái `INACTIVE` và gửi OTP qua email. Nhập OTP để kích hoạt tài khoản.
+3. Xem trang chủ và danh sách sách.
+4. Xem chi tiết sách.
+5. Thêm sách vào giỏ hàng.
+6. Cập nhật hoặc xóa sản phẩm trong giỏ hàng.
+7. Thanh toán bằng địa chỉ giao hàng.
+8. Xem màn hình đặt hàng thành công.
+9. Xem danh sách đơn hàng và chi tiết đơn hàng.
+10. Xem hoặc cập nhật hồ sơ cơ bản, sau đó đăng xuất.
 
-Neu database chua co du lieu sach, tao toi thieu:
+## Tài khoản demo
 
-- 1 category
-- 1 author
-- 1 publisher
-- 5 sach co `stockQuantity > 0`
-- 1 dia chi se duoc app tao luc checkout
+Có hai cách dùng tài khoản khách hàng để demo trên mobile:
 
-## API dang dung
+1. Dùng bộ dữ liệu seed:
+   - Chạy backend với profile `seed`.
+   - Tài khoản khách hàng đầu tiên: `minhanh.nguyen`.
+   - Mật khẩu dùng giá trị `APP_DEMO_USER_PASSWORD` trong `bookstore-backend/.env`.
+2. Tự tạo tài khoản mới trong ứng dụng:
+   - Đăng ký bằng email mới trong ứng dụng.
+   - Nhập OTP được backend gửi qua email.
+   - Đăng nhập bằng email và mật khẩu vừa tạo.
 
-Auth:
+Nếu cơ sở dữ liệu chưa có dữ liệu sách, cần tạo tối thiểu:
+
+- 1 danh mục
+- 1 tác giả
+- 1 nhà xuất bản
+- 5 sách có `stockQuantity > 0`
+- 1 địa chỉ; ứng dụng có thể tạo địa chỉ này trong lúc thanh toán
+
+## Các API đang sử dụng
+
+Xác thực:
 
 - `POST /api/auth/login`
 - `POST /api/auth/register`
@@ -121,7 +121,7 @@ Auth:
 - `POST /api/otp/verify`
 - `GET /api/users/me`
 
-Book/reference:
+Sách và dữ liệu tham chiếu:
 
 - `GET /api/books`
 - `GET /api/books/search?keyword=...`
@@ -131,7 +131,7 @@ Book/reference:
 - `GET /api/authors`
 - `GET /api/publishers`
 
-Cart:
+Giỏ hàng:
 
 - `GET /api/cart`
 - `POST /api/cart/items`
@@ -139,7 +139,7 @@ Cart:
 - `DELETE /api/cart/items/{itemId}`
 - `DELETE /api/cart/items`
 
-Checkout/address/order:
+Thanh toán, địa chỉ và đơn hàng:
 
 - `GET /api/user-addresses`
 - `POST /api/user-addresses`
@@ -147,22 +147,22 @@ Checkout/address/order:
 - `GET /api/orders/my`
 - `GET /api/orders/{id}`
 
-Checkout note:
+Ghi chú thanh toán:
 
-- Backend checkout request uses `bookCouponCode` and `shippingCouponCode`
-- Mobile UI currently has one coupon box and maps that value to `bookCouponCode`
+- Yêu cầu thanh toán của backend dùng hai trường `bookCouponCode` và `shippingCouponCode`.
+- Giao diện mobile hiện có một ô mã giảm giá và ánh xạ giá trị đó vào `bookCouponCode`.
 
-Profile:
+Hồ sơ:
 
 - `GET /api/profiles/me`
 - `PUT /api/profiles/me`
 - `PUT /api/users/me`
 
-## Gioi han demo
+## Giới hạn của bản demo
 
-- Khong co offline mode/Room database.
-- Khong tich hop payment gateway that.
-- Checkout dung `BANK_TRANSFER_QR`, vi backend hien tai validate payment method nay trong `OrderService`.
-- App tao dia chi giao hang toi thieu truoc khi checkout neu can.
-- Khong co admin mobile.
-- Khong co push notification, deep link, wishlist, chat support.
+- Không có chế độ ngoại tuyến hoặc cơ sở dữ liệu Room.
+- Không tích hợp cổng thanh toán thật.
+- Luồng thanh toán dùng `BANK_TRANSFER_QR` vì backend hiện kiểm tra phương thức thanh toán này trong `OrderService`.
+- Ứng dụng tạo địa chỉ giao hàng tối thiểu trước khi thanh toán nếu cần.
+- Không có trang quản trị trên mobile.
+- Không có thông báo đẩy, liên kết sâu, danh sách yêu thích hoặc chat hỗ trợ.

@@ -1,52 +1,53 @@
-# Bookstore Website
+# Website Bookstore
 
-React 19 + Vite 8 storefront/admin frontend for the bookstore project.
+Frontend cửa hàng và trang quản trị của dự án Bookstore, được xây dựng bằng React 19 và Vite 8.
 
-## Tooling
+## Công cụ và công nghệ
 
-- Node.js 22.13+
-- npm
+- Node.js 22.13 trở lên
+- pnpm 11.11.0
 - React 19
 - TypeScript
 - Vite 8
 
-This checkout currently has both `package-lock.json` and `pnpm-lock.yaml`, but the documented workflow here is `npm`.
+Repository hiện có cả `package-lock.json` và `pnpm-lock.yaml`, nhưng quy trình chuẩn sử dụng pnpm theo trường `packageManager` trong `package.json`.
 
-## Setup
+## Cài đặt
 
 ```powershell
 cd D:\bookstore\bookstore-website
 Copy-Item .env.example .env
-npm install
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-## Run locally
+## Chạy cục bộ
 
 ```powershell
 cd D:\bookstore\bookstore-website
-npm run dev
+pnpm dev
 ```
 
-Default URL:
+Địa chỉ mặc định:
 
 ```txt
 http://localhost:5173
 ```
 
-## Verification
+## Kiểm tra
 
 ```powershell
 cd D:\bookstore\bookstore-website
-npm run build
-npm test
+pnpm build
+pnpm test
 ```
 
-## Required env
+## Biến môi trường bắt buộc
 
 - `VITE_API_BASE_URL=http://localhost:8080/api`
-- `VITE_GOOGLE_CLIENT_ID=...` for Google login
+- `VITE_GOOGLE_CLIENT_ID=...` dùng cho chức năng đăng nhập bằng Google
 
-## Related docs
+## Tài liệu liên quan
 
-- Monorepo run guide: `D:\bookstore\docs\RUN_PROJECT.md`
-- Backend production DB note: `D:\bookstore\bookstore-backend\docs\PRODUCTION_DATABASE_SETUP.md`
+- Hướng dẫn chạy toàn bộ repository: `D:\bookstore\docs\RUN_PROJECT.md`
+- Hướng dẫn cơ sở dữ liệu production của backend: `D:\bookstore\bookstore-backend\docs\PRODUCTION_DATABASE_SETUP.md`
