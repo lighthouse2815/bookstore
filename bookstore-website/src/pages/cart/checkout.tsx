@@ -27,7 +27,7 @@ import type { CartItem } from '@/types/cart'
 import type { CouponResponse, CouponType } from '@/types/coupon'
 import { cn } from '@/utils'
 import { filterCouponsByType } from '@/utils/checkout-coupon'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 
 type CheckoutLabels = Record<string, string>
 
@@ -866,6 +866,7 @@ function OrderSummaryItem({
         <img
           src={getBookCoverUrl(item.cover)}
           alt={item.title}
+          onError={(event) => setBookCoverFallback(event.currentTarget)}
           className="size-full object-cover"
         />
         <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">

@@ -14,27 +14,33 @@ import { getErrorMessage } from '@/utils'
 
 type BookDialogMode = 'create' | 'view' | 'edit' | 'delete'
 
+type BookFormImage = {
+  id?: string
+  fileAssetId: string
+  previewUrl: string
+  altText: string
+  primaryImage: boolean
+}
+
 type BookFormState = {
   title: string
   description: string
   price: string
   stockQuantity: string
-  imageAltText: string
-  imageFileAssetId: string
-  imagePreviewUrl: string
+  images: BookFormImage[]
   categoryId: string
   authorId: string
   publisherId: string
 }
+
+type BookFormTextField = Exclude<keyof BookFormState, 'images'>
 
 const initialFormState: BookFormState = {
   title: '',
   description: '',
   price: '',
   stockQuantity: '',
-  imageAltText: '',
-  imageFileAssetId: '',
-  imagePreviewUrl: '',
+  images: [],
   categoryId: '',
   authorId: '',
   publisherId: '',
@@ -72,7 +78,8 @@ export function useAdminBooksPage() {
     references.authors.length > 0 &&
     references.publishers.length > 0
 
-  const isDialogLocked = dialogMode === 'delete' && isDeleting
+  const isDialogLocked =
+    (dialogMode === 'delete' && isDeleting) || isUploadingImage || isSubmitting
 
   const filteredBooks = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase()
@@ -182,24 +189,20 @@ export function useAdminBooksPage() {
   }
 
   function createFormState(book: Book): BookFormState {
+    const hasPrimaryImage = book.images.some((image) => image.primaryImage)
+
     return {
       title: book.title,
       description: book.description ?? '',
       price: String(book.price),
       stockQuantity: String(book.stockQuantity),
-      imageAltText:
-        book.images.find((image) => image.primaryImage)?.altText ??
-        book.images[0]?.altText ??
-        '',
-      imageFileAssetId:
-        book.images.find((image) => image.primaryImage)?.fileAssetId ??
-        book.images[0]?.fileAssetId ??
-        '',
-      imagePreviewUrl:
-        book.images.find((image) => image.primaryImage)?.imageUrl ??
-        book.images[0]?.imageUrl ??
-        book.cover ??
-        '',
+      images: book.images.map((image, index) => ({
+        id: image.id,
+        fileAssetId: image.fileAssetId,
+        previewUrl: image.imageUrl,
+        altText: image.altText ?? '',
+        primaryImage: hasPrimaryImage ? image.primaryImage : index === 0,
+      })),
       categoryId: book.categoryId,
       authorId: book.authorId,
       publisherId: book.publisherId,
@@ -242,37 +245,116 @@ export function useAdminBooksPage() {
     setForm(initialFormState)
   }
 
-  function handleFormChange(field: keyof BookFormState, value: string) {
+  function handleFormChange(field: BookFormTextField, value: string) {
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
     }))
   }
 
-  async function handleImageFileChange(file: File | null) {
-    if (!file) {
+  async function handleImageFilesChange(files: File[]) {
+    if (files.length === 0) {
       return
     }
 
     setIsUploadingImage(true)
 
     try {
-      const uploadedFile = await uploadManagedFile(file, {
-        purpose: 'BOOK_IMAGE',
-        visibility: 'PUBLIC',
-        bookId: dialogMode === 'edit' ? selectedBook?.id : undefined,
-      })
+      const uploadedImages: BookFormImage[] = []
+      let failedUploadCount = 0
 
-      setForm((currentForm) => ({
-        ...currentForm,
-        imageFileAssetId: uploadedFile.id,
-        imagePreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
-      }))
-    } catch (currentError) {
-      toast.error(getErrorMessage(currentError, t('checkout.error')))
+      for (const file of files) {
+        try {
+          const uploadedFile = await uploadManagedFile(file, {
+            purpose: 'BOOK_IMAGE',
+            visibility: 'PUBLIC',
+            bookId: dialogMode === 'edit' ? selectedBook?.id : undefined,
+          })
+
+          uploadedImages.push({
+            fileAssetId: uploadedFile.id,
+            previewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            altText: '',
+            primaryImage: false,
+          })
+        } catch {
+          failedUploadCount += 1
+        }
+      }
+
+      if (uploadedImages.length > 0) {
+        setForm((currentForm) => {
+          const shouldAssignPrimaryImage = currentForm.images.length === 0
+          const normalizedUploadedImages = uploadedImages.map((image, index) => ({
+            ...image,
+            primaryImage: shouldAssignPrimaryImage && index === 0,
+          }))
+
+          return {
+            ...currentForm,
+            images: [...currentForm.images, ...normalizedUploadedImages],
+          }
+        })
+      }
+
+      if (failedUploadCount > 0) {
+        toast.error(
+          t('admin.books.imageUploadPartial', {
+            failed: failedUploadCount,
+            total: files.length,
+          }),
+        )
+      }
     } finally {
       setIsUploadingImage(false)
     }
+  }
+
+  function handleBookImageAltTextChange(imageIndex: number, value: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      images: currentForm.images.map((image, index) =>
+        index === imageIndex ? { ...image, altText: value } : image,
+      ),
+    }))
+  }
+
+  function setPrimaryBookImage(imageIndex: number) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      images: currentForm.images.map((image, index) => ({
+        ...image,
+        primaryImage: index === imageIndex,
+      })),
+    }))
+  }
+
+  function moveBookImage(imageIndex: number, direction: -1 | 1) {
+    setForm((currentForm) => {
+      const nextIndex = imageIndex + direction
+
+      if (nextIndex < 0 || nextIndex >= currentForm.images.length) {
+        return currentForm
+      }
+
+      const images = [...currentForm.images]
+      ;[images[imageIndex], images[nextIndex]] = [images[nextIndex], images[imageIndex]]
+
+      return { ...currentForm, images }
+    })
+  }
+
+  function removeBookImage(imageIndex: number) {
+    setForm((currentForm) => {
+      const removedImageWasPrimary = currentForm.images[imageIndex]?.primaryImage === true
+      const images = currentForm.images.filter((_, index) => index !== imageIndex)
+
+      if (removedImageWasPrimary && images.length > 0) {
+        images[0] = { ...images[0], primaryImage: true }
+      }
+
+      return { ...currentForm, images }
+    })
   }
 
   async function reloadBooks() {
@@ -311,16 +393,13 @@ export function useAdminBooksPage() {
         description: form.description.trim() || null,
         price: Number(form.price),
         stockQuantity: Number(form.stockQuantity),
-        images: form.imageFileAssetId
-          ? [
-              {
-                fileAssetId: form.imageFileAssetId,
-                primaryImage: true,
-                sortOrder: 0,
-                altText: form.imageAltText.trim() || null,
-              },
-            ]
-          : [],
+        images: form.images.map((image, index) => ({
+          id: image.id,
+          fileAssetId: image.fileAssetId,
+          primaryImage: image.primaryImage,
+          sortOrder: index,
+          altText: image.altText.trim() || null,
+        })),
         categoryId: form.categoryId,
         authorId: form.authorId,
         publisherId: form.publisherId,
@@ -396,7 +475,11 @@ export function useAdminBooksPage() {
     openDeleteDialog,
     closeDialog,
     handleFormChange,
-    handleImageFileChange,
+    handleImageFilesChange,
+    handleBookImageAltTextChange,
+    setPrimaryBookImage,
+    moveBookImage,
+    removeBookImage,
     handleSubmit,
     confirmDelete,
   }

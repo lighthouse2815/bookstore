@@ -62,10 +62,15 @@ export const messages = {
       createdAt: 'Tạo lúc',
       updatedAt: 'Cập nhật lúc',
       pagination: {
+        navigation: 'Phân trang',
         previous: 'Trang trước',
         next: 'Trang sau',
         page: 'Trang {page}/{total}',
         total: 'Tổng cộng {count} bản ghi',
+        goToPage: 'Đến trang {page}',
+        jumpLabel: 'Đến trang',
+        jumpInput: 'Nhập số trang muốn đến',
+        jumpAction: 'Đi',
       },
     },
     header: {
@@ -96,6 +101,9 @@ export const messages = {
       newsletterTitle: 'Đăng ký nhận tin',
       newsletterDescription: 'Nhận ưu đãi và gợi ý sách hay mỗi tuần.',
       newsletterPlaceholder: 'Email của bạn',
+      newsletterSubmitting: 'Đang đăng ký',
+      newsletterSuccess: 'Đăng ký nhận tin thành công.',
+      newsletterError: 'Không thể đăng ký nhận tin. Vui lòng thử lại.',
       copyright: '© 2026 SáchVui. Bảo lưu mọi quyền.',
       tagline: 'Thiết kế dành cho người yêu sách.',
       links: {
@@ -525,8 +533,15 @@ export const messages = {
         author: 'Tác giả',
         reviewsCount: '({count} đánh giá)',
         saveAmount: 'Tiết kiệm {amount}',
-        shippingInfo:
-          'Giao hàng nhanh 24-48h. Miễn phí vận chuyển cho đơn từ {amount}.',
+        availabilityLabel: 'Tình trạng',
+        deliveryTitle: 'Giao hàng nhanh',
+        deliveryTime: 'Nhận trong 24-48 giờ',
+        freeShippingTitle: 'Miễn phí vận chuyển',
+        freeShippingThreshold: 'Đơn từ {amount}',
+        wishlistShort: 'Yêu thích',
+        wishlistedShort: 'Đã lưu',
+        shelfShort: 'Kệ sách',
+        journalShort: 'Nhật ký',
         descriptionTitle: 'Giới thiệu sách',
         descriptionFallback: 'Mô tả sách đang được cập nhật.',
         detailsTitle: 'Mô tả chi tiết',
@@ -1070,12 +1085,30 @@ export const messages = {
       },
       customer: {
         title: 'Hỗ trợ khách hàng',
-        subtitle: 'Nhận hồi đáp trực tiếp từ nhân viên',
+        chooseModeTitle: 'Bạn muốn được hỗ trợ theo cách nào?',
+        chooseModeDescription:
+          'Có thể đổi lựa chọn bất cứ lúc nào trong cuộc trò chuyện.',
+        modeSwitcherLabel: 'Kênh hỗ trợ',
+        aiMode: 'Chat với trợ lý AI',
+        aiModeDescription:
+          'Nhận phản hồi ngay về sách và cách sử dụng website.',
+        humanMode: 'Chat với nhân viên',
+        humanModeDescription:
+          'Trao đổi trực tiếp với đội ngũ hỗ trợ qua kết nối realtime.',
+        humanAgent: 'Nhân viên SáchVui',
+        aiAssistant: 'Trợ lý AI SáchVui',
+        aiReplying: 'Trợ lý AI đang soạn câu trả lời...',
+        aiHandoff:
+          'Trợ lý AI đang tạm nghỉ. Tin nhắn của bạn đã được chuyển cho nhân viên hỗ trợ.',
+        aiLimitReached:
+          'Bạn đã dùng hết lượt AI hôm nay. Nhân viên hỗ trợ sẽ tiếp tục phản hồi trong cuộc trò chuyện này.',
         defaultSubject: 'Hỗ trợ khách hàng',
         newConversation: 'Cuộc trò chuyện mới',
         subject: 'Chủ đề',
         subjectPlaceholder: 'Ví dụ: Hỏi về đơn hàng #1234',
         sendPlaceholder: 'Nhập nội dung cần hỗ trợ...',
+        aiSendPlaceholder: 'Nhập câu hỏi cho trợ lý AI...',
+        humanSendPlaceholder: 'Nhập nội dung cần nhân viên hỗ trợ...',
         send: 'Gửi tin nhắn',
         loadingMessages: 'Đang tải tin nhắn...',
         loadOlderMessages: 'Tải tin nhắn cũ hơn',
@@ -1085,10 +1118,11 @@ export const messages = {
         closedNotice:
           'Cuộc trò chuyện này đã đóng. Tạo cuộc trò chuyện mới nếu bạn cần hỗ trợ tiếp.',
         closeConversation: 'Đóng cuộc trò chuyện',
-        realtimeConnected: 'Đang kết nối realtime',
-        realtimeFallback: 'Đang dùng REST fallback',
+        realtimeConnected: 'Realtime đã kết nối',
+        realtimeFallback: 'Realtime đang kết nối lại',
         refresh: 'Tải lại',
         openChat: 'Mở chat hỗ trợ',
+        closeChat: 'Đóng chat hỗ trợ',
         incomingTitle: 'Tin nhắn hỗ trợ mới',
         viewAllNotifications: 'Xem thông báo',
       },
@@ -1226,6 +1260,20 @@ export const messages = {
         referencesSplitDescription:
           'Mở các trang danh mục, tác giả hoặc nhà xuất bản để tạo dữ liệu dùng cho form sách.',
         previewTitle: 'Xem nhanh hiển thị',
+        imageGalleryTitle: 'Ảnh bìa và ảnh chi tiết',
+        imageGalleryHelp:
+          'Tải nhiều ảnh, chọn một ảnh làm bìa và sắp xếp thứ tự hiển thị trên trang chi tiết sách.',
+        imageGalleryEmpty: 'Chưa có ảnh nào cho sách này.',
+        addImages: 'Chọn một hoặc nhiều ảnh',
+        uploadingImages: 'Đang tải ảnh lên...',
+        imageCount: '{count} ảnh',
+        setPrimaryImage: 'Đặt làm ảnh bìa',
+        primaryImage: 'Ảnh bìa',
+        moveImageLeft: 'Chuyển ảnh sang trước',
+        moveImageRight: 'Chuyển ảnh ra sau',
+        removeImage: 'Xóa ảnh khỏi sách',
+        imageAltText: 'Mô tả ảnh',
+        imageUploadPartial: 'Có {failed}/{total} ảnh tải lên không thành công.',
         emptyPreviewTitle: 'Tên sách sẽ hiển thị ở đây',
         emptyPreviewDescription:
           'Mô tả ngắn và hình ảnh sẽ được xem trước ngay trên form.',
@@ -1734,10 +1782,15 @@ export const messages = {
       createdAt: 'Created at',
       updatedAt: 'Updated at',
       pagination: {
+        navigation: 'Pagination',
         previous: 'Previous page',
         next: 'Next page',
         page: 'Page {page}/{total}',
         total: '{count} records in total',
+        goToPage: 'Go to page {page}',
+        jumpLabel: 'Go to page',
+        jumpInput: 'Enter a page number',
+        jumpAction: 'Go',
       },
     },
     header: {
@@ -1768,6 +1821,9 @@ export const messages = {
       newsletterTitle: 'Newsletter',
       newsletterDescription: 'Get weekly deals and curated book picks.',
       newsletterPlaceholder: 'Your email',
+      newsletterSubmitting: 'Subscribing',
+      newsletterSuccess: 'You are now subscribed to the newsletter.',
+      newsletterError: 'Unable to subscribe. Please try again.',
       copyright: '© 2026 SachVui. All rights reserved.',
       tagline: 'Designed for book lovers.',
       links: {
@@ -2194,7 +2250,15 @@ export const messages = {
         author: 'Author',
         reviewsCount: '({count} reviews)',
         saveAmount: 'Save {amount}',
-        shippingInfo: 'Fast delivery in 24-48h. Free shipping for orders over {amount}.',
+        availabilityLabel: 'Availability',
+        deliveryTitle: 'Fast delivery',
+        deliveryTime: 'Arrives in 24-48 hours',
+        freeShippingTitle: 'Free shipping',
+        freeShippingThreshold: 'Orders from {amount}',
+        wishlistShort: 'Wishlist',
+        wishlistedShort: 'Saved',
+        shelfShort: 'Bookshelf',
+        journalShort: 'Journal',
         descriptionTitle: 'About this book',
         descriptionFallback: 'Book description is being updated.',
         detailsTitle: 'Detailed description',
@@ -2729,12 +2793,30 @@ export const messages = {
       },
       customer: {
         title: 'Customer support',
-        subtitle: 'Get live help from the support team',
+        chooseModeTitle: 'How would you like to get support?',
+        chooseModeDescription:
+          'You can switch channels at any time during the conversation.',
+        modeSwitcherLabel: 'Support channel',
+        aiMode: 'Chat with AI assistant',
+        aiModeDescription:
+          'Get an immediate answer about books and using the website.',
+        humanMode: 'Chat with an agent',
+        humanModeDescription:
+          'Talk directly with the support team over a realtime connection.',
+        humanAgent: 'SachVui support agent',
+        aiAssistant: 'SachVui AI assistant',
+        aiReplying: 'The AI assistant is preparing a reply...',
+        aiHandoff:
+          'The AI assistant is temporarily unavailable. Your message has been handed to the support team.',
+        aiLimitReached:
+          'You have used today’s AI allowance. The support team will continue in this conversation.',
         defaultSubject: 'Customer support',
         newConversation: 'New conversation',
         subject: 'Subject',
         subjectPlaceholder: 'Example: Question about order #1234',
         sendPlaceholder: 'Type your support message...',
+        aiSendPlaceholder: 'Ask the AI assistant...',
+        humanSendPlaceholder: 'Type a message for the support team...',
         send: 'Send message',
         loadingMessages: 'Loading messages...',
         loadOlderMessages: 'Load older messages',
@@ -2745,9 +2827,10 @@ export const messages = {
           'This conversation is closed. Start a new one if you still need help.',
         closeConversation: 'Close conversation',
         realtimeConnected: 'Realtime connected',
-        realtimeFallback: 'Using REST fallback',
+        realtimeFallback: 'Realtime reconnecting',
         refresh: 'Refresh',
         openChat: 'Open support chat',
+        closeChat: 'Close support chat',
         incomingTitle: 'New support reply',
         viewAllNotifications: 'View notifications',
       },
@@ -2885,6 +2968,20 @@ orders: {
         referencesSplitDescription:
           'Open the categories, authors, or publishers pages to create the options used by the book form.',
         previewTitle: 'Live preview',
+        imageGalleryTitle: 'Cover and detail images',
+        imageGalleryHelp:
+          'Upload multiple images, choose one cover, and arrange their display order on the book detail page.',
+        imageGalleryEmpty: 'No images have been added to this book yet.',
+        addImages: 'Choose one or more images',
+        uploadingImages: 'Uploading images...',
+        imageCount: '{count} images',
+        setPrimaryImage: 'Set as cover',
+        primaryImage: 'Cover image',
+        moveImageLeft: 'Move image earlier',
+        moveImageRight: 'Move image later',
+        removeImage: 'Remove image from book',
+        imageAltText: 'Image description',
+        imageUploadPartial: '{failed} of {total} images failed to upload.',
         emptyPreviewTitle: 'The book title preview will appear here',
         emptyPreviewDescription:
           'The short description and image preview update immediately from the form.',
@@ -4269,7 +4366,6 @@ Object.assign(messages.vi.home.funDiscovery as Record<string, string>, {
   readingChallengeDescription:
     'Tạo thử thách cá nhân, tăng tiến độ bằng từng cuốn đã đọc và giữ mọi thứ ngay trên trình duyệt của bạn.',
   readingChallengeCta: 'Tạo challenge',
-  readingChallengeHint: 'Frontend-only MVP, lưu bằng localStorage.',
   readingChallengeProgress: '{completed}/{target} cuốn',
   readingChallengeActiveDescription:
     'Trạng thái {status}, đã đi được {progress}. Mở lại để cập nhật tiến độ hoặc chỉnh deadline.',
@@ -4288,7 +4384,6 @@ Object.assign(messages.en.home.funDiscovery as Record<string, string>, {
   readingChallengeDescription:
     'Create a personal challenge, move the bar book by book, and keep everything in your browser only.',
   readingChallengeCta: 'Create challenge',
-  readingChallengeHint: 'Frontend-only MVP powered by localStorage.',
   readingChallengeProgress: '{completed}/{target} books',
   readingChallengeActiveDescription:
     'Status: {status}. You are already {progress} in. Open it again to update progress or change the deadline.',
@@ -4938,16 +5033,12 @@ Object.assign(messages.vi.book.detail as Record<string, unknown>, {
   addToWishlist: 'Thêm vào wishlist',
   removeFromWishlist: 'Bỏ khỏi wishlist',
   recentlyViewedTitle: 'Bạn vừa xem',
-  recentlyViewedDescription:
-    'Quay lại nhanh những tựa sách bạn đã mở gần đây.',
 })
 
 Object.assign(messages.en.book.detail as Record<string, unknown>, {
   addToWishlist: 'Add to wishlist',
   removeFromWishlist: 'Remove from wishlist',
   recentlyViewedTitle: 'Recently viewed',
-  recentlyViewedDescription:
-    'Quick access to books you opened a moment ago.',
 })
 
 Object.assign(messages.vi.cart as Record<string, unknown>, {

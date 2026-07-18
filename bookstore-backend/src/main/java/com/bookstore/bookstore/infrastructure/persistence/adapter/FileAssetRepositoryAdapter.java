@@ -6,6 +6,7 @@ import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.infrastructure.persistence.entity.FileAssetJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.FileAssetPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -88,6 +89,16 @@ public class FileAssetRepositoryAdapter implements IFileAssetRepository {
                 fileAssetJpaRepository.countDigitalAssetSampleUsages(fileAssetId)
         );
         return List.copyOf(usageReferences);
+    }
+
+    @Override
+    public long calculateReservedStorageBytes() {
+        return fileAssetJpaRepository.calculateReservedStorageBytes(List.of(FileStatus.PENDING, FileStatus.ACTIVE));
+    }
+
+    @Override
+    public long countUploadsCreatedAtOrAfter(Instant createdAt) {
+        return fileAssetJpaRepository.countByCreatedAtGreaterThanEqual(createdAt);
     }
 
     @Override

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-labelledby="title">
+  <title id="title">SáchVui</title>
+  <rect width="180" height="180" rx="42" fill="#6d4cff" />
+  <path
+    d="M84 57c-13-10-29-14-49-12v78c19-2 35 2 49 13V57Z"
+    fill="#fff"
+  />
+  <path
+    d="M96 57c13-10 29-14 49-12v78c-19-2-35 2-49 13V57Z"
+    fill="#fff"
+  />
+  <path
+    d="M42 57c13-1 24 2 34 8M138 57c-13-1-24 2-34 8"
+    fill="none"
+    stroke="#6d4cff"
+    stroke-linecap="round"
+    stroke-width="6"
+    opacity=".4"
+  />
+  <circle cx="90" cy="42" r="7" fill="#ffb35c" />
+</svg>

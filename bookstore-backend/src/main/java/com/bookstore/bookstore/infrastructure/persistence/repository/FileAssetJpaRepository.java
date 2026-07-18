@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.domain.enums.FileStatus;
 import com.bookstore.bookstore.infrastructure.persistence.entity.FileAssetJpaEntity;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,16 @@ public interface FileAssetJpaRepository extends JpaRepository<FileAssetJpaEntity
     Optional<FileAssetJpaEntity> findByIdAndStatusAndDeletedAtIsNull(UUID id, FileStatus status);
 
     List<FileAssetJpaEntity> findAllByIdInAndStatusAndDeletedAtIsNull(Collection<UUID> ids, FileStatus status);
+
+    @Query("""
+            select coalesce(sum(f.sizeBytes), 0)
+            from FileAssetJpaEntity f
+            where f.deletedAt is null
+              and f.status in :statuses
+            """)
+    long calculateReservedStorageBytes(@Param("statuses") Collection<FileStatus> statuses);
+
+    long countByCreatedAtGreaterThanEqual(Instant createdAt);
 
     @Query("""
             select count(bi)

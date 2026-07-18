@@ -12,7 +12,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useDigitalLibraryDetailPage } from '@/hooks/use-digital-library-detail-page'
 import NotFoundPage from '@/pages/home/not-found'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { formatDigitalFileSize } from '@/utils/digital-asset'
 
 export default function DigitalLibraryDetailPage() {
@@ -76,6 +76,7 @@ export default function DigitalLibraryDetailPage() {
               <img
                 src={getBookCoverUrl(asset.bookImageUrl)}
                 alt={asset.bookTitle}
+                onError={(event) => setBookCoverFallback(event.currentTarget)}
                 className="aspect-[3/4] w-full object-cover"
               />
             </div>

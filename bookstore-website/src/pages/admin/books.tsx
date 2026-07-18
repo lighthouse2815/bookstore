@@ -4,12 +4,16 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Edit2,
   Eye,
+  ImagePlus,
   Package2,
   Plus,
   RefreshCw,
   Search,
+  Star,
   Tag,
   Trash2,
   User2,
@@ -39,7 +43,7 @@ import type {
   DigitalAssetFormat,
   DigitalAssetResponse,
 } from '@/types/digital-library'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { formatDigitalFileSize } from '@/utils/digital-asset'
 import { cn } from '@/utils'
 import { getCategoryLabel } from '@/utils/i18n'
@@ -82,10 +86,17 @@ export default function AdminBooksPage() {
     openDeleteDialog,
     closeDialog,
     handleFormChange,
-    handleImageFileChange,
+    handleImageFilesChange,
+    handleBookImageAltTextChange,
+    setPrimaryBookImage,
+    moveBookImage,
+    removeBookImage,
     handleSubmit,
     confirmDelete,
   } = useAdminBooksPage()
+
+  const primaryFormImage =
+    form.images.find((image) => image.primaryImage) ?? form.images[0]
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -99,7 +110,7 @@ export default function AdminBooksPage() {
 
       <div
         className={cn(
-          'relative z-10 w-full rounded-[32px] border border-border/70 bg-card/95 p-6 shadow-[0_40px_120px_rgba(2,6,23,0.55)] backdrop-blur xl:p-7',
+          'relative z-10 max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-[32px] border border-border/70 bg-card/95 p-6 shadow-[0_40px_120px_rgba(2,6,23,0.55)] backdrop-blur sm:max-h-[calc(100dvh-3rem)] xl:p-7',
           dialogSizeClassName,
         )}
       >
@@ -228,43 +239,153 @@ export default function AdminBooksPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="bookImageUpload">
-                      {t('admin.books.fields.imageUrl')}
-                    </Label>
-                    <Input
-                      id="bookImageUpload"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) =>
-                        void handleImageFileChange(
-                          event.currentTarget.files?.[0] ?? null,
-                        )
-                      }
-                      className="mt-2 h-12 rounded-2xl bg-background/60"
-                    />
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {isUploadingImage
-                        ? t('common.processing')
-                        : t('admin.books.previewTitle')}
-                    </p>
+                <section className="rounded-[24px] border border-border/60 bg-background/35 p-4 sm:p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t('admin.books.imageGalleryTitle')}
+                      </h3>
+                      <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
+                        {t('admin.books.imageGalleryHelp')}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                      {t('admin.books.imageCount', { count: form.images.length })}
+                    </span>
                   </div>
 
-                  <div>
-                    <Label htmlFor="bookImageAltText">
-                      {t('common.description')}
-                    </Label>
-                    <Input
-                      id="bookImageAltText"
-                      value={form.imageAltText}
-                      onChange={(event) =>
-                        handleFormChange('imageAltText', event.currentTarget.value)
-                      }
-                      className="mt-2 h-12 rounded-2xl bg-background/60"
-                    />
-                  </div>
-                </div>
+                  <label
+                    htmlFor="bookImageUpload"
+                    className={cn(
+                      'mt-4 flex min-h-28 cursor-pointer items-center justify-center gap-3 rounded-[18px] border border-dashed border-primary/35 bg-primary/5 px-4 py-5 text-left transition-colors hover:border-primary/60 hover:bg-primary/8',
+                      isUploadingImage && 'cursor-wait opacity-70',
+                    )}
+                  >
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                      <ImagePlus className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-foreground">
+                        {isUploadingImage
+                          ? t('admin.books.uploadingImages')
+                          : t('admin.books.addImages')}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        JPG, PNG, WebP
+                      </span>
+                    </span>
+                  </label>
+                  <Input
+                    id="bookImageUpload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    disabled={isUploadingImage}
+                    onChange={(event) => {
+                      const files = Array.from(event.currentTarget.files ?? [])
+                      event.currentTarget.value = ''
+                      void handleImageFilesChange(files)
+                    }}
+                    className="sr-only"
+                  />
+
+                  {form.images.length === 0 ? (
+                    <div className="mt-4 rounded-[18px] border border-border/50 bg-background/55 px-4 py-6 text-center text-sm text-muted-foreground">
+                      {t('admin.books.imageGalleryEmpty')}
+                    </div>
+                  ) : (
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {form.images.map((image, index) => (
+                        <article
+                          key={image.id ?? image.fileAssetId}
+                          className="overflow-hidden rounded-[20px] border border-border/60 bg-background/65"
+                        >
+                          <img
+                            src={getBookCoverUrl(image.previewUrl)}
+                            alt={image.altText || form.title || t('admin.books.fields.title')}
+                            onError={(event) => setBookCoverFallback(event.currentTarget)}
+                            className="aspect-[3/4] w-full bg-muted object-cover"
+                          />
+
+                          <div className="space-y-3 p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={image.primaryImage ? 'secondary' : 'outline'}
+                                aria-pressed={image.primaryImage}
+                                onClick={() => setPrimaryBookImage(index)}
+                                className="min-w-0 rounded-xl px-3"
+                              >
+                                <Star
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    image.primaryImage && 'fill-current text-primary',
+                                  )}
+                                />
+                                {image.primaryImage
+                                  ? t('admin.books.primaryImage')
+                                  : t('admin.books.setPrimaryImage')}
+                              </Button>
+
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={index === 0}
+                                  aria-label={t('admin.books.moveImageLeft')}
+                                  onClick={() => moveBookImage(index, -1)}
+                                  className="size-9 rounded-xl"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={index === form.images.length - 1}
+                                  aria-label={t('admin.books.moveImageRight')}
+                                  onClick={() => moveBookImage(index, 1)}
+                                  className="size-9 rounded-xl"
+                                >
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={t('admin.books.removeImage')}
+                                  onClick={() => removeBookImage(index)}
+                                  className="size-9 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label htmlFor={`bookImageAltText-${index}`}>
+                                {t('admin.books.imageAltText')}
+                              </Label>
+                              <Input
+                                id={`bookImageAltText-${index}`}
+                                value={image.altText}
+                                onChange={(event) =>
+                                  handleBookImageAltTextChange(
+                                    index,
+                                    event.currentTarget.value,
+                                  )
+                                }
+                                className="mt-2 h-10 rounded-xl bg-background/75"
+                              />
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <ReferenceSelectField
@@ -312,8 +433,9 @@ export default function AdminBooksPage() {
                 <div className="mt-4 flex flex-col gap-4">
                   <div className="overflow-hidden rounded-[20px] border border-border/60 bg-background/70">
                     <img
-                      src={getBookCoverUrl(form.imagePreviewUrl)}
+                      src={getBookCoverUrl(primaryFormImage?.previewUrl)}
                       alt={form.title || t('admin.books.fields.title')}
+                      onError={(event) => setBookCoverFallback(event.currentTarget)}
                       className="aspect-[3/4] w-full object-cover"
                     />
                   </div>
@@ -343,7 +465,7 @@ export default function AdminBooksPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !hasReferenceData}
+                disabled={isSubmitting || isUploadingImage || !hasReferenceData}
                 className="rounded-2xl"
               >
                 {isSubmitting ? t('common.processing') : t('common.save')}
@@ -507,6 +629,7 @@ export default function AdminBooksPage() {
                               <img
                                 src={getBookCoverUrl(book.cover)}
                                 alt={book.title}
+                                onError={(event) => setBookCoverFallback(event.currentTarget)}
                                 className="h-36 w-24 object-cover"
                               />
                             </div>
@@ -665,6 +788,7 @@ function BookDetailDialogContent({
           <img
             src={getBookCoverUrl(book.cover)}
             alt={book.title}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="aspect-[3/4] w-full object-cover"
           />
         </div>
@@ -810,6 +934,7 @@ function BookDeleteDialogContent({
           <img
             src={getBookCoverUrl(book.cover)}
             alt={book.title}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="h-24 w-16 object-cover"
           />
         </div>

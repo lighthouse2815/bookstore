@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { connectChatRealtime, disconnectChatRealtime } from '@/services/chat-realtime-service'
+import { getAccessToken } from '@/services/api'
 import {
   assignConversation as assignConversationRequest,
   closeAdminConversation as closeAdminConversationRequest,
@@ -80,7 +81,6 @@ export type AdminChatLabels = {
   noMessagesYet: string
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const ADMIN_PAGE_SIZE = 20
 const MESSAGE_PAGE_SIZE = 30
 
@@ -286,7 +286,7 @@ export function useAdminChatPage() {
       return
     }
 
-    const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+    const accessToken = getAccessToken()
     if (!accessToken) {
       setIsRealtimeConnected(false)
       return

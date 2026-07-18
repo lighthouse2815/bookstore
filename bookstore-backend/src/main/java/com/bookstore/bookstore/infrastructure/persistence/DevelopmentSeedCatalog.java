@@ -533,8 +533,8 @@ final class DevelopmentSeedCatalog {
             int pageCount,
             long price
     ) {
-        String coverUrl() {
-            return "https://covers.openlibrary.org/b/id/%d-L.jpg".formatted(coverId);
+        String coverStorageKey() {
+            return "public/seed/books/%s.jpg".formatted(isbn);
         }
     }
 }

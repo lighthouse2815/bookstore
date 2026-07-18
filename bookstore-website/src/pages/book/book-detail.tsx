@@ -1,4 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import {
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   BookPlus,
@@ -6,6 +11,7 @@ import {
   ChevronRight,
   Heart,
   Headphones,
+  PackageCheck,
   ShieldCheck,
   Star,
   TicketPercent,
@@ -32,7 +38,7 @@ import type {
   BookPromotion,
   BookRatingSummary,
 } from '@/types/book'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 import {
   getRecentlyViewedBooks,
@@ -55,6 +61,10 @@ type DetailItem = {
   value: string
 }
 
+const BOOK_DETAIL_TAB_IDS = ['details', 'description', 'reviews'] as const
+
+type BookDetailTab = (typeof BOOK_DETAIL_TAB_IDS)[number]
+
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -75,12 +85,15 @@ export default function BookDetailPage() {
     notFound,
   } = useBookDetail(id)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [activeDetailTab, setActiveDetailTab] =
+    useState<BookDetailTab>('details')
   const [recentlyViewedBooks, setRecentlyViewedBooks] = useState<BookCardData[]>(
     [],
   )
 
   useEffect(() => {
     setSelectedImageIndex(0)
+    setActiveDetailTab('details')
   }, [id])
 
   useEffect(() => {
@@ -148,6 +161,34 @@ export default function BookDetailPage() {
     navigate(`/reading-journal?bookId=${book.id}`)
   }
 
+  function handleDetailTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) {
+    let nextIndex: number | null = null
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % BOOK_DETAIL_TAB_IDS.length
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex =
+        (currentIndex - 1 + BOOK_DETAIL_TAB_IDS.length) %
+        BOOK_DETAIL_TAB_IDS.length
+    } else if (event.key === 'Home') {
+      nextIndex = 0
+    } else if (event.key === 'End') {
+      nextIndex = BOOK_DETAIL_TAB_IDS.length - 1
+    }
+
+    if (nextIndex === null) {
+      return
+    }
+
+    event.preventDefault()
+    const nextTab = BOOK_DETAIL_TAB_IDS[nextIndex]
+    setActiveDetailTab(nextTab)
+    document.getElementById(`book-detail-tab-${nextTab}`)?.focus()
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -196,6 +237,23 @@ export default function BookDetailPage() {
   const reviewItems = reviews.slice(0, 3)
   const brandName = t('common.brand')
   const isFavorite = isWishlisted(book.id)
+  const detailTabs = [
+    {
+      id: 'details' as const,
+      label: t('book.detail.detailsTitle'),
+      icon: BookOpenText,
+    },
+    {
+      id: 'description' as const,
+      label: t('book.detail.descriptionTitle'),
+      icon: PencilLine,
+    },
+    {
+      id: 'reviews' as const,
+      label: `${t('book.detail.reviewTitle')} (${formatNumber(reviewCount)})`,
+      icon: Star,
+    },
+  ]
 
   const detailItems = [
     createTextDetailItem(t('book.detail.specIsbn'), book.isbn, detailFallback),
@@ -290,6 +348,7 @@ export default function BookDetailPage() {
                 <img
                   src={image.src}
                   alt={image.alt}
+                  onError={(event) => setBookCoverFallback(event.currentTarget)}
                   className="absolute inset-0 size-full object-cover"
                 />
               </button>
@@ -302,6 +361,7 @@ export default function BookDetailPage() {
                 <img
                   src={activeImage.src}
                   alt={activeImage.alt}
+                  onError={(event) => setBookCoverFallback(event.currentTarget)}
                   className="absolute inset-0 size-full object-cover"
                 />
                 {discount > 0 && (
@@ -427,69 +487,6 @@ export default function BookDetailPage() {
               </div>
             ) : null}
 
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold ${
-                    book.stockQuantity > 0
-                      ? 'bg-emerald-500/10 text-emerald-600'
-                      : 'bg-destructive/10 text-destructive'
-                  }`}
-                >
-                  <span
-                    className={`size-2 rounded-full ${
-                      book.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-destructive'
-                    }`}
-                  />
-                  {book.stockQuantity > 0
-                    ? t('book.detail.stockValue', {
-                        count: formatNumber(book.stockQuantity),
-                      })
-                    : t('book.detail.stockOut')}
-                </span>
-                <span className="text-muted-foreground">
-                  {t('book.detail.shippingInfo', {
-                    amount: formatCurrency(200000),
-                  })}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  void handleToggleWishlist()
-                }}
-                className={`inline-flex h-12 items-center gap-2 rounded-2xl border px-5 text-sm font-semibold transition-colors ${
-                  isFavorite
-                    ? 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'
-                    : 'border-border bg-background text-foreground hover:bg-muted'
-                }`}
-                aria-pressed={isFavorite}
-              >
-                <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} />
-                {isFavorite
-                  ? t('book.detail.removeFromWishlist')
-                  : t('book.detail.addToWishlist')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAddToShelf}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-              >
-                <BookPlus className="size-4" />
-                {t('shelves.addToShelfAction')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAddJournalEntry}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-              >
-                <PencilLine className="size-4" />
-                {t('readingJournal.openFromBookDetail')}
-              </button>
-            </div>
-
-            <AddToCart book={book} />
           </section>
 
           <aside className="order-4 space-y-4 xl:pt-1">
@@ -573,31 +570,168 @@ export default function BookDetailPage() {
           </aside>
         </section>
 
-        <div className="mt-12 flex flex-wrap gap-6 border-b border-border text-sm">
-          <a
-            href="#book-details"
-            className="border-b-2 border-primary pb-3 font-semibold text-primary"
-          >
-            {t('book.detail.detailsTitle')}
-          </a>
-          <a
-            href="#book-description"
-            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {t('book.detail.descriptionTitle')}
-          </a>
-          <a
-            href="#book-reviews"
-            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {`${t('book.detail.reviewTitle')} (${formatNumber(reviewCount)})`}
-          </a>
-        </div>
+        <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-primary/15 bg-card/55 shadow-[0_24px_70px_-44px_hsl(var(--primary)/0.5)]">
+          <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4 sm:px-6">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {t('book.detail.availabilityLabel')}
+            </h2>
+            <span
+              className={`inline-flex items-center gap-2 text-sm font-semibold tabular-nums ${
+                book.stockQuantity > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-destructive'
+              }`}
+            >
+              <span
+                className={`size-2 rounded-full ${
+                  book.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-destructive'
+                }`}
+              />
+              {book.stockQuantity > 0
+                ? t('book.detail.stockValue', {
+                    count: formatNumber(book.stockQuantity),
+                  })
+                : t('book.detail.stockOut')}
+            </span>
+          </div>
+
+          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-5">
+            <div className="flex min-h-24 min-w-0 items-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Truck className="size-[1.125rem]" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {t('book.detail.deliveryTitle')}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-foreground">
+                  {t('book.detail.deliveryTime')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex min-h-24 min-w-0 items-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <PackageCheck className="size-[1.125rem]" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {t('book.detail.freeShippingTitle')}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-foreground">
+                  {t('book.detail.freeShippingThreshold', {
+                    amount: formatCurrency(200000),
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleToggleWishlist()
+              }}
+              className={`group flex min-h-24 items-center justify-center gap-3 rounded-2xl border px-4 py-4 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0 ${
+                isFavorite
+                  ? 'border-primary/35 bg-primary/10 text-primary'
+                  : 'border-border/80 bg-background/55 text-foreground hover:border-primary/35 hover:bg-primary/5'
+              }`}
+              aria-label={
+                isFavorite
+                  ? t('book.detail.removeFromWishlist')
+                  : t('book.detail.addToWishlist')
+              }
+              aria-pressed={isFavorite}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <Heart
+                  className={`size-[1.125rem] ${isFavorite ? 'fill-current' : ''}`}
+                />
+              </span>
+              {isFavorite
+                ? t('book.detail.wishlistedShort')
+                : t('book.detail.wishlistShort')}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAddToShelf}
+              className="group flex min-h-24 items-center justify-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4 text-sm font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0"
+              aria-label={t('shelves.addToShelfAction')}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <BookPlus className="size-[1.125rem]" />
+              </span>
+              {t('book.detail.shelfShort')}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAddJournalEntry}
+              className="group flex min-h-24 items-center justify-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4 text-sm font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0 sm:col-span-2 lg:col-span-1"
+              aria-label={t('readingJournal.openFromBookDetail')}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <PencilLine className="size-[1.125rem]" />
+              </span>
+              {t('book.detail.journalShort')}
+            </button>
+          </div>
+        </section>
 
         <section
-          id="book-details"
-          className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_360px]"
+          aria-label={t('book.addToCart.addToCart')}
+          className="mt-4 rounded-[1.75rem] border border-primary/15 bg-card/55 p-4 shadow-[0_22px_60px_-46px_hsl(var(--primary)/0.45)] sm:p-5"
         >
+          <AddToCart book={book} />
+        </section>
+
+        <div className="mt-12 overflow-x-auto pb-1">
+          <div
+            role="tablist"
+            aria-label={`${book.title} - ${t('book.detail.detailsTitle')}`}
+            className="inline-flex min-w-full gap-1 rounded-2xl border border-border/70 bg-muted/30 p-1.5 sm:grid sm:grid-cols-3"
+          >
+            {detailTabs.map((tab, index) => {
+              const TabIcon = tab.icon
+              const isActive = activeDetailTab === tab.id
+
+              return (
+                <button
+                  key={tab.id}
+                  id={`book-detail-tab-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`book-detail-panel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveDetailTab(tab.id)}
+                  onKeyDown={(event) => handleDetailTabKeyDown(event, index)}
+                  className={`inline-flex min-h-12 min-w-[12rem] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:min-w-0 ${
+                    isActive
+                      ? 'bg-card text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-border/70 dark:shadow-[0_8px_24px_rgba(0,0,0,0.24)]'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground active:scale-[0.99]'
+                  }`}
+                >
+                  <TabIcon
+                    className={`size-4 ${isActive ? 'text-primary' : ''}`}
+                    strokeWidth={1.8}
+                  />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {activeDetailTab === 'details' ? (
+          <section
+            id="book-detail-panel-details"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-details"
+            tabIndex={0}
+            className="mt-6 grid animate-fade-in gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 xl:grid-cols-[minmax(0,1.5fr)_360px]"
+          >
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
               <BookOpenText className="size-5 text-primary" />
@@ -661,24 +795,34 @@ export default function BookDetailPage() {
               </p>
             )}
           </section>
-        </section>
+          </section>
+        ) : null}
 
-        <section
-          id="book-description"
-          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
-        >
+        {activeDetailTab === 'description' ? (
+          <section
+            id="book-detail-panel-description"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-description"
+            tabIndex={0}
+            className="mt-6 animate-fade-in rounded-3xl border border-border bg-card p-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-8"
+          >
           <h2 className="font-heading text-2xl font-bold">
             {t('book.detail.descriptionTitle')}
           </h2>
           <p className="mt-4 max-w-4xl leading-8 text-muted-foreground">
             {book.description || t('book.detail.descriptionFallback')}
           </p>
-        </section>
+          </section>
+        ) : null}
 
-        <section
-          id="book-reviews"
-          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
-        >
+        {activeDetailTab === 'reviews' ? (
+          <section
+            id="book-detail-panel-reviews"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-reviews"
+            tabIndex={0}
+            className="mt-6 animate-fade-in rounded-3xl border border-border bg-card p-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-8"
+          >
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h2 className="font-heading text-2xl font-bold">
@@ -817,7 +961,8 @@ export default function BookDetailPage() {
               )}
             </div>
           </div>
-        </section>
+          </section>
+        ) : null}
 
         {suggestions.length > 0 && (
           <section className="mt-16">
@@ -834,12 +979,9 @@ export default function BookDetailPage() {
 
         {recentlyViewedBooks.length > 0 && (
           <section className="mt-10">
-            <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight">
+            <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight">
               {t('book.detail.recentlyViewedTitle')}
             </h2>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {t('book.detail.recentlyViewedDescription')}
-            </p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {recentlyViewedBooks.map((recentBook) => (
                 <BookCard key={recentBook.id} book={recentBook} />

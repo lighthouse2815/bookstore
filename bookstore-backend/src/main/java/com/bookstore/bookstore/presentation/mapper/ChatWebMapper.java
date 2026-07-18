@@ -4,11 +4,13 @@ import com.bookstore.bookstore.application.command.AssignConversationCommand;
 import com.bookstore.bookstore.application.command.CreateConversationCommand;
 import com.bookstore.bookstore.application.command.SendChatMessageCommand;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
+import com.bookstore.bookstore.application.result.AiChatReplyResult;
 import com.bookstore.bookstore.application.result.ConversationResult;
 import com.bookstore.bookstore.presentation.request.AssignConversationRequest;
 import com.bookstore.bookstore.presentation.request.CreateConversationRequest;
 import com.bookstore.bookstore.presentation.request.SendChatMessageRequest;
 import com.bookstore.bookstore.presentation.response.ChatMessageResponse;
+import com.bookstore.bookstore.presentation.response.AiChatReplyResponse;
 import com.bookstore.bookstore.presentation.response.ConversationResponse;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -87,6 +89,14 @@ public class ChatWebMapper {
                 result.attachmentSize(),
                 result.createdAt(),
                 result.updatedAt()
+        );
+    }
+
+    public AiChatReplyResponse toAiChatReplyResponse(AiChatReplyResult result) {
+        return new AiChatReplyResponse(
+                result.status(),
+                result.message() == null ? null : toMessageResponse(result.message()),
+                result.remainingRequests()
         );
     }
 }

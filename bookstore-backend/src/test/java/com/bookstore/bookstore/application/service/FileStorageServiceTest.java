@@ -26,7 +26,9 @@ class FileStorageServiceTest {
                 10L,
                 5L,
                 5L,
-                200L
+                200L,
+                8L * 1024L * 1024L * 1024L,
+                500_000L
         ));
     }
 

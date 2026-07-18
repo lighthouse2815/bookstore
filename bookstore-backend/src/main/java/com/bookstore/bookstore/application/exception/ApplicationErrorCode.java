@@ -86,6 +86,10 @@ public enum ApplicationErrorCode {
     FILE_ASSET_ACCESS_DENIED("APPLICATION_FILE_010", "không có quyền truy cập file"),
     FILE_ASSET_IN_USE("APPLICATION_FILE_011", "file đang được sử dụng bởi: %s"),
     FILE_ASSET_OBJECT_METADATA_MISMATCH("APPLICATION_FILE_012", "metadata tệp trên storage không khớp"),
+    FILE_STORAGE_SAFETY_LIMIT_REACHED(
+            "APPLICATION_FILE_013",
+            "Hệ thống đã tạm dừng upload để không vượt hạn mức lưu trữ miễn phí"
+    ),
 
     CART_NOT_FOUND("APPLICATION_CART_001", "không tìm thấy giỏ hàng"),
     CART_EMPTY("APPLICATION_CART_002", "giỏ hàng đang trống"),
@@ -151,7 +155,10 @@ public enum ApplicationErrorCode {
     PROFILE_ALREADY_EXISTS("APPLICATION_PROFILE_001", "profile đã tồn tại"),
     PROFILE_NOT_FOUND("APPLICATION_PROFILE_002", "không tìm thấy profile"),
     PROFILE_USER_NOT_FOUND("APPLICATION_PROFILE_003", "không tìm thấy user"),
-    PROFILE_USER_ALREADY_HAS_PROFILE("APPLICATION_PROFILE_004", "user đã có profile");
+    PROFILE_USER_ALREADY_HAS_PROFILE("APPLICATION_PROFILE_004", "user đã có profile"),
+
+    NEWSLETTER_SUBSCRIPTION_NOT_FOUND("APPLICATION_NEWSLETTER_001", "Không tìm thấy đăng ký nhận tin"),
+    NEWSLETTER_RATE_LIMITED("APPLICATION_NEWSLETTER_002", "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau");
 
     private final String code;
     private final String messageTemplate;

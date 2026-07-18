@@ -30,7 +30,7 @@ import type {
   DigitalAssetFormat,
 } from '@/types/digital-library'
 import { cn, getErrorMessage } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 
 const FORMAT_OPTIONS: Array<DigitalAssetFormat | 'all'> = [
   'all',
@@ -217,6 +217,7 @@ export default function DigitalLibraryPage() {
                           <img
                             src={getBookCoverUrl(item.bookImageUrl)}
                             alt={item.bookTitle}
+                            onError={(event) => setBookCoverFallback(event.currentTarget)}
                             className="aspect-[3/4] w-full object-cover"
                           />
                         </div>

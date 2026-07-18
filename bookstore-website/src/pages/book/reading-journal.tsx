@@ -27,7 +27,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useReadingJournal } from '@/hooks/use-reading-journal'
 import type { ReadingJournalEntry } from '@/types/reading-journal'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { groupReadingJournalEntriesByDate } from '@/utils/reading-journal'
 
 export default function ReadingJournalPage() {
@@ -644,6 +644,7 @@ function JournalEntryCard({
           <img
             src={getBookCoverUrl(entry.book.cover)}
             alt={entry.book.title}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="absolute inset-0 size-full object-cover"
           />
         </button>

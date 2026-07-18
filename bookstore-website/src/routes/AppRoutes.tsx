@@ -31,6 +31,9 @@ const ShippingPolicyPage = lazy(() => import('@/pages/support/shipping-policy'))
 const ReturnsRefundsPage = lazy(() => import('@/pages/support/returns-refunds'))
 const FaqPage = lazy(() => import('@/pages/support/faq'))
 const ContactPage = lazy(() => import('@/pages/support/contact'))
+const NewsletterUnsubscribePage = lazy(
+  () => import('@/pages/support/newsletter-unsubscribe'),
+)
 const OrderConfirmationPage = lazy(
   () => import('@/pages/order/order-confirmation'),
 )
@@ -303,6 +306,14 @@ function AppRouteContent() {
                 <WishlistPage />
               </LazyPage>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/newsletter/unsubscribe"
+          element={
+            <LazyPage>
+              <NewsletterUnsubscribePage />
+            </LazyPage>
           }
         />
         <Route

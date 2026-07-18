@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title description">
+  <title id="title">SáchVui</title>
+  <desc id="description">Ảnh bìa sách đang được cập nhật</desc>
+  <rect width="600" height="800" rx="28" fill="#10111a"/>
+  <rect x="48" y="48" width="504" height="704" rx="24" fill="#171925" stroke="#34314f" stroke-width="2"/>
+  <circle cx="300" cy="314" r="92" fill="#24213f"/>
+  <path d="M248 268c28 0 45 8 52 20 7-12 24-20 52-20 15 0 28 3 40 8v106c-12-5-25-8-40-8-28 0-45 8-52 20-7-12-24-20-52-20-15 0-28 3-40 8V276c12-5 25-8 40-8Z" fill="none" stroke="#8b7cff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M300 288v106" stroke="#8b7cff" stroke-width="10" stroke-linecap="round"/>
+  <text x="300" y="482" fill="#f5f3ff" font-family="Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">Sách<tspan fill="#8b7cff">Vui</tspan></text>
+  <text x="300" y="536" fill="#aaa7ba" font-family="Arial, sans-serif" font-size="22" text-anchor="middle">Ảnh bìa đang được cập nhật</text>
+</svg>

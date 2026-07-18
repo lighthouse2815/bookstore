@@ -29,7 +29,7 @@ import { useWishlist } from '@/contexts/wishlist-context'
 import { useGiftFinder } from '@/hooks/use-gift-finder'
 import { isGiftFinderReady } from '@/services/gift-finder-service'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 import type { Book, BookCardData } from '@/types/book'
 import type {
@@ -595,6 +595,7 @@ function GiftRecommendationCard({
           <img
             src={getBookCoverUrl(book.cover)}
             alt={t('book.card.coverAlt', { title: book.title })}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="absolute inset-0 size-full object-cover transition-transform duration-300 hover:scale-[1.03]"
           />
         </div>

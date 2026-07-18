@@ -21,6 +21,7 @@ import {
   connectNotificationRealtime,
   disconnectNotificationRealtime,
 } from '@/services/notification-realtime-service'
+import { getAccessToken } from '@/services/api'
 import type { NotificationResponse } from '@/types/notification'
 import { getErrorMessage } from '@/utils'
 
@@ -36,7 +37,6 @@ type NotificationContextType = {
   deleteNotification: (notificationId: string) => Promise<void>
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const INITIAL_PAGE_SIZE = 10
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -102,7 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+      const accessToken = getAccessToken()
       if (!accessToken) {
         setIsRealtimeConnected(false)
         return

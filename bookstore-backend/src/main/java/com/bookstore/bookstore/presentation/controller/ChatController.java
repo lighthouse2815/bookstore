@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IChatService;
+import com.bookstore.bookstore.application.port.in.IAiChatService;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
 import com.bookstore.bookstore.application.result.ChatMessageSliceResult;
 import com.bookstore.bookstore.application.result.ConversationResult;
@@ -12,6 +13,7 @@ import com.bookstore.bookstore.presentation.request.CreateConversationRequest;
 import com.bookstore.bookstore.presentation.request.SendChatMessageRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.ChatMessageResponse;
+import com.bookstore.bookstore.presentation.response.AiChatReplyResponse;
 import com.bookstore.bookstore.presentation.response.ConversationResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -41,6 +43,7 @@ public class ChatController {
     private static final String HEADER_HAS_NEXT = "X-Has-Next";
 
     private final IChatService chatService;
+    private final IAiChatService aiChatService;
     private final ChatWebMapper chatWebMapper;
 
     @GetMapping("/api/chat/conversations/my")
@@ -99,6 +102,17 @@ public class ChatController {
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(chatWebMapper.toMessageResponse(result)));
+    }
+
+    @PostMapping("/api/chat/conversations/{conversationId}/ai-reply")
+    public ApiResponse<AiChatReplyResponse> requestAiReply(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID conversationId
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ApiResponse.success(chatWebMapper.toAiChatReplyResponse(
+                aiChatService.requestReply(userId, conversationId)
+        ));
     }
 
     @PutMapping("/api/chat/conversations/{conversationId}/read")

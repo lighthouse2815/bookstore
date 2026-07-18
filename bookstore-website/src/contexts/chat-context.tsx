@@ -16,14 +16,18 @@ import {
   getMessages,
   getMyConversations,
   markConversationRead as markConversationReadRequest,
+  requestAiReply,
   sendMessage as sendMessageRequest,
 } from '@/services/chat-service'
 import {
   connectChatRealtime,
   disconnectChatRealtime,
 } from '@/services/chat-realtime-service'
+import { getAccessToken } from '@/services/api'
 import type {
   ChatMessageResponse,
+  AiChatReplyStatus,
+  ChatSupportMode,
   ConversationResponse,
   CreateConversationRequest,
   SendChatMessageRequest,
@@ -43,6 +47,7 @@ type MessagePageState = {
 type SendMessageOptions = {
   conversationId?: string | null
   createConversation?: CreateConversationRequest
+  responseMode?: ChatSupportMode
 }
 
 type ChatContextType = {
@@ -54,6 +59,8 @@ type ChatContextType = {
   isRealtimeConnected: boolean
   error: string | null
   lastIncomingMessage: ChatMessageResponse | null
+  isAiReplying: boolean
+  aiReplyStatus: AiChatReplyStatus | null
   refresh: () => Promise<void>
   createConversation: (
     data?: CreateConversationRequest,
@@ -75,7 +82,6 @@ type ChatContextType = {
   getMessagePageState: (conversationId: string | null) => MessagePageState
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const DEFAULT_MESSAGE_PAGE_SIZE = 30
 
 const defaultMessagePageState: MessagePageState = {
@@ -108,6 +114,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [lastIncomingMessage, setLastIncomingMessage] =
     useState<ChatMessageResponse | null>(null)
+  const [isAiReplying, setIsAiReplying] = useState(false)
+  const [aiReplyStatus, setAiReplyStatus] = useState<AiChatReplyStatus | null>(
+    null,
+  )
   const conversationsRef = useRef<ConversationResponse[]>([])
   const activeConversationIdRef = useRef<string | null>(null)
 
@@ -148,6 +158,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     if (message.senderRole !== 'USER') {
       setLastIncomingMessage(message)
+    }
+
+    if (message.senderRole === 'SYSTEM') {
+      setIsAiReplying(false)
+      setAiReplyStatus('ANSWERED')
     }
   })
 
@@ -208,7 +223,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+      const accessToken = getAccessToken()
       if (!accessToken) {
         setIsRealtimeConnected(false)
         return
@@ -415,7 +430,47 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       ]),
     )
     setActiveConversationId(currentConversation.conversationId)
+    setAiReplyStatus(null)
     setError(null)
+
+    if (
+      options.responseMode === 'AI' &&
+      (payload.messageType ?? 'TEXT') === 'TEXT'
+    ) {
+      setIsAiReplying(true)
+
+      try {
+        const aiReply = await requestAiReply(currentConversation.conversationId)
+        setAiReplyStatus(aiReply.status)
+
+        if (aiReply.message) {
+          setMessagesByConversation((currentMessagesByConversation) => ({
+            ...currentMessagesByConversation,
+            [currentConversation.conversationId]: mergeMessages(
+              currentMessagesByConversation[currentConversation.conversationId] ??
+                [],
+              [aiReply.message!],
+            ),
+          }))
+          setConversations((currentConversations) =>
+            mergeConversations(currentConversations, [
+              {
+                ...currentConversation,
+                lastMessageId: aiReply.message!.messageId,
+                lastMessagePreview: aiReply.message!.content,
+                lastMessageAt: aiReply.message!.createdAt,
+                updatedAt: aiReply.message!.updatedAt,
+              },
+            ]),
+          )
+        }
+      } catch {
+        setAiReplyStatus('UNAVAILABLE')
+      } finally {
+        setIsAiReplying(false)
+      }
+    }
+
     return currentConversation
   }
 
@@ -466,6 +521,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessagesByConversation({})
     setMessagePages({})
     setLastIncomingMessage(null)
+    setIsAiReplying(false)
+    setAiReplyStatus(null)
     setIsLoading(false)
     setError(null)
     setIsRealtimeConnected(false)
@@ -481,6 +538,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isRealtimeConnected,
       error,
       lastIncomingMessage,
+      isAiReplying,
+      aiReplyStatus,
       refresh,
       createConversation,
       setActiveConversation: setActiveConversationId,
@@ -499,6 +558,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isLoading,
       isRealtimeConnected,
       lastIncomingMessage,
+      isAiReplying,
+      aiReplyStatus,
       unreadCount,
     ],
   )

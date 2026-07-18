@@ -1,11 +1,32 @@
+import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, Globe, Mail, MessageCircle } from 'lucide-react'
+import { BookOpen, Globe, LoaderCircle, Mail, MessageCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
 import { useBrandWordmark } from '@/hooks/use-brand-wordmark'
+import { subscribeNewsletter } from '@/services/newsletter-service'
+import { getErrorMessage } from '@/utils'
 
 export function Footer() {
   const { t } = useLanguage()
   const { brandPrefix, brandSuffix } = useBrandWordmark()
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false)
+
+  async function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsNewsletterSubmitting(true)
+
+    try {
+      await subscribeNewsletter(newsletterEmail.trim())
+      setNewsletterEmail('')
+      toast.success(t('footer.newsletterSuccess'))
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('footer.newsletterError')))
+    } finally {
+      setIsNewsletterSubmitting(false)
+    }
+  }
 
   return (
     <footer className="border-t border-border bg-muted/40">
@@ -101,18 +122,34 @@ export function Footer() {
             <p className="mb-3 text-sm text-muted-foreground">
               {t('footer.newsletterDescription')}
             </p>
-            <form className="flex gap-2">
+            <form className="flex gap-2" onSubmit={handleNewsletterSubmit}>
               <input
                 type="email"
+                name="newsletterEmail"
                 required
+                autoComplete="email"
+                value={newsletterEmail}
+                disabled={isNewsletterSubmitting}
+                onChange={(event) => setNewsletterEmail(event.target.value)}
                 placeholder={t('footer.newsletterPlaceholder')}
+                aria-label={t('footer.newsletterPlaceholder')}
                 className="h-10 w-full rounded-full border border-border bg-background px-4 text-sm outline-none focus:border-primary"
               />
               <button
                 type="submit"
-                className="h-10 shrink-0 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                disabled={isNewsletterSubmitting}
+                className="flex h-10 min-w-16 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {t('common.send')}
+                {isNewsletterSubmitting ? (
+                  <>
+                    <LoaderCircle className="mr-2 size-4 animate-spin" />
+                    <span className="sr-only">
+                      {t('footer.newsletterSubmitting')}
+                    </span>
+                  </>
+                ) : (
+                  t('common.send')
+                )}
               </button>
             </form>
           </div>

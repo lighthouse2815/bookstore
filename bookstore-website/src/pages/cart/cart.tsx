@@ -34,7 +34,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { getBestCartCoupon } from '@/services/cart-service'
 import type { BestCouponSuggestion, CartItem } from '@/types/cart'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 
 const CART_SELECTED_ITEMS_STORAGE_KEY = 'bookstore-cart-selected-items'
 
@@ -541,7 +541,7 @@ function CartLineItem({
   return (
     <article
       className={cn(
-        'grid gap-4 rounded-2xl border border-border bg-background p-4 shadow-sm transition-colors sm:grid-cols-[auto_104px_minmax(0,1fr)_auto] sm:items-center',
+        'grid gap-4 rounded-2xl border border-border bg-background p-4 shadow-sm transition-colors sm:grid-cols-[auto_96px_minmax(0,1fr)_auto] sm:items-center',
         checked && 'border-primary/40 bg-primary/5',
       )}
     >
@@ -553,12 +553,13 @@ function CartLineItem({
 
       <Link
         to={`/books/${item.bookId}`}
-        className="block size-24 overflow-hidden rounded-xl bg-muted sm:size-28"
+        className="group block aspect-[3/4] w-20 overflow-hidden rounded-lg border border-border/70 bg-muted shadow-sm sm:w-24"
       >
         <img
           src={getBookCoverUrl(item.cover)}
           alt={item.title}
-          className="size-full object-cover transition-transform hover:scale-105"
+          onError={(event) => setBookCoverFallback(event.currentTarget)}
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
       </Link>
 

@@ -17,6 +17,8 @@ import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.FileAsset;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -58,6 +60,7 @@ public class FileAssetService implements IFileAssetService {
         validateVisibility(command.purpose(), command.visibility());
         validateContentType(command.purpose(), command.contentType());
         validateSize(command.purpose(), command.sizeBytes());
+        enforceStorageSafetyLimits(command.sizeBytes());
 
         String storageKey = buildStorageKey(command);
         Instant now = Instant.now();
@@ -173,6 +176,24 @@ public class FileAssetService implements IFileAssetService {
     private void requireStorageConfigured() {
         if (!fileStorageSettings.isConfigured()) {
             throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_NOT_CONFIGURED);
+        }
+    }
+
+    private void enforceStorageSafetyLimits(long requestedBytes) {
+        long reservedBytes = fileAssetRepository.calculateReservedStorageBytes();
+        long maxTotalBytes = fileStorageSettings.resolvedSafetyMaxTotalBytes();
+        if (reservedBytes >= maxTotalBytes || requestedBytes > maxTotalBytes - reservedBytes) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_SAFETY_LIMIT_REACHED);
+        }
+
+        Instant now = Instant.now();
+        Instant monthStart = YearMonth.from(now.atZone(ZoneOffset.UTC))
+                .atDay(1)
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant();
+        long monthlyUploads = fileAssetRepository.countUploadsCreatedAtOrAfter(monthStart);
+        if (monthlyUploads >= fileStorageSettings.resolvedSafetyMaxMonthlyUploads()) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_SAFETY_LIMIT_REACHED);
         }
     }
 

@@ -182,12 +182,20 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     i == 1 ? adminEmail() : person.email(),
                     "local-seed-%02d".formatted(i), time(i + 1), userId);
 
+            boolean refreshTokenRevoked = i % 8 == 0;
             insert("""
-                    INSERT INTO refresh_tokens (id, created_at, expires_at, revoked, token, user_id)
-                    VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, UUID_TO_BIN(?))
+                    INSERT INTO refresh_tokens (
+                        id, created_at, expires_at, revoked, token_hash, user_id,
+                        family_id, issued_at, last_used_at, revoked_at, revoke_reason
+                    ) VALUES (
+                        UUID_TO_BIN(?), ?, ?, ?, ?, UUID_TO_BIN(?),
+                        UUID_TO_BIN(?), ?, ?, ?, ?
+                    )
                     """,
-                    id("refresh-token", i), time(i), time(i + 10000), i % 8 == 0,
-                    "seed-refresh-token-%02d-%s".formatted(i, id("refresh-value", i)), userId);
+                    id("refresh-token", i), time(i), time(i + 10000), refreshTokenRevoked,
+                    hashValue("refresh-token", i), userId, id("refresh-token", i), time(i), time(i),
+                    refreshTokenRevoked ? time(i + 2) : null,
+                    refreshTokenRevoked ? "LEGACY_REVOKED" : null);
 
             insert("""
                     INSERT INTO user_otps (
@@ -270,6 +278,8 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             String bookId = id("book", i);
             String digitalAssetId = id("digital-asset", i);
             String storageKey = "digital/books/%02d/ebook-%02d.pdf".formatted(i, i);
+            String coverStorageKey = book.coverStorageKey();
+            String coverUrl = publicStorageUrl(coverStorageKey);
 
             insert("""
                     INSERT INTO file_assets (
@@ -287,12 +297,12 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                         id, bucket, checksum_sha256, content_type, created_at, created_by,
                         deleted_at, original_name, provider, public_url, purpose, size_bytes,
                         status, storage_key, updated_at, visibility
-                    ) VALUES (UUID_TO_BIN(?), 'openlibrary-covers', ?, 'image/jpeg', ?, UUID_TO_BIN(?),
-                        NULL, ?, 'R2', ?, 'BOOK_IMAGE', ?, 'ACTIVE', ?, ?, 'PUBLIC')
+                    ) VALUES (UUID_TO_BIN(?), ?, NULL, 'image/jpeg', ?, UUID_TO_BIN(?),
+                        NULL, ?, ?, ?, 'BOOK_IMAGE', NULL, 'ACTIVE', ?, ?, 'PUBLIC')
                     """,
-                    coverFileAssetId, hashValue("cover", i), time(i), context.userIds().get(0),
-                    "cover-%02d.jpg".formatted(i), book.coverUrl(), 180_000L + i * 1_337L,
-                    "openlibrary/covers/%d-L.jpg".formatted(book.coverId()), time(i + 1));
+                    coverFileAssetId, storageBucket(), time(i), context.userIds().get(0),
+                    "%s.jpg".formatted(book.isbn()), storageProvider(), coverUrl,
+                    coverStorageKey, time(i + 1));
 
             insert("""
                     INSERT INTO books (
@@ -303,7 +313,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     """,
                     bookId, authorId, categoryId, time(i),
                     DevelopmentSeedCatalog.bookDescriptionAt(i - 1, book, category),
-                    book.coverUrl(), money(book.price()), publisherId, seedStockQuantity(i),
+                    coverUrl, money(book.price()), publisherId, seedStockQuantity(i),
                     book.title(), time(i + 1), book.isbn());
 
             insert("""
@@ -323,7 +333,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     ) VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, 0, UUID_TO_BIN(?), UUID_TO_BIN(?))
                     """,
                     id("book-image", i), "Bìa sách %s".formatted(book.title()), time(i),
-                    book.coverUrl(), true, bookId, coverFileAssetId);
+                    coverUrl, true, bookId, coverFileAssetId);
 
             insert("""
                     INSERT INTO digital_assets (
@@ -651,6 +661,9 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         adminEmail();
         adminFullName();
         seedDefaultPassword();
+        storageBucket();
+        storageProvider();
+        requiredProperty("app.storage.public-base-url");
 
         if (seedSize < 15 || seedSize > DevelopmentSeedCatalog.BOOKS.size()) {
             throw new IllegalStateException(
@@ -725,6 +738,22 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
 
     private String seedDefaultPassword() {
         return requiredProperty("app.seed.default-password");
+    }
+
+    private String storageBucket() {
+        return requiredProperty("app.storage.bucket");
+    }
+
+    private String storageProvider() {
+        return environment.getProperty("app.storage.provider", "R2").trim().toUpperCase();
+    }
+
+    private String publicStorageUrl(String storageKey) {
+        String baseUrl = requiredProperty("app.storage.public-base-url");
+        while (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        return baseUrl + "/" + storageKey;
     }
 
     private String requiredProperty(String key) {

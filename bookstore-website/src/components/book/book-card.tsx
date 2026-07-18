@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useWishlist } from '@/contexts/wishlist-context'
 import type { BookCardData } from '@/types/book'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 export function BookCard({ book }: { book: BookCardData }) {
@@ -79,6 +79,7 @@ export function BookCard({ book }: { book: BookCardData }) {
           <img
             src={getBookCoverUrl(book.cover)}
             alt={t('book.card.coverAlt', { title: book.title })}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute left-2 top-2 flex flex-col gap-1">

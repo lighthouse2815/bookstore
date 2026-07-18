@@ -94,6 +94,7 @@ public class SecurityConfig {
                                 "/api/auth/forgot-password/**",
                                 "/api/auth/web/**",
                                 "/api/otp/**",
+                                "/api/newsletter/**",
                                 "/api/payments/sepay/ipn",
                                 "/ws/**"
                         ).permitAll()

@@ -16,7 +16,9 @@ public record FileStorageProperties(
         long presignUploadExpireMinutes,
         long presignDownloadExpireMinutes,
         long maxImageSizeMb,
-        long maxDigitalFileSizeMb
+        long maxDigitalFileSizeMb,
+        long safetyMaxTotalBytes,
+        long safetyMaxMonthlyUploads
 ) implements IFileStorageSettings {
 
     public boolean isConfigured() {
@@ -57,6 +59,14 @@ public record FileStorageProperties(
 
     public long resolvedMaxDigitalFileSizeMb() {
         return maxDigitalFileSizeMb > 0 ? maxDigitalFileSizeMb : 200L;
+    }
+
+    public long resolvedSafetyMaxTotalBytes() {
+        return safetyMaxTotalBytes > 0 ? safetyMaxTotalBytes : 8L * 1024L * 1024L * 1024L;
+    }
+
+    public long resolvedSafetyMaxMonthlyUploads() {
+        return safetyMaxMonthlyUploads > 0 ? safetyMaxMonthlyUploads : 500_000L;
     }
 
     private static boolean hasText(String value) {

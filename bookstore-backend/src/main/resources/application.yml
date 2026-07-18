@@ -28,6 +28,21 @@ management:
       show-details: never
 
 app:
+  ai:
+    chat:
+      enabled: ${AI_ENABLED:false}
+      base-url: ${CLOUDFLARE_AI_BASE_URL:https://api.cloudflare.com/client/v4}
+      account-id: ${CLOUDFLARE_AI_ACCOUNT_ID:}
+      api-token: ${CLOUDFLARE_AI_API_TOKEN:}
+      model: ${CLOUDFLARE_AI_MODEL:@cf/meta/llama-3.1-8b-instruct-fp8}
+      max-tokens: ${AI_MAX_TOKENS:350}
+      temperature: ${AI_TEMPERATURE:0.3}
+      history-limit: ${AI_HISTORY_LIMIT:12}
+      daily-user-limit: ${AI_DAILY_USER_LIMIT:20}
+  newsletter:
+    rate-limit:
+      max-requests: ${NEWSLETTER_RATE_LIMIT_MAX_REQUESTS:10}
+      window-minutes: ${NEWSLETTER_RATE_LIMIT_WINDOW_MINUTES:15}
   swagger:
     enabled: ${APP_SWAGGER_ENABLED:true}
   jwt:
@@ -103,6 +118,8 @@ app:
     presign-download-expire-minutes: ${STORAGE_PRESIGN_DOWNLOAD_EXPIRE_MINUTES:5}
     max-image-size-mb: ${STORAGE_MAX_IMAGE_SIZE_MB:5}
     max-digital-file-size-mb: ${STORAGE_MAX_DIGITAL_FILE_SIZE_MB:200}
+    safety-max-total-bytes: ${STORAGE_SAFETY_MAX_TOTAL_BYTES:8589934592}
+    safety-max-monthly-uploads: ${STORAGE_SAFETY_MAX_MONTHLY_UPLOADS:500000}
 
 springdoc:
   api-docs:

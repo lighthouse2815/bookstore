@@ -21,7 +21,7 @@ import NotFoundPage from '@/pages/home/not-found'
 import { getPublishedDigitalAssetSampleUrl } from '@/services/digital-library-service'
 import type { Book, BookRatingSummary } from '@/types/book'
 import { getErrorMessage } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 type TranslateFunction = (
@@ -180,6 +180,7 @@ export default function BookEbookPage() {
                 <img
                   src={coverSrc}
                   alt={t('book.card.coverAlt', { title: book.title })}
+                  onError={(event) => setBookCoverFallback(event.currentTarget)}
                   className="absolute inset-0 size-full object-cover"
                 />
               </div>

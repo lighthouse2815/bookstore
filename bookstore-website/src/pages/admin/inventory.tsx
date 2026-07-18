@@ -19,6 +19,7 @@ import type {
   AdminStockMovementType,
 } from '@/types/admin-access'
 import type { Book } from '@/types/book'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 
 type Translator = (key: string, params?: Record<string, number | string>) => string
 
@@ -266,8 +267,9 @@ function InventoryBookRow({
         <div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-border/60 bg-background/70">
           {book.cover ? (
             <img
-              src={book.cover}
+              src={getBookCoverUrl(book.cover)}
               alt={book.title}
+              onError={(event) => setBookCoverFallback(event.currentTarget)}
               className="size-full object-cover"
             />
           ) : (

@@ -12,7 +12,7 @@ import {
 import { useLanguage } from '@/contexts/language-context'
 import type { BookCardData } from '@/types/book'
 import type { ReadingChallenge } from '@/types/reading-challenge'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getRecentlyViewedBooks } from '@/utils/recently-viewed'
 import {
   getReadingChallengeProgressPercent,
@@ -166,6 +166,7 @@ export function FunDiscoverySection() {
                       <img
                         src={getBookCoverUrl(book.cover)}
                         alt={book.title}
+                        onError={(event) => setBookCoverFallback(event.currentTarget)}
                         className="absolute inset-0 size-full object-cover"
                       />
                     </div>
@@ -284,11 +285,11 @@ export function FunDiscoverySection() {
                 )}
                 <ArrowRight className="size-4" />
               </Link>
-              <p className="text-sm text-slate-600 dark:text-muted-foreground">
-                {readingChallenge
-                  ? t('home.funDiscovery.readingChallengeActiveHint')
-                  : t('home.funDiscovery.readingChallengeHint')}
-              </p>
+              {readingChallenge ? (
+                <p className="text-sm text-slate-600 dark:text-muted-foreground">
+                  {t('home.funDiscovery.readingChallengeActiveHint')}
+                </p>
+              ) : null}
             </div>
           </div>
         </article>

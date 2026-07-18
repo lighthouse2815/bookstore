@@ -3,6 +3,7 @@ import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   AssignConversationRequest,
+  AiChatReplyResponse,
   ChatMessagePageResult,
   ChatMessageQueryParams,
   ChatMessageResponse,
@@ -66,6 +67,15 @@ export async function sendMessage(
   const response = await api.post<ApiResponse<ChatMessageResponse>>(
     `/chat/conversations/${conversationId}/messages`,
     normalizeMessagePayload(data),
+  )
+  return unwrapResponse(response)
+}
+
+export async function requestAiReply(
+  conversationId: string,
+): Promise<AiChatReplyResponse> {
+  const response = await api.post<ApiResponse<AiChatReplyResponse>>(
+    `/chat/conversations/${conversationId}/ai-reply`,
   )
   return unwrapResponse(response)
 }

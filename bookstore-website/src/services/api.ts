@@ -7,8 +7,9 @@ const AUTH_USER_KEY = 'auth_user'
 const DEPLOY_STARTUP_READY_KEY = 'deploy_startup_backend_ready_at'
 const DEPLOY_STARTUP_READY_TTL_MS = 5 * 60 * 1000
 
-const apiBaseURL =
+const configuredApiBaseURL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
+const apiBaseURL = resolveLocalApiBaseURL(configuredApiBaseURL)
 
 const api = axios.create({
   baseURL: apiBaseURL,
@@ -43,6 +44,32 @@ function isLocalHostname(hostname: string) {
     hostname.startsWith('10.') ||
     /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
   )
+}
+
+function resolveLocalApiBaseURL(configuredBaseURL: string) {
+  if (typeof window === 'undefined') {
+    return configuredBaseURL
+  }
+
+  try {
+    const configuredUrl = new URL(configuredBaseURL)
+    const pageHostname = window.location.hostname
+
+    // Cookies are host-scoped, so localhost and 127.0.0.1 cannot be mixed
+    // for the double-submit CSRF flow used by the web auth endpoints.
+    if (
+      isLocalHostname(pageHostname) &&
+      isLocalHostname(configuredUrl.hostname) &&
+      configuredUrl.hostname !== pageHostname
+    ) {
+      configuredUrl.hostname = pageHostname
+      return configuredUrl.toString().replace(/\/$/, '')
+    }
+  } catch {
+    // Relative API URLs are already same-origin and need no normalization.
+  }
+
+  return configuredBaseURL
 }
 
 function clearSession() {

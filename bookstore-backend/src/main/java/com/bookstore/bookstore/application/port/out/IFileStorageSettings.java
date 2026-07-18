@@ -26,6 +26,10 @@ public interface IFileStorageSettings {
 
     long maxDigitalFileSizeMb();
 
+    long safetyMaxTotalBytes();
+
+    long safetyMaxMonthlyUploads();
+
     default boolean isConfigured() {
         return hasText(bucket()) && hasText(accessKey()) && hasText(secretKey());
     }
@@ -64,6 +68,14 @@ public interface IFileStorageSettings {
 
     default long resolvedMaxDigitalFileSizeMb() {
         return maxDigitalFileSizeMb() > 0 ? maxDigitalFileSizeMb() : 200L;
+    }
+
+    default long resolvedSafetyMaxTotalBytes() {
+        return safetyMaxTotalBytes() > 0 ? safetyMaxTotalBytes() : 8L * 1024L * 1024L * 1024L;
+    }
+
+    default long resolvedSafetyMaxMonthlyUploads() {
+        return safetyMaxMonthlyUploads() > 0 ? safetyMaxMonthlyUploads() : 500_000L;
     }
 
     private static boolean hasText(String value) {

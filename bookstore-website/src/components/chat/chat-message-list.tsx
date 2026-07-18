@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { Loader2, MessageSquareText } from 'lucide-react'
+import { Bot, Headphones, Loader2, MessageSquareText } from 'lucide-react'
 import type { ChatMessageResponse } from '@/types/chat'
 import { cn } from '@/utils'
 
@@ -9,6 +9,8 @@ type ChatMessageListProps = {
   locale: string
   emptyLabel: string
   loadingLabel: string
+  assistantLabel?: string
+  staffLabel?: string
   loadMoreLabel?: string
   hasNext?: boolean
   isLoading?: boolean
@@ -23,6 +25,8 @@ export function ChatMessageList({
   locale,
   emptyLabel,
   loadingLabel,
+  assistantLabel = 'AI',
+  staffLabel = 'Support',
   loadMoreLabel = 'Load older',
   hasNext = false,
   isLoading = false,
@@ -91,7 +95,16 @@ export function ChatMessageList({
           </div>
         ) : (
           messages.map((message) => {
-            const isMine = message.senderId === currentUserId
+            const isAssistant = message.senderRole === 'SYSTEM'
+            const isMine =
+              !isAssistant && message.senderId === currentUserId
+            const isStaff =
+              message.senderRole === 'ADMIN' || message.senderRole === 'STAFF'
+            const senderLabel = isAssistant
+              ? assistantLabel
+              : isStaff
+                ? staffLabel
+                : message.senderRole
 
             return (
               <div
@@ -109,6 +122,17 @@ export function ChatMessageList({
                       : 'border border-border/60 bg-card text-foreground',
                   )}
                 >
+                  {isAssistant ? (
+                    <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                      <Bot className="h-3.5 w-3.5" />
+                      {assistantLabel}
+                    </div>
+                  ) : isStaff ? (
+                    <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                      <Headphones className="h-3.5 w-3.5" />
+                      {staffLabel}
+                    </div>
+                  ) : null}
                   <p className="whitespace-pre-wrap break-words text-sm leading-6">
                     {message.content}
                   </p>
@@ -119,7 +143,9 @@ export function ChatMessageList({
                     isMine ? 'text-right' : 'text-left',
                   )}
                 >
-                  <span className="font-medium">{message.senderRole}</span>
+                  <span className="font-medium">
+                    {senderLabel}
+                  </span>
                   <span className="mx-1.5">•</span>
                   <span>{formatter.format(new Date(message.createdAt))}</span>
                 </div>

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class DevelopmentSeedCatalogTest {
 
     @Test
-    void catalogContainsFiftyUniqueBooksWithRealCoverUrls() {
+    void catalogContainsFiftyUniqueBooksWithStableCloudCoverKeys() {
         assertEquals(50, DevelopmentSeedCatalog.BOOKS.size());
         assertEquals(50, DevelopmentSeedCatalog.BOOKS.stream()
                 .map(DevelopmentSeedCatalog.BookSeed::isbn)
@@ -18,7 +18,7 @@ class DevelopmentSeedCatalogTest {
                 .count());
 
         DevelopmentSeedCatalog.BOOKS.forEach(book -> {
-            assertTrue(book.coverUrl().startsWith("https://covers.openlibrary.org/b/id/"));
+            assertEquals("public/seed/books/%s.jpg".formatted(book.isbn()), book.coverStorageKey());
             assertTrue(book.categoryIndex() >= 0);
             assertTrue(book.categoryIndex() < DevelopmentSeedCatalog.CATEGORIES.size());
             assertTrue(book.publisherIndex() >= 0);

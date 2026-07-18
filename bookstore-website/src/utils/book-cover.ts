@@ -1,4 +1,4 @@
-export const BOOK_DEFAULT_COVER = '/placeholder.jpg'
+export const BOOK_DEFAULT_COVER = '/book-placeholder.svg'
 
 const DIRECT_RESOURCE_PREFIXES = ['http://', 'https://', 'blob:', 'data:'] as const
 
@@ -41,4 +41,13 @@ export function getBookCoverUrl(cover?: string | null) {
     : `/${normalizedCover}`
 
   return new URL(normalizedPath, backendOrigin).toString()
+}
+
+export function setBookCoverFallback(image: HTMLImageElement) {
+  if (image.dataset.coverFallback === 'true') {
+    return
+  }
+
+  image.dataset.coverFallback = 'true'
+  image.src = BOOK_DEFAULT_COVER
 }

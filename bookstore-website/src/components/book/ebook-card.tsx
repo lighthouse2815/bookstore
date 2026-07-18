@@ -15,7 +15,7 @@ import type {
   PublishedDigitalAssetCatalogItem,
 } from '@/types/digital-library'
 import { cn } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 const formatAccentMap: Record<DigitalAssetFormat, string> = {
@@ -42,6 +42,7 @@ export function EbookCard({
         <img
           src={getBookCoverUrl(ebook.bookImageUrl)}
           alt={t('book.card.coverAlt', { title: ebook.bookTitle })}
+          onError={(event) => setBookCoverFallback(event.currentTarget)}
           className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">

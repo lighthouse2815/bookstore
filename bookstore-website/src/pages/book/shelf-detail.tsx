@@ -31,7 +31,7 @@ import {
 } from '@/services/bookshelf-service'
 import type { Bookshelf, BookshelfItem } from '@/types/bookshelf'
 import { cn, getErrorMessage } from '@/utils'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import {
   getReorderedShelfItemIds,
   type ShelfMoveDirection,
@@ -404,6 +404,7 @@ function ShelfBookCard({
           <img
             src={getBookCoverUrl(item.book.cover)}
             alt={item.book.title}
+            onError={(event) => setBookCoverFallback(event.currentTarget)}
             className="absolute inset-0 size-full object-cover"
           />
         </Link>

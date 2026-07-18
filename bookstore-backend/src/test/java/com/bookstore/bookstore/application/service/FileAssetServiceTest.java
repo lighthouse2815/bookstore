@@ -63,7 +63,9 @@ class FileAssetServiceTest {
                         10L,
                         5L,
                         5L,
-                        200L
+                        200L,
+                        8L * 1024L * 1024L * 1024L,
+                        500_000L
                 )
         );
     }
@@ -409,6 +411,63 @@ class FileAssetServiceTest {
         );
 
         assertEquals(ApplicationErrorCode.FILE_ASSET_SIZE_EXCEEDED, exception.getErrorCode());
+    }
+
+    @Test
+    void createPresignedUpload_whenReservedStorageWouldExceedSafetyLimit_stopsBeforePresign() {
+        PresignUploadCommand command = new PresignUploadCommand(
+                UUID.randomUUID(),
+                false,
+                FilePurpose.USER_AVATAR,
+                FileVisibility.PUBLIC,
+                "avatar.jpg",
+                "image/jpeg",
+                1_024L,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        when(fileAssetRepository.calculateReservedStorageBytes())
+                .thenReturn(8L * 1024L * 1024L * 1024L);
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> fileAssetService.createPresignedUpload(command)
+        );
+
+        assertEquals(ApplicationErrorCode.FILE_STORAGE_SAFETY_LIMIT_REACHED, exception.getErrorCode());
+        verify(fileAssetRepository, never()).save(any());
+        verify(fileStorage, never()).createPresignedUploadUrl(any(), any(), any(), any());
+    }
+
+    @Test
+    void createPresignedUpload_whenMonthlyUploadLimitReached_stopsBeforePresign() {
+        PresignUploadCommand command = new PresignUploadCommand(
+                UUID.randomUUID(),
+                false,
+                FilePurpose.USER_AVATAR,
+                FileVisibility.PUBLIC,
+                "avatar.jpg",
+                "image/jpeg",
+                1_024L,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        when(fileAssetRepository.countUploadsCreatedAtOrAfter(any())).thenReturn(500_000L);
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> fileAssetService.createPresignedUpload(command)
+        );
+
+        assertEquals(ApplicationErrorCode.FILE_STORAGE_SAFETY_LIMIT_REACHED, exception.getErrorCode());
+        verify(fileAssetRepository, never()).save(any());
+        verify(fileStorage, never()).createPresignedUploadUrl(any(), any(), any(), any());
     }
 
     private static FileAsset pendingBookImage(UUID fileAssetId, UUID createdBy) {

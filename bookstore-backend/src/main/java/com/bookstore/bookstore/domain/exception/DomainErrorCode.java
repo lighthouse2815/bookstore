@@ -551,7 +551,18 @@ public enum DomainErrorCode {
     INVALID_READING_JOURNAL_ENTRY_DELETED_AT("DOMAIN_READING_JOURNAL_010", "%s khong duoc nam trong tuong lai"),
     INVALID_READING_JOURNAL_ENTRY_AUDIT_ORDER("DOMAIN_READING_JOURNAL_011", "%s khong duoc som hon %s"),
     READING_JOURNAL_ENTRY_ALREADY_DELETED("DOMAIN_READING_JOURNAL_012", "nhat ky doc da bi xoa"),
-    READING_JOURNAL_ENTRY_ALREADY_ACTIVE("DOMAIN_READING_JOURNAL_013", "nhat ky doc dang hoat dong");
+    READING_JOURNAL_ENTRY_ALREADY_ACTIVE("DOMAIN_READING_JOURNAL_013", "nhat ky doc dang hoat dong"),
+
+    INVALID_NEWSLETTER_SUBSCRIPTION_ID("DOMAIN_NEWSLETTER_001", "%s khong duoc null"),
+    INVALID_NEWSLETTER_SUBSCRIPTION_EMAIL("DOMAIN_NEWSLETTER_002", "%s khong dung dinh dang email"),
+    INVALID_NEWSLETTER_SUBSCRIPTION_STATUS("DOMAIN_NEWSLETTER_003", "%s khong duoc null"),
+    INVALID_NEWSLETTER_UNSUBSCRIBE_TOKEN("DOMAIN_NEWSLETTER_004", "%s khong duoc de trong"),
+    INVALID_NEWSLETTER_SUBSCRIBED_AT("DOMAIN_NEWSLETTER_005", "%s khong duoc nam trong tuong lai"),
+    INVALID_NEWSLETTER_UNSUBSCRIBED_AT("DOMAIN_NEWSLETTER_006", "%s khong duoc nam trong tuong lai"),
+    INVALID_NEWSLETTER_CREATED_AT("DOMAIN_NEWSLETTER_007", "%s khong duoc nam trong tuong lai"),
+    INVALID_NEWSLETTER_UPDATED_AT("DOMAIN_NEWSLETTER_008", "%s khong duoc nam trong tuong lai"),
+    INVALID_NEWSLETTER_DELETED_AT("DOMAIN_NEWSLETTER_009", "%s khong duoc nam trong tuong lai"),
+    INVALID_NEWSLETTER_AUDIT_ORDER("DOMAIN_NEWSLETTER_010", "%s khong duoc som hon %s");
 
     private final String code;
     private final String messageTemplate;

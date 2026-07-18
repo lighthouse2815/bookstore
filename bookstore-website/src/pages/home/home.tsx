@@ -1,11 +1,21 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  ArrowUpRight,
   BookMarked,
+  BookOpen,
+  Brain,
+  Briefcase,
+  Cpu,
+  GraduationCap,
+  Landmark,
+  Palette,
+  Rocket,
   Sparkles,
   Truck,
   Wallet,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { BookCard } from '@/components/book/book-card'
 import {
   StatePanel,
@@ -19,7 +29,7 @@ import { Header } from '@/components/layout/header'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalog } from '@/hooks/use-book-catalog'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
 const CATEGORY_PREVIEW_LIMIT = 8
@@ -46,6 +56,81 @@ function CatalogStateCard({
       className={className}
     />
   )
+}
+
+function getCategoryIcon(category: string): LucideIcon {
+  const normalizedCategory = category
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+
+  if (
+    normalizedCategory.includes('vien tuong') ||
+    normalizedCategory.includes('science fiction')
+  ) {
+    return Rocket
+  }
+
+  if (
+    normalizedCategory.includes('giao duc') ||
+    normalizedCategory.includes('education')
+  ) {
+    return GraduationCap
+  }
+
+  if (
+    normalizedCategory.includes('khoa hoc') ||
+    normalizedCategory.includes('cong nghe') ||
+    normalizedCategory.includes('science') ||
+    normalizedCategory.includes('technology')
+  ) {
+    return Cpu
+  }
+
+  if (
+    normalizedCategory.includes('kinh doanh') ||
+    normalizedCategory.includes('quan tri') ||
+    normalizedCategory.includes('business')
+  ) {
+    return Briefcase
+  }
+
+  if (
+    normalizedCategory.includes('ky nang') ||
+    normalizedCategory.includes('phat trien') ||
+    normalizedCategory.includes('skills') ||
+    normalizedCategory.includes('self-help')
+  ) {
+    return Brain
+  }
+
+  if (
+    normalizedCategory.includes('lich su') ||
+    normalizedCategory.includes('hoi ky') ||
+    normalizedCategory.includes('history') ||
+    normalizedCategory.includes('memoir')
+  ) {
+    return Landmark
+  }
+
+  if (
+    normalizedCategory.includes('nghe thuat') ||
+    normalizedCategory.includes('sang tao') ||
+    normalizedCategory.includes('art') ||
+    normalizedCategory.includes('creative')
+  ) {
+    return Palette
+  }
+
+  if (
+    normalizedCategory.includes('gia tuong') ||
+    normalizedCategory.includes('ky ao') ||
+    normalizedCategory.includes('fantasy')
+  ) {
+    return Sparkles
+  }
+
+  return BookOpen
 }
 
 export default function HomePage() {
@@ -177,6 +262,7 @@ export default function HomePage() {
                           <img
                             src={getBookCoverUrl(book.cover)}
                             alt={book.title}
+                            onError={(event) => setBookCoverFallback(event.currentTarget)}
                             className="absolute inset-0 size-full object-cover"
                           />
                         </div>
@@ -213,65 +299,77 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="font-heading text-2xl font-bold tracking-tight">
-                {t('home.categoriesTitle')}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {isLoading
-                  ? t('home.catalogLoadingTitle')
-                  : hasCategoryError
-                    ? t('home.catalogCategoriesErrorTitle')
-                    : t('home.categoriesCount', { count: categories.length })}
-              </p>
-            </div>
-            <Link
-              to="/books"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-            >
-              {t('home.allCategories')}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-          {isLoading ? (
-            <CatalogStateCard
-              title={t('home.catalogLoadingTitle')}
-              description={t('home.catalogLoadingDescription')}
-            />
-          ) : hasCategoryError ? (
-            <CatalogStateCard
-              title={t('home.catalogCategoriesErrorTitle')}
-              description={t('home.catalogCategoriesErrorDescription')}
-              detail={categoryError}
-            />
-          ) : categories.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {featuredCategories.map((category, index) => (
-                <Link
-                  key={category}
-                  to={`/books?category=${encodeURIComponent(category)}`}
-                  className="group flex min-h-24 items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/70 bg-card px-4 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-xs font-semibold tabular-nums text-primary/70">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span className="mt-2 block truncate text-sm font-semibold text-foreground group-hover:text-primary">
-                      {getCategoryLabel(category, t)}
-                    </span>
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-muted/30 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10 dark:shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+            <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-xl">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <BookOpen className="size-4 text-primary" strokeWidth={1.8} />
+                  <span>
+                    {isLoading
+                      ? t('home.catalogLoadingTitle')
+                      : hasCategoryError
+                        ? t('home.catalogCategoriesErrorTitle')
+                        : t('home.categoriesCount', { count: categories.length })}
                   </span>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-                </Link>
-              ))}
+                </div>
+                <h2 className="font-heading text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+                  {t('home.categoriesTitle')}
+                </h2>
+              </div>
+              <Link
+                to="/books"
+                className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-border/70 bg-background px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0"
+              >
+                {t('home.allCategories')}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </div>
-          ) : (
-            <CatalogStateCard
-              title={t('home.emptyTitle')}
-              description={t('home.emptyDescription')}
-            />
-          )}
+
+            {isLoading ? (
+              <CatalogStateCard
+                title={t('home.catalogLoadingTitle')}
+                description={t('home.catalogLoadingDescription')}
+              />
+            ) : hasCategoryError ? (
+              <CatalogStateCard
+                title={t('home.catalogCategoriesErrorTitle')}
+                description={t('home.catalogCategoriesErrorDescription')}
+                detail={categoryError}
+              />
+            ) : categories.length > 0 ? (
+              <div className="grid gap-px overflow-hidden rounded-[1.5rem] border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
+                {featuredCategories.map((category) => {
+                  const CategoryIcon = getCategoryIcon(category)
+
+                  return (
+                    <Link
+                      key={category}
+                      to={`/books?category=${encodeURIComponent(category)}`}
+                      className="group flex min-h-32 flex-col justify-between gap-6 bg-card p-5 transition-all duration-300 hover:bg-primary/5 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60 active:bg-primary/10"
+                    >
+                      <span className="flex items-start justify-between gap-4">
+                        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground">
+                          <CategoryIcon className="size-5" strokeWidth={1.8} />
+                        </span>
+                        <span className="flex size-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+                          <ArrowUpRight className="size-4" />
+                        </span>
+                      </span>
+                      <span className="max-w-[15rem] text-base font-semibold leading-snug text-foreground text-pretty transition-colors group-hover:text-primary">
+                        {getCategoryLabel(category, t)}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <CatalogStateCard
+                title={t('home.emptyTitle')}
+                description={t('home.emptyDescription')}
+              />
+            )}
+          </div>
         </section>
 
         <FunDiscoverySection />
