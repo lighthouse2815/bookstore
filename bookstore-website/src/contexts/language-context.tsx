@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { messages, type AppLanguage } from '@/locales/messages'
+import { formatYearValue } from '@/utils/locale-format'
 
 type TranslationParams = Record<string, number | string>
 
@@ -20,6 +21,7 @@ type LanguageContextValue = {
   formatCurrency: (value: number) => string
   formatDate: (value: Date | number | string) => string
   formatNumber: (value: number) => string
+  formatYear: (value: number) => string
 }
 
 const LANGUAGE_STORAGE_KEY = 'bookstore-language'
@@ -113,6 +115,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           new Date(value),
         ),
       formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value),
+      formatYear: (value: number) => formatYearValue(value, locale),
     }
   }, [language, locale])
 

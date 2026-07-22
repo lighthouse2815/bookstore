@@ -384,7 +384,7 @@ export default function CartPage() {
                         type="button"
                         variant={appliedBestCoupon ? 'outline' : 'default'}
                         disabled={Boolean(appliedBestCoupon)}
-                        className="h-10 rounded-xl"
+                        className="h-11 rounded-xl"
                         onClick={handleApplyBestCoupon}
                       >
                         {appliedBestCoupon

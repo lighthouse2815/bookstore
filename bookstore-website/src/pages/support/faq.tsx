@@ -54,7 +54,7 @@ export default function FaqPage() {
                 {
                   question: 'Do you sell genuine books only?',
                   answer:
-                    'Yes. The storefront is intended for official books with clear publisher references and controlled catalog data.',
+                    'Yes. The online bookstore is intended for official books with clear publisher references and carefully managed product information.',
                 },
                 {
                   question: 'How do I request an exchange or refund?',

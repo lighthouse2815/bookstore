@@ -8,6 +8,9 @@ interface ImportMetaEnv {
   readonly VITE_BANK_TRANSFER_ACCOUNT_NUMBER?: string
   readonly VITE_BANK_TRANSFER_ACCOUNT_NAME?: string
   readonly VITE_BANK_TRANSFER_QR_URL?: string
+  readonly VITE_FACEBOOK_URL?: string
+  readonly VITE_INSTAGRAM_URL?: string
+  readonly VITE_ZALO_URL?: string
 }
 
 type GoogleCredentialResponse = {

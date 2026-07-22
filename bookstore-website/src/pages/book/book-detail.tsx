@@ -70,7 +70,7 @@ export default function BookDetailPage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const { isWishlisted, toggleBook } = useWishlist()
-  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
+  const { t, formatCurrency, formatDate, formatNumber, formatYear } = useLanguage()
   const {
     book,
     suggestions,
@@ -287,7 +287,7 @@ export default function BookDetailPage() {
     createNumberDetailItem(
       t('book.detail.specPublicationYear'),
       book.detail?.publicationYear,
-      (value) => formatNumber(value),
+      (value) => formatYear(value),
       detailFallback,
     ),
     createNumberDetailItem(
@@ -400,7 +400,9 @@ export default function BookDetailPage() {
                   <span>
                     {t('book.detail.specPublicationYear')}{' '}
                     <span className="font-semibold text-foreground">
-                      {book.detail?.publicationYear ?? detailFallback}
+                      {book.detail?.publicationYear
+                        ? formatYear(book.detail.publicationYear)
+                        : detailFallback}
                     </span>
                   </span>
                 </div>

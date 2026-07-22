@@ -102,7 +102,7 @@ export function BookCard({ book }: { book: BookCardData }) {
             void handleToggleWishlist()
           }}
           className={cn(
-            'absolute right-3 top-3 flex size-10 items-center justify-center rounded-full border border-border/70 bg-background/95 shadow-sm transition-colors',
+            'absolute right-3 top-3 flex size-11 items-center justify-center rounded-full border border-border/70 bg-background/95 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
             isFavorite
               ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10'
               : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -150,7 +150,7 @@ export function BookCard({ book }: { book: BookCardData }) {
             <button
               type="button"
               onClick={handleAddToShelf}
-              className="flex size-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-muted"
+              className="flex size-11 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label={t('shelves.addToShelfAria', { title: book.title })}
             >
               <BookPlus className="size-4" />
@@ -160,7 +160,7 @@ export function BookCard({ book }: { book: BookCardData }) {
               onClick={() => {
                 void handleQuickAddToCart()
               }}
-              className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+              className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label={t('book.card.addToCartAria', { title: book.title })}
             >
               <ShoppingCart className="size-4" />

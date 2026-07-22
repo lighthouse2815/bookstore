@@ -1,4 +1,4 @@
-import { Check, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Check, ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { BookCard } from '@/components/book/book-card'
 import { PaginationControls } from '@/components/common/pagination-controls'
@@ -20,6 +20,7 @@ import { getCategoryLabel } from '@/utils/i18n'
 
 export function BookListing() {
   const [categoryQuery, setCategoryQuery] = useState('')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const {
     t,
     formatNumber,
@@ -44,6 +45,12 @@ export function BookListing() {
     category === allCategoriesValue
       ? t('categories.all')
       : getCategoryLabel(category, t)
+  const selectedSortLabel = {
+    popular: t('book.listing.sortPopular'),
+    rating: t('book.listing.sortRating'),
+    'price-asc': t('book.listing.sortPriceAsc'),
+    'price-desc': t('book.listing.sortPriceDesc'),
+  }[sort]
 
   const matchingCategories = useMemo(() => {
     const allCategories = categoryOptions.filter(
@@ -92,13 +99,49 @@ export function BookListing() {
       <PageHeader
         className="mb-6"
         title={t('book.listing.title')}
-        description={t('book.listing.resultCount', {
-          count: formatNumber(totalCount),
-        })}
+        description={
+          isLoading ? (
+            <span className="block h-5 w-36 animate-pulse rounded-full bg-muted" />
+          ) : error ? null : (
+            t('book.listing.resultCount', {
+              count: formatNumber(totalCount),
+            })
+          )
+        }
       />
 
       <div className="grid gap-8 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <button
+          type="button"
+          aria-expanded={mobileFiltersOpen}
+          aria-controls="book-category-filters"
+          aria-label={
+            mobileFiltersOpen
+              ? t('book.listing.filterClose')
+              : t('book.listing.filterOpen')
+          }
+          onClick={() => setMobileFiltersOpen((current) => !current)}
+          className="flex h-12 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 lg:hidden"
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="size-4 text-primary" />
+            {t('book.listing.filterToggle')}
+          </span>
+          <ChevronDown
+            className={cn(
+              'size-4 transition-transform',
+              mobileFiltersOpen && 'rotate-180',
+            )}
+          />
+        </button>
+
+        <aside
+          id="book-category-filters"
+          className={cn(
+            'lg:sticky lg:top-24 lg:block lg:self-start',
+            mobileFiltersOpen ? 'block' : 'hidden',
+          )}
+        >
           <SurfaceCard className="overflow-hidden">
             <div className="border-b border-border/60 p-4">
               <div className="relative">
@@ -108,6 +151,7 @@ export function BookListing() {
                   value={query}
                   onChange={handleQueryChange}
                   placeholder={t('book.listing.searchPlaceholder')}
+                  aria-label={t('book.listing.searchAria')}
                   className="h-11 w-full rounded-2xl border border-border bg-background/80 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                 />
               </div>
@@ -119,11 +163,15 @@ export function BookListing() {
                   <SlidersHorizontal className="size-4 text-primary" />
                   {t('book.listing.categoryTitle')}
                 </h2>
-                <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                  {t('book.listing.categoryCount', {
-                    count: formatNumber(totalCategoryCount),
-                  })}
-                </span>
+                {isLoading ? (
+                  <span className="h-4 w-16 animate-pulse rounded-full bg-muted" />
+                ) : (
+                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                    {t('book.listing.categoryCount', {
+                      count: formatNumber(totalCategoryCount),
+                    })}
+                  </span>
+                )}
               </div>
 
               <div className="rounded-2xl border border-border/60 bg-background/70 p-3">
@@ -140,7 +188,7 @@ export function BookListing() {
                     <button
                       type="button"
                       onClick={() => handleCategorySelect(allCategoriesValue)}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/80 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                      className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border border-border/80 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                       <X className="size-3.5" />
                       {t('book.listing.clearCategory')}
@@ -151,7 +199,10 @@ export function BookListing() {
 
               <div className="mt-3">
                 <Select value={category} onValueChange={handleCategorySelect}>
-                  <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80 px-3">
+                  <SelectTrigger
+                    aria-label={t('book.listing.categoryFilterAria')}
+                    className="h-11 w-full rounded-2xl bg-background/80 px-3"
+                  >
                     <SelectValue>
                       {selectedCategoryLabel}
                     </SelectValue>
@@ -184,7 +235,8 @@ export function BookListing() {
                       placeholder={t(
                         'book.listing.categorySearchPlaceholder',
                       )}
-                      className="h-10 w-full rounded-2xl border border-border bg-background/80 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                      aria-label={t('book.listing.categorySearchAria')}
+                      className="h-11 w-full rounded-2xl border border-border bg-background/80 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
@@ -197,28 +249,34 @@ export function BookListing() {
               ) : null}
 
               <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
-                <CategoryFilterButton
-                  label={t('categories.all')}
-                  isActive={category === allCategoriesValue}
-                  onClick={() => handleCategorySelect(allCategoriesValue)}
-                />
-
-                {matchingCategories.length > 0 ? (
-                  matchingCategories.map((option) => (
-                    <CategoryFilterButton
-                      key={option}
-                      label={getCategoryLabel(option, t)}
-                      isActive={category === option}
-                      onClick={() => handleCategorySelect(option)}
-                    />
-                  ))
+                {error ? null : isLoading ? (
+                  <CategoryFilterSkeleton />
                 ) : (
-                  <StatePanel
-                    minHeightClassName="min-h-[150px]"
-                    title={t('book.listing.categoryEmptyTitle')}
-                    description={t('book.listing.categoryEmptyDescription')}
-                    className="px-4 py-5"
-                  />
+                  <>
+                    <CategoryFilterButton
+                      label={t('categories.all')}
+                      isActive={category === allCategoriesValue}
+                      onClick={() => handleCategorySelect(allCategoriesValue)}
+                    />
+
+                    {matchingCategories.length > 0 ? (
+                      matchingCategories.map((option) => (
+                        <CategoryFilterButton
+                          key={option}
+                          label={getCategoryLabel(option, t)}
+                          isActive={category === option}
+                          onClick={() => handleCategorySelect(option)}
+                        />
+                      ))
+                    ) : (
+                      <StatePanel
+                        minHeightClassName="min-h-[150px]"
+                        title={t('book.listing.categoryEmptyTitle')}
+                        description={t('book.listing.categoryEmptyDescription')}
+                        className="px-4 py-5"
+                      />
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -228,8 +286,13 @@ export function BookListing() {
         <div>
           <div className="mb-4 flex items-center justify-end">
             <Select value={sort} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[220px] rounded-full">
-                <SelectValue placeholder={t('book.listing.sortPlaceholder')} />
+              <SelectTrigger
+                aria-label={t('book.listing.sortAria')}
+                className="h-11 w-full rounded-full sm:w-[220px]"
+              >
+                <SelectValue placeholder={t('book.listing.sortPlaceholder')}>
+                  {selectedSortLabel}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="popular">
@@ -249,7 +312,7 @@ export function BookListing() {
           </div>
 
           {isLoading ? (
-            <StatePanel title={t('common.loading')} />
+            <BookGridSkeleton label={t('common.loading')} />
           ) : error ? (
             <StatePanel
               tone="error"
@@ -298,6 +361,7 @@ function CategoryFilterButton({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={isActive}
       className={cn(
         'flex w-full items-center justify-between rounded-2xl border px-3.5 py-3 text-left text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.99]',
         isActive
@@ -308,6 +372,42 @@ function CategoryFilterButton({
       <span className="pr-3">{label}</span>
       {isActive ? <Check className="size-4 shrink-0" /> : null}
     </button>
+  )
+}
+
+function CategoryFilterSkeleton() {
+  return (
+    <div aria-hidden="true" className="space-y-2">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div
+          key={index}
+          className="h-12 animate-pulse rounded-2xl border border-border/50 bg-muted/70"
+        />
+      ))}
+    </div>
+  )
+}
+
+function BookGridSkeleton({ label }: { label: string }) {
+  return (
+    <div role="status" aria-label={label}>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }, (_, index) => (
+          <div
+            key={index}
+            aria-hidden="true"
+            className="overflow-hidden rounded-2xl border border-border/60 bg-card"
+          >
+            <div className="aspect-[3/4] animate-pulse bg-muted" />
+            <div className="space-y-3 p-4">
+              <div className="h-4 w-3/4 animate-pulse rounded-full bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded-full bg-muted" />
+              <div className="h-5 w-2/5 animate-pulse rounded-full bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

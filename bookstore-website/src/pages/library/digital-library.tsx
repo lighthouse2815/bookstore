@@ -31,6 +31,11 @@ import type {
 } from '@/types/digital-library'
 import { cn, getErrorMessage } from '@/utils'
 import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
+import {
+  getDigitalAccessStatusLabel,
+  getDigitalAccessTypeLabel,
+  getDigitalAssetFormatLabel,
+} from '@/utils/i18n'
 
 const FORMAT_OPTIONS: Array<DigitalAssetFormat | 'all'> = [
   'all',
@@ -136,6 +141,7 @@ export default function DigitalLibraryPage() {
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.currentTarget.value)}
                   placeholder={t('library.page.searchPlaceholder')}
+                  aria-label={t('library.page.searchAria')}
                   className="h-12 rounded-2xl border-primary/10 bg-background/80 pl-12 dark:bg-input/40"
                 />
               </div>
@@ -146,17 +152,22 @@ export default function DigitalLibraryPage() {
                   setSelectedFormat((value as DigitalAssetFormat | 'all') ?? 'all')
                 }
               >
-                <SelectTrigger className="h-12 rounded-2xl border-primary/10 bg-background/80 dark:bg-input/40">
+                <SelectTrigger
+                  aria-label={t('library.page.formatFilterAria')}
+                  className="h-12 rounded-2xl border-primary/10 bg-background/80 dark:bg-input/40"
+                >
                   <SelectValue placeholder={t('library.page.formatFilterLabel')}>
                     {selectedFormat === 'all'
                       ? t('library.page.allFormats')
-                      : selectedFormat}
+                      : getDigitalAssetFormatLabel(selectedFormat, t)}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {FORMAT_OPTIONS.map((format) => (
                     <SelectItem key={format} value={format}>
-                      {format === 'all' ? t('library.page.allFormats') : format}
+                      {format === 'all'
+                        ? t('library.page.allFormats')
+                        : getDigitalAssetFormatLabel(format, t)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -168,17 +179,22 @@ export default function DigitalLibraryPage() {
                   setSelectedStatus((value as DigitalAccessStatus | 'all') ?? 'all')
                 }
               >
-                <SelectTrigger className="h-12 rounded-2xl border-primary/10 bg-background/80 dark:bg-input/40">
+                <SelectTrigger
+                  aria-label={t('library.page.statusFilterAria')}
+                  className="h-12 rounded-2xl border-primary/10 bg-background/80 dark:bg-input/40"
+                >
                   <SelectValue placeholder={t('library.page.statusFilterLabel')}>
                     {selectedStatus === 'all'
                       ? t('library.page.allStatuses')
-                      : selectedStatus}
+                      : getDigitalAccessStatusLabel(selectedStatus, t)}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status === 'all' ? t('library.page.allStatuses') : status}
+                      {status === 'all'
+                        ? t('library.page.allStatuses')
+                        : getDigitalAccessStatusLabel(status, t)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -243,13 +259,13 @@ export default function DigitalLibraryPage() {
                                 getAccessStatusClassName(item.accessStatus),
                               )}
                             >
-                              {item.accessStatus}
+                              {getDigitalAccessStatusLabel(item.accessStatus, t)}
                             </Badge>
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
-                            <Pill>{item.format}</Pill>
-                            <Pill>{item.accessType}</Pill>
+                            <Pill>{getDigitalAssetFormatLabel(item.format, t)}</Pill>
+                            <Pill>{getDigitalAccessTypeLabel(item.accessType, t)}</Pill>
                             {item.downloadAllowed ? (
                               <Pill>{t('library.page.downloadAllowedLabel')}</Pill>
                             ) : null}

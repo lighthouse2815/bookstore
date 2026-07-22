@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BookOpen, Check, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BookOpen, Mail, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { AuthFlipCard } from '@/components/common/auth-flip-card'
@@ -60,7 +60,10 @@ export default function LoginPage() {
               <div className="mx-auto flex max-w-lg flex-col items-center text-center">
                 <img
                   src={lockImage}
-                  alt={loginForm.restrictionCopy?.title ?? 'Locked account'}
+                  alt={
+                    loginForm.restrictionCopy?.title ??
+                    t('auth.login.lockedImageAlt')
+                  }
                   className="mb-6 h-80 w-80 max-w-full object-contain drop-shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:h-[28rem] sm:w-[28rem] lg:h-[32rem] lg:w-[32rem]"
                 />
                 <p className="rounded-full bg-amber-500/12 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
@@ -356,33 +359,6 @@ export default function LoginPage() {
             />
           )}
 
-          {!showSpecialScreen ? (
-            <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 backdrop-blur-sm">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                {t('auth.login.seedAccountTitle')}
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                  <p className="text-xs text-muted-foreground">
-                    <strong>{t('auth.login.username')}:</strong>{' '}
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono">
-                      giamdocdang
-                    </code>
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                  <p className="text-xs text-muted-foreground">
-                    <strong>{t('auth.login.password')}:</strong>{' '}
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono">
-                      123123aa
-                    </code>
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </main>
       <Footer />

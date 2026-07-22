@@ -31,7 +31,8 @@ public class DemoCouponInitializer implements ApplicationRunner {
     private static final BigDecimal MIN_ORDER_AMOUNT = money(50_000);
     private static final BigDecimal MAX_DISCOUNT_AMOUNT = money(25_000);
     private static final int MIN_USAGE_HEADROOM = 100;
-    private static final String DEMO_DESCRIPTION = "Giam 10% cho don hang demo seeded dang du dieu kien.";
+    private static final String PUBLIC_COUPON_DESCRIPTION =
+            "Ưu đãi 10% cho đơn sách đủ điều kiện trong chương trình khách hàng thân thiết.";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -141,7 +142,7 @@ public class DemoCouponInitializer implements ApplicationRunner {
                         """,
                 true,
                 couponCode,
-                DEMO_DESCRIPTION,
+                PUBLIC_COUPON_DESCRIPTION,
                 DISCOUNT_VALUE,
                 MIN_ORDER_AMOUNT,
                 MAX_DISCOUNT_AMOUNT,
@@ -169,7 +170,7 @@ public class DemoCouponInitializer implements ApplicationRunner {
                 true,
                 couponCode,
                 timestamp(auditAt),
-                DEMO_DESCRIPTION,
+                PUBLIC_COUPON_DESCRIPTION,
                 DISCOUNT_VALUE,
                 timestamp(expiresAt),
                 MAX_DISCOUNT_AMOUNT,

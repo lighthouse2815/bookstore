@@ -270,7 +270,7 @@ function OrderHistoryCard({
                 type="button"
                 aria-label={t('orderHistoryPage.copyOrderId')}
                 onClick={() => void onCopyOrderId(order.orderId)}
-                className="inline-flex size-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-primary/10 hover:bg-primary/6 hover:text-primary"
+                className="inline-flex size-11 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-primary/10 hover:bg-primary/6 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 <Copy className="h-4 w-4" />
               </button>

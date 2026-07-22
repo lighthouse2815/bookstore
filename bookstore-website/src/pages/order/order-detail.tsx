@@ -376,9 +376,13 @@ function OrderDetailContent({
         <SurfacePanel>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <SectionHeading icon={XCircle} title="Hủy đơn hàng" variant="plain" />
+              <SectionHeading
+                icon={XCircle}
+                title={t('orderDetail.cancelTitle')}
+                variant="plain"
+              />
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Đơn đang chờ thanh toán. Hàng tồn và ưu đãi sẽ được hoàn lại sau khi hủy.
+                {t('orderDetail.cancelDescription')}
               </p>
             </div>
             <Button
@@ -388,7 +392,7 @@ function OrderDetailContent({
               className="border-rose-200 text-rose-700 hover:bg-rose-50"
             >
               <XCircle className="mr-2 h-4 w-4" />
-              Hủy đơn
+              {t('orderDetail.cancelAction')}
             </Button>
           </div>
         </SurfacePanel>
@@ -825,6 +829,7 @@ function CancelOrderDialog({
   onReasonChange: (value: string) => void
   onSubmit: () => void
 }) {
+  const { t, formatNumber } = useLanguage()
   const isReasonValid = reason.trim().length > 0 && reason.trim().length <= 500
 
   return (
@@ -832,30 +837,38 @@ function CancelOrderDialog({
       <div className="w-full max-w-xl rounded-[28px] border border-border/70 bg-card p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-heading text-3xl font-bold text-foreground">Xác nhận hủy đơn</h2>
+            <h2 className="font-heading text-3xl font-bold text-foreground">
+              {t('orderDetail.cancelDialogTitle')}
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Vui lòng cho biết lý do. Hành động này không thể khôi phục đơn hàng.
+              {t('orderDetail.cancelDialogDescription')}
             </p>
           </div>
           <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
         <div className="mt-6 space-y-2">
-          <Label htmlFor="cancel-order-reason">Lý do hủy đơn</Label>
+          <Label htmlFor="cancel-order-reason">
+            {t('orderDetail.cancelReasonLabel')}
+          </Label>
           <Textarea
             id="cancel-order-reason"
             value={reason}
             onChange={(event) => onReasonChange(event.currentTarget.value)}
             maxLength={500}
-            placeholder="Ví dụ: Tôi không còn nhu cầu mua sách"
+            placeholder={t('orderDetail.cancelReasonPlaceholder')}
             disabled={isSubmitting}
           />
-          <p className="text-xs text-muted-foreground">{reason.trim().length}/500 ký tự</p>
+          <p className="text-xs text-muted-foreground">
+            {t('orderDetail.cancelReasonCount', {
+              count: formatNumber(reason.trim().length),
+            })}
+          </p>
         </div>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Quay lại
+            {t('orderDetail.cancelBack')}
           </Button>
           <Button
             type="button"
@@ -863,7 +876,9 @@ function CancelOrderDialog({
             onClick={onSubmit}
             disabled={!isReasonValid || isSubmitting}
           >
-            {isSubmitting ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
+            {isSubmitting
+              ? t('orderDetail.cancelling')
+              : t('orderDetail.cancelConfirm')}
           </Button>
         </div>
       </div>

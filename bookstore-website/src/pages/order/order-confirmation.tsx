@@ -27,7 +27,10 @@ import {
 
 export default function OrderConfirmationPage() {
   const { t, formatCurrency } = useLanguage()
-  const transferT = (key: string) => t(`orderConfirmationBankTransfer.${key}`)
+  const transferT = (
+    key: string,
+    params?: Record<string, number | string>,
+  ) => t(`orderConfirmationBankTransfer.${key}`, params)
   const cashOnDeliveryT = (key: string) => t(`orderConfirmationCashOnDelivery.${key}`)
   const {
     order,
@@ -170,7 +173,9 @@ export default function OrderConfirmationPage() {
                   paymentStatus === 'PENDING' &&
                   remainingPaymentSeconds != null ? (
                     <p className="mt-3 text-sm font-semibold text-rose-700">
-                      Thời gian thanh toán còn lại: {formatRemainingTime(remainingPaymentSeconds)}
+                      {transferT('remainingTime', {
+                        time: formatRemainingTime(remainingPaymentSeconds),
+                      })}
                     </p>
                   ) : null}
                 </div>

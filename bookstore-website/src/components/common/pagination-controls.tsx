@@ -150,7 +150,7 @@ export function PaginationControls({
           <Button
             type="submit"
             disabled={disabled || totalPages === 0}
-            className="h-10 rounded-xl px-4 font-semibold"
+            className="h-11 rounded-xl px-4 font-semibold"
           >
             {t('common.pagination.jumpAction')}
           </Button>

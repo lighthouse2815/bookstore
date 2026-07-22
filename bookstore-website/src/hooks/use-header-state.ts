@@ -49,6 +49,24 @@ export function useHeaderState() {
     }
   }, [profileOpen])
 
+  useEffect(() => {
+    if (!open && !profileOpen) {
+      return
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') {
+        return
+      }
+
+      setOpen(false)
+      setProfileOpen(false)
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [open, profileOpen])
+
   function isActiveLink(to: string) {
     switch (to) {
       case '/':

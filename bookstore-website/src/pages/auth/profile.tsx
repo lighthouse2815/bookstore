@@ -149,7 +149,7 @@ export default function ProfilePage() {
     address: t('auth.profile.addressMenuTitle'),
     orders: t('auth.profile.ordersTitle'),
     password: t('auth.profile.passwordMenuTitle'),
-    security: 'Bảo mật & thiết bị',
+    security: t('auth.profile.securityTitle'),
     chooseImage: t('auth.profile.chooseImage'),
     imageHint: t('auth.profile.imageHint'),
     orderHistory: t('orders.title'),
@@ -696,9 +696,12 @@ export default function ProfilePage() {
                 <SurfacePanel id="security-panel">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <PanelHeading icon={Shield} title="Bảo mật & thiết bị" />
+                      <PanelHeading
+                        icon={Shield}
+                        title={t('auth.profile.securityTitle')}
+                      />
                       <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-muted-foreground">
-                        Quản lý các thiết bị đang có quyền truy cập tài khoản của bạn.
+                        {t('auth.profile.securityDescription')}
                       </p>
                     </div>
                     <Button
@@ -706,33 +709,44 @@ export default function ProfilePage() {
                       variant="outline"
                       className={destructiveOutlineButtonClassName}
                       onClick={() => {
-                        if (window.confirm('Đăng xuất khỏi tất cả thiết bị?')) {
+                        if (window.confirm(t('auth.profile.logoutAllConfirm'))) {
                           void handleLogoutAllDevices()
                         }
                       }}
                     >
-                      Đăng xuất mọi thiết bị
+                      {t('auth.profile.logoutAllDevices')}
                     </Button>
                   </div>
 
                   {isLoadingSessions ? (
-                    <p className="mt-6 text-sm text-slate-500 dark:text-muted-foreground">Đang tải phiên đăng nhập…</p>
+                    <p className="mt-6 text-sm text-slate-500 dark:text-muted-foreground">
+                      {t('auth.profile.sessionsLoading')}
+                    </p>
                   ) : null}
 
                   {sessionError ? (
                     <StatePanel
-                      title="Không tải được phiên đăng nhập"
+                      title={t('auth.profile.sessionsErrorTitle')}
                       description={sessionError}
                       className="mt-6"
                       minHeightClassName="min-h-[180px]"
-                      action={<Button type="button" variant="outline" className={secondaryButtonClassName} onClick={() => void loadSessions()}>Thử lại</Button>}
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={secondaryButtonClassName}
+                          onClick={() => void loadSessions()}
+                        >
+                          {t('common.retry')}
+                        </Button>
+                      }
                     />
                   ) : null}
 
                   {!isLoadingSessions && !sessionError && sessions.length === 0 ? (
                     <StatePanel
-                      title="Không có phiên đang hoạt động"
-                      description="Các phiên mới sẽ xuất hiện ở đây sau khi bạn đăng nhập."
+                      title={t('auth.profile.sessionsEmptyTitle')}
+                      description={t('auth.profile.sessionsEmptyDescription')}
                       className="mt-6"
                       minHeightClassName="min-h-[180px]"
                     />
@@ -745,12 +759,23 @@ export default function ProfilePage() {
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="truncate font-semibold text-slate-950 dark:text-foreground">
-                                {session.deviceName || session.userAgent || 'Thiết bị không xác định'}
+                                {session.deviceName ||
+                                  session.userAgent ||
+                                  t('auth.profile.unknownDevice')}
                               </h3>
-                              {session.currentSession ? <Badge className="rounded-full">Thiết bị này</Badge> : null}
+                              {session.currentSession ? (
+                                <Badge className="rounded-full">
+                                  {t('auth.profile.currentDevice')}
+                                </Badge>
+                              ) : null}
                             </div>
                             <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-muted-foreground">
-                              {session.ipAddress || 'IP không rõ'} · Dùng gần nhất {session.lastUsedAt ? formatDate(session.lastUsedAt) : formatDate(session.createdAt)}
+                              {session.ipAddress || t('auth.profile.unknownIp')} ·{' '}
+                              {t('auth.profile.lastUsedAt', {
+                                date: session.lastUsedAt
+                                  ? formatDate(session.lastUsedAt)
+                                  : formatDate(session.createdAt),
+                              })}
                             </p>
                           </div>
                           {!session.currentSession ? (
@@ -759,12 +784,16 @@ export default function ProfilePage() {
                               variant="outline"
                               className={destructiveOutlineButtonClassName}
                               onClick={() => {
-                                if (window.confirm('Thu hồi phiên trên thiết bị này?')) {
+                                if (
+                                  window.confirm(
+                                    t('auth.profile.revokeSessionConfirm'),
+                                  )
+                                ) {
                                   void handleRevokeSession(session.sessionId)
                                 }
                               }}
                             >
-                              Thu hồi
+                              {t('auth.profile.revokeSession')}
                             </Button>
                           ) : null}
                         </article>
@@ -971,7 +1000,7 @@ function OrderCard({
         <Link to={`/orders/${order.orderId}`}>
           <Button
             variant="outline"
-            className="h-10 rounded-2xl border-primary/12 px-4 text-primary hover:bg-primary/6"
+            className="h-11 rounded-2xl border-primary/12 px-4 text-primary hover:bg-primary/6"
           >
             {t('orders.viewDetail')}
           </Button>

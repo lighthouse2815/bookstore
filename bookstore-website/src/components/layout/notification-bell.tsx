@@ -40,7 +40,17 @@ export function NotificationBell() {
     }
 
     document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
   }, [open])
 
   useEffect(() => {
@@ -77,8 +87,10 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="relative flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+        className="relative flex size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         aria-label={t('notifications.bell.openLabel')}
+        aria-expanded={open}
+        aria-controls="notification-preview-panel"
       >
         <Bell className="size-5" />
         {unreadCount > 0 ? (
@@ -89,7 +101,10 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[70] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-[0_32px_90px_rgba(15,23,42,0.32)] backdrop-blur dark:border-white/10 dark:bg-card/95 dark:shadow-[0_32px_90px_rgba(0,0,0,0.45)]">
+        <div
+          id="notification-preview-panel"
+          className="absolute right-0 z-[70] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-[0_32px_90px_rgba(15,23,42,0.32)] backdrop-blur dark:border-white/10 dark:bg-card/95 dark:shadow-[0_32px_90px_rgba(0,0,0,0.45)]"
+        >
           <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-4 dark:border-white/10">
             <div>
               <p className="text-base font-semibold text-foreground">
@@ -149,7 +164,7 @@ export function NotificationBell() {
                           notification.link,
                         )
                       }
-                      className="min-w-0 flex-1 text-left"
+                      className="min-h-11 min-w-0 flex-1 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="line-clamp-1 text-sm font-semibold text-foreground">
@@ -176,7 +191,7 @@ export function NotificationBell() {
                     <button
                       type="button"
                       onClick={() => void handleDelete(notification.notificationId)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       aria-label={t('notifications.bell.delete')}
                     >
                       <Trash2 className="h-4 w-4" />

@@ -31,7 +31,7 @@ export function ThemeSwitch({
       title={label}
       onClick={onToggle}
       className={cn(
-        'group relative inline-flex h-8 w-14 shrink-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:animate-none [perspective:500px] [transform-style:preserve-3d]',
+        'group relative inline-flex h-11 w-16 shrink-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:animate-none [perspective:500px] [transform-style:preserve-3d]',
         'animate-theme-switch-float',
         className,
       )}
@@ -57,9 +57,9 @@ export function ThemeSwitch({
       <span
         aria-hidden="true"
         className={cn(
-          'absolute left-[0.3rem] top-[0.28rem] h-[1.4rem] w-[1.4rem] rounded-full transition-transform duration-300',
+          'absolute left-1 top-1/2 size-7 -translate-y-1/2 rounded-full transition-transform duration-300',
           'shadow-[inset_0_-10px_10px_rgba(0,0,0,0.17),0_-1px_15px_-8px_rgba(0,0,0,0.18)]',
-          checked && 'translate-x-6',
+          checked && 'translate-x-7',
         )}
         style={{ backgroundImage: knobBackground }}
       />

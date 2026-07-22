@@ -362,7 +362,9 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             String receiptId = id("receipt", i);
             String couponCode = i % 2 == 0 ? "FREESHIP%02d".formatted(i) : "DOCHEM%02d".formatted(i);
             boolean bookCoupon = i % 2 != 0;
-            BigDecimal productTotal = money(book.price());
+            int orderQuantity = seedOrderQuantity(i);
+            BigDecimal unitPrice = money(book.price());
+            BigDecimal productTotal = unitPrice.multiply(BigDecimal.valueOf(orderQuantity));
             BigDecimal shippingFee = money(30_000L);
             BigDecimal discount = money(10_000L);
             BigDecimal finalAmount = productTotal.add(shippingFee).subtract(discount);
@@ -375,8 +377,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     ) VALUES (UUID_TO_BIN(?), ?, ?, ?, NULL, ?, ?, ?, ?, ?, 100, ?, ?, ?, 1, ?)
                     """,
                     couponId, true, couponCode, time(i),
-                    bookCoupon ? "Giảm 10% cho đầu sách được chọn trong chương trình đọc hè."
-                            : "Hỗ trợ phí vận chuyển cho đơn hàng đủ điều kiện.",
+                    couponDescriptionAt(i, bookCoupon),
                     bookCoupon ? "PERCENTAGE" : "FIXED_AMOUNT", bookCoupon ? money(10) : money(10_000),
                     time(i + 20_000), bookCoupon ? money(25_000) : null, money(50_000),
                     time(i - 100), time(i + 1), bookCoupon ? "BOOK" : "SHIPPING");
@@ -414,10 +415,10 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     INSERT INTO order_items (
                         id, book_id, book_title, line_total, quantity, unit_price,
                         order_id, item_order, item_type, digital_asset_id
-                    ) VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, 1, ?, UUID_TO_BIN(?), 0,
+                    ) VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, ?, UUID_TO_BIN(?), 0,
                         'PHYSICAL_BOOK', NULL)
                     """,
-                    orderItemId, bookId, book.title(), productTotal, productTotal, orderId);
+                    orderItemId, bookId, book.title(), productTotal, orderQuantity, unitPrice, orderId);
 
             insert("""
                     INSERT INTO payments (
@@ -449,7 +450,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
                     ) VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, NULL, UUID_TO_BIN(?), ?, ?, UUID_TO_BIN(?))
                     """,
                     id("review", i), bookId, DevelopmentSeedCatalog.reviewAt(i - 1),
-                    time(i + 600), orderItemId, i % 5 + 1, time(i + 601), userId);
+                    time(i + 600), orderItemId, seedReviewRating(i), time(i + 601), userId);
 
             insert("""
                     INSERT INTO coupon_usages (
@@ -652,7 +653,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         assertMinimumCount(
                 "SELECT COUNT(*) FROM books WHERE deleted_at IS NULL AND stock_quantity <= 10",
                 DASHBOARD_LOW_STOCK_TARGET,
-                "Seed must provide low-stock books for dashboard smoke"
+                "Seed must provide low-stock books for dashboard scenarios"
         );
     }
 
@@ -959,6 +960,34 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         }
 
         return 24 + (index * 17) % 180;
+    }
+
+    private int seedOrderQuantity(int index) {
+        int[] quantities = {1, 2, 1, 3, 2, 4, 1, 5, 2, 3, 1, 6};
+        return quantities[Math.floorMod(index - 1, quantities.length)];
+    }
+
+    private int seedReviewRating(int index) {
+        int[] ratings = {5, 4, 5, 4, 3, 5, 4, 5, 2, 4, 5, 3};
+        return ratings[Math.floorMod(index - 1, ratings.length)];
+    }
+
+    private String couponDescriptionAt(int index, boolean bookCoupon) {
+        if (bookCoupon) {
+            return switch (Math.floorMod(index, 4)) {
+                case 1 -> "Ưu đãi 10% cho các đầu sách được chọn trong tháng này.";
+                case 2 -> "Giảm 10% khi mua sách thuộc danh mục áp dụng.";
+                case 3 -> "Tiết kiệm 10% cho đơn sách đủ điều kiện.";
+                default -> "Ưu đãi dành cho độc giả mua các tựa sách đang được khuyến khích đọc.";
+            };
+        }
+
+        return switch (Math.floorMod(index, 4)) {
+            case 1 -> "Hỗ trợ 10.000đ phí vận chuyển cho đơn hàng đủ điều kiện.";
+            case 2 -> "Ưu đãi phí giao hàng cho đơn từ 50.000đ.";
+            case 3 -> "Giảm 10.000đ phí vận chuyển khi đặt sách trực tuyến.";
+            default -> "Mã hỗ trợ phí giao hàng dành cho đơn sách đủ điều kiện.";
+        };
     }
 
     private static BigDecimal money(long value) {

@@ -88,7 +88,7 @@ export default function ReturnRequestsPage() {
               <Link to="/orders">
                 <Button
                   variant="outline"
-                  className="h-10 rounded-2xl border-primary/15 px-4 text-primary hover:bg-primary/6"
+                  className="h-11 rounded-2xl border-primary/15 px-4 text-primary hover:bg-primary/6"
                 >
                   <ArrowLeftRight className="mr-2 h-4 w-4" />
                   {t('returnRequests.backToOrders')}
@@ -136,7 +136,7 @@ export default function ReturnRequestsPage() {
                       <Link to={`/orders/${request.orderId}`}>
                         <Button
                           variant="outline"
-                          className="h-10 rounded-2xl border-primary/15 px-4 text-primary hover:bg-primary/6"
+                          className="h-11 rounded-2xl border-primary/15 px-4 text-primary hover:bg-primary/6"
                         >
                           {t('returnRequests.viewOrder')}
                         </Button>

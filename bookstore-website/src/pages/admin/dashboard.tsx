@@ -861,8 +861,8 @@ type DashboardCopy = {
 const dashboardCopy = {
   vi: {
     description:
-      'Theo dõi doanh thu, đơn hàng và tồn kho từ hệ thống backend trong một màn hình tổng hợp.',
-    liveLabel: 'Dữ liệu realtime từ backend',
+      'Theo dõi doanh thu, đơn hàng và tồn kho trong một màn hình tổng hợp.',
+    liveLabel: 'Dữ liệu cập nhật mới nhất',
     refresh: 'Làm mới',
     retry: 'Thử lại',
     revenueDescription:
@@ -874,7 +874,7 @@ const dashboardCopy = {
     lowStockDescription:
       'Các đầu sách sắp chạm ngưỡng tồn kho thấp cần được nhập thêm.',
     recentOrdersDescription:
-      'Danh sách đơn hàng mới nhất phát sinh từ backend admin dashboard.',
+      'Danh sách đơn hàng mới nhất trong hệ thống.',
     emptyRevenue: 'Chưa có dữ liệu doanh thu cho khoảng thời gian này',
     emptyTopBooks: 'Chưa có dữ liệu sách bán chạy',
     emptyOrderStatus: 'Chưa có thống kê trạng thái đơn hàng',
@@ -920,8 +920,8 @@ const dashboardCopy = {
   },
   en: {
     description:
-      'Track revenue, orders, and stock health from the backend in one consolidated view.',
-    liveLabel: 'Live backend data',
+      'Track revenue, orders, and stock health in one consolidated view.',
+    liveLabel: 'Latest available data',
     refresh: 'Refresh',
     retry: 'Retry',
     revenueDescription:
@@ -933,7 +933,7 @@ const dashboardCopy = {
     lowStockDescription:
       'Books approaching the low-stock threshold and likely needing replenishment.',
     recentOrdersDescription:
-      'Most recent orders returned by the admin dashboard backend endpoints.',
+      'The most recent orders in the system.',
     emptyRevenue: 'No revenue data for this period',
     emptyTopBooks: 'No top-selling books available yet',
     emptyOrderStatus: 'No order-status statistics available yet',

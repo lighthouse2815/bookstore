@@ -1,6 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, Globe, LoaderCircle, Mail, MessageCircle } from 'lucide-react'
+import {
+  BookOpen,
+  Camera,
+  LoaderCircle,
+  MessageCircle,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
 import { useBrandWordmark } from '@/hooks/use-brand-wordmark'
@@ -12,6 +19,32 @@ export function Footer() {
   const { brandPrefix, brandSuffix } = useBrandWordmark()
   const [newsletterEmail, setNewsletterEmail] = useState('')
   const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false)
+  const socialLinks = (
+    [
+      {
+        href: getPublicSocialUrl(import.meta.env.VITE_FACEBOOK_URL),
+        label: t('footer.facebookAria'),
+        icon: Users,
+      },
+      {
+        href: getPublicSocialUrl(import.meta.env.VITE_INSTAGRAM_URL),
+        label: t('footer.instagramAria'),
+        icon: Camera,
+      },
+      {
+        href: getPublicSocialUrl(import.meta.env.VITE_ZALO_URL),
+        label: t('footer.zaloAria'),
+        icon: MessageCircle,
+      },
+    ] satisfies Array<{
+      href: string | null
+      label: string
+      icon: LucideIcon
+    }>
+  ).filter(
+    (link): link is { href: string; label: string; icon: LucideIcon } =>
+      Boolean(link.href),
+  )
 
   async function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -45,18 +78,22 @@ export function Footer() {
             <p className="text-sm leading-relaxed text-muted-foreground">
               {t('footer.description')}
             </p>
-            <div className="flex gap-2">
-              {[Globe, MessageCircle, Mail].map((Icon, index) => (
+            {socialLinks.length > 0 ? (
+              <div className="flex gap-2">
+                {socialLinks.map(({ href, icon: Icon, label }) => (
                 <a
-                  key={index}
-                  href="#"
-                  className="flex size-9 items-center justify-center rounded-full bg-background text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-                  aria-label={t('footer.socialAria')}
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex size-11 items-center justify-center rounded-full bg-background text-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  aria-label={label}
                 >
                   <Icon className="size-4" />
                 </a>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -138,7 +175,7 @@ export function Footer() {
               <button
                 type="submit"
                 disabled={isNewsletterSubmitting}
-                className="flex h-10 min-w-16 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-11 min-w-16 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isNewsletterSubmitting ? (
                   <>
@@ -162,4 +199,21 @@ export function Footer() {
       </div>
     </footer>
   )
+}
+
+function getPublicSocialUrl(value: string | undefined) {
+  const candidate = value?.trim()
+
+  if (!candidate) {
+    return null
+  }
+
+  try {
+    const url = new URL(candidate)
+    return url.protocol === 'https:' || url.protocol === 'http:'
+      ? url.toString()
+      : null
+  } catch {
+    return null
+  }
 }

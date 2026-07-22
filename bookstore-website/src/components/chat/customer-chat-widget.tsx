@@ -218,7 +218,7 @@ export function CustomerChatWidget() {
                 <button
                   type="button"
                   onClick={() => void refresh()}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   aria-label={t('chat.customer.refresh')}
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -226,7 +226,7 @@ export function CustomerChatWidget() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   aria-label={t('chat.customer.closeChat')}
                 >
                   <X className="h-4 w-4" />
@@ -542,7 +542,7 @@ function SupportModeButton({
       disabled={disabled}
       aria-pressed={isSelected}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60',
         isSelected
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',

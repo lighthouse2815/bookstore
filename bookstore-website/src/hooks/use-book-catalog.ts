@@ -106,7 +106,11 @@ export function useBookCatalogPage({
 
   useEffect(() => {
     let isCancelled = false
-    setState((currentState) => ({ ...currentState, isLoading: true }))
+    setState((currentState) => ({
+      ...currentState,
+      isLoading: true,
+      error: null,
+    }))
 
     async function loadBookCatalogPage() {
       try {

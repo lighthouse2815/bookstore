@@ -6,6 +6,11 @@ import type {
 import type { Gender, UserRole } from '@/types/auth'
 import type { ShipmentStatus } from '@/types/shipment'
 import type { ReturnRequestStatus } from '@/types/return-request'
+import type {
+  DigitalAccessStatus,
+  DigitalAccessType,
+  DigitalAssetFormat,
+} from '@/types/digital-library'
 
 type TranslateFunction = (
   key: string,
@@ -15,21 +20,71 @@ type TranslateFunction = (
 const categoryKeys: Record<string, string> = {
   novel: 'categories.novel',
   'tieu thuyet': 'categories.novel',
-  'tiểu thuyết': 'categories.novel',
   'life skills': 'categories.lifeSkills',
   'ky nang song': 'categories.lifeSkills',
-  'kỹ năng sống': 'categories.lifeSkills',
+  'ky nang & phat trien ban than': 'categories.personalDevelopment',
+  'ky nang va phat trien ban than': 'categories.personalDevelopment',
+  'personal development': 'categories.personalDevelopment',
+  'business & management': 'categories.businessManagement',
+  'business and management': 'categories.businessManagement',
+  'kinh doanh & quan tri': 'categories.businessManagement',
+  'kinh doanh va quan tri': 'categories.businessManagement',
+  'art & creativity': 'categories.artsCreativity',
+  'arts & creativity': 'categories.artsCreativity',
+  'nghe thuat & sang tao': 'categories.artsCreativity',
+  'nghe thuat va sang tao': 'categories.artsCreativity',
+  philosophy: 'categories.philosophy',
+  'triet hoc': 'categories.philosophy',
+  'contemporary literature': 'categories.contemporaryLiterature',
+  'van hoc duong dai': 'categories.contemporaryLiterature',
+  mystery: 'categories.mystery',
+  detective: 'categories.mystery',
+  'trinh tham': 'categories.mystery',
+  education: 'categories.education',
+  'giao duc': 'categories.education',
   science: 'categories.science',
   'khoa hoc': 'categories.science',
-  'khoa học': 'categories.science',
+  'science & technology': 'categories.scienceTechnology',
+  'science and technology': 'categories.scienceTechnology',
+  'khoa hoc & cong nghe': 'categories.scienceTechnology',
+  'khoa hoc va cong nghe': 'categories.scienceTechnology',
   literature: 'categories.literature',
   'van hoc': 'categories.literature',
-  'văn học': 'categories.literature',
   'science fiction': 'categories.sciFi',
   'sci-fi': 'categories.sciFi',
   scifi: 'categories.sciFi',
   'vien tuong': 'categories.sciFi',
-  'viễn tưởng': 'categories.sciFi',
+  'khoa hoc vien tuong': 'categories.sciFi',
+  psychology: 'categories.psychology',
+  'tam ly hoc': 'categories.psychology',
+  'history & memoir': 'categories.historyMemoir',
+  'history and memoir': 'categories.historyMemoir',
+  'lich su & hoi ky': 'categories.historyMemoir',
+  'lich su va hoi ky': 'categories.historyMemoir',
+  children: 'categories.children',
+  kids: 'categories.children',
+  'thieu nhi': 'categories.children',
+  fantasy: 'categories.fantasy',
+  'gia tuong & ky ao': 'categories.fantasy',
+  'gia tuong va ky ao': 'categories.fantasy',
+}
+
+const digitalAccessStatusKeys: Record<DigitalAccessStatus, string> = {
+  ACTIVE: 'library.accessStatus.ACTIVE',
+  EXPIRED: 'library.accessStatus.EXPIRED',
+  REVOKED: 'library.accessStatus.REVOKED',
+}
+
+const digitalAccessTypeKeys: Record<DigitalAccessType, string> = {
+  PURCHASED: 'library.accessType.PURCHASED',
+  BORROWED: 'library.accessType.BORROWED',
+  SUBSCRIPTION: 'library.accessType.SUBSCRIPTION',
+}
+
+const digitalAssetFormatKeys: Record<DigitalAssetFormat, string> = {
+  PDF: 'library.format.PDF',
+  EPUB: 'library.format.EPUB',
+  AUDIO: 'library.format.AUDIO',
 }
 
 const orderStatusKeys: Record<string, string> = {
@@ -103,6 +158,27 @@ export function getCategoryLabel(category: string, t: TranslateFunction) {
   return key ? t(key) : category
 }
 
+export function getDigitalAccessStatusLabel(
+  status: DigitalAccessStatus,
+  t: TranslateFunction,
+) {
+  return t(digitalAccessStatusKeys[status])
+}
+
+export function getDigitalAccessTypeLabel(
+  accessType: DigitalAccessType,
+  t: TranslateFunction,
+) {
+  return t(digitalAccessTypeKeys[accessType])
+}
+
+export function getDigitalAssetFormatLabel(
+  format: DigitalAssetFormat,
+  t: TranslateFunction,
+) {
+  return t(digitalAssetFormatKeys[format])
+}
+
 export function getOrderStatusLabel(status: string, t: TranslateFunction) {
   const key = orderStatusKeys[status]
   return key ? t(key) : status
@@ -148,6 +224,9 @@ function normalizeCategoryKey(category: string) {
   return category
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
     .toLowerCase()
+    .replace(/\s+/g, ' ')
     .trim()
 }

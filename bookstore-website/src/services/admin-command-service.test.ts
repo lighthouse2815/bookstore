@@ -39,14 +39,14 @@ const dictionary: Record<string, string> = {
   'admin.commandPalette.actions.switchToDark': 'Switch to dark theme',
   'admin.commandPalette.actions.switchToLight': 'Switch to light theme',
   'admin.commandPalette.actions.openChat': 'Open support chat',
-  'admin.commandPalette.actions.goStorefront': 'Go to storefront',
+  'admin.commandPalette.actions.goStorefront': 'Go to customer site',
   'admin.commandPalette.actions.logout': 'Log out',
   'admin.commandPalette.subtitles.toggleTheme':
     'Change the current admin workspace theme',
   'admin.commandPalette.subtitles.openChat':
     'Jump straight to the support chat workspace',
   'admin.commandPalette.subtitles.goStorefront':
-    'Leave admin and return to the storefront',
+    'Leave admin and return to the customer site',
   'admin.commandPalette.subtitles.logout':
     'End the current session and go back to login',
 }

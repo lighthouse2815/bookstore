@@ -396,7 +396,7 @@ export default function AdminBooksPage() {
                     placeholder={t('admin.books.fields.category')}
                     options={references.categories.map((category) => ({
                       value: category.id,
-                      label: category.name,
+                      label: getCategoryLabel(category.name, t),
                     }))}
                   />
                   <ReferenceSelectField
@@ -548,7 +548,7 @@ export default function AdminBooksPage() {
                     </SelectItem>
                     {references.categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {category.name}
+                        {getCategoryLabel(category.name, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>

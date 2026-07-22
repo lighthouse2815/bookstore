@@ -23,7 +23,7 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
           type="button"
           onClick={() => setLanguage(nextLanguage)}
           className={cn(
-            'rounded-full px-3 py-1 text-xs font-semibold transition-colors',
+            'min-h-9 rounded-full px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
             language === nextLanguage
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:text-foreground',

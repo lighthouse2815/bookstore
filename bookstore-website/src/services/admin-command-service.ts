@@ -79,7 +79,7 @@ export function buildAdminCommandItems({
       label: t('admin.commandPalette.actions.goStorefront'),
       subtitle: t('admin.commandPalette.subtitles.goStorefront'),
       icon: Home,
-      keywords: ['storefront', 'home', 'shop', 'trang chu', 'cua hang'],
+      keywords: ['customer site', 'home', 'shop', 'trang chu', 'cua hang'],
       href: '/',
       isActive: false,
     },

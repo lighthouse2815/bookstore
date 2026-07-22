@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/contexts/language-context'
 import { cn } from '@/utils'
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
@@ -29,6 +30,7 @@ export function GoogleAuthButton({
   onCredential,
   text = 'continue_with',
 }: GoogleAuthButtonProps) {
+  const { t } = useLanguage()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const onCredentialRef = useRef(onCredential)
@@ -76,11 +78,7 @@ export function GoogleAuthButton({
             const credential = response.credential?.trim()
 
             if (!credential) {
-              toast.error(
-                locale === 'vi'
-                  ? 'Không lấy được Google ID token.'
-                  : 'Unable to get a Google ID token.',
-              )
+              toast.error(t('auth.google.loadError'))
               return
             }
 
@@ -121,7 +119,7 @@ export function GoogleAuthButton({
     return () => {
       isMounted = false
     }
-  }, [clientId, locale, text])
+  }, [clientId, locale, t, text])
 
   if (!clientId) {
     return (
@@ -131,9 +129,7 @@ export function GoogleAuthButton({
           className,
         )}
       >
-        {locale === 'vi'
-          ? 'Thiếu cấu hình VITE_GOOGLE_CLIENT_ID để bật đăng nhập Google.'
-          : 'Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.'}
+        {t('auth.google.unavailable')}
       </div>
     )
   }
@@ -146,9 +142,7 @@ export function GoogleAuthButton({
           className,
         )}
       >
-        {locale === 'vi'
-          ? 'Không tải được Google Identity Services. Hãy thử lại sau.'
-          : 'Google Identity Services could not be loaded. Please try again.'}
+        {t('auth.google.loadError')}
       </div>
     )
   }
@@ -173,7 +167,7 @@ export function GoogleAuthButton({
       {disabled ? (
         <button
           type="button"
-          aria-label={disabledMessage ?? 'Google auth is disabled'}
+          aria-label={disabledMessage ?? t('auth.google.disabled')}
           onClick={() => {
             if (disabledMessage) {
               toast.error(disabledMessage)
@@ -181,7 +175,7 @@ export function GoogleAuthButton({
           }}
           className="absolute inset-0 h-full w-full cursor-not-allowed rounded-full bg-background/30 text-transparent hover:bg-background/30"
         >
-          Blocked
+          {t('auth.google.blocked')}
         </button>
       ) : null}
 

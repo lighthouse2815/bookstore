@@ -386,7 +386,7 @@ export default function CheckoutPage() {
                           type="button"
                           variant={isSuggestedCouponApplied ? 'outline' : 'default'}
                           disabled={Boolean(isSuggestedCouponApplied)}
-                          className="h-10 rounded-xl"
+                          className="h-11 rounded-xl"
                           onClick={applySuggestedCoupon}
                         >
                           {isSuggestedCouponApplied
@@ -1047,7 +1047,7 @@ function CouponDialog({
             type="button"
             aria-label={labels.close}
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <X className="size-4" />
           </button>
@@ -1282,7 +1282,7 @@ function AddressDialog({
             type="button"
             aria-label={labels.close}
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <X className="size-4" />
           </button>

@@ -16,16 +16,16 @@ export function AddToCart({ book }: { book: Book }) {
           <button
             type="button"
             onClick={decrementQty}
-            className="flex size-9 items-center justify-center rounded-[0.625rem] text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95"
+            className="flex size-11 items-center justify-center rounded-[0.625rem] text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95"
             aria-label={t('book.addToCart.decrease')}
           >
             <Minus className="size-4" />
           </button>
-          <span className="w-9 text-center font-semibold tabular-nums">{qty}</span>
+          <span className="w-11 text-center font-semibold tabular-nums">{qty}</span>
           <button
             type="button"
             onClick={incrementQty}
-            className="flex size-9 items-center justify-center rounded-[0.625rem] text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95"
+            className="flex size-11 items-center justify-center rounded-[0.625rem] text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95"
             aria-label={t('book.addToCart.increase')}
           >
             <Plus className="size-4" />

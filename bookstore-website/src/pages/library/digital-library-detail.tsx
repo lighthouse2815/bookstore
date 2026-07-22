@@ -14,6 +14,11 @@ import NotFoundPage from '@/pages/home/not-found'
 import { cn } from '@/utils'
 import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { formatDigitalFileSize } from '@/utils/digital-asset'
+import {
+  getDigitalAccessStatusLabel,
+  getDigitalAccessTypeLabel,
+  getDigitalAssetFormatLabel,
+} from '@/utils/i18n'
 
 export default function DigitalLibraryDetailPage() {
   const { digitalAssetId } = useParams<{ digitalAssetId: string }>()
@@ -102,13 +107,13 @@ export default function DigitalLibraryDetailPage() {
                     getStatusBadgeClassName(asset.accessStatus),
                   )}
                 >
-                  {asset.accessStatus}
+                  {getDigitalAccessStatusLabel(asset.accessStatus, t)}
                 </Badge>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Pill>{asset.format}</Pill>
-                <Pill>{asset.accessType}</Pill>
+                <Pill>{getDigitalAssetFormatLabel(asset.format, t)}</Pill>
+                <Pill>{getDigitalAccessTypeLabel(asset.accessType, t)}</Pill>
                 {asset.downloadAllowed ? <Pill>{t('library.detail.downloadAllowed')}</Pill> : null}
                 {asset.sampleAvailable ? <Pill>{t('library.detail.sampleAvailable')}</Pill> : null}
               </div>

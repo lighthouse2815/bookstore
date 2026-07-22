@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ChangeEvent,
 } from 'react'
@@ -9,11 +8,27 @@ import { useSearchParams } from 'react-router-dom'
 import { useLanguage } from '@/contexts/language-context'
 import { useEbookCatalogPage } from '@/hooks/use-ebook-catalog'
 import { getCategoryLabel } from '@/utils/i18n'
+import {
+  createCatalogSearchParams,
+  readCatalogSearchState,
+  type CatalogSearchUpdate,
+} from '@/utils/catalog-search-params'
 
 type SortKey = 'featured' | 'price-asc' | 'price-desc' | 'format'
 
 const ALL_CATEGORIES = '__all__'
 const PAGE_SIZE = 12
+const EBOOK_SORT_KEYS: readonly SortKey[] = [
+  'featured',
+  'price-asc',
+  'price-desc',
+  'format',
+]
+const EBOOK_SEARCH_DEFAULTS = {
+  allCategoriesValue: ALL_CATEGORIES,
+  defaultSort: 'featured' as const,
+  allowedSorts: EBOOK_SORT_KEYS,
+}
 const CATEGORY_PRESETS = {
   '__life-skills__': 'categories.lifeSkills',
   '__novel__': 'categories.novel',
@@ -25,16 +40,16 @@ const formatOrder = {
 } as const
 
 export function useEbookListing() {
-  const [searchParams] = useSearchParams()
-  const requestedCategory = searchParams.get('category') ?? ALL_CATEGORIES
-  const requestedQuery = searchParams.get('q')?.trim() ?? ''
+  const [searchParams, setSearchParams] = useSearchParams()
+  const searchState = readCatalogSearchState(
+    searchParams,
+    EBOOK_SEARCH_DEFAULTS,
+  )
+  const requestedCategory = searchState.category
   const { t, formatNumber } = useLanguage()
   const [category, setCategory] = useState(requestedCategory)
-  const [query, setQuery] = useState(requestedQuery)
-  const [sort, setSort] = useState<SortKey>('featured')
-  const [page, setPage] = useState(0)
   const [categoryIds, setCategoryIds] = useState<Record<string, string>>({})
-  const resolvedCategoryRequest = useRef<string | null>(null)
+  const { query, sort, page } = searchState
   const selectedCategoryId =
     category === ALL_CATEGORIES ? undefined : categoryIds[category]
   const catalog = useEbookCatalogPage({
@@ -50,21 +65,17 @@ export function useEbookListing() {
   }, [catalog.categoryIds])
 
   useEffect(() => {
-    if (
-      categories.length === 0 ||
-      resolvedCategoryRequest.current === requestedCategory
-    ) {
+    if (requestedCategory === ALL_CATEGORIES) {
+      setCategory(ALL_CATEGORIES)
+      return
+    }
+
+    if (categories.length === 0) {
       return
     }
 
     setCategory(resolveRequestedCategory(requestedCategory, categories, t))
-    setPage(0)
-    resolvedCategoryRequest.current = requestedCategory
   }, [categories, requestedCategory, t])
-
-  useEffect(() => {
-    setQuery(requestedQuery)
-  }, [requestedQuery])
 
   const filteredEbooks = useMemo(() => {
     if (sort === 'featured') {
@@ -91,8 +102,10 @@ export function useEbookListing() {
   const categoryOptions = [ALL_CATEGORIES, ...categories]
 
   function handleQueryChange(event: ChangeEvent<HTMLInputElement>) {
-    setQuery(event.currentTarget.value)
-    setPage(0)
+    updateSearchParams(
+      { query: event.currentTarget.value, page: 0 },
+      true,
+    )
   }
 
   function handleCategorySelect(nextCategory: string | null) {
@@ -101,7 +114,7 @@ export function useEbookListing() {
     }
 
     setCategory(nextCategory)
-    setPage(0)
+    updateSearchParams({ category: nextCategory, page: 0 })
   }
 
   function handleSortChange(nextSort: string | null) {
@@ -109,7 +122,26 @@ export function useEbookListing() {
       return
     }
 
-    setSort(nextSort as SortKey)
+    updateSearchParams({ sort: nextSort as SortKey, page: 0 })
+  }
+
+  function handlePageChange(nextPage: number) {
+    updateSearchParams({ page: Math.max(0, nextPage) })
+  }
+
+  function updateSearchParams(
+    update: CatalogSearchUpdate<SortKey>,
+    replace = false,
+  ) {
+    setSearchParams(
+      (currentParams) =>
+        createCatalogSearchParams(
+          currentParams,
+          update,
+          EBOOK_SEARCH_DEFAULTS,
+        ),
+      { replace },
+    )
   }
 
   return {
@@ -129,7 +161,7 @@ export function useEbookListing() {
     handleQueryChange,
     handleCategorySelect,
     handleSortChange,
-    handlePageChange: setPage,
+    handlePageChange,
   }
 }
 

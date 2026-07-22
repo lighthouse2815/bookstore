@@ -13,6 +13,10 @@ import {
 } from '@/services/digital-library-service'
 import type { DigitalLibraryAssetResponse } from '@/types/digital-library'
 import { cn, getErrorMessage } from '@/utils'
+import {
+  getDigitalAccessTypeLabel,
+  getDigitalAssetFormatLabel,
+} from '@/utils/i18n'
 
 type ReaderState = {
   asset: DigitalLibraryAssetResponse | null
@@ -159,10 +163,10 @@ export default function DigitalLibraryReaderPage() {
 
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
-                {state.asset.format}
+                {getDigitalAssetFormatLabel(state.asset.format, t)}
               </Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
-                {state.asset.accessType}
+                {getDigitalAccessTypeLabel(state.asset.accessType, t)}
               </Badge>
             </div>
           </div>

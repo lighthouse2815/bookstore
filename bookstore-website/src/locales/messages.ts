@@ -10,10 +10,10 @@ export const messages = {
     },
     common: {
       deployStartup: {
-        badge: 'Render cold start',
-        title: 'Đang đánh thức server',
+        badge: 'Đang kết nối',
+        title: 'Nhà sách đang chuẩn bị',
         description:
-          'Render free nên server khởi động hơi lâu một tý. Trang sẽ tự vào ngay khi backend sẵn sàng.',
+          'Hệ thống cần thêm một chút thời gian để sẵn sàng. Trang sẽ tự tiếp tục ngay khi kết nối hoàn tất.',
         hint:
           'Bạn cứ giữ tab này mở, hệ thống đang tự thử kết nối lại để nạp dữ liệu nhà sách.',
         waitedLabel: 'Thời gian chờ',
@@ -22,10 +22,10 @@ export const messages = {
         retryCount: '{count} lần',
         retryNow: 'Thử lại ngay',
         footer:
-          'Nếu phải chờ lâu hơn, Render có thể đang khởi động lại container từ đầu.',
+          'Nếu thời gian chờ lâu hơn dự kiến, bạn có thể thử kết nối lại ngay.',
         phases: {
-          boot: 'Khởi động máy chủ',
-          warmup: 'Làm nóng backend',
+          boot: 'Khởi động dịch vụ',
+          warmup: 'Chuẩn bị kết nối',
           catalog: 'Nạp dữ liệu nhà sách',
         },
       },
@@ -146,14 +146,14 @@ export const messages = {
         'Phần khung trang vẫn sẵn sàng trong lúc dữ liệu sách đang được tải.',
       catalogBooksErrorTitle: 'Chưa tải được danh sách sách',
       catalogBooksErrorDescription:
-        'Hero và các mục khám phá vẫn hoạt động. Các kệ sách sẽ tự hiển thị lại khi catalog phản hồi.',
+        'Các mục khám phá vẫn hoạt động. Kệ sách sẽ tự hiển thị lại khi dữ liệu sẵn sàng.',
       catalogCategoriesErrorTitle: 'Chưa tải được thể loại',
       catalogCategoriesErrorDescription:
-        'Danh sách thể loại sẽ xuất hiện lại khi kết nối catalog ổn định.',
+        'Danh sách thể loại sẽ xuất hiện lại khi dữ liệu sẵn sàng.',
       featuredTitle: 'Sách nổi bật',
       emptyTitle: 'Chưa có sách nào trong hệ thống',
       emptyDescription:
-        'Khi backend có dữ liệu sách, các danh mục và gợi ý trên trang chủ sẽ hiển ra ở đây.',
+        'Các danh mục và gợi ý sẽ xuất hiện tại đây khi kho sách có dữ liệu.',
       promoTitle: 'Tuần lễ vàng - Mua 2 tặng 1',
       promoDescription:
         'Áp dụng cho toàn bộ sách kỹ năng sống và tiểu thuyết. Số lượng có hạn, nhanh tay sở hữu ngay hôm nay!',
@@ -163,15 +163,15 @@ export const messages = {
         badge: 'BookMatch',
         title: 'Không biết đọc gì hôm nay?',
         description:
-          'Làm quiz 3 bước để hệ thống ghép mood, ngân sách và thời lượng đọc thành một list sách hợp vibe ngay trên storefront.',
-        button: 'Mở quiz gợi ý',
-        stepCount: '3 bước siêu nhanh',
+          'Trả lời 3 câu hỏi ngắn về cảm hứng, ngân sách và thời lượng đọc để tìm những cuốn sách hợp với bạn hôm nay.',
+        button: 'Tìm sách hợp gu',
+        stepCount: '3 câu hỏi ngắn',
       },
       couponGame: {
         badge: 'Mini game hôm nay',
         title: 'Săn mã giảm giá hôm nay',
         description:
-          'Quay vòng may mắn để lấy một mã coupon public đang hoạt động. Mã chỉ hiển thị để bạn copy và nhập thủ công ở giỏ hàng hoặc checkout.',
+          'Quay vòng may mắn để nhận một mã giảm giá còn hiệu lực, sau đó sao chép mã và dùng khi thanh toán.',
         button: 'Mở vòng quay',
         dailyLimit: '1 lượt mỗi ngày',
       },
@@ -196,18 +196,18 @@ export const messages = {
     },
     couponGamePage: {
       badge: 'Vui nhẹ nhưng có quà',
-      title: 'Vòng quay may mắn săn coupon',
+      title: 'Vòng quay may mắn săn mã giảm giá',
       description:
-        'Mỗi ngày bạn có một lượt quay để nhận ngẫu nhiên một coupon public đang active trên storefront. MVP này không tự áp mã, không đụng usedCount, chỉ giúp bạn săn và copy nhanh.',
+        'Mỗi ngày bạn có một lượt quay để nhận ngẫu nhiên một mã giảm giá còn hiệu lực. Hãy sao chép mã và dùng cho đơn hàng phù hợp.',
       limitChip: 'Giới hạn',
       dailyLimit: '1 lần / ngày',
-      poolChip: 'Pool active',
+      poolChip: 'Mã đang có',
       poolCount: '{count} mã sẵn sàng',
       manualChip: 'Cách dùng',
-      manualOnly: 'Copy và nhập thủ công',
-      wheelBadge: 'Lucky Spin',
+      manualOnly: 'Sao chép và nhập mã',
+      wheelBadge: 'Vòng quay may mắn',
       spinHint:
-        'Bấm quay để hệ thống chọn một coupon active với chút ưu tiên cho ưu đãi lớn hơn, nhưng vẫn đủ random để vui.',
+        'Bấm quay để nhận ngẫu nhiên một mã trong danh sách ưu đãi đang áp dụng.',
       spinButton: 'Quay ngay',
       spinLoading: 'Đang quay...',
       playedButton: 'Đã quay hôm nay',
@@ -217,18 +217,18 @@ export const messages = {
       resultTitle: 'Mã bạn có thể săn được',
       resultPlaceholder: 'Chưa mở quà',
       resultWaiting:
-        'Khi quay xong, mã coupon, mô tả giảm giá, hạn dùng và nút copy sẽ hiện ở đây.',
+        'Sau khi quay, mã giảm giá, mức ưu đãi, hạn dùng và nút sao chép sẽ hiện ở đây.',
       todayResultBadge: 'Mã hôm nay',
       resultSaved: 'Kết quả giữ đến',
       copyButton: 'Sao chép mã',
-      copySuccess: 'Đã sao chép mã coupon.',
+      copySuccess: 'Đã sao chép mã giảm giá.',
       copyError:
-        'Không thể sao chép tự động. Hãy sao chép thủ công mã coupon phía trên.',
+        'Không thể sao chép tự động. Hãy sao chép mã phía trên theo cách thủ công.',
       openCart: 'Đi tới giỏ hàng',
       backHome: 'Về trang chủ',
       viewBooks: 'Xem thêm sách',
       manualApplyHint:
-        'Mã này chưa được áp tự động vào giỏ hàng. Hãy dán thủ công vào flow coupon hiện có ở giỏ hàng hoặc checkout.',
+        'Mã chưa được áp tự động. Hãy dán mã vào ô giảm giá trong giỏ hàng hoặc khi thanh toán.',
       typeBook: 'Dùng cho sách',
       typeShipping: 'Dùng cho phí vận chuyển',
       minOrderLabel: 'Đơn tối thiểu',
@@ -236,13 +236,13 @@ export const messages = {
       expiresLabel: 'Hạn dùng',
       noExpiry: 'Không giới hạn thời gian',
       noDescription:
-        'Coupon này không có mô tả thêm, nhưng bạn vẫn có thể copy mã và thử áp dụng theo flow hiện có.',
-      emptyTitle: 'Hôm nay chưa có coupon active để quay',
+        'Mã này chưa có mô tả thêm. Bạn vẫn có thể sao chép và thử áp dụng cho đơn hàng phù hợp.',
+      emptyTitle: 'Hôm nay chưa có mã giảm giá để quay',
       emptyDescription:
-        'Khi storefront có coupon public hợp lệ, vòng quay sẽ sáng đèn trở lại. Bạn có thể quay lại sau mà không cần làm gì thêm.',
+        'Vòng quay sẽ mở lại khi có mã giảm giá phù hợp. Bạn vui lòng quay lại sau nhé.',
       errorTitle: 'Tạm thời chưa tải được vòng quay',
       errorDescription:
-        'Không lấy được danh sách coupon active từ hệ thống lúc này. Vui lòng thử lại sau.',
+        'Không thể tải danh sách mã giảm giá lúc này. Vui lòng thử lại sau.',
       discountPercent: 'Giảm {value}%',
       discountFixed: 'Giảm {amount}',
       wheelCenter: 'LUCKY',
@@ -253,9 +253,8 @@ export const messages = {
         errorFallback: 'Đăng nhập thất bại',
         title: 'Chào mừng quay lại',
         description:
-          'Đăng nhập bằng tài khoản backend để tiếp tục mua sách',
+          'Đăng nhập bằng tài khoản của bạn để tiếp tục mua sách',
         cardTitle: 'Đăng nhập',
-        seedAccountTitle: 'Tài khoản mẫu từ backend',
         username: 'Tên đăng nhập',
         password: 'Mật khẩu',
         forgotPassword: 'Quên mật khẩu?',
@@ -297,21 +296,21 @@ export const messages = {
       forgotPassword: {
         title: 'Quên mật khẩu',
         description:
-          'Nhập email, xác thực OTP rồi đặt lại mật khẩu mới theo luồng backend',
+          'Nhập email, xác thực mã bảo mật rồi đặt lại mật khẩu mới',
         requestTitle: 'Yêu cầu OTP',
         requestDescription:
-          'Nhập email tài khoản để server gửi OTP đặt lại mật khẩu',
+          'Nhập email tài khoản để nhận mã đặt lại mật khẩu',
         requestHint:
-          'Nếu email tồn tại và hợp lệ, server sẽ gửi OTP đến hộp thư của bạn.',
+          'Nếu email hợp lệ, mã xác thực sẽ được gửi đến hộp thư của bạn.',
         requestSubmit: 'Gửi OTP',
         requestSuccess: 'Nếu email tồn tại, OTP đã được gửi',
         requestErrorFallback: 'Không thể gửi OTP đặt lại mật khẩu',
         verifyTitle: 'Xác thực OTP',
         verifyDescription:
-          'Nhập mã OTP 6 số đã được gửi tới {email} để nhận reset token',
+          'Nhập mã OTP 6 số đã được gửi tới {email}',
         otpSent: 'OTP đã được gửi tới email của bạn',
         verifyHint:
-          'Sau khi OTP đúng, backend sẽ trả về reset token để bạn đổi mật khẩu.',
+          'Sau khi mã được xác thực, bạn có thể tạo mật khẩu mới.',
         verifySubmit: 'Xác thực OTP',
         verifySuccess: 'OTP hợp lệ, hãy đặt mật khẩu mới',
         verifyErrorFallback: 'Xác thực OTP đặt lại mật khẩu thất bại',
@@ -321,9 +320,9 @@ export const messages = {
         backStep: 'Quay lại',
         resetTitle: 'Đặt mật khẩu mới',
         resetDescription:
-          'Tạo mật khẩu mới cho tài khoản {email} bằng reset token vừa nhận',
+          'Tạo mật khẩu mới cho tài khoản {email}',
         resetHint:
-          'Mật khẩu mới phải có ít nhất 8 ký tự. Sau khi đổi xong, các refresh token cũ sẽ bị thu hồi.',
+          'Mật khẩu mới phải có ít nhất 8 ký tự. Các phiên đăng nhập cũ sẽ kết thúc sau khi đổi mật khẩu.',
         newPassword: 'Mật khẩu mới',
         newPasswordPlaceholder: 'Ít nhất 8 ký tự',
         confirmPassword: 'Xác nhận mật khẩu mới',
@@ -341,13 +340,13 @@ export const messages = {
         passwordTooShort: 'Mật khẩu phải có ít nhất 8 ký tự!',
         title: 'Tạo tài khoản',
         description:
-          'Biểu mẫu này map theo backend `/api/auth/register` và sẽ xác thực OTP qua email trước khi đăng nhập',
+          'Điền thông tin và xác thực email để hoàn tất đăng ký tài khoản',
         otpSent: 'Mã OTP đã được gửi tới email của bạn',
         verifyTitle: 'Xác thực OTP',
         verifyDescription:
           'Nhập mã OTP 6 số đã được gửi tới {email} để kích hoạt tài khoản',
         verifyHint:
-          'Backend gửi OTP ngay sau khi tạo tài khoản. Xác thực xong bạn mới đăng nhập được.',
+          'Mã OTP được gửi ngay sau khi tạo tài khoản. Bạn có thể đăng nhập sau khi xác thực.',
         otpCode: 'Mã OTP',
         otpPlaceholder: '6 chữ số',
         otpHint: 'Kiểm tra hộp thư và nhập đúng mã gồm 6 chữ số.',
@@ -387,7 +386,7 @@ export const messages = {
           closeReady:
             'Bạn đã đọc đến cuối. Có thể bấm dấu X để đóng cửa sổ.',
           intro:
-            'Tài liệu này là nội dung minh hoạ cho trải nghiệm đăng ký tài khoản trên SáchVui. Bằng việc tiếp tục tạo tài khoản, bạn xác nhận đã đọc, hiểu và sẵn sàng tuân thủ các nguyên tắc vận hành dưới đây.',
+            'Tài liệu này trình bày các điều khoản sử dụng tài khoản SáchVui. Bằng việc tiếp tục đăng ký, bạn xác nhận đã đọc, hiểu và đồng ý tuân thủ các nội dung dưới đây.',
           sections: [
             {
               title: '1. Tài khoản và phạm vi sử dụng',
@@ -434,8 +433,8 @@ export const messages = {
             {
               title: '7. Đồng thuận cuối cùng',
               paragraphs: [
-                'Việc đánh dấu đồng ý thể hiện rằng bạn chấp nhận bộ điều khoản minh hoạ này như một phần của trải nghiệm đăng ký. Nếu bạn không đồng ý với bất kỳ nội dung nào, lựa chọn an toàn nhất là dừng thao tác tạo tài khoản cho đến khi bạn cảm thấy phù hợp hơn.',
-                'Cảm ơn bạn đã dành thời gian đọc đến cuối. Sự cẩn trọng của bạn giúp quá trình dùng thử giao diện đăng ký trở nên rõ ràng, có chủ đích và sát hơn với cách một website thương mại điện tử nên trao đổi trách nhiệm với người dùng.',
+                'Việc đánh dấu đồng ý thể hiện rằng bạn chấp nhận các điều khoản này. Nếu không đồng ý với bất kỳ nội dung nào, bạn nên dừng thao tác tạo tài khoản.',
+                'Cảm ơn bạn đã dành thời gian đọc. Sự cẩn trọng này giúp quyền lợi và trách nhiệm của bạn khi sử dụng SáchVui được rõ ràng hơn.',
               ],
             },
           ],
@@ -523,7 +522,7 @@ export const messages = {
         sortPriceDesc: 'Giá cao đến thấp',
         errorTitle: 'Không tải được danh sách sách',
         errorDescription:
-          'Frontend đã gọi backend nhưng không lấy được dữ liệu hợp lệ.',
+          'Không thể nhận dữ liệu sách lúc này. Vui lòng thử lại sau.',
         emptyTitle: 'Không tìm thấy sách nào',
         emptyDescription: 'Thử thay đổi từ khóa hoặc bộ lọc của bạn.',
       },
@@ -602,43 +601,43 @@ export const messages = {
       },
       match: {
         heroBadge: 'BookMatch',
-        title: 'Quiz “Hôm nay đọc gì?”',
+        title: 'Hôm nay đọc gì?',
         description:
-          'Chọn mood, ngân sách và thời lượng đọc. Hệ thống sẽ ghép rule-based để gợi ý ngay các cuốn sách hợp hôm nay nhất.',
-        progressTitle: 'Tiến độ quiz',
+          'Chọn cảm hứng, ngân sách và thời lượng đọc để nhận danh sách sách phù hợp với bạn hôm nay.',
+        progressTitle: 'Tiến độ lựa chọn',
         progressReady: 'Sẵn sàng gợi ý',
         progressStep: 'Bước {current}/3',
         sidebarTitle: 'Phiên gợi ý hôm nay',
         sidebarDescription:
-          'Khi đủ 3 lựa chọn, BookMatch sẽ trả về khoảng {count} cuốn sách để bạn demo ngay.',
+          'Hoàn thành 3 lựa chọn để nhận khoảng {count} cuốn sách phù hợp.',
         submit: 'Gợi ý sách cho tôi',
         submitLoading: 'Đang ghép mood...',
-        reset: 'Làm lại quiz',
+        reset: 'Chọn lại',
         resultsTitle: 'Kết quả BookMatch',
         resultsDescription:
-          'Danh sách này ưu tiên mood, khớp ngân sách, độ dày sách rồi mới cộng thêm rating và độ phổ biến.',
-        resultsCount: '{count} cuốn đang hợp vibe',
+          'Danh sách ưu tiên cảm hứng đọc, ngân sách, độ dài, đánh giá và mức độ yêu thích của độc giả.',
+        resultsCount: '{count} cuốn phù hợp hôm nay',
         errorTitle: 'Chưa gợi ý được sách',
         errorRetry: 'Thử lại',
-        catalogEmptyTitle: 'Kệ sách đang nghỉ giải lao',
+        catalogEmptyTitle: 'Chưa có sách để gợi ý',
         catalogEmptyDescription:
-          'Backend hiện chưa có dữ liệu sách để BookMatch trộn mood cho bạn.',
-        emptyTitle: 'Hôm nay kho sách hơi khó chiều rồi',
+          'Kho sách hiện chưa có dữ liệu phù hợp. Bạn vui lòng quay lại sau.',
+        emptyTitle: 'Chưa tìm thấy cuốn phù hợp',
         emptyDescription:
-          'Chưa có enough match cho lựa chọn này. Thử mood khác hoặc nới ngân sách một chút nhé.',
+          'Hãy thử đổi cảm hứng đọc hoặc mở rộng khoảng ngân sách một chút nhé.',
         summary: {
-          mood: 'Mood',
+          mood: 'Cảm hứng',
           budget: 'Ngân sách',
           readingTime: 'Thời lượng',
           pending: 'Chưa chọn',
         },
         steps: {
-          moodLabel: 'Mood',
+          moodLabel: 'Cảm hứng',
           budgetLabel: 'Ngân sách',
           readingTimeLabel: 'Thời lượng',
-          moodTitle: 'Bạn muốn đọc theo mood nào?',
+          moodTitle: 'Bạn muốn đọc với cảm hứng nào?',
           moodDescription:
-            'Chọn vibe chính để BookMatch ưu tiên thể loại và keyword phù hợp.',
+            'Lựa chọn này giúp ưu tiên thể loại và chủ đề gần với mong muốn của bạn.',
           budgetTitle: 'Hôm nay bạn muốn chi khoảng bao nhiêu?',
           budgetDescription:
             'Giá sách sẽ được ưu tiên theo đúng khoảng ngân sách bạn chọn.',
@@ -770,7 +769,7 @@ export const messages = {
       couponCode: 'Mã giảm giá',
       couponPlaceholder: 'Nhập mã nếu có',
       paymentMethodTitle: 'Phương thức thanh toán',
-      paymentMethodNotice: 'Backend hiện xử lý thanh toán với phương thức mặc định từ server.',
+      paymentMethodNotice: 'Chọn phương thức thanh toán phù hợp để hoàn tất đơn hàng.',
       missingInfo: 'Vui lòng điền đầy đủ thông tin',
       success: 'Đặt hàng thành công!',
       error: 'Có lỗi xảy ra. Vui lòng thử lại.',
@@ -838,16 +837,16 @@ export const messages = {
     orderConfirmationBankTransfer: {
       waitingTitle: 'Ch\u1edd thanh to\u00e1n chuy\u1ec3n kho\u1ea3n',
       waitingDescription:
-        '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o. H\u00e3y chuy\u1ec3n kho\u1ea3n \u0111\u00fang n\u1ed9i dung b\u00ean d\u01b0\u1edbi \u0111\u1ec3 backend t\u1ef1 \u0111\u1ed1i chi\u1ebfu thanh to\u00e1n.',
+        '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o. H\u00e3y chuy\u1ec3n kho\u1ea3n \u0111\u00fang n\u1ed9i dung b\u00ean d\u01b0\u1edbi \u0111\u1ec3 thanh to\u00e1n \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn t\u1ef1 \u0111\u1ed9ng.',
       paidTitle: 'Thanh to\u00e1n th\u00e0nh c\u00f4ng',
       paidDescription:
-        'Backend \u0111\u00e3 c\u1eadp nh\u1eadt \u0111\u01a1n h\u00e0ng n\u00e0y l\u00e0 \u0111\u00e3 thanh to\u00e1n. Frontend kh\u00f4ng t\u1ef1 set PAID.',
+        'Thanh to\u00e1n c\u1ee7a \u0111\u01a1n h\u00e0ng n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn.',
       failedTitle: 'Thanh to\u00e1n th\u1ea5t b\u1ea1i',
       failedDescription:
-        'Backend \u0111\u00e3 \u0111\u00e1nh d\u1ea5u giao d\u1ecbch th\u1ea5t b\u1ea1i. H\u00e3y ki\u1ec3m tra l\u1ea1i chuy\u1ec3n kho\u1ea3n n\u1ebfu c\u1ea7n.',
+        'Giao d\u1ecbch ch\u01b0a th\u00e0nh c\u00f4ng. H\u00e3y ki\u1ec3m tra l\u1ea1i th\u00f4ng tin chuy\u1ec3n kho\u1ea3n.',
       cancelledTitle: 'Thanh to\u00e1n \u0111\u00e3 h\u1ee7y',
       cancelledDescription:
-        'Backend \u0111\u00e3 \u0111\u00e1nh d\u1ea5u giao d\u1ecbch b\u1ecb h\u1ee7y. H\u00e3y t\u1ea1o checkout m\u1edbi n\u1ebfu b\u1ea1n v\u1eabn mu\u1ed1n \u0111\u1eb7t h\u00e0ng.',
+        'Giao d\u1ecbch \u0111\u00e3 b\u1ecb h\u1ee7y. H\u00e3y t\u1ea1o \u0111\u01a1n h\u00e0ng m\u1edbi n\u1ebfu b\u1ea1n v\u1eabn mu\u1ed1n mua s\u00e1ch.',
       pollingNotice:
         '\u0110ang ki\u1ec3m tra tr\u1ea1ng th\u00e1i thanh to\u00e1n m\u1ed7i 4 gi\u00e2y.',
       transferInstructionTitle: 'H\u01b0\u1edbng d\u1eabn chuy\u1ec3n kho\u1ea3n',
@@ -879,7 +878,7 @@ export const messages = {
         'H\u00e3y d\u00f9ng \u0111\u00fang ng\u00e2n h\u00e0ng, s\u1ed1 t\u00e0i kho\u1ea3n, ch\u1ee7 t\u00e0i kho\u1ea3n, s\u1ed1 ti\u1ec1n v\u00e0 n\u1ed9i dung chuy\u1ec3n kho\u1ea3n hi\u1ec7n tr\u00ean trang n\u00e0y.',
       orderSummaryTitle: 'T\u00f3m t\u1eaft thanh to\u00e1n',
       summaryDescription:
-        'M\u00e0n h\u00ecnh n\u00e0y ch\u1ec9 \u0111\u1ecdc tr\u1ea1ng th\u00e1i v\u00e0 d\u1eef li\u1ec7u thanh to\u00e1n t\u1eeb backend.',
+        'Th\u00f4ng tin b\u00ean d\u01b0\u1edbi ph\u1ea3n \u00e1nh tr\u1ea1ng th\u00e1i thanh to\u00e1n m\u1edbi nh\u1ea5t c\u1ee7a \u0111\u01a1n h\u00e0ng.',
       orderIdLabel: 'M\u00e3 \u0111\u01a1n h\u00e0ng',
       orderCodeLabel: 'M\u00e3 giao d\u1ecbch',
       totalAmountLabel: 'T\u1ed5ng thanh to\u00e1n',
@@ -926,14 +925,14 @@ export const messages = {
         allFormats: 'T\u1ea5t c\u1ea3 \u0111\u1ecbnh d\u1ea1ng',
         allStatuses: 'T\u1ea5t c\u1ea3 tr\u1ea1ng th\u00e1i',
         bookLabel: 'S\u00e1ch',
-        countLabel: 'T\u00e0i s\u1ea3n \u0111ang hi\u1ec3n th\u1ecb',
+        countLabel: 'N\u1ed9i dung ph\u00f9 h\u1ee3p',
         description:
-          'Xem c\u00e1c t\u00e0i s\u1ea3n s\u1ed1 \u0111\u00e3 \u0111\u01b0\u1ee3c c\u1ea5p quy\u1ec1n t\u1eeb \u0111\u01a1n h\u00e0ng c\u1ee7a b\u1ea1n v\u00e0 ti\u1ebfp t\u1ee5c \u0111\u1ecdc an to\u00e0n t\u1eeb th\u01b0 vi\u1ec7n ri\u00eang.',
-        downloadAllowedLabel: 'Cho ph\u00e9p t\u1ea3i',
-        downloadReadyBadge: 'C\u00f3 th\u1ec3 t\u1ea3i trong trang chi ti\u1ebft',
+          'Xem l\u1ea1i ebook v\u00e0 s\u00e1ch n\u00f3i t\u1eeb c\u00e1c \u0111\u01a1n h\u00e0ng \u0111\u00e3 ho\u00e0n t\u1ea5t, r\u1ed3i ti\u1ebfp t\u1ee5c \u0111\u1ecdc ho\u1eb7c nghe ngay t\u1ea1i \u0111\u00e2y.',
+        downloadAllowedLabel: 'C\u00f3 th\u1ec3 t\u1ea3i v\u1ec1',
+        downloadReadyBadge: 'T\u1ea3i v\u1ec1 t\u1eeb trang chi ti\u1ebft',
         emptyDescription:
-          'Kh\u00f4ng c\u00f3 t\u00e0i s\u1ea3n s\u1ed1 n\u00e0o kh\u1edbp b\u1ed9 l\u1ecdc hi\u1ec7n t\u1ea1i. Khi quy\u1ec1n truy c\u1eadp \u0111\u01b0\u1ee3c c\u1ea5p, t\u00e0i s\u1ea3n s\u1ebd xu\u1ea5t hi\u1ec7n \u1edf \u0111\u00e2y.',
-        emptyTitle: 'Ch\u01b0a t\u00ecm th\u1ea5y t\u00e0i s\u1ea3n s\u1ed1',
+          'Kh\u00f4ng c\u00f3 ebook ho\u1eb7c s\u00e1ch n\u00f3i n\u00e0o kh\u1edbp v\u1edbi b\u1ed9 l\u1ecdc hi\u1ec7n t\u1ea1i.',
+        emptyTitle: 'Ch\u01b0a t\u00ecm th\u1ea5y n\u1ed9i dung ph\u00f9 h\u1ee3p',
         expiresAtLabel: 'H\u1ebft h\u1ea1n l\u00fac',
         formatFilterLabel: 'L\u1ecdc theo \u0111\u1ecbnh d\u1ea1ng',
         loadMore: 'T\u1ea3i th\u00eam',
@@ -948,11 +947,10 @@ export const messages = {
         readNowLabel: '\u0110\u1ecdc ngay',
         sampleAvailableLabel: 'C\u00f3 b\u1ea3n m\u1eabu',
         sampleError: 'Kh\u00f4ng th\u1ec3 m\u1edf b\u1ea3n m\u1eabu.',
-        searchPlaceholder:
-          'T\u00ecm theo t\u00ean s\u00e1ch, t\u00ean t\u00e0i s\u1ea3n ho\u1eb7c \u0111\u1ecbnh d\u1ea1ng...',
-        statusFilterLabel: 'L\u1ecdc theo tr\u1ea1ng th\u00e1i',
+        searchPlaceholder: 'T\u00ecm theo t\u00ean s\u00e1ch ho\u1eb7c \u0111\u1ecbnh d\u1ea1ng...',
+        statusFilterLabel: 'L\u1ecdc theo tr\u1ea1ng th\u00e1i \u0111\u1ecdc',
         title: 'Th\u01b0 vi\u1ec7n s\u1ed1 c\u1ee7a t\u00f4i',
-        totalOwnedLabel: '\u0110\u00e3 \u0111\u01b0\u1ee3c c\u1ea5p {count} t\u00e0i s\u1ea3n',
+        totalOwnedLabel: '{count} n\u1ed9i dung trong th\u01b0 vi\u1ec7n',
         viewDetailLabel: 'Xem chi ti\u1ebft',
       },
       detail: {
@@ -1279,7 +1277,7 @@ export const messages = {
           'Mô tả ngắn và hình ảnh sẽ được xem trước ngay trên form.',
         emptyDescription: 'S\u00e1ch n\u00e0y ch\u01b0a c\u00f3 m\u00f4 t\u1ea3.',
         confirmDelete: 'Xóa sách "{title}"?',
-        formDescription: 'Điền đầy đủ thông tin để đồng bộ với backend.',
+        formDescription: 'Điền đầy đủ thông tin để lưu thay đổi cho cuốn sách.',
         searchPlaceholder: 'Tìm theo tên sách hoặc tác giả...',
         filterPlaceholder: 'Lọc theo thể loại',
         allCategories: 'Tất cả thể loại',
@@ -1311,7 +1309,7 @@ export const messages = {
         sectionLabel: 'T\u00e0i s\u1ea3n s\u1ed1',
         title: 'T\u00e0i s\u1ea3n s\u1ed1 c\u1ee7a cu\u1ed1n s\u00e1ch',
         description:
-          'Qu\u1ea3n l\u00fd c\u00e1c t\u00e0i s\u1ea3n s\u1ed1 m\u00e0 backend \u0111ang g\u1eafn v\u1edbi cu\u1ed1n s\u00e1ch n\u00e0y ngay trong flow admin books hi\u1ec7n t\u1ea1i.',
+          'Qu\u1ea3n l\u00fd c\u00e1c phi\u00ean b\u1ea3n s\u1ed1 g\u1eafn v\u1edbi cu\u1ed1n s\u00e1ch n\u00e0y ngay trong trang qu\u1ea3n l\u00fd s\u00e1ch.',
         addAsset: 'Th\u00eam t\u00e0i s\u1ea3n',
         loading: '\u0110ang t\u1ea3i t\u00e0i s\u1ea3n s\u1ed1...',
         empty: 'Cu\u1ed1n s\u00e1ch n\u00e0y ch\u01b0a c\u00f3 t\u00e0i s\u1ea3n s\u1ed1 n\u00e0o.',
@@ -1428,7 +1426,7 @@ export const messages = {
         confirmDelivered: 'Xác nhận đã giao',
         confirming: 'Đang xác nhận...',
         confirmHint:
-          'Nút này chỉ bật khi shipment đang ở trạng thái DELIVERING theo rule backend.',
+          'Nút này chỉ bật khi đơn hàng đang ở trạng thái giao hàng.',
         loadError: 'Không tải được dữ liệu giao hàng',
         detailError: 'Không tải được chi tiết đơn giao',
         assignValidationError: 'Hãy chọn đơn hàng và shipper trước khi gán',
@@ -1503,9 +1501,9 @@ export const messages = {
         detailsCustomer: 'Chi tiết khách hàng',
         detailsStaff: 'Chi tiết nhân viên',
         editDialogDescription:
-          'Chỉnh sửa thông tin backend hiện cho phép với tài khoản nhân viên.',
+          'Chỉnh sửa những thông tin hiện được phép thay đổi với tài khoản nhân viên.',
         editError: 'Không cập nhật được nhân viên',
-        editLockedHint: 'API hiện tại chưa hỗ trợ sửa tài khoản admin thuần.',
+        editLockedHint: 'Tài khoản quản trị viên không thể chỉnh sửa tại đây.',
         editSuccess: 'Đã cập nhật nhân viên',
         editTitle: 'Sửa nhân viên',
         lockDescription: {
@@ -1564,7 +1562,7 @@ export const messages = {
       permissionsPage: {
         title: 'Quản lý quyền',
         description:
-          'Xem danh sách quyền mà backend đang cấp cho hệ thống quản trị.',
+          'Xem danh sách quyền đang được sử dụng trong hệ thống quản trị.',
         totalPermissions: '{count} quyền',
         searchPlaceholder: 'Tìm theo mã quyền hoặc mô tả...',
         loadError: 'Không tải được danh sách quyền',
@@ -1579,7 +1577,7 @@ export const messages = {
       promotionsPage: {
         title: 'Quản lý khuyến mãi',
         description:
-          'Theo dõi các chương trình giảm giá và tình trạng sử dụng từ hệ thống backend.',
+          'Theo dõi các chương trình giảm giá và tình trạng sử dụng hiện tại.',
         totalPromotions: '{count} khuyến mãi',
         searchPlaceholder: 'Tìm theo tên chương trình, mã hoặc mô tả...',
         loadError: 'Không tải được danh sách khuyến mãi',
@@ -1730,10 +1728,10 @@ export const messages = {
     },
     common: {
       deployStartup: {
-        badge: 'Render cold start',
-        title: 'Waking the server up',
+        badge: 'Connecting',
+        title: 'The bookstore is getting ready',
         description:
-          'Render free spins the server up a bit slowly. The page will continue automatically as soon as the backend is ready.',
+          'The service needs a little more time to get ready. This page will continue automatically once the connection is available.',
         hint:
           'Keep this tab open while the app retries in the background and prepares the bookstore data.',
         waitedLabel: 'Wait time',
@@ -1742,10 +1740,10 @@ export const messages = {
         retryCount: '{count}',
         retryNow: 'Retry now',
         footer:
-          'If this takes longer than usual, Render may still be starting the container from scratch.',
+          'If the wait takes longer than expected, you can retry the connection now.',
         phases: {
-          boot: 'Booting the server',
-          warmup: 'Warming the backend',
+          boot: 'Starting the service',
+          warmup: 'Preparing the connection',
           catalog: 'Loading bookstore data',
         },
       },
@@ -1873,7 +1871,7 @@ export const messages = {
       featuredTitle: 'Featured books',
       emptyTitle: 'No books are available yet',
       emptyDescription:
-        'The home page will show real books here as soon as the backend has data.',
+        'Books and recommendations will appear here when the collection is available.',
       promoTitle: 'Golden week - Buy 2 get 1',
       promoDescription:
         'Applies to all life skills and novel titles. Limited quantity, grab the deal today.',
@@ -1883,8 +1881,8 @@ export const messages = {
         badge: 'BookMatch',
         title: 'Not sure what to read today?',
         description:
-          'Take a quick 3-step quiz and let the storefront match your mood, budget, and reading time into a playful recommendation list.',
-        button: 'Open the quiz',
+          'Answer 3 quick questions about your mood, budget, and reading time to find books that fit today.',
+        button: 'Find my next read',
         stepCount: '3 quick steps',
       },
       couponGame: {
@@ -1918,16 +1916,16 @@ export const messages = {
       badge: 'A light daily treat',
       title: 'Lucky wheel coupon hunt',
       description:
-        'You get one spin per day to reveal a random active public coupon from the storefront. This MVP does not auto-apply codes, does not touch usedCount, and simply helps users discover and copy a deal.',
+        'You get one spin per day to reveal a valid discount code. Copy the code and use it on an eligible order.',
       limitChip: 'Limit',
       dailyLimit: '1 time / day',
-      poolChip: 'Active pool',
+      poolChip: 'Available codes',
       poolCount: '{count} codes ready',
       manualChip: 'Usage',
       manualOnly: 'Copy and apply manually',
       wheelBadge: 'Lucky Spin',
       spinHint:
-        'Tap spin and the app will pick one active coupon with a slight bias toward bigger discounts, while keeping the result fun and random.',
+        'Tap spin to receive a random code from the available offers.',
       spinButton: 'Spin now',
       spinLoading: 'Spinning...',
       playedButton: 'Already played today',
@@ -1948,7 +1946,7 @@ export const messages = {
       backHome: 'Back to home',
       viewBooks: 'Browse books',
       manualApplyHint:
-        'This coupon is not auto-applied to the cart. Paste it manually into the existing coupon flow in cart or checkout.',
+        'This code is not applied automatically. Paste it into the discount field in your cart or at checkout.',
       typeBook: 'For books',
       typeShipping: 'For shipping',
       minOrderLabel: 'Minimum order',
@@ -1959,7 +1957,7 @@ export const messages = {
         'This coupon does not have an extra description, but you can still copy the code and try it in the existing flow.',
       emptyTitle: 'No active coupon is available to spin today',
       emptyDescription:
-        'Once the storefront has a valid public coupon again, the wheel will light back up. You can simply come back later.',
+        'The wheel will reopen when another discount code becomes available. Please check back later.',
       errorTitle: 'The wheel is unavailable right now',
       errorDescription:
         'The app could not load the active coupon list at the moment. Please try again later.',
@@ -1972,9 +1970,8 @@ export const messages = {
         success: 'Login successful!',
         errorFallback: 'Login failed',
         title: 'Welcome back',
-        description: 'Sign in with your backend account to keep shopping',
+        description: 'Sign in with your account to keep shopping',
         cardTitle: 'Login',
-        seedAccountTitle: 'Seed backend account',
         username: 'Username',
         password: 'Password',
         forgotPassword: 'Forgot password?',
@@ -2016,21 +2013,21 @@ export const messages = {
       forgotPassword: {
         title: 'Forgot password',
         description:
-          'Enter your email, verify the OTP, then set a new password using the backend flow',
+          'Enter your email, verify the security code, then set a new password',
         requestTitle: 'Request OTP',
         requestDescription:
-          'Enter your account email so the server can send a password reset OTP',
+          'Enter your account email to receive a password reset code',
         requestHint:
-          'If the email exists and is eligible, the server will send an OTP to the inbox.',
+          'If the email is valid, a verification code will be sent to your inbox.',
         requestSubmit: 'Send OTP',
         requestSuccess: 'If the email exists, an OTP has been sent',
         requestErrorFallback: 'Unable to send password reset OTP',
         verifyTitle: 'Verify OTP',
         verifyDescription:
-          'Enter the 6-digit OTP sent to {email} to receive a reset token',
+          'Enter the 6-digit OTP sent to {email}',
         otpSent: 'An OTP has been sent to your email',
         verifyHint:
-          'Once the OTP is correct, the backend will return a reset token for the password change step.',
+          'Once the code is verified, you can create a new password.',
         verifySubmit: 'Verify OTP',
         verifySuccess: 'OTP verified, set your new password',
         verifyErrorFallback: 'Password reset OTP verification failed',
@@ -2040,9 +2037,9 @@ export const messages = {
         backStep: 'Back',
         resetTitle: 'Set new password',
         resetDescription:
-          'Create a new password for {email} using the reset token you just received',
+          'Create a new password for {email}',
         resetHint:
-          'Your new password must be at least 8 characters. After reset, previous refresh tokens will be revoked.',
+          'Your new password must be at least 8 characters. Previous sessions will end after the password is changed.',
         newPassword: 'New password',
         newPasswordPlaceholder: 'At least 8 characters',
         confirmPassword: 'Confirm new password',
@@ -2060,13 +2057,13 @@ export const messages = {
         passwordTooShort: 'Password must be at least 8 characters!',
         title: 'Create account',
         description:
-          'This form uses the backend `/api/auth/register` payload and verifies email OTP before login',
+          'Enter your details and verify your email to finish creating your account',
         otpSent: 'An OTP has been sent to your email',
         verifyTitle: 'Verify OTP',
         verifyDescription:
           'Enter the 6-digit OTP sent to {email} to activate your account',
         verifyHint:
-          'The backend sends OTP right after registration. You can sign in only after verification.',
+          'The verification code is sent after registration. You can sign in once the email is verified.',
         otpCode: 'OTP code',
         otpPlaceholder: '6 digits',
         otpHint: 'Check your inbox and enter the exact 6-digit code.',
@@ -2106,7 +2103,7 @@ export const messages = {
           closeReady:
             'You have reached the end. The X button can now be used to close this dialog.',
           intro:
-            'This document is a demo terms-of-use sheet for the SachVui registration flow. By continuing to create an account, you confirm that you have read, understood, and are willing to follow the operating principles below.',
+            'This document explains the terms for using a SachVui account. By continuing to register, you confirm that you have read, understood, and accepted the terms below.',
           sections: [
             {
               title: '1. Account scope and access',
@@ -2153,8 +2150,8 @@ export const messages = {
             {
               title: '7. Final acknowledgement',
               paragraphs: [
-                'Checking the agreement box means you accept these demo terms as part of the registration experience. If you disagree with any part of the text, the safer option is to stop creating the account until you are comfortable proceeding.',
-                'Thank you for reading to the end. Your attention makes the signup flow feel intentional, transparent, and closer to how a production e-commerce experience should communicate responsibilities.',
+                'Checking the agreement box means you accept these terms. If you disagree with any part, you should stop creating the account.',
+                'Thank you for reading. Your attention helps keep your rights and responsibilities on SachVui clear.',
               ],
             },
           ],
@@ -2240,7 +2237,7 @@ export const messages = {
         sortPriceDesc: 'Price: high to low',
         errorTitle: 'Unable to load books',
         errorDescription:
-          'The frontend reached the backend but did not receive valid book data.',
+          'Book information is unavailable right now. Please try again later.',
         emptyTitle: 'No books found',
         emptyDescription: 'Try changing your keywords or filters.',
       },
@@ -2320,25 +2317,25 @@ export const messages = {
         heroBadge: 'BookMatch',
         title: '“What should I read today?” quiz',
         description:
-          'Pick your mood, budget, and reading time. The storefront will use simple rules to build a fun recommendation shelf for today.',
+          'Choose your mood, budget, and reading time to receive a list of books that fit today.',
         progressTitle: 'Quiz progress',
         progressReady: 'Ready to recommend',
         progressStep: 'Step {current}/3',
         sidebarTitle: 'Today’s recommendation run',
         sidebarDescription:
-          'Once all 3 choices are set, BookMatch returns around {count} books that are easy to demo right away.',
+          'Complete all 3 choices to receive around {count} suitable books.',
         submit: 'Recommend books for me',
         submitLoading: 'Matching your mood...',
         reset: 'Start over',
         resultsTitle: 'BookMatch results',
         resultsDescription:
-          'These picks prioritize mood fit, price range, and reading length first, then use rating and popularity as tie-breakers.',
+          'Suggestions are ordered by mood, price range, reading length, reader reviews, and popularity.',
         resultsCount: '{count} books fit today’s vibe',
         errorTitle: 'Unable to suggest books',
         errorRetry: 'Try again',
         catalogEmptyTitle: 'The shelf is taking a break',
         catalogEmptyDescription:
-          'The backend does not have book data yet, so BookMatch has nothing to blend for you.',
+          'There are no books available for recommendations right now. Please check back later.',
         emptyTitle: 'Today’s shelf is being picky',
         emptyDescription:
           'This combination does not have enough good matches yet. Try another mood or loosen the budget a bit.',
@@ -2486,7 +2483,7 @@ export const messages = {
       couponCode: 'Coupon code',
       couponPlaceholder: 'Enter a code if you have one',
       paymentMethodTitle: 'Payment method',
-      paymentMethodNotice: 'The backend currently processes checkout with the server default payment method.',
+      paymentMethodNotice: 'Choose the payment method that works best for your order.',
       missingInfo: 'Please complete all required fields',
       success: 'Order placed successfully!',
       error: 'Something went wrong. Please try again.',
@@ -2554,16 +2551,16 @@ export const messages = {
     orderConfirmationBankTransfer: {
       waitingTitle: 'Waiting for your bank transfer',
       waitingDescription:
-        'Your order has been created. Complete the transfer with the exact content below so the backend can match the payment automatically.',
+        'Your order has been created. Complete the transfer with the exact content below so the payment can be confirmed automatically.',
       paidTitle: 'Payment confirmed successfully',
       paidDescription:
-        'The backend has marked this order as paid. No client-side status was forced.',
+        'Payment for this order has been confirmed.',
       failedTitle: 'Payment failed',
       failedDescription:
-        'The backend marked this payment as failed. Please review the transfer and try again if needed.',
+        'The payment was unsuccessful. Please review the transfer details and try again if needed.',
       cancelledTitle: 'Payment cancelled',
       cancelledDescription:
-        'The backend marked this payment as cancelled. Start a new checkout if you still want to place the order.',
+        'The payment was cancelled. Start a new order if you still want to purchase these books.',
       pollingNotice: 'Checking payment status every 4 seconds.',
       transferInstructionTitle: 'Transfer instructions',
       transferInstructionDescription:
@@ -2594,7 +2591,7 @@ export const messages = {
         'Use the bank, account number, account name, amount, and transfer content exactly as shown on this page.',
       orderSummaryTitle: 'Order summary',
       summaryDescription:
-        'This screen only reflects payment data from the backend.',
+        'The information below reflects the latest payment status for this order.',
       orderIdLabel: 'Order ID',
       orderCodeLabel: 'Order code',
       totalAmountLabel: 'Total amount',
@@ -2638,14 +2635,14 @@ export const messages = {
         allFormats: 'All formats',
         allStatuses: 'All statuses',
         bookLabel: 'Book',
-        countLabel: 'Matching assets',
+        countLabel: 'Matching titles',
         description:
-          'Review the digital assets already granted by your completed orders and continue reading safely from your private library.',
-        downloadAllowedLabel: 'Download enabled',
-        downloadReadyBadge: 'Download available in detail',
+          'Find the ebooks and audiobooks from your completed orders, then continue reading or listening here.',
+        downloadAllowedLabel: 'Available to download',
+        downloadReadyBadge: 'Download from the detail page',
         emptyDescription:
-          'No digital asset matches the current filters. Assets you own will appear here after access is granted.',
-        emptyTitle: 'No digital assets found',
+          'No ebook or audiobook matches the current filters.',
+        emptyTitle: 'No matching content found',
         expiresAtLabel: 'Expires at',
         formatFilterLabel: 'Filter by format',
         loadMore: 'Load more',
@@ -2660,10 +2657,10 @@ export const messages = {
         readNowLabel: 'Read now',
         sampleAvailableLabel: 'Sample available',
         sampleError: 'Could not open the sample file.',
-        searchPlaceholder: 'Search by book title, asset title, or format...',
-        statusFilterLabel: 'Filter by access status',
+        searchPlaceholder: 'Search by book title or format...',
+        statusFilterLabel: 'Filter by reading status',
         title: 'My digital library',
-        totalOwnedLabel: '{count} asset(s) granted',
+        totalOwnedLabel: '{count} titles in your library',
         viewDetailLabel: 'View details',
       },
       detail: {
@@ -2946,7 +2943,7 @@ orders: {
       },
       books: {
         title: 'Manage books',
-        description: 'Manage the books displayed across the storefront.',
+        description: 'Manage the books available to customers.',
         sectionLabel: 'Book',
         countLabel: '{count} books',
         totalBooks: 'Total {count} books',
@@ -2987,7 +2984,7 @@ orders: {
           'The short description and image preview update immediately from the form.',
         emptyDescription: 'This book does not have a description yet.',
         confirmDelete: 'Delete "{title}"?',
-        formDescription: 'Fill in the fields below to sync with backend data.',
+        formDescription: 'Fill in the fields below to save the book changes.',
         searchPlaceholder: 'Search by title or author...',
         filterPlaceholder: 'Filter by category',
         allCategories: 'All categories',
@@ -3019,7 +3016,7 @@ orders: {
         sectionLabel: 'Digital asset',
         title: 'Digital assets for this book',
         description:
-          'Manage the backend digital assets attached to this book without leaving the current admin book flow.',
+          'Manage the digital editions attached to this book without leaving the book management page.',
         addAsset: 'Add asset',
         loading: 'Loading digital assets...',
         empty: 'No digital asset is attached to this book yet.',
@@ -3182,7 +3179,7 @@ orders: {
           'Search by username, email, phone number, or role...',
         loadError: 'Unable to load the user list',
         fallbackNotice:
-          'The backend user-list endpoint is failing. Showing the current account as a fallback.',
+          'The user list is temporarily unavailable. The current account is shown instead.',
         empty: 'No users found',
         active: 'Active',
         inactive: 'Inactive',
@@ -3212,10 +3209,10 @@ orders: {
         detailsCustomer: 'Customer details',
         detailsStaff: 'Employee details',
         editDialogDescription:
-          'Edit the fields currently supported by the backend for staff accounts.',
+          'Edit the information available for staff accounts.',
         editError: 'Unable to update employee',
         editLockedHint:
-          'The current API does not support editing admin-only accounts.',
+          'Administrator accounts cannot be edited here.',
         editSuccess: 'Employee updated successfully',
         editTitle: 'Edit employee',
         lockDescription: {
@@ -3245,7 +3242,7 @@ orders: {
       customersPage: {
         title: 'Manage customers',
         description:
-          'Review active customer accounts from the backend.',
+          'Review active customer accounts in the system.',
         totalUsers: '{count} customers',
         searchPlaceholder: 'Search by username or role...',
         loadError: 'Unable to load the customer list',
@@ -3254,7 +3251,7 @@ orders: {
       staffPage: {
         title: 'Manage staff',
         description:
-          'Review both staff and admin accounts from the backend.',
+          'Review staff and administrator accounts in the system.',
         totalUsers: '{count} staff members',
         searchPlaceholder: 'Search by username or role...',
         loadError: 'Unable to load the staff list',
@@ -3275,7 +3272,7 @@ orders: {
       permissionsPage: {
         title: 'Manage permissions',
         description:
-          'Review the permission codes currently exposed by the backend.',
+          'Review the permission codes used by the administration system.',
         totalPermissions: '{count} permissions',
         searchPlaceholder: 'Search by permission code or description...',
         loadError: 'Unable to load the permission list',
@@ -3290,7 +3287,7 @@ orders: {
       promotionsPage: {
         title: 'Manage promotions',
         description:
-          'Review discount campaigns and their usage state from the backend.',
+          'Review discount campaigns and their current usage state.',
         totalPromotions: '{count} promotions',
         searchPlaceholder: 'Search by campaign name, code, or description...',
         loadError: 'Unable to load the promotion list',
@@ -4080,34 +4077,34 @@ Object.assign(messages.en.admin as Record<string, unknown>, {
 })
 
 Object.assign(messages.vi.library.page as Record<string, unknown>, {
-  filterEmptyTitle: 'Không tìm thấy tài sản số',
+  filterEmptyTitle: 'Không tìm thấy nội dung phù hợp',
   filterEmptyDescription:
-    'Thử đổi từ khóa, định dạng hoặc trạng thái truy cập để xem lại các tài sản bạn đã sở hữu.',
-  emptyOwnedTitle: 'Bạn chưa có tài sản số nào',
+    'Thử đổi từ khóa, định dạng hoặc trạng thái để xem lại thư viện.',
+  emptyOwnedTitle: 'Bạn chưa có ebook hoặc sách nói',
   emptyOwnedDescription:
-    'Mua phiên bản số của sách, hoàn tất thanh toán rồi quay lại đây để đọc PDF/EPUB hoặc nghe AUDIO trong thư viện riêng.',
+    'Chọn một bản số, hoàn tất thanh toán rồi quay lại đây để đọc hoặc nghe.',
   emptyOwnedAction: 'Khám phá sách',
-  emptyGuideLabel: 'Cách bắt đầu',
+  emptyGuideLabel: 'Bắt đầu trong 3 bước',
   emptySteps: {
-    findBook: 'Mở trang sách và tìm khối Phiên bản số.',
-    buyDigital: 'Thêm ebook/audio vào giỏ và thanh toán bằng SePay.',
-    readHere: 'Sau khi thanh toán thành công, tài sản sẽ xuất hiện ở trang này.',
+    findBook: 'Mở trang chi tiết sách và chọn bản ebook hoặc sách nói.',
+    buyDigital: 'Thêm vào giỏ và hoàn tất thanh toán.',
+    readHere: 'Nội dung sẽ xuất hiện tại đây sau khi thanh toán thành công.',
   },
 })
 
 Object.assign(messages.en.library.page as Record<string, unknown>, {
-  filterEmptyTitle: 'No digital assets found',
+  filterEmptyTitle: 'No matching content found',
   filterEmptyDescription:
-    'Try changing the search term, format, or access status to review owned assets again.',
-  emptyOwnedTitle: 'You do not own any digital assets yet',
+    'Try changing the search term, format, or reading status to review your library.',
+  emptyOwnedTitle: 'Your ebook and audiobook library is empty',
   emptyOwnedDescription:
-    'Buy a digital edition, complete payment, then return here to read PDF/EPUB files or listen to AUDIO from your private library.',
+    'Choose a digital edition, complete payment, then return here to read or listen.',
   emptyOwnedAction: 'Browse books',
-  emptyGuideLabel: 'How to start',
+  emptyGuideLabel: 'Get started in 3 steps',
   emptySteps: {
-    findBook: 'Open a book detail page and find the Digital editions block.',
-    buyDigital: 'Add the ebook/audio to cart and pay with SePay.',
-    readHere: 'After payment succeeds, the asset will appear on this page.',
+    findBook: 'Open a book detail page and choose an ebook or audiobook edition.',
+    buyDigital: 'Add it to your cart and complete payment.',
+    readHere: 'Your book will appear here after payment succeeds.',
   },
 })
 
@@ -4359,8 +4356,8 @@ Object.assign(messages.vi.home.funDiscovery as Record<string, string>, {
   giftFinderBadge: '4 bước tặng quà',
   giftFinderTitle: 'Tìm sách làm quà',
   giftFinderDescription:
-    'Chọn người nhận, dịp tặng, ngân sách và vibe để nhận ngay 6-8 gợi ý sách còn hàng.',
-  giftFinderCta: 'Mở Gift Finder',
+    'Chọn người nhận, dịp tặng, ngân sách và phong cách món quà để nhận 6-8 gợi ý sách còn hàng.',
+  giftFinderCta: 'Tìm sách phù hợp',
   readingChallengeBadge: 'Reading Challenge',
   readingChallengeTitle: 'Giữ nhịp đọc mỗi ngày',
   readingChallengeDescription:
@@ -4377,8 +4374,8 @@ Object.assign(messages.en.home.funDiscovery as Record<string, string>, {
   giftFinderBadge: '4 quick gift picks',
   giftFinderTitle: 'Find a book gift',
   giftFinderDescription:
-    'Pick the recipient, occasion, budget, and vibe to reveal 6-8 in-stock gift ideas instantly.',
-  giftFinderCta: 'Open Gift Finder',
+    'Choose the recipient, occasion, budget, and gift style to reveal 6-8 in-stock ideas.',
+  giftFinderCta: 'Find a suitable book',
   readingChallengeBadge: 'Reading Challenge',
   readingChallengeTitle: 'Keep your reading streak alive',
   readingChallengeDescription:
@@ -4397,7 +4394,7 @@ Object.assign(messages.vi.book as Record<string, unknown>, {
     heroBadge: 'Gift Finder',
     title: 'Tìm sách làm quà không cần đoán mò',
     description:
-      'Chọn người nhận, dịp tặng, ngân sách và tone quà. Gift Finder sẽ lọc ngay từ catalog hiện có để trả về các cuốn phù hợp để tặng hôm nay.',
+      'Chọn người nhận, dịp tặng, ngân sách và phong cách món quà để tìm những cuốn sách phù hợp nhất.',
     progressTitle: 'Tiến độ chọn quà',
     progressReady: 'Sẵn sàng gợi ý',
     progressStep: 'Bước {current}/4',
@@ -4409,13 +4406,13 @@ Object.assign(messages.vi.book as Record<string, unknown>, {
     reset: 'Làm lại',
     resultsTitle: 'Gợi ý quà tặng',
     resultsDescription:
-      'Các gợi ý ưu tiên độ khớp người nhận, dịp tặng, tone và ngân sách trước, rồi mới dùng rating cùng độ phổ biến để sắp thứ tự.',
+      'Các gợi ý được sắp xếp theo người nhận, dịp tặng, phong cách món quà, ngân sách và đánh giá của độc giả.',
     resultsCount: '{count} cuốn đang hợp nhất',
     errorTitle: 'Chưa tìm được gợi ý quà',
     errorRetry: 'Thử lại',
-    catalogEmptyTitle: 'Kệ quà đang trống dữ liệu',
+    catalogEmptyTitle: 'Chưa có sách để gợi ý',
     catalogEmptyDescription:
-      'Catalog hiện chưa có sách để Gift Finder ghép gợi ý cho bạn.',
+      'Kho sách hiện chưa có lựa chọn phù hợp để làm quà. Bạn vui lòng quay lại sau.',
     emptyTitle: 'Chưa có cuốn nào thật sự khớp',
     emptyDescription:
       'Thử đổi một lựa chọn hoặc nới ngân sách để hệ thống mở rộng danh sách gợi ý.',
@@ -4423,17 +4420,17 @@ Object.assign(messages.vi.book as Record<string, unknown>, {
       recipient: 'Người nhận',
       occasion: 'Dịp tặng',
       budget: 'Ngân sách',
-      tone: 'Tone quà',
+      tone: 'Phong cách món quà',
       pending: 'Chưa chọn',
     },
     steps: {
       recipientLabel: 'Người nhận',
       occasionLabel: 'Dịp tặng',
       budgetLabel: 'Ngân sách',
-      toneLabel: 'Tone quà',
+      toneLabel: 'Phong cách món quà',
       recipientTitle: 'Bạn đang tìm quà cho ai?',
       recipientDescription:
-        'Gift Finder sẽ ưu tiên nhóm sách và từ khóa hợp với người bạn muốn tặng.',
+        'Lựa chọn này giúp tìm những nhóm sách phù hợp với người bạn muốn tặng.',
       occasionTitle: 'Bạn muốn tặng vào dịp nào?',
       occasionDescription:
         'Mỗi dịp tặng sẽ kéo danh sách theo cảm xúc và mức độ trang trọng khác nhau.',
@@ -4442,7 +4439,7 @@ Object.assign(messages.vi.book as Record<string, unknown>, {
         'Giá sách sẽ được ưu tiên nằm gần đúng khoảng ngân sách bạn đã chọn.',
       toneTitle: 'Bạn muốn món quà mang cảm giác gì?',
       toneDescription:
-        'Tone quà giúp hệ thống đẩy lên những cuốn có vibe ấm áp, truyền cảm hứng hay thực tế hơn.',
+        'Hãy chọn cảm giác ấm áp, truyền cảm hứng, thực tế hoặc cuốn hút mà bạn muốn gửi gắm.',
     },
     recipients: {
       BEST_FRIEND: {
@@ -4502,7 +4499,7 @@ Object.assign(messages.vi.book as Record<string, unknown>, {
       FROM_150_TO_300: {
         label: '150.000đ - 300.000đ',
         description:
-          'Khoảng ngân sách cân bằng nhất cho nhiều tựa phổ biến trên storefront.',
+          'Khoảng ngân sách phù hợp với nhiều tựa sách được độc giả yêu thích.',
       },
       ABOVE_300: {
         label: 'Trên 300.000đ',
@@ -4555,7 +4552,7 @@ Object.assign(messages.en.book as Record<string, unknown>, {
     heroBadge: 'Gift Finder',
     title: 'Find a book gift without guessing',
     description:
-      'Pick the recipient, occasion, budget, and gift tone. Gift Finder uses the live catalog to return the most giftable picks for today.',
+      'Choose the recipient, occasion, budget, and gift style to find the most suitable books.',
     progressTitle: 'Gift progress',
     progressReady: 'Ready to recommend',
     progressStep: 'Step {current}/4',
@@ -4567,13 +4564,13 @@ Object.assign(messages.en.book as Record<string, unknown>, {
     reset: 'Start over',
     resultsTitle: 'Gift suggestions',
     resultsDescription:
-      'These picks prioritize recipient fit, gifting occasion, tone, and budget first, then use rating and popularity as tie-breakers.',
+      'Suggestions are ordered by recipient, occasion, gift style, budget, and reader reviews.',
     resultsCount: '{count} books fit best right now',
     errorTitle: 'Unable to build gift suggestions',
     errorRetry: 'Try again',
     catalogEmptyTitle: 'The gift shelf is empty',
     catalogEmptyDescription:
-      'The catalog does not have book data available for Gift Finder right now.',
+      'There are no suitable gift books available right now. Please check back later.',
     emptyTitle: 'Nothing is a strong match yet',
     emptyDescription:
       'Try changing one answer or widening the budget to open up more gift options.',
@@ -4660,7 +4657,7 @@ Object.assign(messages.en.book as Record<string, unknown>, {
       FROM_150_TO_300: {
         label: '150,000 VND to 300,000 VND',
         description:
-          'The most balanced range for many proven storefront titles.',
+          'A balanced range with many popular and well-loved titles.',
       },
       ABOVE_300: {
         label: 'Above 300,000 VND',
@@ -4732,13 +4729,13 @@ Object.assign(messages.vi.admin as Record<string, unknown>, {
       switchToDark: 'Chuyển sang giao diện tối',
       switchToLight: 'Chuyển sang giao diện sáng',
       openChat: 'Mở chat hỗ trợ',
-      goStorefront: 'Về storefront',
+      goStorefront: 'Về trang khách hàng',
       logout: 'Đăng xuất',
     },
     subtitles: {
       toggleTheme: 'Đổi theme của workspace admin hiện tại',
       openChat: 'Đi thẳng tới khu vực chat hỗ trợ',
-      goStorefront: 'Rời admin và quay về trang khách hàng',
+      goStorefront: 'Rời khu vực quản trị và quay về trang khách hàng',
       logout: 'Đóng phiên hiện tại và quay về màn hình đăng nhập',
     },
   },
@@ -4768,13 +4765,13 @@ Object.assign(messages.en.admin as Record<string, unknown>, {
       switchToDark: 'Switch to dark theme',
       switchToLight: 'Switch to light theme',
       openChat: 'Open support chat',
-      goStorefront: 'Go to storefront',
+      goStorefront: 'Go to customer site',
       logout: 'Log out',
     },
     subtitles: {
       toggleTheme: 'Change the current admin workspace theme',
       openChat: 'Jump straight to the support chat workspace',
-      goStorefront: 'Leave admin and return to the storefront',
+      goStorefront: 'Leave admin and return to the customer site',
       logout: 'End the current session and go back to login',
     },
   },
@@ -4785,21 +4782,21 @@ Object.assign(messages.vi as Record<string, unknown>, {
     badge: 'Thử thách đọc sách cá nhân',
     title: 'Reading Challenge của riêng bạn',
     description:
-      'Một góc vui vẻ để đặt mục tiêu đọc, tự theo dõi tiến độ và tự thưởng cho mình khi hoàn thành. MVP này chỉ chạy trên website và lưu trực tiếp bằng localStorage.',
-    localStorageLabel: 'Lưu ở đâu',
-    localStorageValue: 'Trình duyệt hiện tại',
-    scopeLabel: 'Scope',
-    scopeValue: 'Frontend-only, không gọi API',
+      'Đặt mục tiêu đọc, theo dõi tiến độ và tự thưởng cho mình khi hoàn thành. Tiến độ được lưu riêng trong trình duyệt này.',
+    localStorageLabel: 'Nơi lưu tiến độ',
+    localStorageValue: 'Trình duyệt này',
+    scopeLabel: 'Cách hoạt động',
+    scopeValue: 'Theo dõi riêng trên thiết bị này',
     goalLabel: 'Mục tiêu',
     goalValue: '{target} cuốn',
-    goalEmptyValue: 'Chưa tạo challenge',
+    goalEmptyValue: 'Chưa tạo thử thách',
     storageErrorTitle: 'Không thể lưu ổn định vào trình duyệt',
     storageErrorDescription:
       'Thao tác vẫn được phản ánh trên màn hình hiện tại, nhưng dữ liệu có thể không giữ lại sau khi reload.',
     storageErrorDismiss: 'Ẩn cảnh báo',
     progressOfGoal: 'Đã đọc {completed}/{target} cuốn',
     progressDescription:
-      'Mỗi lần bấm +1 hoặc -1, thanh tiến độ sẽ cập nhật ngay. Khi đổi mục tiêu, hệ thống tự chặn completedBooks không vượt quá target mới.',
+      'Mỗi lần tăng hoặc giảm số sách đã đọc, thanh tiến độ sẽ cập nhật ngay và luôn bám sát mục tiêu hiện tại.',
     progressPercentLabel: 'Tiến độ hiện tại',
     progressBarLabel: 'Tiến độ thử thách',
     completedLabel: 'Đã đọc',
@@ -4838,7 +4835,7 @@ Object.assign(messages.vi as Record<string, unknown>, {
       'Điền tên, mục tiêu và khoảng thời gian bạn muốn chinh phục.',
     formEditDescription:
       'Bạn có thể đổi tên, đổi target hoặc kéo dài deadline mà không cần rời khỏi trang.',
-    localOnlyChip: 'Local MVP',
+    localOnlyChip: 'Lưu trên trình duyệt',
     titleLabel: 'Tên thử thách',
     titlePlaceholder: 'Ví dụ: Đọc 5 cuốn tháng này',
     targetLabel: 'Số sách mục tiêu',
@@ -4888,11 +4885,11 @@ Object.assign(messages.en as Record<string, unknown>, {
     badge: 'Personal reading challenge',
     title: 'Your own Reading Challenge',
     description:
-      'A playful place to set a reading goal, track progress, and celebrate the finish line. This MVP lives only on the website and stores data in localStorage.',
-    localStorageLabel: 'Stored in',
-    localStorageValue: 'Current browser only',
-    scopeLabel: 'Scope',
-    scopeValue: 'Frontend only, no API calls',
+      'Set a reading goal, track your progress, and celebrate the finish line. Progress is saved privately in this browser.',
+    localStorageLabel: 'Progress saved in',
+    localStorageValue: 'This browser',
+    scopeLabel: 'How it works',
+    scopeValue: 'Private to this device',
     goalLabel: 'Goal',
     goalValue: '{target} books',
     goalEmptyValue: 'No challenge yet',
@@ -4941,7 +4938,7 @@ Object.assign(messages.en as Record<string, unknown>, {
       'Give it a name, choose the target, and decide how long you want to chase it.',
     formEditDescription:
       'You can update the title, target, or deadline without leaving the page.',
-    localOnlyChip: 'Local MVP',
+    localOnlyChip: 'Saved in this browser',
     titleLabel: 'Challenge title',
     titlePlaceholder: 'Example: Read 5 books this month',
     targetLabel: 'Target number of books',
@@ -5074,7 +5071,7 @@ Object.assign(messages.en.cart as Record<string, unknown>, {
 Object.assign(messages.vi.checkout as Record<string, unknown>, {
   bestCouponTitle: 'Gợi ý mã giảm giá',
   bestCouponDescription:
-    'Bạn có thể áp dụng mã gợi ý bên dưới mà không làm thay đổi flow coupon hiện có.',
+    'Chọn mã phù hợp bên dưới để tiết kiệm hơn cho đơn hàng này.',
   bestCouponRecommended: 'Gợi ý từ hệ thống',
   bestCouponApply: 'Áp dụng mã này',
   bestCouponApplied: 'Đã áp dụng',
@@ -5086,7 +5083,7 @@ Object.assign(messages.vi.checkout as Record<string, unknown>, {
 Object.assign(messages.en.checkout as Record<string, unknown>, {
   bestCouponTitle: 'Suggested coupon',
   bestCouponDescription:
-    'Apply the recommended code below without changing the existing coupon flow.',
+    'Choose a suitable code below to save more on this order.',
   bestCouponRecommended: 'Recommended by the system',
   bestCouponApply: 'Apply this code',
   bestCouponApplied: 'Applied',
@@ -5796,3 +5793,497 @@ Object.assign(messages.en.admin.sidebar as Record<string, unknown>, {
     system: 'Settings',
   },
 })
+
+Object.assign(messages.vi.categories as Record<string, unknown>, {
+  personalDevelopment: 'Kỹ năng và phát triển bản thân',
+  businessManagement: 'Kinh doanh và quản trị',
+  artsCreativity: 'Nghệ thuật và sáng tạo',
+  philosophy: 'Triết học',
+  contemporaryLiterature: 'Văn học đương đại',
+  mystery: 'Trinh thám',
+  education: 'Giáo dục',
+  scienceTechnology: 'Khoa học và công nghệ',
+  psychology: 'Tâm lý học',
+  historyMemoir: 'Lịch sử và hồi ký',
+  children: 'Sách thiếu nhi',
+  fantasy: 'Giả tưởng và kỳ ảo',
+})
+
+Object.assign(messages.en.categories as Record<string, unknown>, {
+  personalDevelopment: 'Personal development',
+  businessManagement: 'Business & management',
+  artsCreativity: 'Arts & creativity',
+  philosophy: 'Philosophy',
+  contemporaryLiterature: 'Contemporary literature',
+  mystery: 'Mystery',
+  education: 'Education',
+  scienceTechnology: 'Science & technology',
+  psychology: 'Psychology',
+  historyMemoir: 'History & memoir',
+  children: "Children's books",
+  fantasy: 'Fantasy',
+})
+
+Object.assign(messages.vi.header as Record<string, unknown>, {
+  mobileMenuOpen: 'Mở menu điều hướng',
+  mobileMenuClose: 'Đóng menu điều hướng',
+  appearanceLabel: 'Giao diện',
+  primaryNavigation: 'Điều hướng chính',
+})
+
+Object.assign(messages.en.header as Record<string, unknown>, {
+  mobileMenuOpen: 'Open navigation menu',
+  mobileMenuClose: 'Close navigation menu',
+  appearanceLabel: 'Appearance',
+  primaryNavigation: 'Primary navigation',
+})
+
+Object.assign(messages.vi.footer as Record<string, unknown>, {
+  facebookAria: 'Theo dõi SáchVui trên Facebook',
+  instagramAria: 'Theo dõi SáchVui trên Instagram',
+  zaloAria: 'Liên hệ SáchVui qua Zalo',
+})
+
+Object.assign(messages.en.footer as Record<string, unknown>, {
+  facebookAria: 'Follow SachVui on Facebook',
+  instagramAria: 'Follow SachVui on Instagram',
+  zaloAria: 'Contact SachVui on Zalo',
+})
+
+Object.assign(messages.vi.book.listing as Record<string, unknown>, {
+  filterToggle: 'Bộ lọc sách',
+  filterOpen: 'Mở bộ lọc sách',
+  filterClose: 'Đóng bộ lọc sách',
+  categoryFilterAria: 'Lọc sách theo thể loại',
+  sortAria: 'Sắp xếp danh sách sách',
+  searchAria: 'Tìm trong danh sách sách',
+  categorySearchAria: 'Tìm thể loại sách',
+})
+
+Object.assign(messages.en.book.listing as Record<string, unknown>, {
+  filterToggle: 'Book filters',
+  filterOpen: 'Open book filters',
+  filterClose: 'Close book filters',
+  categoryFilterAria: 'Filter books by category',
+  sortAria: 'Sort book list',
+  searchAria: 'Search within books',
+  categorySearchAria: 'Search book categories',
+})
+
+Object.assign(messages.vi.ebookCatalog as Record<string, unknown>, {
+  filterToggle: 'Bộ lọc sách điện tử',
+  filterOpen: 'Mở bộ lọc sách điện tử',
+  filterClose: 'Đóng bộ lọc sách điện tử',
+  categoryFilterAria: 'Lọc sách điện tử theo thể loại',
+  sortAria: 'Sắp xếp danh sách sách điện tử',
+  searchAria: 'Tìm trong danh sách sách điện tử',
+  categorySearchAria: 'Tìm thể loại sách điện tử',
+})
+
+Object.assign(messages.en.ebookCatalog as Record<string, unknown>, {
+  filterToggle: 'Ebook filters',
+  filterOpen: 'Open ebook filters',
+  filterClose: 'Close ebook filters',
+  categoryFilterAria: 'Filter ebooks by category',
+  sortAria: 'Sort ebook list',
+  searchAria: 'Search within ebooks',
+  categorySearchAria: 'Search ebook categories',
+})
+
+Object.assign(messages.vi.library as Record<string, unknown>, {
+  accessStatus: {
+    ACTIVE: 'Đang sử dụng',
+    EXPIRED: 'Đã hết hạn',
+    REVOKED: 'Đã thu hồi',
+  },
+  accessType: {
+    PURCHASED: 'Đã mua',
+    BORROWED: 'Đang mượn',
+    SUBSCRIPTION: 'Theo gói thành viên',
+  },
+  format: {
+    PDF: 'PDF',
+    EPUB: 'EPUB',
+    AUDIO: 'Sách nói',
+  },
+})
+
+Object.assign(messages.en.library as Record<string, unknown>, {
+  accessStatus: {
+    ACTIVE: 'Active',
+    EXPIRED: 'Expired',
+    REVOKED: 'Revoked',
+  },
+  accessType: {
+    PURCHASED: 'Purchased',
+    BORROWED: 'Borrowed',
+    SUBSCRIPTION: 'Subscription',
+  },
+  format: {
+    PDF: 'PDF',
+    EPUB: 'EPUB',
+    AUDIO: 'Audiobook',
+  },
+})
+
+Object.assign(messages.vi.library.page as Record<string, unknown>, {
+  searchAria: 'Tìm trong thư viện số',
+  formatFilterAria: 'Lọc thư viện theo định dạng',
+  statusFilterAria: 'Lọc thư viện theo trạng thái truy cập',
+})
+
+Object.assign(messages.en.library.page as Record<string, unknown>, {
+  searchAria: 'Search the digital library',
+  formatFilterAria: 'Filter library by format',
+  statusFilterAria: 'Filter library by access status',
+})
+
+Object.assign(messages.vi.auth.profile as Record<string, unknown>, {
+  securityTitle: 'Bảo mật và thiết bị',
+  securityDescription:
+    'Quản lý các thiết bị đang có quyền truy cập tài khoản của bạn.',
+  logoutAllDevices: 'Đăng xuất khỏi mọi thiết bị',
+  logoutAllConfirm: 'Đăng xuất khỏi tất cả thiết bị?',
+  sessionsLoading: 'Đang tải các phiên đăng nhập…',
+  sessionsErrorTitle: 'Không tải được các phiên đăng nhập',
+  sessionsEmptyTitle: 'Không có phiên đang hoạt động',
+  sessionsEmptyDescription:
+    'Các phiên mới sẽ xuất hiện ở đây sau khi bạn đăng nhập.',
+  unknownDevice: 'Thiết bị không xác định',
+  currentDevice: 'Thiết bị này',
+  unknownIp: 'IP không rõ',
+  lastUsedAt: 'Dùng gần nhất {date}',
+  revokeSessionConfirm: 'Thu hồi phiên trên thiết bị này?',
+  revokeSession: 'Thu hồi',
+})
+
+Object.assign(messages.en.auth.profile as Record<string, unknown>, {
+  securityTitle: 'Security and devices',
+  securityDescription: 'Manage devices that can access your account.',
+  logoutAllDevices: 'Sign out on all devices',
+  logoutAllConfirm: 'Sign out on every device?',
+  sessionsLoading: 'Loading sign-in sessions…',
+  sessionsErrorTitle: 'Unable to load sign-in sessions',
+  sessionsEmptyTitle: 'No active sessions',
+  sessionsEmptyDescription:
+    'New sessions will appear here after you sign in.',
+  unknownDevice: 'Unknown device',
+  currentDevice: 'This device',
+  unknownIp: 'Unknown IP',
+  lastUsedAt: 'Last used {date}',
+  revokeSessionConfirm: 'Revoke this device session?',
+  revokeSession: 'Revoke',
+})
+
+Object.assign(messages.vi.orderDetail as Record<string, unknown>, {
+  cancelTitle: 'Hủy đơn hàng',
+  cancelDescription:
+    'Đơn đang chờ thanh toán. Số lượng tồn và ưu đãi sẽ được hoàn lại sau khi hủy.',
+  cancelAction: 'Hủy đơn',
+  cancelDialogTitle: 'Xác nhận hủy đơn',
+  cancelDialogDescription:
+    'Vui lòng cho biết lý do. Hành động này không thể khôi phục đơn hàng.',
+  cancelReasonLabel: 'Lý do hủy đơn',
+  cancelReasonPlaceholder: 'Ví dụ: Tôi không còn nhu cầu mua sách',
+  cancelReasonCount: '{count}/500 ký tự',
+  cancelBack: 'Quay lại',
+  cancelling: 'Đang hủy…',
+  cancelConfirm: 'Xác nhận hủy đơn',
+})
+
+Object.assign(messages.en.orderDetail as Record<string, unknown>, {
+  cancelTitle: 'Cancel order',
+  cancelDescription:
+    'This order is awaiting payment. Stock and promotions will be restored after cancellation.',
+  cancelAction: 'Cancel order',
+  cancelDialogTitle: 'Confirm order cancellation',
+  cancelDialogDescription:
+    'Please tell us why. This action cannot restore the order afterward.',
+  cancelReasonLabel: 'Cancellation reason',
+  cancelReasonPlaceholder: 'For example: I no longer need these books',
+  cancelReasonCount: '{count}/500 characters',
+  cancelBack: 'Go back',
+  cancelling: 'Cancelling…',
+  cancelConfirm: 'Confirm cancellation',
+})
+
+Object.assign(
+  messages.vi.orderConfirmationBankTransfer as Record<string, unknown>,
+  {
+    remainingTime: 'Thời gian thanh toán còn lại: {time}',
+    bankFallback: 'Thông tin ngân hàng chưa được cập nhật',
+    accountNumberFallback: 'Số tài khoản chưa được cập nhật',
+    accountNameFallback: 'Tên tài khoản chưa được cập nhật',
+  },
+)
+
+Object.assign(
+  messages.en.orderConfirmationBankTransfer as Record<string, unknown>,
+  {
+    remainingTime: 'Payment time remaining: {time}',
+    bankFallback: 'Bank information is not available yet',
+    accountNumberFallback: 'Account number is not available yet',
+    accountNameFallback: 'Account name is not available yet',
+  },
+)
+
+Object.assign(messages.vi.auth as Record<string, unknown>, {
+  google: {
+    unavailable: 'Đăng nhập bằng Google hiện chưa khả dụng.',
+    loadError: 'Không thể kết nối với Google. Vui lòng thử lại sau.',
+    disabled: 'Đăng nhập bằng Google đang tạm khóa',
+    blocked: 'Không khả dụng',
+  },
+})
+
+Object.assign(messages.en.auth as Record<string, unknown>, {
+  google: {
+    unavailable: 'Google sign-in is currently unavailable.',
+    loadError: 'Unable to connect to Google. Please try again later.',
+    disabled: 'Google sign-in is temporarily disabled',
+    blocked: 'Unavailable',
+  },
+})
+
+Object.assign(messages.vi.orderConfirmationBankTransfer as Record<string, unknown>, {
+  qrFallbackNoticeTitle: 'Đang dùng mã QR dự phòng',
+  qrFallbackNoticeDescription:
+    'Mã QR dự phòng đang được hiển thị. Hãy kiểm tra kỹ số tiền và nội dung chuyển khoản trước khi xác nhận.',
+  copyButton: 'Sao chép nội dung',
+  copySuccess: 'Đã sao chép nội dung chuyển khoản.',
+  copyError: 'Không thể sao chép nội dung chuyển khoản.',
+})
+
+Object.assign(messages.en.orderConfirmationBankTransfer as Record<string, unknown>, {
+  qrFallbackNoticeTitle: 'Using a backup QR code',
+  qrFallbackNoticeDescription:
+    'A backup QR code is shown. Check the amount and transfer content carefully before confirming.',
+})
+
+Object.assign(messages.vi.library.detail as Record<string, unknown>, {
+  accessDescription:
+    'Mở trình đọc riêng hoặc tải sách khi quyền truy cập của bạn còn hiệu lực.',
+  mimeTypeLabel: 'Loại tệp',
+  openingDownloadLabel: 'Đang chuẩn bị tệp tải xuống…',
+})
+
+Object.assign(messages.en.library.detail as Record<string, unknown>, {
+  accessDescription:
+    'Open the private reader or download the book while your access remains active.',
+  openingDownloadLabel: 'Preparing your download…',
+})
+
+Object.assign(messages.vi.notifications as Record<string, unknown>, {
+  realtimeConnected: 'Đã kết nối',
+  realtimeFallback: 'Đang kết nối lại',
+})
+
+Object.assign(messages.en.notifications as Record<string, unknown>, {
+  realtimeConnected: 'Connected',
+  realtimeFallback: 'Reconnecting',
+})
+
+Object.assign(messages.vi.chat.customer as Record<string, unknown>, {
+  humanModeDescription: 'Trao đổi trực tiếp với đội ngũ hỗ trợ.',
+  realtimeConnected: 'Đã kết nối',
+  realtimeFallback: 'Đang kết nối lại',
+})
+
+Object.assign(messages.en.chat.customer as Record<string, unknown>, {
+  humanModeDescription: 'Talk directly with the support team.',
+  realtimeConnected: 'Connected',
+  realtimeFallback: 'Reconnecting',
+})
+
+Object.assign(messages.vi.orderTimeline as Record<string, unknown>, {
+  empty: 'Đơn hàng này chưa có mốc cập nhật nào.',
+})
+
+Object.assign(messages.vi.readingJournal as Record<string, unknown>, {
+  badge: 'Nhật ký đọc sách',
+  description:
+    'Ghi lại từng buổi đọc, lưu cảm nhận và duy trì thói quen đọc mỗi ngày.',
+  booksLoadError: 'Không thể tải danh sách sách cho nhật ký',
+  loadError: 'Không thể tải nhật ký đọc sách',
+  streakLoadError: 'Không thể tải chuỗi ngày đọc',
+  createSuccess: 'Đã lưu ghi chép mới',
+  updateSuccess: 'Đã cập nhật ghi chép',
+  deleteSuccess: 'Đã xóa ghi chép',
+  checkInSuccess: 'Đã ghi nhận hoạt động đọc hôm nay',
+  createError: 'Không thể lưu ghi chép',
+  updateError: 'Không thể cập nhật ghi chép',
+  deleteError: 'Không thể xóa ghi chép',
+  checkInError: 'Không thể ghi nhận hoạt động hôm nay',
+  deleteConfirm: 'Bạn có chắc muốn xóa ghi chép này không?',
+  profileShortcut: 'Nhật ký đọc của tôi',
+  openFromBookDetail: 'Viết nhật ký',
+  openFromLibraryDetail: 'Ghi vào nhật ký',
+  loginRequired: 'Vui lòng đăng nhập để dùng nhật ký đọc sách',
+  emptyTitle: 'Nhật ký của bạn vẫn còn trống',
+  emptyDescription:
+    'Tạo ghi chép đầu tiên hoặc đánh dấu hoạt động hôm nay để bắt đầu lưu lại hành trình đọc.',
+})
+
+Object.assign(messages.vi.readingJournal.stats as Record<string, unknown>, {
+  entries: 'Tổng ghi chép',
+  entriesHint: 'Tất cả ghi chú đã lưu trong nhật ký.',
+  current: 'Chuỗi ngày hiện tại',
+  currentHint: 'Số ngày đọc liên tiếp bạn đang duy trì.',
+  longest: 'Chuỗi ngày dài nhất',
+  longestHint: 'Chuỗi ngày đọc dài nhất bạn từng đạt được.',
+})
+
+Object.assign(messages.vi.readingJournal.streak as Record<string, unknown>, {
+  title: 'Thói quen đọc mỗi ngày',
+  description: 'Các ghi chép giúp tính chuỗi ngày đọc của bạn.',
+  checkedIn: 'Đã ghi nhận',
+  notCheckedIn: 'Chưa ghi nhận',
+})
+
+Object.assign(messages.vi.readingJournal.composer as Record<string, unknown>, {
+  title: 'Tạo ghi chép mới',
+  description: 'Chọn sách, ngày đọc, tiến độ và lưu một vài cảm nhận.',
+  newBadge: 'Mới',
+  editTitle: 'Chỉnh sửa ghi chép',
+  editDescription: 'Bạn đang cập nhật một ghi chép đã lưu.',
+  editBadge: 'Chỉnh sửa',
+})
+
+Object.assign(messages.vi.readingJournal.actions as Record<string, unknown>, {
+  saveEntry: 'Lưu ghi chép',
+  updateEntry: 'Cập nhật ghi chép',
+  checkInToday: 'Ghi nhận hôm nay',
+  editEntry: 'Sửa ghi chép',
+  deleteEntry: 'Xóa ghi chép',
+})
+
+Object.assign(messages.vi.readingJournal.filters as Record<string, unknown>, {
+  title: 'Bộ lọc nhật ký',
+  description: 'Lọc nhật ký theo sách hoặc khoảng ngày.',
+  reset: 'Đặt lại',
+})
+
+Object.assign(messages.vi.readingJournal.timeline as Record<string, unknown>, {
+  title: 'Hành trình đọc',
+  description: 'Các ghi chép được nhóm theo ngày để bạn dễ xem lại.',
+  countLabel: '{count} ghi chép trong nhật ký',
+  dayCount: '{count} ghi chép trong ngày này',
+  noteFallback: 'Ghi chép này chưa có nội dung chi tiết.',
+})
+
+Object.assign(messages.vi.auth.login as Record<string, unknown>, {
+  lockedImageAlt: 'Tài khoản đang bị hạn chế đăng nhập',
+})
+
+Object.assign(messages.vi.home.funDiscovery as Record<string, unknown>, {
+  bookMatchDescription: 'Trả lời vài câu hỏi để tìm sách hợp cảm hứng hôm nay.',
+  bookMatchCta: 'Bắt đầu chọn sách',
+  wishlistCta: 'Mở danh sách yêu thích',
+  readingChallengeBadge: 'Thử thách đọc sách',
+  readingChallengeDescription:
+    'Tạo mục tiêu cá nhân và cập nhật tiến độ theo từng cuốn đã đọc.',
+  readingChallengeCta: 'Tạo thử thách',
+  readingChallengeActiveDescription:
+    'Trạng thái {status}, đã hoàn thành {progress}. Mở lại để cập nhật tiến độ hoặc đổi thời hạn.',
+  readingChallengeActiveHint:
+    'Bạn có thể tăng, giảm, chỉnh sửa hoặc xóa thử thách.',
+})
+
+Object.assign(messages.vi.book.match as Record<string, unknown>, {
+  heroBadge: 'Gợi ý sách theo sở thích',
+  submitLoading: 'Đang tìm sách phù hợp…',
+  resultsTitle: 'Sách dành cho bạn',
+})
+
+Object.assign(messages.vi.book.match.reasons as Record<string, unknown>, {
+  MOOD: 'Hợp cảm hứng bạn chọn',
+})
+
+Object.assign(messages.vi.home.bookMatch as Record<string, unknown>, {
+  badge: 'Gợi ý sách theo sở thích',
+})
+
+Object.assign(messages.vi.book.giftFinder as Record<string, unknown>, {
+  heroBadge: 'Gợi ý quà tặng',
+})
+
+Object.assign(messages.vi.book.giftFinder.actions as Record<string, unknown>, {
+  addToWishlist: 'Lưu vào danh sách yêu thích',
+  removeFromWishlist: 'Bỏ khỏi danh sách yêu thích',
+})
+
+Object.assign(messages.vi as Record<string, unknown>, {
+  wishlist: {
+    badge: 'Yêu thích',
+    title: 'Sách yêu thích',
+    description: 'Lưu lại những tựa sách bạn muốn quay lại xem hoặc mua sau.',
+    count: '{count} sách yêu thích',
+    emptyTitle: 'Danh sách yêu thích đang trống',
+    emptyDescription:
+      'Bấm nút hình trái tim trên thẻ sách hoặc trang chi tiết để lưu sách.',
+    browseBooks: 'Khám phá sách',
+    loginRequired: 'Vui lòng đăng nhập để dùng danh sách yêu thích',
+    fetchError: 'Không thể tải danh sách yêu thích',
+    updateError: 'Không thể cập nhật danh sách yêu thích',
+    added: 'Đã thêm "{title}" vào danh sách yêu thích',
+    removed: 'Đã xóa "{title}" khỏi danh sách yêu thích',
+  },
+})
+
+Object.assign(messages.vi.book.card as Record<string, unknown>, {
+  wishlistAria: 'Lưu "{title}" vào danh sách yêu thích',
+})
+
+Object.assign(messages.vi.book.detail as Record<string, unknown>, {
+  addToWishlist: 'Thêm vào danh sách yêu thích',
+  removeFromWishlist: 'Bỏ khỏi danh sách yêu thích',
+})
+
+Object.assign(messages.vi.readingChallengePage as Record<string, unknown>, {
+  title: 'Thử thách đọc sách của bạn',
+  description:
+    'Đặt mục tiêu đọc, theo dõi tiến độ và tự thưởng khi hoàn thành. Tiến độ được lưu trên thiết bị này.',
+  localStorageLabel: 'Nơi lưu tiến độ',
+  localStorageValue: 'Thiết bị này',
+  storageErrorTitle: 'Chưa thể lưu tiến độ',
+  storageErrorDescription:
+    'Thay đổi vẫn hiển thị lúc này nhưng có thể mất khi bạn tải lại trang.',
+  deadlineLabel: 'Thời hạn',
+  completedDescription:
+    'Bạn đã chạm mục tiêu đọc sách. Hãy tăng mục tiêu hoặc tạo thử thách mới để giữ nhịp.',
+  urgentDescription:
+    'Thời hạn đang đến gần nhưng mục tiêu chưa hoàn tất. Mỗi trang đọc thêm đều đáng giá.',
+  overdueTitle: 'Thử thách đã quá hạn',
+  overdueDescription:
+    'Bạn vẫn có thể đổi thời hạn hoặc đặt lại tiến độ để bắt đầu một vòng đọc mới.',
+  deleteButton: 'Xóa thử thách',
+  deleteConfirm: 'Bạn có chắc muốn xóa thử thách đọc hiện tại không?',
+  emptyTitle: 'Chưa có thử thách nào',
+  emptyDescription:
+    'Bắt đầu bằng một mục tiêu nhỏ như 5 cuốn trong tháng này. Sau khi tạo, tiến độ và thời hạn sẽ hiện tại đây.',
+  emptyCreateButton: 'Tạo thử thách ngay',
+  formEditTitle: 'Chỉnh sửa thử thách',
+  formEditDescription:
+    'Bạn có thể đổi tên, mục tiêu hoặc kéo dài thời hạn mà không cần rời trang.',
+  targetLabel: 'Số sách mục tiêu',
+  presetCustomDescription: 'Tự đặt thời hạn theo lịch cá nhân của bạn.',
+  previewLabel: 'Thời hạn dự kiến',
+  previewValue: 'Thử thách sẽ kết thúc vào {date}',
+  previewFallback: 'Chọn thời hạn để xem trước.',
+  createButton: 'Tạo thử thách',
+  formHintCreate:
+    'Hãy đặt mục tiêu vừa sức cho lần đầu, rồi tăng dần ở các thử thách sau.',
+  formHintEdit:
+    'Nếu giảm mục tiêu thấp hơn số sách đã đọc, tiến độ sẽ tự điều chỉnh cho phù hợp.',
+})
+
+Object.assign(
+  messages.vi.readingChallengePage.errors as Record<string, unknown>,
+  {
+    titleRequired: 'Hãy nhập tên thử thách.',
+    endDateRequired: 'Hãy chọn ngày kết thúc.',
+    endDateBeforeStart:
+      'Ngày kết thúc không thể sớm hơn ngày bắt đầu thử thách.',
+    unknown: 'Không thể lưu thử thách lúc này. Vui lòng thử lại.',
+  },
+)
