@@ -15,14 +15,15 @@ export async function getMyWishlist(): Promise<BookCardData[]> {
     referenceData.authors.map((author) => [author.id, author.name]),
   )
   const categoryMap = new Map(
-    referenceData.categories.map((category) => [category.id, category.name]),
+    referenceData.categories.map((category) => [category.id, category]),
   )
 
   return unwrapResponse(response).map((bookResponse) => ({
     id: bookResponse.id,
     title: bookResponse.title,
     author: authorMap.get(bookResponse.authorId) ?? '',
-    category: categoryMap.get(bookResponse.categoryId) ?? '',
+    category: categoryMap.get(bookResponse.categoryId)?.name ?? '',
+    categoryInfo: categoryMap.get(bookResponse.categoryId) ?? null,
     price: bookResponse.price,
     rating:
       typeof bookResponse.averageRating === 'number'

@@ -70,7 +70,7 @@ export default function BookDetailPage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const { isWishlisted, toggleBook } = useWishlist()
-  const { t, formatCurrency, formatDate, formatNumber, formatYear } = useLanguage()
+  const { t, language, formatCurrency, formatDate, formatNumber, formatYear } = useLanguage()
   const {
     book,
     suggestions,
@@ -323,7 +323,7 @@ export default function BookDetailPage() {
           {categoryTrail.map((category) => (
             <div key={category.id} className="flex items-center gap-1">
               <ChevronRight className="size-4" />
-              <span>{getCategoryLabel(category.name, t)}</span>
+              <span>{getCategoryLabel(category, language)}</span>
             </div>
           ))}
           <ChevronRight className="size-4" />
@@ -376,7 +376,7 @@ export default function BookDetailPage() {
           <section className="order-3 min-w-0 space-y-6 xl:pt-6">
             <div className="space-y-4">
               <span className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                {getCategoryLabel(book.category, t)}
+                {getCategoryLabel(book.categoryInfo ?? book.category, language)}
               </span>
               <div className="space-y-3">
                 <h1 className="font-heading text-4xl font-bold tracking-tight text-balance text-foreground lg:text-5xl">

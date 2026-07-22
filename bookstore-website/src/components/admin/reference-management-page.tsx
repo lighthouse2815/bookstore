@@ -25,11 +25,14 @@ import {
   getReferenceImageUrl,
   useAdminReferenceManagementPage,
   type ReferenceItem,
+  type ReferenceFormState,
   type ReferenceSectionKey,
 } from '@/hooks/use-admin-reference-management-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { getBookCoverUrl } from '@/utils/book-cover'
 import { cn } from '@/utils'
+import { getCategoryDescription, getCategoryLabel } from '@/utils/i18n'
+import type { AppLanguage } from '@/locales/messages'
 
 type SectionVisual = {
   icon: LucideIcon
@@ -120,6 +123,7 @@ export function AdminReferenceManagementPage({
 }) {
   const {
     t,
+    language,
     formatDate,
     formatNumber,
     isLoading,
@@ -200,6 +204,7 @@ export function AdminReferenceManagementPage({
             onClose={closeDialog}
             onEdit={openEditFromDetail}
             t={t}
+            language={language}
           />
         ) : dialogMode === 'delete' && selectedItem ? (
           <ReferenceDeleteDialogContent
@@ -210,6 +215,7 @@ export function AdminReferenceManagementPage({
             onClose={closeDialog}
             onConfirm={handleDeleteConfirm}
             t={t}
+            language={language}
           />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -242,18 +248,26 @@ export function AdminReferenceManagementPage({
             </div>
 
             <div className="space-y-5">
-              <div>
-                <Label htmlFor={`${sectionKey}-name`}>{t('common.name')}</Label>
-                <Input
-                  id={`${sectionKey}-name`}
-                  value={form.name}
-                  onChange={(event) =>
-                    handleFormChange('name', event.currentTarget.value)
-                  }
-                  className="mt-2 h-12 rounded-2xl bg-background/60"
-                  required
+              {sectionKey === 'categories' ? (
+                <CategoryLocalizationFields
+                  form={form}
+                  onChange={handleFormChange}
+                  t={t}
                 />
-              </div>
+              ) : (
+                <div>
+                  <Label htmlFor={`${sectionKey}-name`}>{t('common.name')}</Label>
+                  <Input
+                    id={`${sectionKey}-name`}
+                    value={form.name}
+                    onChange={(event) =>
+                      handleFormChange('name', event.currentTarget.value)
+                    }
+                    className="mt-2 h-12 rounded-2xl bg-background/60"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
                 <Label htmlFor={`${sectionKey}-image-upload`}>{imageLabel}</Label>
@@ -267,7 +281,7 @@ export function AdminReferenceManagementPage({
                     {imagePreviewUrl ? (
                       <img
                         src={getBookCoverUrl(imagePreviewUrl)}
-                        alt={form.name || t('common.name')}
+                        alt={form.name || form.categoryNameVi || t('common.name')}
                         className="size-full object-cover"
                       />
                     ) : (
@@ -332,7 +346,7 @@ export function AdminReferenceManagementPage({
                 </>
               ) : null}
 
-              <div>
+              {sectionKey !== 'categories' ? <div>
                 <Label htmlFor={`${sectionKey}-description`}>
                   {descriptionLabel}
                 </Label>
@@ -345,7 +359,7 @@ export function AdminReferenceManagementPage({
                   className="mt-2 min-h-32 rounded-2xl bg-background/60"
                   rows={5}
                 />
-              </div>
+              </div> : null}
             </div>
 
             <div className="flex flex-wrap justify-end gap-3">
@@ -467,7 +481,7 @@ export function AdminReferenceManagementPage({
                             {imageUrl ? (
                               <img
                                 src={getBookCoverUrl(imageUrl)}
-                                alt={item.name}
+                                alt={getReferenceDisplayName(sectionKey, item, language)}
                                 className="size-full object-cover"
                               />
                             ) : (
@@ -479,7 +493,7 @@ export function AdminReferenceManagementPage({
 
                           <div className="min-w-0">
                             <p className="truncate text-2xl font-semibold text-foreground">
-                              {item.name}
+                              {getReferenceDisplayName(sectionKey, item, language)}
                             </p>
                           </div>
                         </div>
@@ -538,6 +552,103 @@ export function AdminReferenceManagementPage({
   )
 }
 
+function CategoryLocalizationFields({
+  form,
+  onChange,
+  t,
+}: {
+  form: ReferenceFormState
+  onChange: (field: keyof ReferenceFormState, value: string) => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <Label htmlFor="category-code">
+          {t('admin.referencePages.categories.code')}
+        </Label>
+        <Input
+          id="category-code"
+          value={form.categoryCode}
+          onChange={(event) =>
+            onChange(
+              'categoryCode',
+              event.currentTarget.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''),
+            )
+          }
+          className="mt-2 h-12 rounded-2xl bg-background/60 font-mono uppercase"
+          placeholder="LITERATURE"
+          required
+        />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <fieldset className="space-y-4 rounded-[24px] border border-border/60 bg-background/40 p-5">
+          <legend className="px-2 text-sm font-semibold text-primary">
+            {t('admin.referencePages.categories.vietnamese')}
+          </legend>
+          <div>
+            <Label htmlFor="category-name-vi">
+              {t('admin.referencePages.categories.localizedName')}
+            </Label>
+            <Input
+              id="category-name-vi"
+              value={form.categoryNameVi}
+              onChange={(event) => onChange('categoryNameVi', event.currentTarget.value)}
+              className="mt-2 h-12 rounded-2xl bg-background/60"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="category-description-vi">
+              {t('admin.referencePages.categories.localizedDescription')}
+            </Label>
+            <Textarea
+              id="category-description-vi"
+              value={form.categoryDescriptionVi}
+              onChange={(event) =>
+                onChange('categoryDescriptionVi', event.currentTarget.value)
+              }
+              className="mt-2 min-h-28 rounded-2xl bg-background/60"
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-4 rounded-[24px] border border-border/60 bg-background/40 p-5">
+          <legend className="px-2 text-sm font-semibold text-primary">
+            {t('admin.referencePages.categories.english')}
+          </legend>
+          <div>
+            <Label htmlFor="category-name-en">
+              {t('admin.referencePages.categories.localizedName')}
+            </Label>
+            <Input
+              id="category-name-en"
+              value={form.categoryNameEn}
+              onChange={(event) => onChange('categoryNameEn', event.currentTarget.value)}
+              className="mt-2 h-12 rounded-2xl bg-background/60"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="category-description-en">
+              {t('admin.referencePages.categories.localizedDescription')}
+            </Label>
+            <Textarea
+              id="category-description-en"
+              value={form.categoryDescriptionEn}
+              onChange={(event) =>
+                onChange('categoryDescriptionEn', event.currentTarget.value)
+              }
+              className="mt-2 min-h-28 rounded-2xl bg-background/60"
+            />
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  )
+}
+
 type ReferenceDetailDialogContentProps = {
   item: ReferenceItem
   sectionKey: ReferenceSectionKey
@@ -547,6 +658,7 @@ type ReferenceDetailDialogContentProps = {
   onClose: () => void
   onEdit: () => void
   t: (key: string, params?: Record<string, number | string>) => string
+  language: AppLanguage
 }
 
 function ReferenceDetailDialogContent({
@@ -558,10 +670,15 @@ function ReferenceDetailDialogContent({
   onClose,
   onEdit,
   t,
+  language,
 }: ReferenceDetailDialogContentProps) {
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
-  const description = getReferenceDescription(sectionKey, item)
+  const description =
+    sectionKey === 'categories' && 'translations' in item
+      ? getCategoryDescription(item, language) ?? ''
+      : getReferenceDescription(sectionKey, item)
+  const displayName = getReferenceDisplayName(sectionKey, item, language)
   const authorAvatarUrl =
     sectionKey === 'authors' && 'avatarUrl' in item ? item.avatarUrl : null
   const authorBirthYear =
@@ -588,7 +705,7 @@ function ReferenceDetailDialogContent({
           <div>
             <p className="text-sm font-medium text-primary">{sectionLabel}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">
-              {item.name}
+              {displayName}
             </p>
           </div>
         </div>
@@ -665,6 +782,7 @@ type ReferenceDeleteDialogContentProps = {
   onClose: () => void
   onConfirm: () => void
   t: (key: string, params?: Record<string, number | string>) => string
+  language: AppLanguage
 }
 
 function ReferenceDeleteDialogContent({
@@ -675,9 +793,11 @@ function ReferenceDeleteDialogContent({
   onClose,
   onConfirm,
   t,
+  language,
 }: ReferenceDeleteDialogContentProps) {
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
+  const displayName = getReferenceDisplayName(sectionKey, item, language)
 
   return (
     <div className="space-y-6">
@@ -689,7 +809,7 @@ function ReferenceDeleteDialogContent({
           {t('admin.references.deleteTitle')}
         </h2>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          {t('admin.references.confirmDelete', { name: item.name })}
+          {t('admin.references.confirmDelete', { name: displayName })}
         </p>
       </div>
 
@@ -705,7 +825,7 @@ function ReferenceDeleteDialogContent({
         <div className="min-w-0">
           <p className="text-sm font-medium text-primary">{sectionLabel}</p>
           <p className="mt-1 truncate text-xl font-semibold text-foreground">
-            {item.name}
+            {displayName}
           </p>
         </div>
       </div>
@@ -737,6 +857,16 @@ function ReferenceDeleteDialogContent({
       </div>
     </div>
   )
+}
+
+function getReferenceDisplayName(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+  language: AppLanguage,
+) {
+  return sectionKey === 'categories' && 'translations' in item
+    ? getCategoryLabel(item, language)
+    : item.name
 }
 
 function DetailMetaCard({

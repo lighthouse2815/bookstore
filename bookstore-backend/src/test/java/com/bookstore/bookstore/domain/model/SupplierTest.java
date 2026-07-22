@@ -34,6 +34,47 @@ class SupplierTest {
     }
 
     @Test
+    void constructor_acceptsVietnameseLandlineNumber() {
+        Instant now = Instant.EPOCH;
+
+        Supplier supplier = new Supplier(
+                UUID.randomUUID(),
+                "Supplier A",
+                "02439445680",
+                null,
+                null,
+                null,
+                now,
+                now,
+                null
+        );
+
+        assertEquals("02439445680", supplier.getPhone());
+    }
+
+    @Test
+    void constructor_rejectsPhoneLongerThanVietnameseLandlineNumber() {
+        Instant now = Instant.EPOCH;
+
+        DomainException exception = assertThrows(
+                DomainException.class,
+                () -> new Supplier(
+                        UUID.randomUUID(),
+                        "Supplier A",
+                        "024394456800",
+                        null,
+                        null,
+                        null,
+                        now,
+                        now,
+                        null
+                )
+        );
+
+        assertEquals(DomainErrorCode.INVALID_SUPPLIER_PHONE, exception.getErrorCode());
+    }
+
+    @Test
     void updateSupplier_rejectsDeletedSupplier() {
         Instant now = Instant.EPOCH;
         Supplier supplier = new Supplier(

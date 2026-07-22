@@ -7,7 +7,7 @@ import {
 import { useSearchParams } from 'react-router-dom'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalogPage } from '@/hooks/use-book-catalog'
-import { getCategoryLabel } from '@/utils/i18n'
+import type { CategoryResponse } from '@/types/book'
 import {
   createCatalogSearchParams,
   readCatalogSearchState,
@@ -30,8 +30,8 @@ const BOOK_SEARCH_DEFAULTS = {
   allowedSorts: BOOK_SORT_KEYS,
 }
 const CATEGORY_PRESETS = {
-  '__life-skills__': 'categories.lifeSkills',
-  '__novel__': 'categories.novel',
+  '__life-skills__': 'PERSONAL_DEVELOPMENT',
+  '__novel__': 'LITERATURE',
 } as const
 
 export function useBookListing() {
@@ -41,7 +41,7 @@ export function useBookListing() {
     BOOK_SEARCH_DEFAULTS,
   )
   const requestedCategory = searchState.category
-  const { t, formatNumber } = useLanguage()
+  const { t, language, formatNumber } = useLanguage()
   const [category, setCategory] = useState(requestedCategory)
   const [categoryIds, setCategoryIds] = useState<Record<string, string>>({})
   const { query, sort, page } = searchState
@@ -69,8 +69,8 @@ export function useBookListing() {
       return
     }
 
-    setCategory(resolveRequestedCategory(requestedCategory, categories, t))
-  }, [categories, requestedCategory, t])
+    setCategory(resolveRequestedCategory(requestedCategory, categories))
+  }, [categories, requestedCategory])
 
   const filteredBooks = useMemo(() => {
     return [...books].sort((firstBook, secondBook) => {
@@ -91,7 +91,7 @@ export function useBookListing() {
 
   }, [books, sort])
 
-  const categoryOptions = [ALL_CATEGORIES, ...categories]
+  const categoryOptions = categories
 
   function handleQueryChange(event: ChangeEvent<HTMLInputElement>) {
     updateSearchParams(
@@ -138,6 +138,7 @@ export function useBookListing() {
 
   return {
     t,
+    language,
     formatNumber,
     isLoading,
     error,
@@ -159,23 +160,29 @@ export function useBookListing() {
 
 function resolveRequestedCategory(
   requestedCategory: string,
-  categories: string[],
-  t: (key: string, params?: Record<string, number | string>) => string,
+  categories: CategoryResponse[],
 ) {
   if (requestedCategory === ALL_CATEGORIES) {
     return ALL_CATEGORIES
   }
 
-  const presetKey =
+  const presetCode =
     CATEGORY_PRESETS[requestedCategory as keyof typeof CATEGORY_PRESETS]
 
-  if (presetKey) {
-    return (
-      categories.find(
-        (category) => getCategoryLabel(category, t) === t(presetKey),
-      ) ?? ALL_CATEGORIES
-    )
+  if (presetCode) {
+    return categories.some((category) => category.code === presetCode)
+      ? presetCode
+      : ALL_CATEGORIES
   }
 
-  return categories.includes(requestedCategory) ? requestedCategory : ALL_CATEGORIES
+  return (
+    categories.find(
+      (category) =>
+        category.code === requestedCategory ||
+        category.name === requestedCategory ||
+        Object.values(category.translations).some(
+          (translation) => translation?.name === requestedCategory,
+        ),
+    )?.code ?? ALL_CATEGORIES
+  )
 }

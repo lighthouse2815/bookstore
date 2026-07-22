@@ -24,7 +24,7 @@ export async function getPersonalizedRecommendations(
   const referenceMaps = {
     authorMap: new Map(referenceData.authors.map((author) => [author.id, author.name])),
     categoryMap: new Map(
-      referenceData.categories.map((category) => [category.id, category.name]),
+      referenceData.categories.map((category) => [category.id, category]),
     ),
     publisherMap: new Map(
       referenceData.publishers.map((publisher) => [publisher.id, publisher.name]),

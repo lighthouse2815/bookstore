@@ -39,6 +39,7 @@ export function useOrderConfirmationPage() {
       setError(t('notFound.description'))
       return
     }
+    const resolvedOrderId = orderId
 
     let isCancelled = false
     let timeoutId: number | undefined
@@ -49,7 +50,7 @@ export function useOrderConfirmationPage() {
       }
 
       try {
-        const data = await getOrderById(orderId)
+        const data = await getOrderById(resolvedOrderId)
 
         if (isCancelled) {
           return

@@ -40,7 +40,9 @@ public record BookPageDetailResponse(
 
     public record CategoryTrailItemResponse(
             UUID id,
-            String name
+            String code,
+            String name,
+            Map<String, CategoryTranslationResponse> translations
     ) {
     }
 

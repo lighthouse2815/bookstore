@@ -61,7 +61,7 @@ export async function getBookCatalogLoadState(
             mapBookResponseToBook(bookResponse, referenceMaps),
           )
         : [],
-    categories: getCategoryNames(categories),
+    categories: sortCategories(categories),
     categoryIds: getCategoryIds(categories),
     bookError:
       bookResponsesResult.status === 'rejected'
@@ -87,7 +87,7 @@ export async function getBookCatalog(
     books: bookResponses.map((bookResponse) =>
       mapBookResponseToBook(bookResponse, referenceMaps),
     ),
-    categories: getCategoryNames(referenceData.categories),
+    categories: sortCategories(referenceData.categories),
     categoryIds: getCategoryIds(referenceData.categories),
   }
 }
@@ -105,7 +105,7 @@ export async function getBookCatalogPage(
     books: bookPage.items.map((bookResponse) =>
       mapBookResponseToBook(bookResponse, referenceMaps),
     ),
-    categories: getCategoryNames(referenceData.categories),
+    categories: sortCategories(referenceData.categories),
     categoryIds: getCategoryIds(referenceData.categories),
     totalCount: bookPage.totalCount,
     page: bookPage.page,
@@ -261,7 +261,8 @@ export function mapBookResponseToBook(
     title: bookResponse.title,
     isbn: bookResponse.isbn,
     author: referenceMaps.authorMap.get(bookResponse.authorId) ?? '',
-    category: referenceMaps.categoryMap.get(bookResponse.categoryId) ?? '',
+    category: referenceMaps.categoryMap.get(bookResponse.categoryId)?.name ?? '',
+    categoryInfo: referenceMaps.categoryMap.get(bookResponse.categoryId) ?? null,
     price: bookResponse.price,
     oldPrice: undefined,
     rating: normalizeRatingValue(bookResponse.averageRating) ?? undefined,
@@ -304,6 +305,7 @@ function mapBookPageDetailResponseToBookPageDetail(
       isbn: pageDetailResponse.book.isbn,
       author: pageDetailResponse.author.name,
       category: leafCategory?.name ?? '',
+      categoryInfo: leafCategory ?? null,
       price: pageDetailResponse.book.price,
       oldPrice: pageDetailResponse.book.originalPrice ?? undefined,
       rating:
@@ -336,7 +338,9 @@ function mapBookPageDetailResponseToBookPageDetail(
     },
     categoryTrail: categoryTrail.map((category) => ({
       id: category.id,
+      code: category.code,
       name: category.name,
+      translations: category.translations,
     })),
     ratingSummary,
     promotions: pageDetailResponse.promotions.map(
@@ -437,7 +441,7 @@ function mapBookReviewResponseToBookReview(
 
 export type BookReferenceMaps = {
   authorMap: Map<string, string>
-  categoryMap: Map<string, string>
+  categoryMap: Map<string, CategoryResponse>
   publisherMap: Map<string, string>
 }
 
@@ -449,7 +453,7 @@ function buildBookReferenceMaps(
       referenceData.authors.map((author) => [author.id, author.name]),
     ),
     categoryMap: new Map(
-      referenceData.categories.map((category) => [category.id, category.name]),
+      referenceData.categories.map((category) => [category.id, category]),
     ),
     publisherMap: new Map(
       referenceData.publishers.map((publisher) => [publisher.id, publisher.name]),
@@ -457,16 +461,15 @@ function buildBookReferenceMaps(
   }
 }
 
-function getCategoryNames(categories: CategoryResponse[]) {
-  return [...new Set(categories.map((category) => category.name).filter(Boolean))]
-    .sort((firstCategory, secondCategory) =>
-      firstCategory.localeCompare(secondCategory, 'vi'),
-    )
+function sortCategories(categories: CategoryResponse[]) {
+  return [...categories].sort((firstCategory, secondCategory) =>
+    firstCategory.name.localeCompare(secondCategory.name, 'vi'),
+  )
 }
 
 function getCategoryIds(categories: CategoryResponse[]) {
   return Object.fromEntries(
-    categories.map((category) => [category.name, category.id]),
+    categories.map((category) => [category.code, category.id]),
   )
 }
 

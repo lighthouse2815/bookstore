@@ -3,13 +3,13 @@ import {
   getBookCatalogLoadState,
   getBookCatalogPage,
 } from '@/services/book-service'
-import type { Book } from '@/types/book'
+import type { Book, CategoryResponse } from '@/types/book'
 import type { PageRequest } from '@/types/pagination'
 import { getErrorMessage } from '@/utils'
 
 type UseBookCatalogResult = {
   books: Book[]
-  categories: string[]
+  categories: CategoryResponse[]
   categoryIds: Record<string, string>
   isLoading: boolean
   error: string | null
@@ -131,6 +131,8 @@ export function useBookCatalogPage({
             size: catalog.size,
             isLoading: false,
             error: null,
+            bookError: null,
+            categoryError: null,
           })
         }
       } catch (error) {

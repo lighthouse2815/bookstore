@@ -24,10 +24,16 @@ export type UpsertBookImageRequest = {
 }
 
 export type UpsertCategoryRequest = {
-  name: string
-  description?: string | null
+  code: string
+  translations: CategoryTranslationRequest[]
   parentId?: string | null
   imageFileAssetId?: string | null
+}
+
+export type CategoryTranslationRequest = {
+  locale: 'vi' | 'en'
+  name: string
+  description?: string | null
 }
 
 export type UpsertAuthorRequest = {
@@ -90,15 +96,26 @@ export type BookDetailResponse = {
   edition: string | null
 }
 
-export type CategoryResponse = {
+export type LocalizedCategory = {
   id: string
+  code: string
   name: string
+  translations: Partial<Record<'vi' | 'en', CategoryTranslationResponse>>
+}
+
+export type CategoryResponse = LocalizedCategory & {
   description: string | null
   parentId: string | null
   imageFileAssetId: string | null
   imageUrl: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type CategoryTranslationResponse = {
+  locale: 'vi' | 'en'
+  name: string
+  description: string | null
 }
 
 export type AuthorResponse = {
@@ -130,6 +147,7 @@ export type Book = {
   isbn: string | null
   author: string
   category: string
+  categoryInfo?: LocalizedCategory | null
   price: number
   oldPrice?: number
   rating?: number
@@ -152,7 +170,13 @@ export type Book = {
 
 export type BookCardData = Pick<
   Book,
-  'id' | 'title' | 'author' | 'category' | 'price' | 'cover'
+  | 'id'
+  | 'title'
+  | 'author'
+  | 'category'
+  | 'categoryInfo'
+  | 'price'
+  | 'cover'
 > &
   Partial<Pick<Book, 'oldPrice' | 'rating' | 'reviews' | 'bestseller'>>
 
@@ -182,7 +206,7 @@ export type BookDetail = {
 
 export type BookCatalog = {
   books: Book[]
-  categories: string[]
+  categories: CategoryResponse[]
   categoryIds: Record<string, string>
 }
 
@@ -266,15 +290,9 @@ export type BookPromotion = {
   updatedAt: string
 }
 
-export type BookCategoryTrailItemResponse = {
-  id: string
-  name: string
-}
+export type BookCategoryTrailItemResponse = LocalizedCategory
 
-export type BookCategoryTrailItem = {
-  id: string
-  name: string
-}
+export type BookCategoryTrailItem = LocalizedCategory
 
 export type BookRatingSummaryResponse = {
   averageRating: number | null

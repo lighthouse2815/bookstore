@@ -1640,6 +1640,11 @@ export const messages = {
           searchPlaceholder: 'Tìm kiếm danh mục...',
           empty: 'Chưa có danh mục nào',
           emptyDescription: 'Danh mục này chưa có mô tả.',
+          code: 'Mã thể loại',
+          vietnamese: 'Nội dung tiếng Việt',
+          english: 'Nội dung tiếng Anh',
+          localizedName: 'Tên hiển thị',
+          localizedDescription: 'Mô tả',
         },
         authors: {
           title: 'Quản lý tác giả',
@@ -1669,11 +1674,6 @@ export const messages = {
     },
     categories: {
       all: 'Tất cả',
-      novel: 'Tiểu thuyết',
-      lifeSkills: 'Kỹ năng sống',
-      science: 'Khoa học',
-      literature: 'Văn học',
-      sciFi: 'Viễn tưởng',
     },
     orderStatus: {
       pending: 'Chờ xác nhận',
@@ -3350,6 +3350,11 @@ orders: {
           searchPlaceholder: 'Search categories...',
           empty: 'No categories yet',
           emptyDescription: 'This category does not have a description yet.',
+          code: 'Category code',
+          vietnamese: 'Vietnamese content',
+          english: 'English content',
+          localizedName: 'Display name',
+          localizedDescription: 'Description',
         },
         authors: {
           title: 'Manage authors',
@@ -3379,11 +3384,6 @@ orders: {
     },
     categories: {
       all: 'All',
-      novel: 'Novel',
-      lifeSkills: 'Life skills',
-      science: 'Science',
-      literature: 'Literature',
-      sciFi: 'Sci-fi',
     },
     orderStatus: {
       pending: 'Pending confirmation',
@@ -3430,6 +3430,26 @@ orders: {
     },
   },
 } as const
+
+function getMutableMessageSection(
+  root: unknown,
+  ...path: string[]
+): Record<string, unknown> {
+  let current = root
+
+  for (const key of path) {
+    if (typeof current !== 'object' || current === null) {
+      throw new Error(`Missing message section: ${path.join('.')}`)
+    }
+    current = (current as Record<string, unknown>)[key]
+  }
+
+  if (typeof current !== 'object' || current === null) {
+    throw new Error(`Missing message section: ${path.join('.')}`)
+  }
+
+  return current as Record<string, unknown>
+}
 
 Object.assign(messages.vi.admin.permissionsPage as Record<string, unknown>, {
   showingCount: 'Hiển thị {count} trên {total} quyền',
@@ -4352,7 +4372,7 @@ Object.assign(messages.en.home as Record<string, unknown>, {
   },
 })
 
-Object.assign(messages.vi.home.funDiscovery as Record<string, string>, {
+Object.assign(getMutableMessageSection(messages.vi, 'home', 'funDiscovery'), {
   giftFinderBadge: '4 bước tặng quà',
   giftFinderTitle: 'Tìm sách làm quà',
   giftFinderDescription:
@@ -4370,7 +4390,7 @@ Object.assign(messages.vi.home.funDiscovery as Record<string, string>, {
   readingChallengeActiveHint: 'Có thể +1, -1, chỉnh sửa hoặc xóa challenge.',
 })
 
-Object.assign(messages.en.home.funDiscovery as Record<string, string>, {
+Object.assign(getMutableMessageSection(messages.en, 'home', 'funDiscovery'), {
   giftFinderBadge: '4 quick gift picks',
   giftFinderTitle: 'Find a book gift',
   giftFinderDescription:
@@ -5794,36 +5814,6 @@ Object.assign(messages.en.admin.sidebar as Record<string, unknown>, {
   },
 })
 
-Object.assign(messages.vi.categories as Record<string, unknown>, {
-  personalDevelopment: 'Kỹ năng và phát triển bản thân',
-  businessManagement: 'Kinh doanh và quản trị',
-  artsCreativity: 'Nghệ thuật và sáng tạo',
-  philosophy: 'Triết học',
-  contemporaryLiterature: 'Văn học đương đại',
-  mystery: 'Trinh thám',
-  education: 'Giáo dục',
-  scienceTechnology: 'Khoa học và công nghệ',
-  psychology: 'Tâm lý học',
-  historyMemoir: 'Lịch sử và hồi ký',
-  children: 'Sách thiếu nhi',
-  fantasy: 'Giả tưởng và kỳ ảo',
-})
-
-Object.assign(messages.en.categories as Record<string, unknown>, {
-  personalDevelopment: 'Personal development',
-  businessManagement: 'Business & management',
-  artsCreativity: 'Arts & creativity',
-  philosophy: 'Philosophy',
-  contemporaryLiterature: 'Contemporary literature',
-  mystery: 'Mystery',
-  education: 'Education',
-  scienceTechnology: 'Science & technology',
-  psychology: 'Psychology',
-  historyMemoir: 'History & memoir',
-  children: "Children's books",
-  fantasy: 'Fantasy',
-})
-
 Object.assign(messages.vi.header as Record<string, unknown>, {
   mobileMenuOpen: 'Mở menu điều hướng',
   mobileMenuClose: 'Đóng menu điều hướng',
@@ -5870,7 +5860,7 @@ Object.assign(messages.en.book.listing as Record<string, unknown>, {
   categorySearchAria: 'Search book categories',
 })
 
-Object.assign(messages.vi.ebookCatalog as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'ebookCatalog'), {
   filterToggle: 'Bộ lọc sách điện tử',
   filterOpen: 'Mở bộ lọc sách điện tử',
   filterClose: 'Đóng bộ lọc sách điện tử',
@@ -5880,7 +5870,7 @@ Object.assign(messages.vi.ebookCatalog as Record<string, unknown>, {
   categorySearchAria: 'Tìm thể loại sách điện tử',
 })
 
-Object.assign(messages.en.ebookCatalog as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.en, 'ebookCatalog'), {
   filterToggle: 'Ebook filters',
   filterOpen: 'Open ebook filters',
   filterClose: 'Close ebook filters',
@@ -6095,11 +6085,11 @@ Object.assign(messages.en.chat.customer as Record<string, unknown>, {
   realtimeFallback: 'Reconnecting',
 })
 
-Object.assign(messages.vi.orderTimeline as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'orderTimeline'), {
   empty: 'Đơn hàng này chưa có mốc cập nhật nào.',
 })
 
-Object.assign(messages.vi.readingJournal as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal'), {
   badge: 'Nhật ký đọc sách',
   description:
     'Ghi lại từng buổi đọc, lưu cảm nhận và duy trì thói quen đọc mỗi ngày.',
@@ -6124,7 +6114,7 @@ Object.assign(messages.vi.readingJournal as Record<string, unknown>, {
     'Tạo ghi chép đầu tiên hoặc đánh dấu hoạt động hôm nay để bắt đầu lưu lại hành trình đọc.',
 })
 
-Object.assign(messages.vi.readingJournal.stats as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'stats'), {
   entries: 'Tổng ghi chép',
   entriesHint: 'Tất cả ghi chú đã lưu trong nhật ký.',
   current: 'Chuỗi ngày hiện tại',
@@ -6133,14 +6123,14 @@ Object.assign(messages.vi.readingJournal.stats as Record<string, unknown>, {
   longestHint: 'Chuỗi ngày đọc dài nhất bạn từng đạt được.',
 })
 
-Object.assign(messages.vi.readingJournal.streak as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'streak'), {
   title: 'Thói quen đọc mỗi ngày',
   description: 'Các ghi chép giúp tính chuỗi ngày đọc của bạn.',
   checkedIn: 'Đã ghi nhận',
   notCheckedIn: 'Chưa ghi nhận',
 })
 
-Object.assign(messages.vi.readingJournal.composer as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'composer'), {
   title: 'Tạo ghi chép mới',
   description: 'Chọn sách, ngày đọc, tiến độ và lưu một vài cảm nhận.',
   newBadge: 'Mới',
@@ -6149,7 +6139,7 @@ Object.assign(messages.vi.readingJournal.composer as Record<string, unknown>, {
   editBadge: 'Chỉnh sửa',
 })
 
-Object.assign(messages.vi.readingJournal.actions as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'actions'), {
   saveEntry: 'Lưu ghi chép',
   updateEntry: 'Cập nhật ghi chép',
   checkInToday: 'Ghi nhận hôm nay',
@@ -6157,13 +6147,13 @@ Object.assign(messages.vi.readingJournal.actions as Record<string, unknown>, {
   deleteEntry: 'Xóa ghi chép',
 })
 
-Object.assign(messages.vi.readingJournal.filters as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'filters'), {
   title: 'Bộ lọc nhật ký',
   description: 'Lọc nhật ký theo sách hoặc khoảng ngày.',
   reset: 'Đặt lại',
 })
 
-Object.assign(messages.vi.readingJournal.timeline as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingJournal', 'timeline'), {
   title: 'Hành trình đọc',
   description: 'Các ghi chép được nhóm theo ngày để bạn dễ xem lại.',
   countLabel: '{count} ghi chép trong nhật ký',
@@ -6175,7 +6165,7 @@ Object.assign(messages.vi.auth.login as Record<string, unknown>, {
   lockedImageAlt: 'Tài khoản đang bị hạn chế đăng nhập',
 })
 
-Object.assign(messages.vi.home.funDiscovery as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'home', 'funDiscovery'), {
   bookMatchDescription: 'Trả lời vài câu hỏi để tìm sách hợp cảm hứng hôm nay.',
   bookMatchCta: 'Bắt đầu chọn sách',
   wishlistCta: 'Mở danh sách yêu thích',
@@ -6203,11 +6193,11 @@ Object.assign(messages.vi.home.bookMatch as Record<string, unknown>, {
   badge: 'Gợi ý sách theo sở thích',
 })
 
-Object.assign(messages.vi.book.giftFinder as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'book', 'giftFinder'), {
   heroBadge: 'Gợi ý quà tặng',
 })
 
-Object.assign(messages.vi.book.giftFinder.actions as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'book', 'giftFinder', 'actions'), {
   addToWishlist: 'Lưu vào danh sách yêu thích',
   removeFromWishlist: 'Bỏ khỏi danh sách yêu thích',
 })
@@ -6239,7 +6229,7 @@ Object.assign(messages.vi.book.detail as Record<string, unknown>, {
   removeFromWishlist: 'Bỏ khỏi danh sách yêu thích',
 })
 
-Object.assign(messages.vi.readingChallengePage as Record<string, unknown>, {
+Object.assign(getMutableMessageSection(messages.vi, 'readingChallengePage'), {
   title: 'Thử thách đọc sách của bạn',
   description:
     'Đặt mục tiêu đọc, theo dõi tiến độ và tự thưởng khi hoàn thành. Tiến độ được lưu trên thiết bị này.',
@@ -6278,7 +6268,7 @@ Object.assign(messages.vi.readingChallengePage as Record<string, unknown>, {
 })
 
 Object.assign(
-  messages.vi.readingChallengePage.errors as Record<string, unknown>,
+  getMutableMessageSection(messages.vi, 'readingChallengePage', 'errors'),
   {
     titleRequired: 'Hãy nhập tên thử thách.',
     endDateRequired: 'Hãy chọn ngày kết thúc.',

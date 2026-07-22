@@ -95,7 +95,7 @@ export function selectCouponGameWinner(
     }
   }
 
-  return candidates.at(-1) ?? null
+  return candidates[candidates.length - 1] ?? null
 }
 
 export function createCouponGameResult(

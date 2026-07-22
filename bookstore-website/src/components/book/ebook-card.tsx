@@ -30,7 +30,7 @@ export function EbookCard({
 }: {
   ebook: PublishedDigitalAssetCatalogItem
 }) {
-  const { t, formatCurrency } = useLanguage()
+  const { t, language, formatCurrency } = useLanguage()
   const FormatIcon = getFormatIcon(ebook.format)
 
   return (
@@ -66,7 +66,7 @@ export function EbookCard({
       <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span className="rounded-full bg-primary/8 px-2.5 py-1 font-medium text-primary">
-            {getCategoryLabel(ebook.categoryName, t)}
+            {getCategoryLabel(ebook.categoryInfo ?? ebook.categoryName, language)}
           </span>
           <span>{ebook.authorName || t('book.fallback.author')}</span>
         </div>

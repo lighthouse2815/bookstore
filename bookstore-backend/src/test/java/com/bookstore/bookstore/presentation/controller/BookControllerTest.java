@@ -17,6 +17,7 @@ import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.response.AuthorResponse;
 import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
+import com.bookstore.bookstore.presentation.response.CategoryTranslationResponse;
 import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -129,7 +130,12 @@ class BookControllerTest {
                 ),
                 List.of(new BookPageDetailResponse.CategoryTrailItemResponse(
                         UUID.fromString("00000000-0000-0000-0000-000000000201"),
-                        "Van hoc"
+                        "LITERATURE",
+                        "Văn học",
+                        Map.of(
+                                "vi", new CategoryTranslationResponse("vi", "Văn học", null),
+                                "en", new CategoryTranslationResponse("en", "Literature", null)
+                        )
                 )),
                 new BookPageDetailResponse.RatingSummaryResponse(
                         BigDecimal.valueOf(4.5),

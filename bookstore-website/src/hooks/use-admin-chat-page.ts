@@ -316,9 +316,6 @@ export function useAdminChatPage() {
     }
   }, [
     canUseAdminChat,
-    handleRealtimeAdminConversation,
-    handleRealtimeConversation,
-    handleRealtimeMessage,
     isAuthLoading,
   ])
 

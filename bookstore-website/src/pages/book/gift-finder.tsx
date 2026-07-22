@@ -13,6 +13,7 @@ import {
   Sparkles,
   Wallet,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   ChoiceCard,
@@ -560,7 +561,7 @@ function GiftRecommendationCard({
   const { isAuthenticated } = useAuth()
   const { addItem } = useCart()
   const { isWishlisted, toggleBook } = useWishlist()
-  const { t, formatCurrency } = useLanguage()
+  const { t, language, formatCurrency } = useLanguage()
   const isSaved = isWishlisted(book.id)
   const pageCount = book.detail?.pageCount ?? null
 
@@ -604,7 +605,7 @@ function GiftRecommendationCard({
       <div className="space-y-4 p-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">
-            {getCategoryLabel(book.category, t)}
+            {getCategoryLabel(book.categoryInfo ?? book.category, language)}
           </p>
           <Link to={`/books/${book.id}`}>
             <h3 className="mt-2 font-heading text-xl font-semibold leading-snug text-balance transition-colors hover:text-primary">

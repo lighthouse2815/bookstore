@@ -11,10 +11,14 @@ import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Category;
+import com.bookstore.bookstore.domain.model.CategoryTranslation;
 import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class CategoryService implements ICategoryService {
+
+    private static final String VI_LOCALE = "vi";
+    private static final String EN_LOCALE = "en";
+    private static final String CATEGORY_CODE_PATTERN = "[A-Z0-9_]+";
 
     private final ICategoryRepository categoryRepository;
     private final FileAssetPolicyService fileAssetPolicyService;
@@ -72,10 +80,17 @@ public class CategoryService implements ICategoryService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        String name = StringUtils.trimToNull(command.name());
-        String description = StringUtils.trimToNull(command.description());
+        String code = normalizeCode(command.code());
+        Map<String, CategoryTranslation> translations = normalizeTranslations(command.translations());
+        CategoryTranslation vietnamese = translations.get(VI_LOCALE);
+        String name = vietnamese.name();
+        String description = vietnamese.description();
         UUID parentId = command.parentId();
         FileAsset imageFileAsset = resolveImageFileAsset(command.imageFileAssetId());
+
+        if (categoryRepository.existsByCodeIncludingDeleted(code)) {
+            throw new ApplicationException(ApplicationErrorCode.CATEGORY_CODE_ALREADY_EXISTS);
+        }
 
         if (categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
@@ -86,8 +101,10 @@ public class CategoryService implements ICategoryService {
         Instant now = Instant.now();
         Category category = new Category(
                 UUID.randomUUID(),
+                code,
                 name,
                 description,
+                translations,
                 parentId,
                 imageFileAsset,
                 now,
@@ -108,17 +125,24 @@ public class CategoryService implements ICategoryService {
         Category currentCategory = categoryRepository.findByIdActive(command.categoryId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
 
-        String name = StringUtils.trimToNull(command.name());
-        String description = StringUtils.trimToNull(command.description());
+        String code = normalizeCode(command.code());
+        Map<String, CategoryTranslation> translations = normalizeTranslations(command.translations());
+        CategoryTranslation vietnamese = translations.get(VI_LOCALE);
+        String name = vietnamese.name();
+        String description = vietnamese.description();
         UUID parentId = command.parentId();
         FileAsset imageFileAsset = resolveImageFileAsset(command.imageFileAssetId());
+
+        if (!currentCategory.getCode().equals(code) && categoryRepository.existsByCodeIncludingDeleted(code)) {
+            throw new ApplicationException(ApplicationErrorCode.CATEGORY_CODE_ALREADY_EXISTS);
+        }
 
         if (!currentCategory.getName().equals(name) && categoryRepository.existsByNameIncludingDeleted(name)) {
             throw new ApplicationException(ApplicationErrorCode.CATEGORY_NAME_ALREADY_EXISTS);
         }
 
         requireActiveParentCategory(parentId, currentCategory.getId());
-        currentCategory.updateCategory(name, description, parentId, imageFileAsset);
+        currentCategory.updateCategory(code, name, description, translations, parentId, imageFileAsset);
         return categoryRepository.save(currentCategory);
     }
 
@@ -158,6 +182,55 @@ public class CategoryService implements ICategoryService {
                 FilePurpose.CATEGORY_IMAGE,
                 FileVisibility.PUBLIC
         );
+    }
+
+    private String normalizeCode(String rawCode) {
+        String code = StringUtils.trimToNull(rawCode);
+        if (code == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "code");
+        }
+        code = code.toUpperCase(Locale.ROOT);
+        if (!code.matches(CATEGORY_CODE_PATTERN)) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "code");
+        }
+        return code;
+    }
+
+    private Map<String, CategoryTranslation> normalizeTranslations(
+            List<com.bookstore.bookstore.application.command.CategoryTranslationCommand> commands
+    ) {
+        if (commands == null || commands.isEmpty()) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations");
+        }
+
+        Map<String, CategoryTranslation> translations = new LinkedHashMap<>();
+        commands.forEach(command -> {
+            if (command == null) {
+                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations");
+            }
+            String locale = StringUtils.trimToNull(command.locale());
+            locale = locale == null ? null : locale.toLowerCase(Locale.ROOT);
+            if (!VI_LOCALE.equals(locale) && !EN_LOCALE.equals(locale)) {
+                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "locale");
+            }
+            if (translations.containsKey(locale)) {
+                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations." + locale);
+            }
+            String name = StringUtils.trimToNull(command.name());
+            if (name == null) {
+                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "name");
+            }
+            translations.put(locale, new CategoryTranslation(
+                    locale,
+                    name,
+                    StringUtils.trimToNull(command.description())
+            ));
+        });
+
+        if (!translations.containsKey(VI_LOCALE) || !translations.containsKey(EN_LOCALE)) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations.vi,en");
+        }
+        return Map.copyOf(translations);
     }
 
     private void validatePageRequest(int page, int size) {

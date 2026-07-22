@@ -69,6 +69,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
       setIsLoading(false)
       return
     }
+    const resolvedBookId = bookId
 
     let isCancelled = false
 
@@ -76,7 +77,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
       setIsLoading(true)
 
       try {
-        const response = await getAdminDigitalAssetsByBookId(bookId)
+        const response = await getAdminDigitalAssetsByBookId(resolvedBookId)
 
         if (isCancelled) {
           return

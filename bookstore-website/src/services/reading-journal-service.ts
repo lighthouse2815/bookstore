@@ -25,7 +25,7 @@ import { buildReadingJournalQueryParams } from '@/utils/reading-journal'
 
 type BookReferenceMaps = {
   authorMap: Map<string, string>
-  categoryMap: Map<string, string>
+  categoryMap: Map<string, CategoryResponse>
   publisherMap: Map<string, string>
 }
 
@@ -163,7 +163,7 @@ function buildBookReferenceMaps(
   publishers: PublisherResponse[],
 ): BookReferenceMaps {
   return {
-    categoryMap: new Map(categories.map((category) => [category.id, category.name])),
+    categoryMap: new Map(categories.map((category) => [category.id, category])),
     authorMap: new Map(authors.map((author) => [author.id, author.name])),
     publisherMap: new Map(
       publishers.map((publisher) => [publisher.id, publisher.name]),
@@ -197,6 +197,7 @@ function mapBookResponseToReadingJournalBook(
       title: 'Unknown book',
       author: '',
       category: '',
+      categoryInfo: null,
       price: 0,
       cover: getBookCoverUrl(),
       stockQuantity: 0,
@@ -213,7 +214,8 @@ function mapBookResponseToReadingJournalBook(
     id: book.id,
     title: book.title,
     author: referenceMaps.authorMap.get(book.authorId) ?? '',
-    category: referenceMaps.categoryMap.get(book.categoryId) ?? '',
+    category: referenceMaps.categoryMap.get(book.categoryId)?.name ?? '',
+    categoryInfo: referenceMaps.categoryMap.get(book.categoryId) ?? null,
     price: book.price,
     cover: resolveReadingJournalBookCover(primaryImage),
     stockQuantity: book.stockQuantity,

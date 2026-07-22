@@ -58,83 +58,21 @@ function CatalogStateCard({
   )
 }
 
-function getCategoryIcon(category: string): LucideIcon {
-  const normalizedCategory = category
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-
-  if (
-    normalizedCategory.includes('vien tuong') ||
-    normalizedCategory.includes('science fiction')
-  ) {
-    return Rocket
-  }
-
-  if (
-    normalizedCategory.includes('giao duc') ||
-    normalizedCategory.includes('education')
-  ) {
-    return GraduationCap
-  }
-
-  if (
-    normalizedCategory.includes('khoa hoc') ||
-    normalizedCategory.includes('cong nghe') ||
-    normalizedCategory.includes('science') ||
-    normalizedCategory.includes('technology')
-  ) {
-    return Cpu
-  }
-
-  if (
-    normalizedCategory.includes('kinh doanh') ||
-    normalizedCategory.includes('quan tri') ||
-    normalizedCategory.includes('business')
-  ) {
-    return Briefcase
-  }
-
-  if (
-    normalizedCategory.includes('ky nang') ||
-    normalizedCategory.includes('phat trien') ||
-    normalizedCategory.includes('skills') ||
-    normalizedCategory.includes('self-help')
-  ) {
-    return Brain
-  }
-
-  if (
-    normalizedCategory.includes('lich su') ||
-    normalizedCategory.includes('hoi ky') ||
-    normalizedCategory.includes('history') ||
-    normalizedCategory.includes('memoir')
-  ) {
-    return Landmark
-  }
-
-  if (
-    normalizedCategory.includes('nghe thuat') ||
-    normalizedCategory.includes('sang tao') ||
-    normalizedCategory.includes('art') ||
-    normalizedCategory.includes('creative')
-  ) {
-    return Palette
-  }
-
-  if (
-    normalizedCategory.includes('gia tuong') ||
-    normalizedCategory.includes('ky ao') ||
-    normalizedCategory.includes('fantasy')
-  ) {
-    return Sparkles
-  }
-
-  return BookOpen
+function getCategoryIcon(categoryCode: string): LucideIcon {
+  return {
+    SCIENCE_FICTION: Rocket,
+    EDUCATION: GraduationCap,
+    SCIENCE_TECHNOLOGY: Cpu,
+    BUSINESS_MANAGEMENT: Briefcase,
+    PERSONAL_DEVELOPMENT: Brain,
+    HISTORY_MEMOIR: Landmark,
+    ART_CREATIVITY: Palette,
+    FANTASY: Sparkles,
+  }[categoryCode] ?? BookOpen
 }
 
 export default function HomePage() {
-  const { t, formatNumber } = useLanguage()
+  const { t, language, formatNumber } = useLanguage()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const { books, categories, isLoading, bookError, categoryError } =
     useBookCatalog()
@@ -340,12 +278,12 @@ export default function HomePage() {
             ) : categories.length > 0 ? (
               <div className="grid gap-px overflow-hidden rounded-[1.5rem] border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
                 {featuredCategories.map((category) => {
-                  const CategoryIcon = getCategoryIcon(category)
+                  const CategoryIcon = getCategoryIcon(category.code)
 
                   return (
                     <Link
-                      key={category}
-                      to={`/books?category=${encodeURIComponent(category)}`}
+                      key={category.id}
+                      to={`/books?category=${encodeURIComponent(category.code)}`}
                       className="group flex min-h-32 flex-col justify-between gap-6 bg-card p-5 transition-all duration-300 hover:bg-primary/5 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60 active:bg-primary/10"
                     >
                       <span className="flex items-start justify-between gap-4">
@@ -357,7 +295,7 @@ export default function HomePage() {
                         </span>
                       </span>
                       <span className="max-w-[15rem] text-base font-semibold leading-snug text-foreground text-pretty transition-colors group-hover:text-primary">
-                        {getCategoryLabel(category, t)}
+                        {getCategoryLabel(category, language)}
                       </span>
                     </Link>
                   )

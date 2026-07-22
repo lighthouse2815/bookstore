@@ -94,6 +94,7 @@ export default function AdminBooksPage() {
     handleSubmit,
     confirmDelete,
   } = useAdminBooksPage()
+  const { language } = useLanguage()
 
   const primaryFormImage =
     form.images.find((image) => image.primaryImage) ?? form.images[0]
@@ -396,7 +397,7 @@ export default function AdminBooksPage() {
                     placeholder={t('admin.books.fields.category')}
                     options={references.categories.map((category) => ({
                       value: category.id,
-                      label: getCategoryLabel(category.name, t),
+                      label: getCategoryLabel(category, language),
                     }))}
                   />
                   <ReferenceSelectField
@@ -548,7 +549,7 @@ export default function AdminBooksPage() {
                     </SelectItem>
                     {references.categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {getCategoryLabel(category.name, t)}
+                        {getCategoryLabel(category, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -773,6 +774,7 @@ function BookDetailDialogContent({
   onEdit,
   t,
 }: BookDetailDialogContentProps) {
+  const { language } = useLanguage()
   const stockAvailable = book.stockQuantity > 0
 
   return (
@@ -809,7 +811,7 @@ function BookDetailDialogContent({
               className="rounded-2xl border-primary/20 bg-primary/12 px-3 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
             >
               <Tag className="mr-2 h-4 w-4" />
-              {getCategoryLabel(book.category, t)}
+              {getCategoryLabel(book.categoryInfo ?? book.category, language)}
             </Badge>
             <Badge
               variant="outline"
@@ -843,7 +845,7 @@ function BookDetailDialogContent({
             <BookMetaCard
               icon={Tag}
               label={t('admin.books.fields.category')}
-              value={getCategoryLabel(book.category, t)}
+              value={getCategoryLabel(book.categoryInfo ?? book.category, language)}
             />
             <BookMetaCard
               icon={Wallet}

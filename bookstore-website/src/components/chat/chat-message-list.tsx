@@ -35,7 +35,7 @@ export function ChatMessageList({
   className,
 }: ChatMessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const lastMessageId = messages.at(-1)?.messageId
+  const lastMessageId = messages[messages.length - 1]?.messageId
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -66,7 +66,7 @@ export function ChatMessageList({
     >
       <div
         ref={containerRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4 [scrollbar-gutter:stable]"
       >
         {hasNext ? (
           <div className="flex justify-center pb-1">

@@ -4,6 +4,8 @@ import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.CategoryRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 
@@ -11,13 +13,39 @@ import lombok.Getter;
 public class Category {
 
     private UUID id;
+    private String code;
     private String name;
     private String description;
+    private Map<String, CategoryTranslation> translations;
     private UUID parentId;
     private FileAsset imageFileAsset;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
+
+    public Category(
+            UUID id,
+            String code,
+            String name,
+            String description,
+            Map<String, CategoryTranslation> translations,
+            UUID parentId,
+            FileAsset imageFileAsset,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant deletedAt
+    ) {
+        this.id = Guard.notNull(id, DomainErrorCode.INVALID_CATEGORY_ID, "id");
+        setCode(code);
+        setName(name);
+        setDescription(description);
+        setTranslations(translations);
+        setParentId(parentId);
+        setImageFileAsset(imageFileAsset);
+        setCreatedAt(createdAt);
+        setUpdatedAt(updatedAt);
+        setDeletedAt(deletedAt);
+    }
 
     public Category(
             UUID id,
@@ -29,33 +57,54 @@ public class Category {
             Instant updatedAt,
             Instant deletedAt
     ) {
-        this.id = Guard.notNull(id, DomainErrorCode.INVALID_CATEGORY_ID, "id");
-        setName(name);
-        setDescription(description);
-        setParentId(parentId);
-        setImageFileAsset(imageFileAsset);
-        setCreatedAt(createdAt);
-        setUpdatedAt(updatedAt);
-        setDeletedAt(deletedAt);
-    }
-
-    public void updateCategory(String name, String description, UUID parentId, FileAsset imageFileAsset) {
-        CategoryRule.requireCanUpdate(
-                deletedAt,
-                this.name,
-                this.description,
-                this.parentId,
-                getImageFileAssetId(),
+        this(
+                id,
+                "LEGACY_" + id.toString().replace("-", "").toUpperCase(),
                 name,
                 description,
+                Map.of("vi", new CategoryTranslation("vi", name, description)),
+                parentId,
+                imageFileAsset,
+                createdAt,
+                updatedAt,
+                deletedAt
+        );
+    }
+
+    public void updateCategory(
+            String code,
+            String name,
+            String description,
+            Map<String, CategoryTranslation> translations,
+            UUID parentId,
+            FileAsset imageFileAsset
+    ) {
+        CategoryRule.requireCanUpdate(
+                deletedAt,
+                this.code,
+                this.name,
+                this.description,
+                this.translations,
+                this.parentId,
+                getImageFileAssetId(),
+                code,
+                name,
+                description,
+                translations,
                 parentId,
                 imageFileAsset == null ? null : imageFileAsset.getId()
         );
+        setCode(code);
         setName(name);
         setDescription(description);
+        setTranslations(translations);
         setParentId(parentId);
         setImageFileAsset(imageFileAsset);
         setUpdatedAt(Instant.now());
+    }
+
+    private void setCode(String code) {
+        this.code = Guard.notBlank(code, DomainErrorCode.INVALID_CATEGORY_CODE, "code");
     }
 
     public void softDelete() {
@@ -71,6 +120,16 @@ public class Category {
 
     private void setDescription(String description) {
         this.description = description;
+    }
+
+    private void setTranslations(Map<String, CategoryTranslation> translations) {
+        if (translations == null || translations.isEmpty() || translations.values().stream().anyMatch(java.util.Objects::isNull)) {
+            throw new com.bookstore.bookstore.domain.exception.DomainException(
+                    DomainErrorCode.INVALID_CATEGORY_TRANSLATION,
+                    "translations"
+            );
+        }
+        this.translations = Map.copyOf(new LinkedHashMap<>(translations));
     }
 
     private void setParentId(UUID parentId) {

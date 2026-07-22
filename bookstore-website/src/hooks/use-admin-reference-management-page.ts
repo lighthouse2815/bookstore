@@ -40,6 +40,11 @@ export type ReferenceFormState = {
   id: string | null
   name: string
   description: string
+  categoryCode: string
+  categoryNameVi: string
+  categoryDescriptionVi: string
+  categoryNameEn: string
+  categoryDescriptionEn: string
   avatarFileAssetId: string
   avatarPreviewUrl: string
   referenceImageFileAssetId: string
@@ -52,6 +57,11 @@ const initialFormState: ReferenceFormState = {
   id: null,
   name: '',
   description: '',
+  categoryCode: '',
+  categoryNameVi: '',
+  categoryDescriptionVi: '',
+  categoryNameEn: '',
+  categoryDescriptionEn: '',
   avatarFileAssetId: '',
   avatarPreviewUrl: '',
   referenceImageFileAssetId: '',
@@ -65,7 +75,7 @@ const PAGE_SIZE = 10
 export function useAdminReferenceManagementPage(
   sectionKey: ReferenceSectionKey,
 ) {
-  const { t, formatDate, formatNumber } = useLanguage()
+  const { t, language, formatDate, formatNumber } = useLanguage()
   const [items, setItems] = useState<ReferenceItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +97,19 @@ export function useAdminReferenceManagementPage(
     }
 
     return items.filter((item) =>
-      [item.name, getReferenceDescription(sectionKey, item)]
+      [
+        item.name,
+        getReferenceDescription(sectionKey, item),
+        ...(sectionKey === 'categories' && 'translations' in item
+          ? [
+              item.code,
+              item.translations.vi?.name,
+              item.translations.vi?.description,
+              item.translations.en?.name,
+              item.translations.en?.description,
+            ]
+          : []),
+      ]
         .join(' ')
         .toLowerCase()
         .includes(keyword),
@@ -257,6 +279,24 @@ export function useAdminReferenceManagementPage(
       id: item.id,
       name: item.name,
       description: getReferenceDescription(sectionKey, item),
+      categoryCode:
+        sectionKey === 'categories' && 'code' in item ? item.code : '',
+      categoryNameVi:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.vi?.name ?? item.name
+          : '',
+      categoryDescriptionVi:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.vi?.description ?? item.description ?? ''
+          : '',
+      categoryNameEn:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.en?.name ?? ''
+          : '',
+      categoryDescriptionEn:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.en?.description ?? ''
+          : '',
       avatarFileAssetId:
         sectionKey === 'authors' && 'avatarFileAssetId' in item
           ? item.avatarFileAssetId ?? ''
@@ -324,14 +364,14 @@ export function useAdminReferenceManagementPage(
         case 'categories':
           if (form.id) {
             await updateCategory(form.id, {
-              name: form.name.trim(),
-              description: form.description.trim() || null,
+              code: form.categoryCode.trim().toUpperCase(),
+              translations: buildCategoryTranslations(form),
               imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           } else {
             await createCategory({
-              name: form.name.trim(),
-              description: form.description.trim() || null,
+              code: form.categoryCode.trim().toUpperCase(),
+              translations: buildCategoryTranslations(form),
               imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           }
@@ -414,6 +454,7 @@ export function useAdminReferenceManagementPage(
 
   return {
     t,
+    language,
     formatDate,
     formatNumber,
     items,
@@ -445,6 +486,21 @@ export function useAdminReferenceManagementPage(
     handleDeleteConfirm,
     handlePageChange: setPage,
   }
+}
+
+function buildCategoryTranslations(form: ReferenceFormState) {
+  return [
+    {
+      locale: 'vi' as const,
+      name: form.categoryNameVi.trim(),
+      description: form.categoryDescriptionVi.trim() || null,
+    },
+    {
+      locale: 'en' as const,
+      name: form.categoryNameEn.trim(),
+      description: form.categoryDescriptionEn.trim() || null,
+    },
+  ]
 }
 
 function getReferenceImagePurpose(sectionKey: ReferenceSectionKey) {

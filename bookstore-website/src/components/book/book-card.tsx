@@ -14,7 +14,7 @@ export function BookCard({ book }: { book: BookCardData }) {
   const { addItem } = useCart()
   const { isAuthenticated } = useAuth()
   const { isWishlisted, toggleBook } = useWishlist()
-  const { t, formatCurrency } = useLanguage()
+  const { t, language, formatCurrency } = useLanguage()
   const navigate = useNavigate()
   const hasRating = typeof book.rating === 'number' && book.rating > 0
   const isFavorite = isWishlisted(book.id)
@@ -116,7 +116,7 @@ export function BookCard({ book }: { book: BookCardData }) {
 
       <div className="flex flex-1 flex-col p-4">
         <span className="mb-1 text-xs font-medium text-accent">
-          {getCategoryLabel(book.category, t)}
+          {getCategoryLabel(book.categoryInfo ?? book.category, language, t('book.fallback.category'))}
         </span>
         <Link to={`/books/${book.id}`}>
           <h3 className="line-clamp-2 font-heading text-sm font-semibold leading-snug text-balance hover:text-primary">

@@ -30,22 +30,38 @@ final class DevelopmentSeedCatalog {
     );
 
     static final List<CategorySeed> CATEGORIES = List.of(
-            category("Văn học", "Tiểu thuyết, truyện ngắn và các tác phẩm văn chương nổi bật."),
-            category("Kỹ năng & phát triển bản thân", "Sách ứng dụng giúp cải thiện tư duy, giao tiếp và thói quen."),
-            category("Thiếu nhi", "Tác phẩm giàu trí tưởng tượng dành cho trẻ em và gia đình."),
-            category("Kinh doanh & quản trị", "Kiến thức về lãnh đạo, vận hành, tài chính và khởi nghiệp."),
-            category("Khoa học & công nghệ", "Kiến thức khoa học phổ thông, công nghệ và khám phá tự nhiên."),
-            category("Lịch sử & hồi ký", "Những câu chuyện có thật, ký ức cá nhân và các giai đoạn lịch sử."),
-            category("Giả tưởng & kỳ ảo", "Thế giới phép thuật, thần thoại và những chuyến phiêu lưu kỳ ảo."),
-            category("Trinh thám", "Các vụ án, bí ẩn và hành trình truy tìm sự thật."),
-            category("Tâm lý học", "Khám phá cảm xúc, hành vi và cách con người đưa ra quyết định."),
-            category("Triết học", "Tư tưởng kinh điển và những câu hỏi nền tảng về cuộc sống."),
-            category("Văn học đương đại", "Tác phẩm hiện đại phản ánh con người và xã hội hôm nay."),
-            category("Khoa học viễn tưởng", "Tương lai, không gian và tác động của khoa học lên con người."),
-            category("Giáo dục", "Tài liệu học tập và phương pháp giáo dục dành cho nhiều lứa tuổi."),
-            category("Nghệ thuật & sáng tạo", "Mỹ thuật, thiết kế, nhiếp ảnh và thực hành sáng tạo."),
-            category("Du ký & khám phá", "Hành trình, địa danh và trải nghiệm văn hóa trên thế giới."),
-            category("Ẩm thực & phong cách sống", "Món ăn, chăm sóc nhà cửa và lối sống cân bằng.")
+            category("LITERATURE", "Văn học", "Tiểu thuyết, truyện ngắn và các tác phẩm văn chương nổi bật.",
+                    "Literature", "Novels, short stories, and notable literary works."),
+            category("PERSONAL_DEVELOPMENT", "Kỹ năng & phát triển bản thân", "Sách ứng dụng giúp cải thiện tư duy, giao tiếp và thói quen.",
+                    "Skills & Personal Development", "Practical books for improving mindset, communication, and daily habits."),
+            category("CHILDREN", "Thiếu nhi", "Tác phẩm giàu trí tưởng tượng dành cho trẻ em và gia đình.",
+                    "Children's Books", "Imaginative books for children and families."),
+            category("BUSINESS_MANAGEMENT", "Kinh doanh & quản trị", "Kiến thức về lãnh đạo, vận hành, tài chính và khởi nghiệp.",
+                    "Business & Management", "Books on leadership, operations, finance, and entrepreneurship."),
+            category("SCIENCE_TECHNOLOGY", "Khoa học & công nghệ", "Kiến thức khoa học phổ thông, công nghệ và khám phá tự nhiên.",
+                    "Science & Technology", "Accessible science, technology, and discoveries about the natural world."),
+            category("HISTORY_MEMOIR", "Lịch sử & hồi ký", "Những câu chuyện có thật, ký ức cá nhân và các giai đoạn lịch sử.",
+                    "History & Memoir", "True stories, personal memories, and accounts of historical periods."),
+            category("FANTASY", "Giả tưởng & kỳ ảo", "Thế giới phép thuật, thần thoại và những chuyến phiêu lưu kỳ ảo.",
+                    "Fantasy", "Magical worlds, mythology, and extraordinary adventures."),
+            category("MYSTERY", "Trinh thám", "Các vụ án, bí ẩn và hành trình truy tìm sự thật.",
+                    "Mystery & Crime", "Cases, mysteries, and journeys in search of the truth."),
+            category("PSYCHOLOGY", "Tâm lý học", "Khám phá cảm xúc, hành vi và cách con người đưa ra quyết định.",
+                    "Psychology", "Explore emotions, behavior, and how people make decisions."),
+            category("PHILOSOPHY", "Triết học", "Tư tưởng kinh điển và những câu hỏi nền tảng về cuộc sống.",
+                    "Philosophy", "Classic ideas and fundamental questions about life."),
+            category("CONTEMPORARY_LITERATURE", "Văn học đương đại", "Tác phẩm hiện đại phản ánh con người và xã hội hôm nay.",
+                    "Contemporary Literature", "Modern works reflecting people and society today."),
+            category("SCIENCE_FICTION", "Khoa học viễn tưởng", "Tương lai, không gian và tác động của khoa học lên con người.",
+                    "Science Fiction", "The future, space, and the impact of science on humanity."),
+            category("EDUCATION", "Giáo dục", "Tài liệu học tập và phương pháp giáo dục dành cho nhiều lứa tuổi.",
+                    "Education", "Learning resources and educational methods for different age groups."),
+            category("ART_CREATIVITY", "Nghệ thuật & sáng tạo", "Mỹ thuật, thiết kế, nhiếp ảnh và thực hành sáng tạo.",
+                    "Art & Creativity", "Art, design, photography, and creative practice."),
+            category("TRAVEL_EXPLORATION", "Du ký & khám phá", "Hành trình, địa danh và trải nghiệm văn hóa trên thế giới.",
+                    "Travel & Exploration", "Journeys, destinations, and cultural experiences around the world."),
+            category("FOOD_LIFESTYLE", "Ẩm thực & phong cách sống", "Món ăn, chăm sóc nhà cửa và lối sống cân bằng.",
+                    "Food & Lifestyle", "Cooking, home care, and a balanced way of living.")
     );
 
     static final List<AuthorSeed> AUTHORS = List.of(
@@ -460,8 +476,14 @@ final class DevelopmentSeedCatalog {
         };
     }
 
-    private static CategorySeed category(String name, String description) {
-        return new CategorySeed(name, description);
+    private static CategorySeed category(
+            String code,
+            String name,
+            String description,
+            String englishName,
+            String englishDescription
+    ) {
+        return new CategorySeed(code, name, description, englishName, englishDescription);
     }
 
     private static AuthorSeed author(
@@ -500,7 +522,13 @@ final class DevelopmentSeedCatalog {
         return new BookSeed(title, author, categoryIndex, publisherIndex, isbn, coverId, publicationYear, pageCount, price);
     }
 
-    record CategorySeed(String name, String description) {
+    record CategorySeed(
+            String code,
+            String name,
+            String description,
+            String englishName,
+            String englishDescription
+    ) {
     }
 
     record AuthorSeed(String name, String biography, Integer birthYear, Integer deathYear, String avatarUrl) {

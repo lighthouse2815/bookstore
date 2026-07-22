@@ -48,6 +48,7 @@ export default function DigitalLibraryReaderPage() {
       })
       return
     }
+    const resolvedDigitalAssetId = digitalAssetId
 
     let isCancelled = false
 
@@ -61,8 +62,8 @@ export default function DigitalLibraryReaderPage() {
 
       try {
         const [asset, signedUrl] = await Promise.all([
-          getMyDigitalLibraryAsset(digitalAssetId),
-          getMyDigitalAssetReadUrl(digitalAssetId),
+          getMyDigitalLibraryAsset(resolvedDigitalAssetId),
+          getMyDigitalAssetReadUrl(resolvedDigitalAssetId),
         ])
 
         if (isCancelled) {

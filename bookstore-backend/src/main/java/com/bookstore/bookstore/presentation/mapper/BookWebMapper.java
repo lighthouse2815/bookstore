@@ -34,6 +34,7 @@ public class BookWebMapper {
 
     private final AuthorWebMapper authorWebMapper;
     private final CouponWebMapper couponWebMapper;
+    private final CategoryWebMapper categoryWebMapper;
 
     public CreateBookCommand toCreateCommand(CreateBookRequest request) {
         return new CreateBookCommand(
@@ -104,7 +105,9 @@ public class BookWebMapper {
                 result.categoryTrail().stream()
                         .map(category -> new BookPageDetailResponse.CategoryTrailItemResponse(
                                 category.getId(),
-                                category.getName()
+                                category.getCode(),
+                                category.getName(),
+                                categoryWebMapper.toTranslationResponses(category)
                         ))
                         .toList(),
                 new BookPageDetailResponse.RatingSummaryResponse(

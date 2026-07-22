@@ -24,6 +24,8 @@ public interface ICategoryRepository {
 
     boolean existsByNameIncludingDeleted(String categoryName);
 
+    boolean existsByCodeIncludingDeleted(String categoryCode);
+
     Category save(Category category);
 
     void deleteById(UUID categoryId);

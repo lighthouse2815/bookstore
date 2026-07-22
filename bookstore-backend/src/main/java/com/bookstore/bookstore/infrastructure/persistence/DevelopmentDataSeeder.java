@@ -221,10 +221,22 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             DevelopmentSeedCatalog.CategorySeed category = DevelopmentSeedCatalog.CATEGORIES.get(i - 1);
             insert("""
                     INSERT INTO categories (
-                        id, created_at, deleted_at, description, name, updated_at
-                    ) VALUES (UUID_TO_BIN(?), ?, NULL, ?, ?, ?)
+                        id, code, created_at, deleted_at, description, name, updated_at
+                    ) VALUES (UUID_TO_BIN(?), ?, ?, NULL, ?, ?, ?)
                     """,
-                    id("category", i), time(i), category.description(), category.name(), time(i + 1));
+                    id("category", i), category.code(), time(i), category.description(), category.name(), time(i + 1));
+
+            insert("""
+                    INSERT INTO category_translations (id, category_id, locale, name, description)
+                    VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), 'vi', ?, ?)
+                    """,
+                    id("category-translation-vi", i), id("category", i), category.name(), category.description());
+            insert("""
+                    INSERT INTO category_translations (id, category_id, locale, name, description)
+                    VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), 'en', ?, ?)
+                    """,
+                    id("category-translation-en", i), id("category", i),
+                    category.englishName(), category.englishDescription());
         }
 
         for (int i = 1; i <= DevelopmentSeedCatalog.PUBLISHERS.size(); i++) {
@@ -599,6 +611,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         minimumCounts.put("role_permissions", 50);
         minimumCounts.put("chat_conversation_participants", seedSize * 2);
         minimumCounts.put("categories", categoryCount);
+        minimumCounts.put("category_translations", categoryCount * 2);
         minimumCounts.put("authors", DevelopmentSeedCatalog.AUTHORS.size());
         minimumCounts.put("publishers", DevelopmentSeedCatalog.PUBLISHERS.size());
         minimumCounts.put("suppliers", DevelopmentSeedCatalog.SUPPLIERS.size());

@@ -31,7 +31,7 @@ type TranslateFunction = (
 
 export default function BookEbookPage() {
   const { id } = useParams<{ id: string }>()
-  const { t, formatCurrency, formatNumber } = useLanguage()
+  const { t, language, formatCurrency, formatNumber } = useLanguage()
   const { addDigitalItem } = useCart()
   const {
     book,
@@ -162,7 +162,7 @@ export default function BookEbookPage() {
           {categoryTrail.map((category) => (
             <div key={category.id} className="flex items-center gap-1">
               <ChevronRight className="size-4" />
-              <span>{getCategoryLabel(category.name, t)}</span>
+              <span>{getCategoryLabel(category, language)}</span>
             </div>
           ))}
           <ChevronRight className="size-4" />
@@ -188,7 +188,7 @@ export default function BookEbookPage() {
 
             <div className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
               <span className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                {getCategoryLabel(book.category, t)}
+                {getCategoryLabel(book.categoryInfo ?? book.category, language)}
               </span>
               <h1 className="mt-3 font-heading text-2xl font-bold tracking-tight text-balance text-foreground">
                 {book.title}

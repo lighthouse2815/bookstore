@@ -77,6 +77,11 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
     }
 
     @Override
+    public boolean existsByCodeIncludingDeleted(String categoryCode) {
+        return categoryJpaRepository.existsByCode(categoryCode);
+    }
+
+    @Override
     public Category save(Category category) {
         CategoryJpaEntity entity = categoryJpaRepository.findById(category.getId())
                 .orElseGet(CategoryJpaEntity::new);

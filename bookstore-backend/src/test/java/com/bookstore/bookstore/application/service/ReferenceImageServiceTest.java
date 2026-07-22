@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.command.CreateCategoryCommand;
+import com.bookstore.bookstore.application.command.CategoryTranslationCommand;
 import com.bookstore.bookstore.application.command.CreatePublisherCommand;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
@@ -50,11 +51,19 @@ class ReferenceImageServiceTest {
         when(categoryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var category = categoryService.create(new CreateCategoryCommand(
-                "Văn học", "Sách văn học", null, fileAssetId
+                "LITERATURE",
+                java.util.List.of(
+                        new CategoryTranslationCommand("vi", "Văn học", "Sách văn học"),
+                        new CategoryTranslationCommand("en", "Literature", "Literary books")
+                ),
+                null,
+                fileAssetId
         ));
 
         assertEquals(fileAssetId, category.getImageFileAssetId());
         assertEquals(imageAsset.getPublicUrl(), category.getImageUrl());
+        assertEquals("LITERATURE", category.getCode());
+        assertEquals("Literature", category.getTranslations().get("en").name());
         verify(fileAssetPolicyService).requireActiveAsset(
                 fileAssetId, FilePurpose.CATEGORY_IMAGE, FileVisibility.PUBLIC
         );

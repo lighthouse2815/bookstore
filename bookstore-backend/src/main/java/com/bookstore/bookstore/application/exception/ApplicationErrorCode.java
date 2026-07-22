@@ -48,6 +48,7 @@ public enum ApplicationErrorCode {
 
     CATEGORY_NOT_FOUND("APPLICATION_CATEGORY_001", "không tìm thấy category"),
     CATEGORY_NAME_ALREADY_EXISTS("APPLICATION_CATEGORY_002", "category đã tồn tại"),
+    CATEGORY_CODE_ALREADY_EXISTS("APPLICATION_CATEGORY_003", "mã category đã tồn tại"),
 
     AUTHOR_NOT_FOUND("APPLICATION_AUTHOR_001", "không tìm thấy author"),
     AUTHOR_NAME_ALREADY_EXISTS("APPLICATION_AUTHOR_002", "author đã tồn tại"),

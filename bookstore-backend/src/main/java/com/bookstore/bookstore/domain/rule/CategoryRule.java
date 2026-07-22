@@ -3,7 +3,9 @@ package com.bookstore.bookstore.domain.rule;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
+import com.bookstore.bookstore.domain.model.CategoryTranslation;
 
 public final class CategoryRule {
 
@@ -12,12 +14,16 @@ public final class CategoryRule {
 
     public static void requireCanUpdate(
             Instant deletedAt,
+            String currentCode,
             String currentName,
             String currentDescription,
+            Map<String, CategoryTranslation> currentTranslations,
             java.util.UUID currentParentId,
             java.util.UUID currentImageFileAssetId,
+            String newCode,
             String newName,
             String newDescription,
+            Map<String, CategoryTranslation> newTranslations,
             java.util.UUID newParentId,
             java.util.UUID newImageFileAssetId
     ) {
@@ -25,8 +31,10 @@ public final class CategoryRule {
             throw new DomainException(DomainErrorCode.CATEGORY_ALREADY_DELETED);
         }
 
-        if (Objects.equals(currentName, newName)
+        if (Objects.equals(currentCode, newCode)
+                && Objects.equals(currentName, newName)
                 && Objects.equals(currentDescription, newDescription)
+                && Objects.equals(currentTranslations, newTranslations)
                 && Objects.equals(currentParentId, newParentId)
                 && Objects.equals(currentImageFileAssetId, newImageFileAssetId)) {
             throw new DomainException(DomainErrorCode.CATEGORY_DATA_NOT_CHANGED);

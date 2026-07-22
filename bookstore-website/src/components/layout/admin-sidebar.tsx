@@ -206,7 +206,7 @@ export function AdminSidebar({
 }
 
 function groupAdminMenuItems(menuItems: AdminRouteItem[], t: TranslationFn) {
-  const groupLookup = new Map(
+  const groupLookup = new Map<string, string>(
     SIDEBAR_GROUPS.flatMap((group) =>
       group.routeIds.map((routeId) => [routeId, group.id] as const),
     ),

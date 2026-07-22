@@ -21,7 +21,14 @@ export type ReadingStreakResponse = {
 
 export type ReadingJournalBook = Pick<
   Book,
-  'id' | 'title' | 'author' | 'category' | 'price' | 'cover' | 'stockQuantity'
+  | 'id'
+  | 'title'
+  | 'author'
+  | 'category'
+  | 'categoryInfo'
+  | 'price'
+  | 'cover'
+  | 'stockQuantity'
 > &
   Partial<Pick<Book, 'rating' | 'reviews'>>
 

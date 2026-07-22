@@ -37,19 +37,19 @@ export function AdminChatDetailPanel({
 
   if (!conversation) {
     return (
-      <section className="flex min-h-[44rem] items-center justify-center rounded-[30px] border border-dashed border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
+      <section className="flex h-[clamp(32rem,78dvh,42rem)] min-h-0 items-center justify-center rounded-[30px] border border-dashed border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
         <p>{labels.noConversationSelected}</p>
       </section>
     )
   }
 
   return (
-    <section className="flex min-h-[44rem] flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
+    <section className="flex h-[clamp(32rem,78dvh,42rem)] min-h-0 flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
       <div className="border-b border-border/60 px-5 py-5">
         <h2 className="text-lg font-semibold text-foreground">{labels.assignee}</h2>
       </div>
 
-      <div className="space-y-4 px-5 py-5">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable]">
         <DetailCard
           label={labels.customer}
           value={conversation.customerName || conversation.customerEmail || conversation.customerId}

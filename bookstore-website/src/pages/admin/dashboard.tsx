@@ -899,14 +899,14 @@ const dashboardCopy = {
       recentOrders: 'Đơn hàng mới nhất',
     },
     stats: {
-      todayRevenue: 'Doanh thu hôm nay',
-      monthRevenue: 'Doanh thu tháng này',
-      todayOrders: 'Đơn hôm nay',
+      totalRevenue: 'Tổng doanh thu',
+      totalOrders: 'Tổng đơn hàng',
       pendingOrders: 'Đơn chờ xử lý',
+      deliveredOrders: 'Đơn đã giao',
+      cancelledOrders: 'Đơn đã hủy',
+      totalUsers: 'Tổng người dùng',
+      totalBooks: 'Tổng đầu sách',
       lowStockBooks: 'Sách sắp hết hàng',
-      newCustomers: 'Khách hàng mới',
-      newReviews: 'Đánh giá mới',
-      activeCoupons: 'Mã giảm giá hoạt động',
     },
     columns: {
       orderId: 'Mã đơn',
@@ -958,14 +958,14 @@ const dashboardCopy = {
       recentOrders: 'Recent orders',
     },
     stats: {
-      todayRevenue: 'Today revenue',
-      monthRevenue: 'This month revenue',
-      todayOrders: 'Orders today',
+      totalRevenue: 'Total revenue',
+      totalOrders: 'Total orders',
       pendingOrders: 'Pending orders',
+      deliveredOrders: 'Delivered orders',
+      cancelledOrders: 'Cancelled orders',
+      totalUsers: 'Total users',
+      totalBooks: 'Total books',
       lowStockBooks: 'Low-stock books',
-      newCustomers: 'New customers',
-      newReviews: 'New reviews',
-      activeCoupons: 'Active coupons',
     },
     columns: {
       orderId: 'Order ID',
@@ -977,26 +977,4 @@ const dashboardCopy = {
       stockQuantity: 'Stock',
     },
   },
-} as Record<'vi' | 'en', DashboardCopy>
-
-dashboardCopy.vi.stats = {
-  totalRevenue: 'Tổng doanh thu',
-  totalOrders: 'Tổng đơn hàng',
-  pendingOrders: 'Đơn chờ xử lý',
-  deliveredOrders: 'Đơn đã giao',
-  cancelledOrders: 'Đơn đã hủy',
-  totalUsers: 'Tổng người dùng',
-  totalBooks: 'Tổng đầu sách',
-  lowStockBooks: 'Sách sắp hết hàng',
-}
-
-dashboardCopy.en.stats = {
-  totalRevenue: 'Total revenue',
-  totalOrders: 'Total orders',
-  pendingOrders: 'Pending orders',
-  deliveredOrders: 'Delivered orders',
-  cancelledOrders: 'Cancelled orders',
-  totalUsers: 'Total users',
-  totalBooks: 'Total books',
-  lowStockBooks: 'Low-stock books',
-}
+} satisfies Record<'vi' | 'en', DashboardCopy>

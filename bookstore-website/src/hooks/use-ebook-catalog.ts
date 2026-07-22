@@ -8,7 +8,7 @@ import { getErrorMessage } from '@/utils'
 
 type UseEbookCatalogResult = {
   ebooks: PublishedDigitalAssetCatalogItem[]
-  categories: string[]
+  categories: CategoryResponse[]
   categoryIds: Record<string, string>
   isLoading: boolean
   error: string | null
@@ -82,7 +82,7 @@ export function useEbookCatalogPage({
           references.authors.map((author) => [author.id, author.name]),
         )
         const categoryMap = new Map(
-          references.categories.map((category) => [category.id, category.name]),
+          references.categories.map((category) => [category.id, category]),
         )
         const publisherMap = new Map(
           references.publishers.map((publisher) => [publisher.id, publisher.name]),
@@ -91,11 +91,12 @@ export function useEbookCatalogPage({
         setState({
           ebooks: catalogPage.items.map((item) => ({
             ...item,
-            categoryName: categoryMap.get(item.categoryId) ?? '',
+            categoryName: categoryMap.get(item.categoryId)?.name ?? '',
+            categoryInfo: categoryMap.get(item.categoryId) ?? null,
             authorName: authorMap.get(item.authorId) ?? '',
             publisherName: publisherMap.get(item.publisherId) ?? '',
           })),
-          categories: getCategoryNames(references.categories),
+          categories: sortCategories(references.categories),
           categoryIds: getCategoryIds(references.categories),
           totalCount: catalogPage.totalCount,
           page: catalogPage.page,
@@ -128,15 +129,14 @@ export function useEbookCatalogPage({
   return state
 }
 
-function getCategoryNames(categories: CategoryResponse[]) {
-  return [...new Set(categories.map((category) => category.name))].sort(
-    (firstCategory, secondCategory) =>
-      firstCategory.localeCompare(secondCategory, 'vi'),
+function sortCategories(categories: CategoryResponse[]) {
+  return [...categories].sort((firstCategory, secondCategory) =>
+    firstCategory.name.localeCompare(secondCategory.name, 'vi'),
   )
 }
 
 function getCategoryIds(categories: CategoryResponse[]) {
   return Object.fromEntries(
-    categories.map((category) => [category.name, category.id]),
+    categories.map((category) => [category.code, category.id]),
   )
 }

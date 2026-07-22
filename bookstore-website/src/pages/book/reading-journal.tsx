@@ -24,6 +24,7 @@ import { Textarea } from '@/components/common/textarea'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
+import { getCategoryLabel } from '@/utils/i18n'
 import { useReadingJournal } from '@/hooks/use-reading-journal'
 import type { ReadingJournalEntry } from '@/types/reading-journal'
 import { cn } from '@/utils'
@@ -633,6 +634,7 @@ function JournalEntryCard({
   onEdit: () => void
   onDelete: () => void
 }) {
+  const { language } = useLanguage()
   return (
     <article className="motion-card overflow-hidden rounded-[28px] border border-primary/10 bg-white/92 shadow-[0_16px_48px_rgba(50,88,160,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_16px_48px_rgba(0,0,0,0.24)]">
       <div className="grid gap-0 lg:grid-cols-[180px_minmax(0,1fr)]">
@@ -653,7 +655,7 @@ function JournalEntryCard({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                {entry.book.category}
+                {getCategoryLabel(entry.book.categoryInfo ?? entry.book.category, language)}
               </p>
               <h3 className="mt-2 font-heading text-2xl font-bold leading-tight text-slate-950 dark:text-foreground">
                 {entry.book.title}

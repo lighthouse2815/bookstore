@@ -20,6 +20,8 @@ import type {
 } from '@/types/admin-access'
 import type { Book } from '@/types/book'
 import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
+import { useLanguage } from '@/contexts/language-context'
+import { getCategoryLabel } from '@/utils/i18n'
 
 type Translator = (key: string, params?: Record<string, number | string>) => string
 
@@ -261,6 +263,7 @@ function InventoryBookRow({
   onOpenHistory: () => void
   t: Translator
 }) {
+  const { language } = useLanguage()
   return (
     <article className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2.2fr)_11rem_1.2fr_12rem] xl:gap-0 xl:p-0">
       <div className="flex min-w-0 items-center gap-5 xl:px-8 xl:py-6">
@@ -281,7 +284,7 @@ function InventoryBookRow({
             {book.title}
           </p>
           <p className="mt-2 truncate text-sm text-muted-foreground">
-            {book.author} - {book.category}
+            {book.author} - {getCategoryLabel(book.categoryInfo ?? book.category, language)}
           </p>
           <p className="mt-2 text-sm font-medium text-foreground">
             {labels.price}: {formatCurrency(book.price)}

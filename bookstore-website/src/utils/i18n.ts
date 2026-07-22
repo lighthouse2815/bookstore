@@ -11,63 +11,13 @@ import type {
   DigitalAccessType,
   DigitalAssetFormat,
 } from '@/types/digital-library'
+import type { AppLanguage } from '@/locales/messages'
+import type { LocalizedCategory } from '@/types/book'
 
 type TranslateFunction = (
   key: string,
   params?: Record<string, number | string>,
 ) => string
-
-const categoryKeys: Record<string, string> = {
-  novel: 'categories.novel',
-  'tieu thuyet': 'categories.novel',
-  'life skills': 'categories.lifeSkills',
-  'ky nang song': 'categories.lifeSkills',
-  'ky nang & phat trien ban than': 'categories.personalDevelopment',
-  'ky nang va phat trien ban than': 'categories.personalDevelopment',
-  'personal development': 'categories.personalDevelopment',
-  'business & management': 'categories.businessManagement',
-  'business and management': 'categories.businessManagement',
-  'kinh doanh & quan tri': 'categories.businessManagement',
-  'kinh doanh va quan tri': 'categories.businessManagement',
-  'art & creativity': 'categories.artsCreativity',
-  'arts & creativity': 'categories.artsCreativity',
-  'nghe thuat & sang tao': 'categories.artsCreativity',
-  'nghe thuat va sang tao': 'categories.artsCreativity',
-  philosophy: 'categories.philosophy',
-  'triet hoc': 'categories.philosophy',
-  'contemporary literature': 'categories.contemporaryLiterature',
-  'van hoc duong dai': 'categories.contemporaryLiterature',
-  mystery: 'categories.mystery',
-  detective: 'categories.mystery',
-  'trinh tham': 'categories.mystery',
-  education: 'categories.education',
-  'giao duc': 'categories.education',
-  science: 'categories.science',
-  'khoa hoc': 'categories.science',
-  'science & technology': 'categories.scienceTechnology',
-  'science and technology': 'categories.scienceTechnology',
-  'khoa hoc & cong nghe': 'categories.scienceTechnology',
-  'khoa hoc va cong nghe': 'categories.scienceTechnology',
-  literature: 'categories.literature',
-  'van hoc': 'categories.literature',
-  'science fiction': 'categories.sciFi',
-  'sci-fi': 'categories.sciFi',
-  scifi: 'categories.sciFi',
-  'vien tuong': 'categories.sciFi',
-  'khoa hoc vien tuong': 'categories.sciFi',
-  psychology: 'categories.psychology',
-  'tam ly hoc': 'categories.psychology',
-  'history & memoir': 'categories.historyMemoir',
-  'history and memoir': 'categories.historyMemoir',
-  'lich su & hoi ky': 'categories.historyMemoir',
-  'lich su va hoi ky': 'categories.historyMemoir',
-  children: 'categories.children',
-  kids: 'categories.children',
-  'thieu nhi': 'categories.children',
-  fantasy: 'categories.fantasy',
-  'gia tuong & ky ao': 'categories.fantasy',
-  'gia tuong va ky ao': 'categories.fantasy',
-}
 
 const digitalAccessStatusKeys: Record<DigitalAccessStatus, string> = {
   ACTIVE: 'library.accessStatus.ACTIVE',
@@ -125,6 +75,7 @@ const paymentStatusKeys: Record<OrderPaymentStatus, string> = {
   FAILED: 'paymentStatus.FAILED',
   CANCELLED: 'paymentStatus.CANCELLED',
   REFUNDED: 'paymentStatus.REFUNDED',
+  EXPIRED: 'paymentStatus.EXPIRED',
 }
 
 const shipmentStatusKeys: Record<ShipmentStatus, string> = {
@@ -148,14 +99,33 @@ const genderKeys: Record<Gender, string> = {
   OTHER: 'genders.OTHER',
 }
 
-export function getCategoryLabel(category: string, t: TranslateFunction) {
-  if (category.trim() === '') {
-    return t('book.fallback.category')
+export function getCategoryLabel(
+  category: LocalizedCategory | string | null | undefined,
+  language: AppLanguage,
+  fallback = '',
+) {
+  if (!category) {
+    return fallback
+  }
+  if (typeof category === 'string') {
+    return category.trim() || fallback
   }
 
-  const normalizedCategory = normalizeCategoryKey(category)
-  const key = categoryKeys[normalizedCategory]
-  return key ? t(key) : category
+  return category.translations?.[language]?.name?.trim() || category.name || fallback
+}
+
+export function getCategoryDescription(
+  category: (LocalizedCategory & { description?: string | null }) | null | undefined,
+  language: AppLanguage,
+) {
+  if (!category) {
+    return null
+  }
+  return (
+    category.translations?.[language]?.description?.trim() ||
+    category.description?.trim() ||
+    null
+  )
 }
 
 export function getDigitalAccessStatusLabel(
@@ -218,15 +188,4 @@ export function getUserRoleLabel(role: UserRole, t: TranslateFunction) {
 
 export function getGenderLabel(gender: Gender, t: TranslateFunction) {
   return t(genderKeys[gender])
-}
-
-function normalizeCategoryKey(category: string) {
-  return category
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
 }

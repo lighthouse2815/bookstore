@@ -25,6 +25,7 @@ export function EbookListing() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const {
     t,
+    language,
     formatNumber,
     isLoading,
     error,
@@ -42,11 +43,14 @@ export function EbookListing() {
     handleSortChange,
     handlePageChange,
   } = useEbookListing()
-  const totalCategoryCount = Math.max(categoryOptions.length - 1, 0)
+  const totalCategoryCount = categoryOptions.length
+  const selectedCategory = categoryOptions.find(
+    (option) => option.code === category,
+  )
   const selectedCategoryLabel =
     category === allCategoriesValue
       ? t('categories.all')
-      : getCategoryLabel(category, t)
+      : getCategoryLabel(selectedCategory, language, t('book.fallback.category'))
   const selectedSortLabel = {
     featured: t('ebookCatalog.sortFeatured'),
     format: t('ebookCatalog.sortFormat'),
@@ -55,25 +59,26 @@ export function EbookListing() {
   }[sort]
 
   const matchingCategories = useMemo(() => {
-    const allCategories = categoryOptions.filter(
-      (option) => option !== allCategoriesValue,
-    )
     const normalizedQuery = normalizeCategoryText(categoryQuery)
 
     if (!normalizedQuery) {
-      return allCategories
+      return categoryOptions
     }
 
-    const matchedCategories = allCategories.filter((option) =>
-      normalizeCategoryText(getCategoryLabel(option, t)).includes(normalizedQuery),
+    const matchedCategories = categoryOptions.filter((option) =>
+      normalizeCategoryText(getCategoryLabel(option, language)).includes(normalizedQuery),
     )
 
-    if (category !== allCategoriesValue && !matchedCategories.includes(category)) {
-      return [category, ...matchedCategories]
+    if (
+      category !== allCategoriesValue &&
+      selectedCategory &&
+      !matchedCategories.some((option) => option.code === category)
+    ) {
+      return [selectedCategory, ...matchedCategories]
     }
 
     return matchedCategories
-  }, [allCategoriesValue, category, categoryOptions, categoryQuery, t])
+  }, [allCategoriesValue, category, categoryOptions, categoryQuery, language, selectedCategory])
 
   const matchingCategoryCount = useMemo(() => {
     const normalizedQuery = normalizeCategoryText(categoryQuery)
@@ -82,14 +87,12 @@ export function EbookListing() {
       return totalCategoryCount
     }
 
-    return categoryOptions
-      .filter((option) => option !== allCategoriesValue)
-      .filter((option) =>
-        normalizeCategoryText(getCategoryLabel(option, t)).includes(
+    return categoryOptions.filter((option) =>
+        normalizeCategoryText(getCategoryLabel(option, language)).includes(
           normalizedQuery,
         ),
       ).length
-  }, [allCategoriesValue, categoryOptions, categoryQuery, t, totalCategoryCount])
+  }, [categoryOptions, categoryQuery, language, totalCategoryCount])
 
   return (
     <div>
@@ -226,11 +229,9 @@ export function EbookListing() {
                     <SelectItem value={allCategoriesValue}>
                       {t('categories.all')}
                     </SelectItem>
-                    {categoryOptions
-                      .filter((option) => option !== allCategoriesValue)
-                      .map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {getCategoryLabel(option, t)}
+                    {categoryOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.code}>
+                          {getCategoryLabel(option, language)}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -275,10 +276,10 @@ export function EbookListing() {
                     {matchingCategories.length > 0 ? (
                       matchingCategories.map((option) => (
                         <CategoryFilterButton
-                          key={option}
-                          label={getCategoryLabel(option, t)}
-                          isActive={category === option}
-                          onClick={() => handleCategorySelect(option)}
+                          key={option.id}
+                          label={getCategoryLabel(option, language)}
+                          isActive={category === option.code}
+                          onClick={() => handleCategorySelect(option.code)}
                         />
                       ))
                     ) : (

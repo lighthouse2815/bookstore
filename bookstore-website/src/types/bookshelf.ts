@@ -30,6 +30,7 @@ export type BookshelfBook = {
   title: string
   author: string
   category: string
+  categoryInfo?: import('@/types/book').LocalizedCategory | null
   price: number
   cover: string | null
   rating?: number

@@ -93,6 +93,8 @@ public enum DomainErrorCode {
     CATEGORY_ALREADY_DELETED("DOMAIN_CATEGORY_007", "category đã bi xóa"),
     CATEGORY_DATA_NOT_CHANGED("DOMAIN_CATEGORY_008", "dữ liệu category phải khác dữ liệu hiện tại"),
     INVALID_CATEGORY_PARENT_ID("DOMAIN_CATEGORY_009", "%s không hợp lệ"),
+    INVALID_CATEGORY_CODE("DOMAIN_CATEGORY_010", "%s không được để trống"),
+    INVALID_CATEGORY_TRANSLATION("DOMAIN_CATEGORY_011", "%s không được để trống"),
 
     INVALID_AUTHOR_ID("DOMAIN_AUTHOR_001", "%s không được null"),
     INVALID_AUTHOR_NAME("DOMAIN_AUTHOR_002", "%s không được để trống"),
@@ -119,7 +121,7 @@ public enum DomainErrorCode {
 
     INVALID_SUPPLIER_ID("DOMAIN_SUPPLIER_001", "%s không được null"),
     INVALID_SUPPLIER_NAME("DOMAIN_SUPPLIER_002", "%s không được để trống"),
-    INVALID_SUPPLIER_PHONE("DOMAIN_SUPPLIER_003", "%s phải có đúng 10 chữ số và bắt đầu bằng 0"),
+    INVALID_SUPPLIER_PHONE("DOMAIN_SUPPLIER_003", "%s phải có 10 hoặc 11 chữ số và bắt đầu bằng 0"),
     INVALID_SUPPLIER_EMAIL("DOMAIN_SUPPLIER_004", "%s không đúng định dạng email"),
     INVALID_SUPPLIER_ADDRESS("DOMAIN_SUPPLIER_005", "%s không được để trống"),
     INVALID_SUPPLIER_NOTE("DOMAIN_SUPPLIER_006", "%s không được để trống"),

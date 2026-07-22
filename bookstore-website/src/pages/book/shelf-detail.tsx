@@ -21,6 +21,7 @@ import {
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
+import { getCategoryLabel } from '@/utils/i18n'
 import {
   addBookToShelf,
   deleteBookshelf,
@@ -55,6 +56,7 @@ export default function ShelfDetailPage() {
       setIsLoading(false)
       return
     }
+    const resolvedShelfId = shelfId
 
     let isCancelled = false
 
@@ -63,7 +65,7 @@ export default function ShelfDetailPage() {
       setError(null)
 
       try {
-        const nextBookshelf = await getMyBookshelf(shelfId)
+        const nextBookshelf = await getMyBookshelf(resolvedShelfId)
         if (isCancelled) {
           return
         }
@@ -94,6 +96,8 @@ export default function ShelfDetailPage() {
     if (!shelfId || !addBookId) {
       return
     }
+    const resolvedShelfId = shelfId
+    const resolvedBookId = addBookId
 
     let isCancelled = false
 
@@ -101,7 +105,7 @@ export default function ShelfDetailPage() {
       setIsSaving(true)
 
       try {
-        const updatedShelf = await addBookToShelf(shelfId, addBookId)
+        const updatedShelf = await addBookToShelf(resolvedShelfId, resolvedBookId)
         if (isCancelled) {
           return
         }
@@ -391,6 +395,7 @@ function ShelfBookCard({
   onMove: (direction: ShelfMoveDirection) => void
   onRemove: () => void
 }) {
+  const { language } = useLanguage()
   const hasRating =
     typeof item.book.rating === 'number' && !Number.isNaN(item.book.rating)
 
@@ -451,7 +456,7 @@ function ShelfBookCard({
 
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary dark:bg-primary/18">
-              {item.book.category}
+              {getCategoryLabel(item.book.categoryInfo ?? item.book.category, language)}
             </span>
             <span
               className={cn(

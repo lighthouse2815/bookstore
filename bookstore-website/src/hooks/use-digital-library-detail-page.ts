@@ -44,6 +44,7 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
       setNotFound(true)
       return
     }
+    const resolvedDigitalAssetId = digitalAssetId
 
     let isCancelled = false
 
@@ -51,7 +52,7 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
       setIsLoading(true)
 
       try {
-        const response = await getMyDigitalLibraryAsset(digitalAssetId)
+        const response = await getMyDigitalLibraryAsset(resolvedDigitalAssetId)
 
         if (isCancelled) {
           return
@@ -151,18 +152,30 @@ export function useDigitalLibraryDetailPage(digitalAssetId?: string) {
   }
 
   async function openSampleAsset() {
+    const currentAsset = asset
+    if (!currentAsset) {
+      return
+    }
     await openSignedAssetUrl({
-      asset,
+      asset: currentAsset,
       requestUrl: () =>
-        getPublishedDigitalAssetSampleUrl(asset.bookId, asset.digitalAssetId),
+        getPublishedDigitalAssetSampleUrl(
+          currentAsset.bookId,
+          currentAsset.digitalAssetId,
+        ),
       setLoading: setIsResolvingSampleUrl,
     })
   }
 
   async function downloadAsset() {
+    const currentAsset = asset
+    if (!currentAsset) {
+      return
+    }
     await openSignedAssetUrl({
-      asset,
-      requestUrl: () => getMyDigitalAssetDownloadUrl(asset.digitalAssetId),
+      asset: currentAsset,
+      requestUrl: () =>
+        getMyDigitalAssetDownloadUrl(currentAsset.digitalAssetId),
       setLoading: setIsResolvingDownloadUrl,
     })
   }

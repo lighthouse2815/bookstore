@@ -41,10 +41,10 @@ export function Header() {
     handleSearchQueryChange,
     submitSearch,
   } = useHeaderState()
+  const userRoles = user?.roles ?? []
   const canOpenAdminArea =
-    Boolean(user) &&
-    (user.roles.includes('ADMIN') || user.roles.includes('STAFF'))
-  const adminLinkTarget = user?.roles.includes('ADMIN') ? '/admin' : '/admin/chat'
+    userRoles.includes('ADMIN') || userRoles.includes('STAFF')
+  const adminLinkTarget = userRoles.includes('ADMIN') ? '/admin' : '/admin/chat'
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">

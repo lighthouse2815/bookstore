@@ -119,7 +119,7 @@ export default function AdminChatPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)_22rem]">
+        <div className="grid items-start gap-6 xl:grid-cols-[22rem_minmax(0,1fr)_22rem]">
           <AdminConversationList
             labels={labels}
             conversations={conversations}

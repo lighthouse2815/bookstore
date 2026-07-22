@@ -1,4 +1,5 @@
 import type { PageResult } from '@/types/pagination'
+import type { LocalizedCategory } from '@/types/book'
 
 export type DigitalAssetFormat = 'PDF' | 'EPUB' | 'AUDIO'
 
@@ -91,6 +92,7 @@ export type PublishedDigitalAssetCatalogItemResponse = {
 
 export type PublishedDigitalAssetCatalogItem = PublishedDigitalAssetCatalogItemResponse & {
   categoryName: string
+  categoryInfo: LocalizedCategory | null
   authorName: string
   publisherName: string
 }

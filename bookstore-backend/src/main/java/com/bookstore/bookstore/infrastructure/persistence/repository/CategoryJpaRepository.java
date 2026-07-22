@@ -12,27 +12,29 @@ import org.springframework.data.repository.query.Param;
 
 public interface CategoryJpaRepository extends JpaRepository<CategoryJpaEntity, UUID> {
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     List<CategoryJpaEntity> findAllByDeletedAtIsNull();
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     Page<CategoryJpaEntity> findAllByDeletedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     List<CategoryJpaEntity> findAll();
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     Optional<CategoryJpaEntity> findByIdAndDeletedAtIsNull(@Param("id") UUID id);
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     Optional<CategoryJpaEntity> findById(@Param("id") UUID id);
 
     boolean existsById(@Param("id") UUID id);
 
-    @EntityGraph(attributePaths = "imageFileAsset")
+    @EntityGraph(attributePaths = {"imageFileAsset", "translations"})
     Optional<CategoryJpaEntity> findByNameAndDeletedAtIsNull(@Param("name") String name);
 
     boolean existsByName(@Param("name") String name);
+
+    boolean existsByCode(@Param("code") String code);
 
 
 }
