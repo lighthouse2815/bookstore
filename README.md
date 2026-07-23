@@ -47,7 +47,9 @@ Từ thư mục `bookstore-backend`:
 
 ```powershell
 cd D:\bookstore\bookstore-backend
-.\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+docker compose up -d
+.\mvnw.cmd spring-boot:run
 ```
 
 Nếu muốn biên dịch nhanh và bỏ qua kiểm thử:
@@ -71,9 +73,10 @@ http://localhost:8080/swagger-ui/index.html
 
 Lưu ý:
 
-- Trước khi chạy backend, hãy bảo đảm đã sao chép `.env.example` thành `.env` trong `D:\bookstore\bookstore-backend`.
-- Backend sử dụng MySQL trong Docker, vì vậy thường phải chạy `docker-compose up -d` trước.
-- Môi trường phát triển cục bộ nên dùng profile `dev`. Môi trường production cần đặt `SPRING_PROFILES_ACTIVE=prod` và cung cấp `JWT_SECRET`, `DB_USER`, `DB_PASSWORD` qua biến môi trường.
+- Trước khi chạy backend, hãy sao chép `.env.example` thành `.env` trong `D:\bookstore\bookstore-backend` và thay các giá trị mẫu cần thiết.
+- `.env.example` đặt `SPRING_PROFILES_ACTIVE=dev`, vì vậy lệnh `.\mvnw.cmd spring-boot:run` sẽ tự nạp đúng cấu hình phát triển, bao gồm tài khoản MySQL.
+- Backend sử dụng MySQL trong Docker, vì vậy thường phải chạy `docker compose up -d` trước.
+- Môi trường production phải ghi đè thành `SPRING_PROFILES_ACTIVE=prod` và cung cấp `JWT_SECRET`, `DB_USER`, `DB_PASSWORD` qua biến môi trường.
 
 ## 3. Chạy website
 
