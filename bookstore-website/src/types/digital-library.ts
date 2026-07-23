@@ -65,7 +65,6 @@ export type PublishedDigitalAssetResponse = {
   bookId: string
   format: DigitalAssetFormat
   title: string
-  fileName: string
   price: number
   downloadAllowed: boolean
   purchaseAllowed: boolean
@@ -80,7 +79,6 @@ export type PublishedDigitalAssetCatalogItemResponse = {
   publisherId: string
   format: DigitalAssetFormat
   title: string
-  fileName: string
   price: number
   downloadAllowed: boolean
   purchaseAllowed: boolean

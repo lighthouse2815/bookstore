@@ -3,20 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      ;(() => {
-        const storageKey = 'bookstore-theme'
-
-        try {
-          const storedTheme = window.localStorage.getItem(storageKey)
-          const theme = storedTheme === 'dark' ? 'dark' : 'light'
-
-          document.documentElement.classList.toggle('dark', theme === 'dark')
-        } catch {
-          document.documentElement.classList.remove('dark')
-        }
-      })()
-    </script>
+    <script src="/theme-init.js"></script>
     <title>Sách Vui - Nhà sách trực tuyến cho người trẻ</title>
     <meta
       name="description"

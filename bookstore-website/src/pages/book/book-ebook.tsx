@@ -382,9 +382,6 @@ export default function BookEbookPage() {
                                   {asset.format}
                                 </span>
                               </div>
-                              <p className="mt-1 break-all text-sm text-muted-foreground">
-                                {asset.fileName}
-                              </p>
                             </div>
                           </div>
 

@@ -226,9 +226,6 @@ export type BookReferenceData = {
 
 export type BookReviewResponse = {
   reviewId: string
-  userId: string
-  bookId: string
-  orderItemId: string
   reviewerName: string
   reviewerAvatarUrl: string | null
   verifiedPurchase: boolean
@@ -242,9 +239,6 @@ export type BookReviewResponse = {
 
 export type BookReview = {
   reviewId: string
-  userId: string
-  bookId: string
-  orderItemId: string
   reviewerName: string
   reviewerAvatarUrl: string | null
   verifiedPurchase: boolean

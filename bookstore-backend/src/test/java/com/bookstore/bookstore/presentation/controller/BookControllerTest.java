@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.port.in.IBookService;
 import com.bookstore.bookstore.application.result.BookPageDetailResult;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
+import com.bookstore.bookstore.config.WebMvcConfig;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.response.AuthorResponse;
 import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
@@ -33,7 +34,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(BookController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, WebMvcConfig.class})
 @TestPropertySource(properties = {
         "app.jwt.secret=01234567890123456789012345678901",
         "app.jwt.expiration-minutes=60",
@@ -94,6 +95,19 @@ class BookControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(bookQueryService, bookWebMapper);
+    }
+
+    @Test
+    void getBooks_whenPageSizeExceedsMaximum_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/books")
+                        .param("page", "0")
+                        .param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message")
+                        .value("page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 100"));
+
+        verifyNoInteractions(bookService, bookQueryService, bookWebMapper);
     }
 
     private BookPageDetailResponse buildPageDetailResponse() {

@@ -46,6 +46,7 @@ import com.bookstore.bookstore.domain.model.UserAuthIdentity;
 import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -62,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService implements IAuthService {
 
     private static final String USER_ROLE = "USER";
@@ -211,6 +213,8 @@ public class AuthService implements IAuthService {
             } catch (AuthRateLimitException exception) {
                 audit(null, "LOGIN_THROTTLED", "LOGIN", null, metadata, null);
                 throw exception;
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable during pre-check", exception);
             }
         }
 
@@ -235,7 +239,11 @@ public class AuthService implements IAuthService {
         }
 
         if (authThrottleService != null) {
-            authThrottleService.clearLoginFailures(username);
+            try {
+                authThrottleService.clearLoginFailures(username);
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable while clearing failures", exception);
+            }
         }
         audit(user, "LOGIN_SUCCEEDED", "USER", user.getId().toString(), metadata, null);
         return issueTokens(user, metadata, null, null);
@@ -656,7 +664,14 @@ public class AuthService implements IAuthService {
 
     private void recordLoginFailure(String normalizedIdentifier, AuthRequestMetadata metadata) {
         if (authThrottleService != null) {
-            authThrottleService.recordLoginFailure(normalizedIdentifier, metadata == null ? null : metadata.ipAddress());
+            try {
+                authThrottleService.recordLoginFailure(
+                        normalizedIdentifier,
+                        metadata == null ? null : metadata.ipAddress()
+                );
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable while recording a failed login", exception);
+            }
         }
         audit(null, "LOGIN_FAILED", "LOGIN", null, metadata, java.util.Map.of("identifier", "redacted"));
     }
@@ -672,20 +687,24 @@ public class AuthService implements IAuthService {
         if (auditLogService == null) {
             return;
         }
-        auditLogService.record(new AuditLogCommand(
-                user == null ? null : user.getId(),
-                user == null ? null : user.getUsername(),
-                user == null ? null : toRoleNames(user.getRoles()).stream().findFirst().orElse(null),
-                action,
-                targetType,
-                targetId,
-                action,
-                null,
-                details,
-                metadata == null ? null : metadata.ipAddress(),
-                metadata == null ? null : metadata.userAgent(),
-                Instant.now()
-        ));
+        try {
+            auditLogService.record(new AuditLogCommand(
+                    user == null ? null : user.getId(),
+                    user == null ? null : user.getUsername(),
+                    user == null ? null : toRoleNames(user.getRoles()).stream().findFirst().orElse(null),
+                    action,
+                    targetType,
+                    targetId,
+                    action,
+                    null,
+                    details,
+                    metadata == null ? null : metadata.ipAddress(),
+                    metadata == null ? null : metadata.userAgent(),
+                    Instant.now()
+            ));
+        } catch (RuntimeException exception) {
+            log.warn("Authentication audit log unavailable for action {}", action, exception);
+        }
     }
 
     private static Set<String> toRoleNames(Set<Role> roles) {

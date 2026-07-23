@@ -12,7 +12,6 @@ public record PublicDigitalAssetCatalogItemResponse(
         UUID publisherId,
         DigitalAssetFormat format,
         String title,
-        String fileName,
         BigDecimal price,
         boolean downloadAllowed,
         boolean purchaseAllowed,

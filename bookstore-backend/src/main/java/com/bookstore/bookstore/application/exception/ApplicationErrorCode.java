@@ -2,7 +2,7 @@ package com.bookstore.bookstore.application.exception;
 
 public enum ApplicationErrorCode {
 
-    AUTH_INVALID_CREDENTIALS("AUTH_INVALID_CREDENTIALS", "Thong tin dang nhap khong hop le"),
+    AUTH_INVALID_CREDENTIALS("AUTH_INVALID_CREDENTIALS", "Thông tin đăng nhập không hợp lệ"),
     AUTH_RATE_LIMITED("AUTH_RATE_LIMITED", "Ban da thu qua nhieu lan. Vui long thu lai sau."),
     AUTH_SESSION_EXPIRED("AUTH_SESSION_EXPIRED", "Phien dang nhap da het han"),
     AUTH_SESSION_REVOKED("AUTH_SESSION_REVOKED", "Phien dang nhap khong con hieu luc"),
@@ -11,6 +11,7 @@ public enum ApplicationErrorCode {
     OTP_LOCKED("AUTH_OTP_LOCKED", "Ma xac thuc khong hop le"),
 
     INVALID_ARGUMENT("APPLICATION_001", "%s không được null"),
+    PAGINATION_INVALID("APPLICATION_PAGINATION_001", "page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 100"),
 
     INVALID_AUTH_PASSWORD("APPLICATION_AUTH_001", "password không được null"),
     AUTH_USER_NOT_FOUND("APPLICATION_AUTH_003", "không tìm thấy user"),

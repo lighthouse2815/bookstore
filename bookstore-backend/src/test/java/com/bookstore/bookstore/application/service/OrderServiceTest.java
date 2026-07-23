@@ -556,6 +556,24 @@ class OrderServiceTest {
         verify(orderAssembler).toResult(order, expiresAt);
     }
 
+    @Test
+    void getMyOrder_whenOrderBelongsToAnotherUser_returnsNotFound() {
+        UUID currentUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        Order otherUsersOrder = org.mockito.Mockito.mock(Order.class);
+        when(otherUsersOrder.getUserId()).thenReturn(otherUserId);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(otherUsersOrder));
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> orderService.getMyOrder(currentUserId, orderId)
+        );
+
+        assertEquals(ApplicationErrorCode.ORDER_NOT_FOUND, exception.getErrorCode());
+        verifyNoInteractions(paymentRepository, orderAssembler);
+    }
+
     private static Cart cart(UUID userId) {
         Instant now = Instant.EPOCH;
         return new Cart(

@@ -8,6 +8,7 @@ import com.bookstore.bookstore.presentation.request.ReviewModerationRequest;
 import com.bookstore.bookstore.presentation.request.UpdateReviewRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
+import com.bookstore.bookstore.presentation.response.PublicReviewResponse;
 import com.bookstore.bookstore.presentation.response.ReviewResponse;
 import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +39,7 @@ public class ReviewController {
     private final AdminAuditSupport adminAuditSupport;
 
     @GetMapping("/api/books/{bookId}/reviews")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getByBookId(
+    public ResponseEntity<ApiResponse<List<PublicReviewResponse>>> getByBookId(
             @PathVariable UUID bookId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -48,14 +49,14 @@ public class ReviewController {
                     bookId,
                     page == null ? 0 : page,
                     size == null ? 10 : size
-            ).map(reviewWebMapper::toResponse);
+            ).map(reviewWebMapper::toPublicResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
                     .body(ApiResponse.success(result.items()));
         }
 
         return ResponseEntity.ok(ApiResponse.success(reviewService.getByBookId(bookId).stream()
-                .map(reviewWebMapper::toResponse)
+                .map(reviewWebMapper::toPublicResponse)
                 .toList()));
     }
 

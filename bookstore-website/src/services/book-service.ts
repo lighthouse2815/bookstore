@@ -422,9 +422,6 @@ function mapBookReviewResponseToBookReview(
 ): BookReview {
   return {
     reviewId: reviewResponse.reviewId,
-    userId: reviewResponse.userId,
-    bookId: reviewResponse.bookId,
-    orderItemId: reviewResponse.orderItemId,
     reviewerName: reviewResponse.reviewerName,
     reviewerAvatarUrl: reviewResponse.reviewerAvatarUrl
       ? resolveBookImageUrl(reviewResponse.reviewerAvatarUrl)

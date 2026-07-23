@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.command.CreateUserAddressCommand;
 import com.bookstore.bookstore.application.command.DeleteUserAddressCommand;
 import com.bookstore.bookstore.application.command.SetDefaultUserAddressCommand;
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.enums.UserStatus;
@@ -97,6 +100,22 @@ class UserAddressServiceTest {
         assertEquals(false, captor.getAllValues().get(0).isDefaultAddress());
         assertEquals(true, captor.getAllValues().get(1).isDefaultAddress());
         assertEquals(nextAddress.getId(), captor.getAllValues().get(1).getId());
+    }
+
+    @Test
+    void getByIdAndUserId_whenAddressBelongsToAnotherUser_returnsNotFound() {
+        UUID currentUserId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        when(userAddressRepository.findByIdAndUserIdActive(addressId, currentUserId))
+                .thenReturn(Optional.empty());
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> userAddressService.getByIdAndUserId(addressId, currentUserId)
+        );
+
+        assertEquals(ApplicationErrorCode.USER_ADDRESS_NOT_FOUND, exception.getErrorCode());
+        verify(userAddressRepository).findByIdAndUserIdActive(addressId, currentUserId);
     }
 
     private static User user() {

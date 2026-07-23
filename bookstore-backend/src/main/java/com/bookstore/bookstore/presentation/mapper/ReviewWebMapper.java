@@ -9,6 +9,7 @@ import com.bookstore.bookstore.application.result.ReviewResult;
 import com.bookstore.bookstore.presentation.request.CreateReviewRequest;
 import com.bookstore.bookstore.presentation.request.ReviewModerationRequest;
 import com.bookstore.bookstore.presentation.request.UpdateReviewRequest;
+import com.bookstore.bookstore.presentation.response.PublicReviewResponse;
 import com.bookstore.bookstore.presentation.response.ReviewResponse;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -69,6 +70,21 @@ public class ReviewWebMapper {
                 result.moderatedBy(),
                 result.moderatedByName(),
                 result.moderatedAt(),
+                result.createdAt(),
+                result.updatedAt()
+        );
+    }
+
+    public PublicReviewResponse toPublicResponse(ReviewResult result) {
+        return new PublicReviewResponse(
+                result.reviewId(),
+                result.reviewerName(),
+                result.reviewerAvatarUrl(),
+                result.verifiedPurchase(),
+                result.reviewImages(),
+                result.helpfulCount(),
+                result.rating(),
+                result.comment(),
                 result.createdAt(),
                 result.updatedAt()
         );

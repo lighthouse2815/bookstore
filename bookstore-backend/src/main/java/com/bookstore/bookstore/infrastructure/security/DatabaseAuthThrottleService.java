@@ -28,7 +28,7 @@ public class DatabaseAuthThrottleService implements IAuthThrottleService {
     private final AuthSecurityProperties properties;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public void assertLoginAllowed(String normalizedIdentifier, String normalizedIp) {
         Instant now = Instant.now();
         assertAttemptAllowed(ACCOUNT, hash(normalizedIdentifier), now);

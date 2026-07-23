@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.command.LoginCommand;
@@ -227,6 +228,35 @@ class AuthServiceTokenFlowTest {
         );
         assertTrue(tokenCaptor.getValue().isUsed());
         assertEquals("hashed-new-password", userCaptor.getValue().getPasswordHash());
+    }
+
+    @Test
+    void revokeSession_whenSessionBelongsToAnotherUser_rejectsUnauthorized() {
+        User currentUser = user();
+        RefreshToken otherUsersToken = new RefreshToken(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                hashToken("other-users-refresh-token"),
+                Instant.now().plus(1, ChronoUnit.DAYS),
+                false,
+                Instant.now().minus(1, ChronoUnit.DAYS)
+        );
+        when(userRepository.findByIdIncludingDeletedForUpdate(currentUser.getId()))
+                .thenReturn(Optional.of(currentUser));
+        when(refreshTokenRepository.findByIdForUpdate(otherUsersToken.getId()))
+                .thenReturn(Optional.of(otherUsersToken));
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> authService.revokeSession(
+                        currentUser.getId(),
+                        otherUsersToken.getId(),
+                        UUID.randomUUID()
+                )
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_SESSION_REVOKED, exception.getErrorCode());
+        verify(refreshTokenRepository, never()).save(otherUsersToken);
     }
 
     private static User user() {

@@ -67,9 +67,9 @@ export function useProfilePage() {
     }
 
     setAccountForm({
-      username: user.username,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
+      username: user.username ?? '',
+      email: user.email ?? '',
+      phoneNumber: user.phoneNumber ?? '',
     })
   }, [user])
 
@@ -89,12 +89,12 @@ export function useProfilePage() {
 
         setProfile(profileResponse)
         setProfileForm({
-          lastName: profileResponse.lastName,
-          firstName: profileResponse.firstName,
+          lastName: profileResponse.lastName ?? '',
+          firstName: profileResponse.firstName ?? '',
           avatarFileAssetId: profileResponse.avatarFileAssetId ?? '',
           avatarUrl: profileResponse.avatarUrl ?? '',
-          gender: profileResponse.gender,
-          dateOfBirth: profileResponse.dateOfBirth,
+          gender: profileResponse.gender ?? 'OTHER',
+          dateOfBirth: profileResponse.dateOfBirth ?? '',
         })
         setOrders(ordersResponse)
       } catch (error) {

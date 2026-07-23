@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +22,7 @@ import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.port.out.IGoogleIdTokenVerifier;
+import com.bookstore.bookstore.application.port.out.IAuthThrottleService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
 import com.bookstore.bookstore.application.port.out.IPasswordResetTokenRepository;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
@@ -88,6 +90,9 @@ class AuthServiceTest {
 
     @Mock
     private IGoogleIdTokenVerifier googleIdTokenVerifier;
+
+    @Mock
+    private IAuthThrottleService authThrottleService;
 
     @Mock
     private IAuditLogService auditLogService;
@@ -258,6 +263,39 @@ class AuthServiceTest {
         ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
                 ApplicationException.class,
                 () -> authService.login(new LoginCommand("username", "wrong-password"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
+    }
+
+    @Test
+    void login_whenFailureTelemetryIsUnavailable_preservesInvalidCredentialsError() {
+        when(userRepository.findByUsernameActive("missing")).thenReturn(Optional.empty());
+        doThrow(new IllegalStateException("throttle unavailable"))
+                .when(authThrottleService)
+                .recordLoginFailure(any(), org.mockito.ArgumentMatchers.nullable(String.class));
+        doThrow(new IllegalStateException("audit unavailable"))
+                .when(auditLogService)
+                .record(any());
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.login(new LoginCommand("missing", "secret"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
+    }
+
+    @Test
+    void login_whenThrottlePrecheckIsUnavailable_stillValidatesCredentials() {
+        doThrow(new IllegalStateException("throttle unavailable"))
+                .when(authThrottleService)
+                .assertLoginAllowed(any(), org.mockito.ArgumentMatchers.nullable(String.class));
+        when(userRepository.findByUsernameActive("missing")).thenReturn(Optional.empty());
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.login(new LoginCommand("missing", "secret"))
         );
 
         assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());

@@ -71,7 +71,29 @@ class ReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].status").value("APPROVED"));
+                .andExpect(jsonPath("$.data[0].reviewId").value(REVIEW_ID.toString()))
+                .andExpect(jsonPath("$.data[0].reviewerName").value("Nguyen Van A"))
+                .andExpect(jsonPath("$.data[0].userId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].bookId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].orderItemId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].status").doesNotExist())
+                .andExpect(jsonPath("$.data[0].moderationReason").doesNotExist())
+                .andExpect(jsonPath("$.data[0].moderatedBy").doesNotExist());
+    }
+
+    @Test
+    void getAll_whenAnonymous_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/admin/reviews"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getAll_whenCustomerReturnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/admin/reviews")
+                        .with(jwt()
+                                .jwt(jwt -> jwt.subject(USER_ID.toString()).claim("roles", List.of("USER")))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

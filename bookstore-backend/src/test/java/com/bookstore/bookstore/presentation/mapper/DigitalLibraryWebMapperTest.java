@@ -29,7 +29,6 @@ class DigitalLibraryWebMapperTest {
         assertEquals(asset.getBookId(), response.bookId());
         assertEquals(asset.getFormat(), response.format());
         assertEquals(asset.getTitle(), response.title());
-        assertEquals(asset.getFileName(), response.fileName());
         assertEquals(asset.getPrice(), response.price());
         assertTrue(response.downloadAllowed());
         assertTrue(response.purchaseAllowed());

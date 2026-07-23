@@ -9,7 +9,6 @@ public record PublishedDigitalAssetResponse(
         UUID bookId,
         DigitalAssetFormat format,
         String title,
-        String fileName,
         BigDecimal price,
         boolean downloadAllowed,
         boolean purchaseAllowed,

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.command.UpdateReadingProgressCommand;
@@ -232,6 +233,24 @@ class DigitalLibraryServiceTest {
         );
 
         assertEquals(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void getMyAsset_whenAccessBelongsToAnotherUser_rejectsNotFound() {
+        UUID currentUserId = UUID.randomUUID();
+        UUID digitalAssetId = UUID.randomUUID();
+        when(userDigitalAccessRepository.findAllByUserIdAndDigitalAssetIdActive(
+                currentUserId,
+                digitalAssetId
+        )).thenReturn(List.of());
+
+        ApplicationException exception = assertThrows(
+                ApplicationException.class,
+                () -> digitalLibraryService.getMyAsset(currentUserId, digitalAssetId)
+        );
+
+        assertEquals(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND, exception.getErrorCode());
+        verifyNoInteractions(digitalAssetRepository, bookRepository, readingProgressRepository, fileStorage);
     }
 
     private static Order order(
