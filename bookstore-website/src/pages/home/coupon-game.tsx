@@ -48,24 +48,24 @@ export default function CouponGamePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(254,249,195,0.4),rgba(255,255,255,0.96)_25%,rgba(254,242,242,0.96)_100%)]">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(254,249,195,0.4),rgba(255,255,255,0.96)_25%,rgba(254,242,242,0.96)_100%)] dark:bg-[linear-gradient(180deg,rgba(31,25,15,1)_0%,rgba(18,16,24,1)_35%,rgba(14,13,22,1)_100%)]">
       <Header />
       <main className="flex-1">
         <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-[2rem] border border-amber-200/70 bg-white/88 px-6 py-8 shadow-[0_28px_90px_rgba(217,119,6,0.12)] backdrop-blur sm:px-8 lg:px-10">
-            <div className="pointer-events-none absolute -right-12 top-0 size-40 rounded-full bg-pink-200/45 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 left-0 size-44 rounded-full bg-amber-200/55 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[2rem] border border-amber-200/70 bg-white/88 px-6 py-8 shadow-[0_28px_90px_rgba(217,119,6,0.12)] backdrop-blur dark:border-amber-300/15 dark:bg-card/90 dark:shadow-[0_28px_90px_rgba(0,0,0,0.3)] sm:px-8 lg:px-10">
+            <div className="pointer-events-none absolute -right-12 top-0 size-40 rounded-full bg-pink-200/45 blur-3xl dark:bg-pink-500/12" />
+            <div className="pointer-events-none absolute bottom-0 left-0 size-44 rounded-full bg-amber-200/55 blur-3xl dark:bg-amber-400/12" />
 
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-200">
                   <Gift className="size-4" />
                   {t('couponGamePage.badge')}
                 </span>
-                <h1 className="mt-4 font-heading text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+                <h1 className="mt-4 font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                   {t('couponGamePage.title')}
                 </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                   {t('couponGamePage.description')}
                 </p>
               </div>
@@ -94,7 +94,7 @@ export default function CouponGamePage() {
         </section>
 
         <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-12 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:px-8">
-          <div className="min-w-0 rounded-[2rem] border border-amber-200/70 bg-white/86 p-6 shadow-[0_28px_70px_rgba(250,204,21,0.12)] backdrop-blur sm:p-8">
+          <div className="min-w-0 rounded-[2rem] border border-amber-200/70 bg-white/86 p-6 shadow-[0_28px_70px_rgba(250,204,21,0.12)] backdrop-blur dark:border-amber-300/15 dark:bg-card/90 dark:shadow-[0_28px_70px_rgba(0,0,0,0.28)] sm:p-8">
             {showErrorState ? (
               <StatePanel
                 title={t('couponGamePage.errorTitle')}
@@ -115,10 +115,10 @@ export default function CouponGamePage() {
               <>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-700">
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-700 dark:text-amber-300">
                       {t('couponGamePage.wheelBadge')}
                     </p>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
                       {playedToday
                         ? t('couponGamePage.alreadyPlayedDescription')
                         : t('couponGamePage.spinHint')}
@@ -187,22 +187,22 @@ export default function CouponGamePage() {
             )}
           </div>
 
-          <div className="min-w-0 rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="min-w-0 rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                   {playedToday
                     ? t('couponGamePage.alreadyPlayedTitle')
                     : t('couponGamePage.resultTitle')}
                 </p>
-                <h2 className="mt-2 font-heading text-2xl font-bold text-slate-900">
+                <h2 className="mt-2 font-heading text-2xl font-bold text-foreground">
                   {couponSummary
                     ? result?.couponCode
                     : t('couponGamePage.resultPlaceholder')}
                 </h2>
               </div>
               {couponSummary ? (
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
                   {formatCouponBenefit(couponSummary, formatCurrency, t)}
                 </span>
               ) : null}
@@ -210,17 +210,17 @@ export default function CouponGamePage() {
 
             {couponSummary ? (
               <>
-                <div className="motion-result mt-5 rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-5">
+                <div className="motion-result mt-5 rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-5 dark:border-amber-300/20 dark:bg-amber-400/8">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-background/70 dark:text-foreground">
                       {getCouponTypeLabel(couponSummary, t)}
                     </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-background/70 dark:text-foreground">
                       {formatCouponBenefit(couponSummary, formatCurrency, t)}
                     </span>
                   </div>
 
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
+                  <p className="mt-4 text-sm leading-7 text-foreground/80">
                     {couponSummary.description || t('couponGamePage.noDescription')}
                   </p>
 
@@ -228,29 +228,29 @@ export default function CouponGamePage() {
                     <SummaryField
                       label={t('couponGamePage.minOrderLabel')}
                       value={formatCurrency(couponSummary.minOrderAmount)}
-                      className="border-white/80 bg-white/78"
+                      className="border-white/80 bg-white/78 dark:border-white/10 dark:bg-background/45"
                     />
                     <SummaryField
                       label={t('couponGamePage.expiresLabel')}
                       value={formatExpiresAt(couponSummary.expiresAt, formatDate, t)}
-                      className="border-white/80 bg-white/78"
+                      className="border-white/80 bg-white/78 dark:border-white/10 dark:bg-background/45"
                     />
                     {couponSummary.maxDiscountAmount !== null ? (
                       <SummaryField
                         label={t('couponGamePage.maxDiscountLabel')}
                         value={formatCurrency(couponSummary.maxDiscountAmount)}
-                        className="border-white/80 bg-white/78"
+                        className="border-white/80 bg-white/78 dark:border-white/10 dark:bg-background/45"
                       />
                     ) : null}
                     <SummaryField
                       label={t('couponGamePage.resultSaved')}
                       value={t('couponGamePage.dailyLimit')}
-                      className="border-white/80 bg-white/78"
+                      className="border-white/80 bg-white/78 dark:border-white/10 dark:bg-background/45"
                     />
                   </div>
                 </div>
 
-                <p className="mt-5 text-sm leading-7 text-slate-600">
+                <p className="mt-5 text-sm leading-7 text-muted-foreground">
                   {t('couponGamePage.manualApplyHint')}
                 </p>
 
@@ -258,7 +258,7 @@ export default function CouponGamePage() {
                   <Button
                     type="button"
                     onClick={handleCopyCoupon}
-                    className={`${primaryButtonClassName} h-11 flex-1 rounded-full bg-slate-900 px-6 text-white hover:bg-slate-900/90`}
+                    className={`${primaryButtonClassName} h-11 flex-1 rounded-full bg-slate-900 px-6 text-white hover:bg-slate-900/90 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90`}
                   >
                     <Copy className="size-4" />
                     {t('couponGamePage.copyButton')}
@@ -273,7 +273,7 @@ export default function CouponGamePage() {
                 </div>
               </>
             ) : (
-              <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/80 p-5 text-sm leading-7 text-slate-600">
+              <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/80 p-5 text-sm leading-7 text-slate-600 dark:border-white/10 dark:bg-background/45 dark:text-muted-foreground">
                 {isLoading
                   ? t('common.loading')
                   : showErrorState

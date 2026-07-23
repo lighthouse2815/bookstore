@@ -123,24 +123,24 @@ export default function ReadingChallengePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(251,207,232,0.18),rgba(255,255,255,0.96)_24%,rgba(224,242,254,0.82)_100%)]">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(251,207,232,0.18),rgba(255,255,255,0.96)_24%,rgba(224,242,254,0.82)_100%)] dark:bg-[linear-gradient(180deg,rgba(35,19,31,1)_0%,rgba(18,16,25,1)_38%,rgba(13,20,29,1)_100%)]">
       <Header />
       <main className="flex-1">
         <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-[2rem] border border-rose-200/70 bg-white/88 px-6 py-8 shadow-[0_30px_90px_rgba(236,72,153,0.12)] backdrop-blur sm:px-8 lg:px-10">
-            <div className="pointer-events-none absolute -right-10 top-0 size-44 rounded-full bg-pink-200/45 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 left-0 size-48 rounded-full bg-sky-200/55 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[2rem] border border-rose-200/70 bg-white/88 px-6 py-8 shadow-[0_30px_90px_rgba(236,72,153,0.12)] backdrop-blur dark:border-rose-300/15 dark:bg-card/90 dark:shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:px-8 lg:px-10">
+            <div className="pointer-events-none absolute -right-10 top-0 size-44 rounded-full bg-pink-200/45 blur-3xl dark:bg-pink-500/12" />
+            <div className="pointer-events-none absolute bottom-0 left-0 size-48 rounded-full bg-sky-200/55 blur-3xl dark:bg-sky-400/12" />
 
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+                <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200">
                   <Sparkles className="size-4" />
                   {t('readingChallengePage.badge')}
                 </span>
-                <h1 className="mt-4 font-heading text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+                <h1 className="mt-4 font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                   {t('readingChallengePage.title')}
                 </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                   {t('readingChallengePage.description')}
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function ReadingChallengePage() {
         </section>
 
         <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-12 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:px-8">
-          <div className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-card/92 dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8">
             {error ? (
               <InlineNotice
                 tone="warning"
@@ -194,37 +194,37 @@ export default function ReadingChallengePage() {
                       >
                         {status ? getStatusLabel(status, t) : null}
                       </Badge>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-white/8 dark:text-muted-foreground">
                         {t('readingChallengePage.progressOfGoal', {
                           completed: formatNumber(challenge.completedBooks),
                           target: formatNumber(challenge.targetBooks),
                         })}
                       </span>
                     </div>
-                    <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-slate-900">
+                    <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-foreground">
                       {challenge.title}
                     </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                       {t('readingChallengePage.progressDescription')}
                     </p>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/75 px-5 py-4 text-left shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-600">
+                  <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/75 px-5 py-4 text-left shadow-sm dark:border-rose-300/20 dark:bg-rose-400/10 dark:shadow-none">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-600 dark:text-rose-300">
                       {t('readingChallengePage.progressPercentLabel')}
                     </p>
-                    <p className="mt-2 font-heading text-3xl font-bold text-rose-700">
+                    <p className="mt-2 font-heading text-3xl font-bold text-rose-700 dark:text-rose-200">
                       {progressPercent}%
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm font-medium text-slate-600">
+                  <div className="flex items-center justify-between text-sm font-medium text-muted-foreground">
                     <span>{t('readingChallengePage.progressBarLabel')}</span>
                     <span>{progressPercent}%</span>
                   </div>
-                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                     <div
                       className="motion-progress-fill h-full rounded-full bg-[linear-gradient(90deg,#f43f5e,#fb7185,#38bdf8)]"
                       style={{ transform: `scaleX(${progressPercent / 100})` }}
@@ -353,27 +353,27 @@ export default function ReadingChallengePage() {
 
           <div
             id="reading-challenge-form"
-            className="rounded-[2rem] border border-sky-200/70 bg-white/90 p-6 shadow-[0_24px_70px_rgba(14,165,233,0.1)] sm:p-8"
+            className="rounded-[2rem] border border-sky-200/70 bg-white/90 p-6 shadow-[0_24px_70px_rgba(14,165,233,0.1)] dark:border-sky-300/15 dark:bg-card/92 dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-700 dark:text-sky-300">
                   {challenge
                     ? t('readingChallengePage.formEditBadge')
                     : t('readingChallengePage.formCreateBadge')}
                 </p>
-                <h2 className="mt-2 font-heading text-2xl font-bold text-slate-900">
+                <h2 className="mt-2 font-heading text-2xl font-bold text-foreground">
                   {challenge
                     ? t('readingChallengePage.formEditTitle')
                     : t('readingChallengePage.formCreateTitle')}
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
                   {challenge
                     ? t('readingChallengePage.formEditDescription')
                     : t('readingChallengePage.formCreateDescription')}
                 </p>
               </div>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-400/10 dark:text-sky-200">
                 <PencilLine className="mr-1 inline size-3" />
                 {t('readingChallengePage.localOnlyChip')}
               </span>
@@ -394,7 +394,7 @@ export default function ReadingChallengePage() {
                       title: event.target.value,
                     }))
                   }
-                  className="h-11 rounded-2xl border-slate-200 px-4"
+                  className="h-11 rounded-2xl border-slate-200 px-4 dark:border-white/10 dark:bg-background/55"
                 />
               </div>
 
@@ -415,7 +415,7 @@ export default function ReadingChallengePage() {
                       targetBooks: event.target.value,
                     }))
                   }
-                  className="h-11 rounded-2xl border-slate-200 px-4"
+                  className="h-11 rounded-2xl border-slate-200 px-4 dark:border-white/10 dark:bg-background/55"
                 />
               </div>
 
@@ -434,8 +434,8 @@ export default function ReadingChallengePage() {
                       }
                       className={`rounded-[1.25rem] border px-4 py-3 text-left transition-all ${
                         formState.preset === preset
-                          ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50/50'
+                          ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-300/35 dark:bg-sky-400/12 dark:text-sky-200'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50/50 dark:border-white/10 dark:bg-background/45 dark:text-muted-foreground dark:hover:border-sky-300/25 dark:hover:bg-sky-400/8'
                       }`}
                     >
                       <p className="font-semibold">
@@ -464,15 +464,15 @@ export default function ReadingChallengePage() {
                         customEndDate: event.target.value,
                       }))
                     }
-                    className="h-11 rounded-2xl border-slate-200 px-4"
+                    className="h-11 rounded-2xl border-slate-200 px-4 dark:border-white/10 dark:bg-background/55"
                   />
                 </div>
               ) : (
-                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
+                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4 dark:border-sky-300/20 dark:bg-sky-400/8">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700 dark:text-sky-300">
                     {t('readingChallengePage.previewLabel')}
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
+                  <p className="mt-2 text-sm font-semibold text-foreground">
                     {deadlinePreview
                       ? t('readingChallengePage.previewValue', {
                           date: formatDate(deadlinePreview),
@@ -483,7 +483,7 @@ export default function ReadingChallengePage() {
               )}
 
               {formError ? (
-                <div className="rounded-[1.25rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <div className="rounded-[1.25rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200">
                   {formError}
                 </div>
               ) : null}
@@ -498,11 +498,11 @@ export default function ReadingChallengePage() {
               </Button>
             </form>
 
-            <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/90 p-5">
-              <p className="font-heading text-lg font-semibold text-slate-900">
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50/90 p-5 dark:border-white/10 dark:bg-background/45">
+              <p className="font-heading text-lg font-semibold text-foreground">
                 {t('readingChallengePage.formHintTitle')}
               </p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">
                 {challenge
                   ? t('readingChallengePage.formHintEdit')
                   : t('readingChallengePage.formHintCreate')}
@@ -528,17 +528,17 @@ function StatCard({
   detail: string
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4">
-      <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-background/45">
+      <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm dark:bg-card dark:text-foreground dark:shadow-none">
         <Icon className="size-5" />
       </span>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 font-heading text-2xl font-bold text-slate-900">
+      <p className="mt-2 font-heading text-2xl font-bold text-foreground">
         {value}
       </p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p>
     </div>
   )
 }
@@ -558,10 +558,10 @@ function InlineNotice({
 }) {
   const palette =
     tone === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-300/20 dark:bg-emerald-400/10 dark:text-emerald-200'
       : tone === 'warning'
-        ? 'border-amber-200 bg-amber-50 text-amber-800'
-        : 'border-rose-200 bg-rose-50 text-rose-800'
+        ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-200'
+        : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200'
 
   return (
     <div className={`mt-6 rounded-[1.5rem] border px-5 py-4 ${palette}`}>
@@ -624,17 +624,17 @@ function getDeadlinePreview(
 function getStatusBadgeClassName(status: ReadingChallengeStatus | null) {
   switch (status) {
     case 'COMPLETED':
-      return 'bg-emerald-100 text-emerald-700'
+      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200'
     case 'OVERDUE':
-      return 'bg-rose-100 text-rose-700'
+      return 'bg-rose-100 text-rose-700 dark:bg-rose-400/10 dark:text-rose-200'
     case 'NEAR_COMPLETION':
-      return 'bg-amber-100 text-amber-700'
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200'
     case 'IN_PROGRESS':
-      return 'bg-sky-100 text-sky-700'
+      return 'bg-sky-100 text-sky-700 dark:bg-sky-400/10 dark:text-sky-200'
     case 'NOT_STARTED':
-      return 'bg-slate-100 text-slate-700'
+      return 'bg-slate-100 text-slate-700 dark:bg-white/8 dark:text-muted-foreground'
     default:
-      return 'bg-slate-100 text-slate-700'
+      return 'bg-slate-100 text-slate-700 dark:bg-white/8 dark:text-muted-foreground'
   }
 }
 
