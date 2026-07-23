@@ -35,90 +35,107 @@ type KnownShipmentStatus = ShipmentStatus
 
 const DEFAULT_TONE: EventTone = {
   icon: ReceiptText,
-  iconClassName: 'text-slate-600',
-  surfaceClassName: 'border-slate-200 bg-slate-50/80',
+  iconClassName: 'text-slate-600 dark:text-slate-300',
+  surfaceClassName:
+    'border-slate-200 bg-slate-50/80 dark:border-slate-400/20 dark:bg-slate-400/10',
 }
 
 const EVENT_TONES: Record<string, EventTone> = {
   ORDER_CREATED: {
     icon: ReceiptText,
     iconClassName: 'text-primary',
-    surfaceClassName: 'border-primary/15 bg-primary/6',
+    surfaceClassName:
+      'border-primary/15 bg-primary/6 dark:border-primary/25 dark:bg-primary/10',
   },
   COUPON_APPLIED: {
     icon: TicketPercent,
-    iconClassName: 'text-fuchsia-600',
-    surfaceClassName: 'border-fuchsia-200 bg-fuchsia-50/80',
+    iconClassName: 'text-fuchsia-600 dark:text-fuchsia-300',
+    surfaceClassName:
+      'border-fuchsia-200 bg-fuchsia-50/80 dark:border-fuchsia-400/20 dark:bg-fuchsia-400/10',
   },
   PAYMENT_PENDING: {
     icon: Clock3,
-    iconClassName: 'text-amber-600',
-    surfaceClassName: 'border-amber-200 bg-amber-50/80',
+    iconClassName: 'text-amber-600 dark:text-amber-300',
+    surfaceClassName:
+      'border-amber-200 bg-amber-50/80 dark:border-amber-400/20 dark:bg-amber-400/10',
   },
   PAYMENT_PAID: {
     icon: BadgeCheck,
-    iconClassName: 'text-emerald-600',
-    surfaceClassName: 'border-emerald-200 bg-emerald-50/80',
+    iconClassName: 'text-emerald-600 dark:text-emerald-300',
+    surfaceClassName:
+      'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10',
   },
   ORDER_STATUS_CHANGED: {
     icon: PackageCheck,
-    iconClassName: 'text-sky-600',
-    surfaceClassName: 'border-sky-200 bg-sky-50/80',
+    iconClassName: 'text-sky-600 dark:text-sky-300',
+    surfaceClassName:
+      'border-sky-200 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10',
   },
   SHIPMENT_ASSIGNED: {
     icon: Truck,
     iconClassName: 'text-primary',
-    surfaceClassName: 'border-primary/15 bg-primary/6',
+    surfaceClassName:
+      'border-primary/15 bg-primary/6 dark:border-primary/25 dark:bg-primary/10',
   },
   SHIPMENT_STATUS_CHANGED: {
     icon: Truck,
-    iconClassName: 'text-amber-700',
-    surfaceClassName: 'border-amber-200 bg-amber-50/80',
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    surfaceClassName:
+      'border-amber-200 bg-amber-50/80 dark:border-amber-400/20 dark:bg-amber-400/10',
   },
   ORDER_CANCELLED: {
     icon: CircleOff,
-    iconClassName: 'text-rose-600',
-    surfaceClassName: 'border-rose-200 bg-rose-50/80',
+    iconClassName: 'text-rose-600 dark:text-rose-300',
+    surfaceClassName:
+      'border-rose-200 bg-rose-50/80 dark:border-rose-400/20 dark:bg-rose-400/10',
   },
   STOCK_ROLLED_BACK: {
     icon: RotateCcw,
-    iconClassName: 'text-sky-700',
-    surfaceClassName: 'border-sky-200 bg-sky-50/80',
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    surfaceClassName:
+      'border-sky-200 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10',
   },
   COUPON_ROLLED_BACK: {
     icon: RotateCcw,
-    iconClassName: 'text-fuchsia-600',
-    surfaceClassName: 'border-fuchsia-200 bg-fuchsia-50/80',
+    iconClassName: 'text-fuchsia-600 dark:text-fuchsia-300',
+    surfaceClassName:
+      'border-fuchsia-200 bg-fuchsia-50/80 dark:border-fuchsia-400/20 dark:bg-fuchsia-400/10',
   },
   RETURN_REQUESTED: {
     icon: RotateCcw,
-    iconClassName: 'text-amber-600',
-    surfaceClassName: 'border-amber-200 bg-amber-50/80',
+    iconClassName: 'text-amber-600 dark:text-amber-300',
+    surfaceClassName:
+      'border-amber-200 bg-amber-50/80 dark:border-amber-400/20 dark:bg-amber-400/10',
   },
   RETURN_APPROVED: {
     icon: BadgeCheck,
-    iconClassName: 'text-emerald-600',
-    surfaceClassName: 'border-emerald-200 bg-emerald-50/80',
+    iconClassName: 'text-emerald-600 dark:text-emerald-300',
+    surfaceClassName:
+      'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10',
   },
   RETURN_REJECTED: {
     icon: CircleOff,
-    iconClassName: 'text-rose-600',
-    surfaceClassName: 'border-rose-200 bg-rose-50/80',
+    iconClassName: 'text-rose-600 dark:text-rose-300',
+    surfaceClassName:
+      'border-rose-200 bg-rose-50/80 dark:border-rose-400/20 dark:bg-rose-400/10',
   },
   RETURN_CANCELLED: {
     icon: CircleOff,
-    iconClassName: 'text-slate-600',
-    surfaceClassName: 'border-slate-200 bg-slate-50/80',
+    iconClassName: 'text-slate-600 dark:text-slate-300',
+    surfaceClassName:
+      'border-slate-200 bg-slate-50/80 dark:border-slate-400/20 dark:bg-slate-400/10',
   },
   REFUND_INTERNAL_APPROVED: {
     icon: BadgeCheck,
     iconClassName: 'text-primary',
-    surfaceClassName: 'border-primary/15 bg-primary/6',
+    surfaceClassName:
+      'border-primary/15 bg-primary/6 dark:border-primary/25 dark:bg-primary/10',
   },
   STOCK_RESTOCKED_FROM_RETURN: {
     icon: RotateCcw,
-    iconClassName: 'text-sky-700',
-    surfaceClassName: 'border-sky-200 bg-sky-50/80',
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    surfaceClassName:
+      'border-sky-200 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10',
   },
 }
 
@@ -167,7 +184,7 @@ export function OrderTimelineList({
               <Icon className={cn('h-5 w-5', tone.iconClassName)} />
             </span>
 
-            <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-4 shadow-sm">
+            <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-4 shadow-sm dark:bg-background/45">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-foreground">{event.title}</p>

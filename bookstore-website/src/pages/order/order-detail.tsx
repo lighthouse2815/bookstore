@@ -57,24 +57,29 @@ const ORDER_STATUS_TONES: Record<
   }
 > = {
   PENDING: {
-    badgeClassName: 'bg-sky-50 text-sky-700 ring-1 ring-sky-100',
-    iconClassName: 'text-sky-600',
+    badgeClassName:
+      'bg-sky-50 text-sky-700 ring-1 ring-sky-100 dark:bg-sky-400/10 dark:text-sky-200 dark:ring-sky-400/20',
+    iconClassName: 'text-sky-600 dark:text-sky-300',
   },
   CONFIRMED: {
-    badgeClassName: 'bg-primary/10 text-primary ring-1 ring-primary/10',
+    badgeClassName:
+      'bg-primary/10 text-primary ring-1 ring-primary/10 dark:bg-primary/15 dark:ring-primary/25',
     iconClassName: 'text-primary',
   },
   SHIPPING: {
-    badgeClassName: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
-    iconClassName: 'text-amber-600',
+    badgeClassName:
+      'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-400/10 dark:text-amber-200 dark:ring-amber-400/20',
+    iconClassName: 'text-amber-600 dark:text-amber-300',
   },
   DELIVERED: {
-    badgeClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
-    iconClassName: 'text-emerald-600',
+    badgeClassName:
+      'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-400/10 dark:text-emerald-200 dark:ring-emerald-400/20',
+    iconClassName: 'text-emerald-600 dark:text-emerald-300',
   },
   CANCELLED: {
-    badgeClassName: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100',
-    iconClassName: 'text-rose-600',
+    badgeClassName:
+      'bg-rose-50 text-rose-700 ring-1 ring-rose-100 dark:bg-rose-400/10 dark:text-rose-200 dark:ring-rose-400/20',
+    iconClassName: 'text-rose-600 dark:text-rose-300',
   },
 }
 
@@ -86,32 +91,39 @@ const PAYMENT_STATUS_TONES: Record<
   }
 > = {
   PENDING: {
-    tileClassName: 'border-rose-100 bg-rose-50/70',
-    iconClassName: 'text-rose-500',
+    tileClassName:
+      'border-rose-100 bg-rose-50/70 dark:border-rose-400/20 dark:bg-rose-400/8',
+    iconClassName: 'text-rose-500 dark:text-rose-300',
   },
   UNPAID: {
-    tileClassName: 'border-rose-100 bg-rose-50/70',
-    iconClassName: 'text-rose-500',
+    tileClassName:
+      'border-rose-100 bg-rose-50/70 dark:border-rose-400/20 dark:bg-rose-400/8',
+    iconClassName: 'text-rose-500 dark:text-rose-300',
   },
   PAID: {
-    tileClassName: 'border-emerald-100 bg-emerald-50/70',
-    iconClassName: 'text-emerald-500',
+    tileClassName:
+      'border-emerald-100 bg-emerald-50/70 dark:border-emerald-400/20 dark:bg-emerald-400/8',
+    iconClassName: 'text-emerald-500 dark:text-emerald-300',
   },
   FAILED: {
-    tileClassName: 'border-rose-100 bg-rose-50/70',
-    iconClassName: 'text-rose-500',
+    tileClassName:
+      'border-rose-100 bg-rose-50/70 dark:border-rose-400/20 dark:bg-rose-400/8',
+    iconClassName: 'text-rose-500 dark:text-rose-300',
   },
   CANCELLED: {
-    tileClassName: 'border-slate-200 bg-slate-50/80',
-    iconClassName: 'text-slate-500',
+    tileClassName:
+      'border-slate-200 bg-slate-50/80 dark:border-slate-400/20 dark:bg-slate-400/8',
+    iconClassName: 'text-slate-500 dark:text-slate-300',
   },
   REFUNDED: {
-    tileClassName: 'border-amber-100 bg-amber-50/70',
-    iconClassName: 'text-amber-500',
+    tileClassName:
+      'border-amber-100 bg-amber-50/70 dark:border-amber-400/20 dark:bg-amber-400/8',
+    iconClassName: 'text-amber-500 dark:text-amber-300',
   },
   EXPIRED: {
-    tileClassName: 'border-slate-200 bg-slate-50/80',
-    iconClassName: 'text-slate-500',
+    tileClassName:
+      'border-slate-200 bg-slate-50/80 dark:border-slate-400/20 dark:bg-slate-400/8',
+    iconClassName: 'text-slate-500 dark:text-slate-300',
   },
 }
 
@@ -148,18 +160,18 @@ export default function OrderDetailPage() {
   } = useOrderDetailPage()
 
   return (
-    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)]">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)] dark:bg-[linear-gradient(180deg,rgba(14,13,22,1)_0%,rgba(10,9,17,1)_54%,rgba(7,7,13,1)_100%)]">
       <Header />
 
       <main className="flex-1 pb-16 pt-6 sm:pb-20 sm:pt-8">
         <div className="mx-auto flex w-full max-w-[1272px] flex-col gap-6 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="font-heading text-4xl font-bold tracking-tight text-slate-950">
+              <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
                 {t('orders.detailTitle')}
               </h1>
               {order ? (
-                <p className="mt-3 break-all text-sm text-slate-500 sm:text-base">
+                <p className="mt-3 break-all text-sm text-muted-foreground sm:text-base">
                   {t('orders.orderId')}: {order.orderId}
                 </p>
               ) : null}
@@ -282,10 +294,10 @@ function OrderDetailContent({
                 <CalendarDays className="h-[22px] w-[22px]" />
               </span>
               <div>
-                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {t('orders.createdAt')}
                 </p>
-                <p className="mt-1.5 text-[1.7rem] font-bold text-slate-950">
+                <p className="mt-1.5 text-[1.7rem] font-bold text-foreground">
                   {formatDate(order.createdAt)}
                 </p>
               </div>
@@ -311,10 +323,10 @@ function OrderDetailContent({
             />
             <DetailTile
               icon={Phone}
-              iconClassName="text-rose-500"
+              iconClassName="text-rose-500 dark:text-rose-300"
               label={t('orders.receiverPhone')}
               value={order.receiverPhone}
-              tileClassName="border-rose-100 bg-rose-50/65"
+              tileClassName="border-rose-100 bg-rose-50/65 dark:border-rose-400/20 dark:bg-rose-400/8"
             />
             <DetailTile
               icon={WalletCards}
@@ -361,7 +373,7 @@ function OrderDetailContent({
             />
           </div>
 
-          <div className="mt-6 rounded-[24px] bg-[linear-gradient(135deg,rgba(124,92,255,0.1),rgba(124,92,255,0.04))] px-5 py-4">
+          <div className="mt-6 rounded-[24px] bg-primary/6 px-5 py-4 dark:bg-primary/10">
             <SummaryRow
               label={t('orders.finalAmount')}
               value={formatCurrency(order.finalAmount)}
@@ -381,7 +393,7 @@ function OrderDetailContent({
                 title={t('orderDetail.cancelTitle')}
                 variant="plain"
               />
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {t('orderDetail.cancelDescription')}
               </p>
             </div>
@@ -389,7 +401,7 @@ function OrderDetailContent({
               type="button"
               variant="outline"
               onClick={onOpenCancelOrderDialog}
-              className="border-rose-200 text-rose-700 hover:bg-rose-50"
+              className="border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-400/25 dark:text-rose-300 dark:hover:bg-rose-400/10"
             >
               <XCircle className="mr-2 h-4 w-4" />
               {t('orderDetail.cancelAction')}
@@ -440,7 +452,7 @@ function OrderDetailContent({
                 <div className="min-w-0 pt-1">
                   <Link
                     to={`/books/${item.bookId}`}
-                    className="text-[1.1rem] font-bold text-slate-950 transition hover:text-primary"
+                    className="text-[1.1rem] font-bold text-foreground transition hover:text-primary"
                   >
                     {item.bookTitle}
                   </Link>
@@ -461,7 +473,7 @@ function OrderDetailContent({
                       </Link>
                     ) : null}
                   </div>
-                  <p className="mt-2 text-[15px] text-slate-500">
+                  <p className="mt-2 text-[15px] text-muted-foreground">
                     {t('checkout.quantityShort', {
                       count: item.quantity,
                     })}{' '}
@@ -470,7 +482,7 @@ function OrderDetailContent({
                 </div>
               </div>
 
-              <p className="shrink-0 pt-1 text-[1.05rem] font-bold text-slate-950 md:text-[1.15rem]">
+              <p className="shrink-0 pt-1 text-[1.05rem] font-bold text-foreground md:text-[1.15rem]">
                 {formatCurrency(item.lineTotal)}
               </p>
             </article>
@@ -490,7 +502,7 @@ function OrderDetailContent({
           title={t('orderTimeline.title')}
           variant="plain"
         />
-        <p className="mt-3 text-sm leading-6 text-slate-500">
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
           {t('orderTimeline.description')}
         </p>
 
@@ -569,10 +581,10 @@ function DetailTile({
           <Icon className={cn('h-[18px] w-[18px]', iconClassName)} />
         </span>
         <div className="min-w-0">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="mt-2 break-words text-[1.03rem] font-bold leading-7 text-slate-950">
+          <p className="mt-2 break-words text-[1.03rem] font-bold leading-7 text-foreground">
             {value}
           </p>
         </div>
@@ -605,14 +617,14 @@ function SummaryRow({
           'text-sm',
           emphasized
             ? 'whitespace-nowrap text-center text-2xl font-semibold tracking-tight text-primary'
-            : 'text-slate-500',
+            : 'text-muted-foreground',
         )}
       >
         {label}
       </span>
       <span
         className={cn(
-          'text-right text-[15px] font-semibold text-slate-950',
+          'text-right text-[15px] font-semibold text-foreground',
           emphasized && 'w-full text-center font-heading text-[2rem] text-primary',
         )}
       >
@@ -630,20 +642,24 @@ const RETURN_REQUEST_STATUS_TONES: Record<
   }
 > = {
   PENDING: {
-    badgeClassName: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
-    iconClassName: 'text-amber-600',
+    badgeClassName:
+      'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-400/10 dark:text-amber-200 dark:ring-amber-400/20',
+    iconClassName: 'text-amber-600 dark:text-amber-300',
   },
   APPROVED: {
-    badgeClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
-    iconClassName: 'text-emerald-600',
+    badgeClassName:
+      'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-400/10 dark:text-emerald-200 dark:ring-emerald-400/20',
+    iconClassName: 'text-emerald-600 dark:text-emerald-300',
   },
   REJECTED: {
-    badgeClassName: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100',
-    iconClassName: 'text-rose-600',
+    badgeClassName:
+      'bg-rose-50 text-rose-700 ring-1 ring-rose-100 dark:bg-rose-400/10 dark:text-rose-200 dark:ring-rose-400/20',
+    iconClassName: 'text-rose-600 dark:text-rose-300',
   },
   CANCELLED: {
-    badgeClassName: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
-    iconClassName: 'text-slate-500',
+    badgeClassName:
+      'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-400/10 dark:text-slate-200 dark:ring-slate-400/20',
+    iconClassName: 'text-slate-500 dark:text-slate-300',
   },
 }
 
@@ -680,7 +696,7 @@ function ReturnRequestPanel({
             title={t('returnRequests.sectionTitle')}
             variant="plain"
           />
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
             {t('returnRequests.sectionDescription')}
           </p>
         </div>
@@ -709,11 +725,11 @@ function ReturnRequestPanel({
             title={t('returnRequests.emptyForOrder')}
           />
         ) : (
-          <div className="rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(249,245,255,0.94)_100%)] p-5 shadow-[0_12px_30px_rgba(137,92,255,0.06)]">
+          <div className="rounded-[24px] border border-primary/10 bg-background/75 p-5 shadow-[0_12px_30px_rgba(137,92,255,0.06)] dark:border-primary/20 dark:bg-background/45 dark:shadow-none">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="font-heading text-2xl font-bold text-slate-950">
+                  <h3 className="font-heading text-2xl font-bold text-foreground">
                     {t('returnRequests.latestRequestTitle')}
                   </h3>
                   <span
@@ -733,10 +749,10 @@ function ReturnRequestPanel({
                     {getReturnRequestStatusLabel(latestReturnRequest.status, t)}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {t('returnRequests.createdAt')}: {formatDate(latestReturnRequest.createdAt)}
                 </p>
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-foreground/85">
                   {latestReturnRequest.reason}
                 </p>
               </div>
@@ -769,14 +785,14 @@ function ReturnRequestPanel({
               />
               <DetailTile
                 icon={ReceiptText}
-                iconClassName="text-emerald-500"
+                iconClassName="text-emerald-500 dark:text-emerald-300"
                 label={t('returnRequests.approvedAmount')}
                 value={
                   latestReturnRequest.approvedRefundAmount == null
                     ? t('returnRequests.notProcessed')
                     : formatCurrency(latestReturnRequest.approvedRefundAmount)
                 }
-                tileClassName="border-emerald-100 bg-emerald-50/65"
+                tileClassName="border-emerald-100 bg-emerald-50/65 dark:border-emerald-400/20 dark:bg-emerald-400/8"
               />
               <DetailTile
                 icon={Clock3}
@@ -800,11 +816,11 @@ function ReturnRequestPanel({
             </div>
 
             {latestReturnRequest.adminNote ? (
-              <div className="mt-5 rounded-[20px] border border-slate-200 bg-slate-50/90 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <div className="mt-5 rounded-[20px] border border-border bg-muted/30 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   {t('returnRequests.adminNote')}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-foreground/85">
                   {latestReturnRequest.adminNote}
                 </p>
               </div>
@@ -913,7 +929,7 @@ function ReturnRequestDialog({
             <h2 className="font-heading text-3xl font-bold text-foreground">
               {t('returnRequests.dialogTitle')}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {t('returnRequests.dialogDescription')}
             </p>
           </div>
