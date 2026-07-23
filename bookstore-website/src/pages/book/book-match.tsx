@@ -53,35 +53,36 @@ const moodOptions: MatchOption<BookMatchMood>[] = [
     icon: Coffee,
     titleKey: 'book.match.moods.RELAX.label',
     descriptionKey: 'book.match.moods.RELAX.description',
-    accentClassName: 'bg-amber-500/15 text-amber-700',
+    accentClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   },
   {
     value: 'STUDY',
     icon: GraduationCap,
     titleKey: 'book.match.moods.STUDY.label',
     descriptionKey: 'book.match.moods.STUDY.description',
-    accentClassName: 'bg-sky-500/15 text-sky-700',
+    accentClassName: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
   },
   {
     value: 'ADVENTURE',
     icon: Compass,
     titleKey: 'book.match.moods.ADVENTURE.label',
     descriptionKey: 'book.match.moods.ADVENTURE.description',
-    accentClassName: 'bg-emerald-500/15 text-emerald-700',
+    accentClassName:
+      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
   },
   {
     value: 'MYSTERY',
     icon: MoonStar,
     titleKey: 'book.match.moods.MYSTERY.label',
     descriptionKey: 'book.match.moods.MYSTERY.description',
-    accentClassName: 'bg-slate-500/15 text-slate-700',
+    accentClassName: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
   },
   {
     value: 'HEALING',
     icon: HeartHandshake,
     titleKey: 'book.match.moods.HEALING.label',
     descriptionKey: 'book.match.moods.HEALING.description',
-    accentClassName: 'bg-rose-500/15 text-rose-700',
+    accentClassName: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
   },
 ]
 
@@ -91,21 +92,22 @@ const budgetOptions: MatchOption<BookMatchBudget>[] = [
     icon: PiggyBank,
     titleKey: 'book.match.budgets.UNDER_100.label',
     descriptionKey: 'book.match.budgets.UNDER_100.description',
-    accentClassName: 'bg-lime-500/15 text-lime-700',
+    accentClassName: 'bg-lime-500/15 text-lime-700 dark:text-lime-300',
   },
   {
     value: 'FROM_100_TO_200',
     icon: Wallet,
     titleKey: 'book.match.budgets.FROM_100_TO_200.label',
     descriptionKey: 'book.match.budgets.FROM_100_TO_200.description',
-    accentClassName: 'bg-orange-500/15 text-orange-700',
+    accentClassName: 'bg-orange-500/15 text-orange-700 dark:text-orange-300',
   },
   {
     value: 'ABOVE_200',
     icon: Gem,
     titleKey: 'book.match.budgets.ABOVE_200.label',
     descriptionKey: 'book.match.budgets.ABOVE_200.description',
-    accentClassName: 'bg-fuchsia-500/15 text-fuchsia-700',
+    accentClassName:
+      'bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300',
   },
 ]
 
@@ -115,21 +117,21 @@ const readingTimeOptions: MatchOption<BookMatchReadingTime>[] = [
     icon: BookOpen,
     titleKey: 'book.match.readingTimes.SHORT.label',
     descriptionKey: 'book.match.readingTimes.SHORT.description',
-    accentClassName: 'bg-cyan-500/15 text-cyan-700',
+    accentClassName: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300',
   },
   {
     value: 'MEDIUM',
     icon: Clock3,
     titleKey: 'book.match.readingTimes.MEDIUM.label',
     descriptionKey: 'book.match.readingTimes.MEDIUM.description',
-    accentClassName: 'bg-violet-500/15 text-violet-700',
+    accentClassName: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
   },
   {
     value: 'LONG',
     icon: Hourglass,
     titleKey: 'book.match.readingTimes.LONG.label',
     descriptionKey: 'book.match.readingTimes.LONG.description',
-    accentClassName: 'bg-red-500/15 text-red-700',
+    accentClassName: 'bg-red-500/15 text-red-700 dark:text-red-300',
   },
 ]
 
@@ -190,11 +192,11 @@ export default function BookMatchPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,_rgba(244,114,182,0.12),_transparent_28%),radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_26%),linear-gradient(180deg,_rgba(248,250,252,0.96),_rgba(255,255,255,1))]">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,_rgba(244,114,182,0.12),_transparent_28%),radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_26%),linear-gradient(180deg,_rgba(248,250,252,0.96),_rgba(255,255,255,1))] dark:bg-[radial-gradient(circle_at_top_right,_rgba(244,114,182,0.08),_transparent_30%),radial-gradient(circle_at_top_left,_rgba(59,130,246,0.08),_transparent_28%),linear-gradient(180deg,_rgba(20,22,31,1),_rgba(12,12,19,1))]">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/90 px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:px-8 lg:px-10">
+          <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/90 px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:px-8 lg:px-10">
             <div className="absolute -right-12 top-6 size-32 rounded-full bg-primary/10 blur-2xl" />
             <div className="absolute -left-10 bottom-0 size-28 rounded-full bg-accent/15 blur-2xl" />
             <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-end">
@@ -211,7 +213,7 @@ export default function BookMatchPage() {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-background/80 p-5 backdrop-blur">
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-5 backdrop-blur dark:border-white/10 dark:bg-background/55">
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span>{t('book.match.progressTitle')}</span>
                   <span>
@@ -310,7 +312,7 @@ export default function BookMatchPage() {
             </div>
 
             <aside className="lg:sticky lg:top-24">
-              <div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
+              <div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] dark:border-white/10 dark:shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
                 <div className="flex items-center gap-3">
                   <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Sparkles className="size-5" />
@@ -461,7 +463,7 @@ export default function BookMatchPage() {
                   {recommendations.map((recommendation) => (
                     <div
                       key={recommendation.book.id}
-                      className="motion-card space-y-3 rounded-[1.5rem] border border-border/70 bg-card/90 p-3 shadow-sm"
+                      className="motion-card space-y-3 rounded-[1.5rem] border border-border/70 bg-card/90 p-3 shadow-sm dark:border-white/10 dark:shadow-none"
                     >
                       <BookCard book={recommendation.book} />
                       {recommendation.reasons.length > 0 ? (

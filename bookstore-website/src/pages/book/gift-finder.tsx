@@ -55,35 +55,36 @@ const recipientOptions: GiftOption<GiftFinderRecipient>[] = [
     icon: Sparkles,
     titleKey: 'book.giftFinder.recipients.BEST_FRIEND.label',
     descriptionKey: 'book.giftFinder.recipients.BEST_FRIEND.description',
-    accentClassName: 'bg-sky-500/15 text-sky-700',
+    accentClassName: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
   },
   {
     value: 'PARTNER',
     icon: HeartHandshake,
     titleKey: 'book.giftFinder.recipients.PARTNER.label',
     descriptionKey: 'book.giftFinder.recipients.PARTNER.description',
-    accentClassName: 'bg-rose-500/15 text-rose-700',
+    accentClassName: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
   },
   {
     value: 'PARENT',
     icon: BookOpen,
     titleKey: 'book.giftFinder.recipients.PARENT.label',
     descriptionKey: 'book.giftFinder.recipients.PARENT.description',
-    accentClassName: 'bg-amber-500/15 text-amber-700',
+    accentClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   },
   {
     value: 'COLLEAGUE',
     icon: GraduationCap,
     titleKey: 'book.giftFinder.recipients.COLLEAGUE.label',
     descriptionKey: 'book.giftFinder.recipients.COLLEAGUE.description',
-    accentClassName: 'bg-emerald-500/15 text-emerald-700',
+    accentClassName:
+      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
   },
   {
     value: 'YOUNG_READER',
     icon: Compass,
     titleKey: 'book.giftFinder.recipients.YOUNG_READER.label',
     descriptionKey: 'book.giftFinder.recipients.YOUNG_READER.description',
-    accentClassName: 'bg-violet-500/15 text-violet-700',
+    accentClassName: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
   },
 ]
 
@@ -93,28 +94,29 @@ const occasionOptions: GiftOption<GiftFinderOccasion>[] = [
     icon: Gift,
     titleKey: 'book.giftFinder.occasions.BIRTHDAY.label',
     descriptionKey: 'book.giftFinder.occasions.BIRTHDAY.description',
-    accentClassName: 'bg-fuchsia-500/15 text-fuchsia-700',
+    accentClassName:
+      'bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300',
   },
   {
     value: 'THANK_YOU',
     icon: HeartHandshake,
     titleKey: 'book.giftFinder.occasions.THANK_YOU.label',
     descriptionKey: 'book.giftFinder.occasions.THANK_YOU.description',
-    accentClassName: 'bg-cyan-500/15 text-cyan-700',
+    accentClassName: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300',
   },
   {
     value: 'CELEBRATION',
     icon: Sparkles,
     titleKey: 'book.giftFinder.occasions.CELEBRATION.label',
     descriptionKey: 'book.giftFinder.occasions.CELEBRATION.description',
-    accentClassName: 'bg-orange-500/15 text-orange-700',
+    accentClassName: 'bg-orange-500/15 text-orange-700 dark:text-orange-300',
   },
   {
     value: 'ENCOURAGEMENT',
     icon: Compass,
     titleKey: 'book.giftFinder.occasions.ENCOURAGEMENT.label',
     descriptionKey: 'book.giftFinder.occasions.ENCOURAGEMENT.description',
-    accentClassName: 'bg-lime-500/15 text-lime-700',
+    accentClassName: 'bg-lime-500/15 text-lime-700 dark:text-lime-300',
   },
 ]
 
@@ -124,21 +126,22 @@ const budgetOptions: GiftOption<GiftFinderBudget>[] = [
     icon: Wallet,
     titleKey: 'book.giftFinder.budgets.UNDER_150.label',
     descriptionKey: 'book.giftFinder.budgets.UNDER_150.description',
-    accentClassName: 'bg-lime-500/15 text-lime-700',
+    accentClassName: 'bg-lime-500/15 text-lime-700 dark:text-lime-300',
   },
   {
     value: 'FROM_150_TO_300',
     icon: Gift,
     titleKey: 'book.giftFinder.budgets.FROM_150_TO_300.label',
     descriptionKey: 'book.giftFinder.budgets.FROM_150_TO_300.description',
-    accentClassName: 'bg-orange-500/15 text-orange-700',
+    accentClassName: 'bg-orange-500/15 text-orange-700 dark:text-orange-300',
   },
   {
     value: 'ABOVE_300',
     icon: Gem,
     titleKey: 'book.giftFinder.budgets.ABOVE_300.label',
     descriptionKey: 'book.giftFinder.budgets.ABOVE_300.description',
-    accentClassName: 'bg-fuchsia-500/15 text-fuchsia-700',
+    accentClassName:
+      'bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300',
   },
 ]
 
@@ -148,28 +151,29 @@ const toneOptions: GiftOption<GiftFinderTone>[] = [
     icon: Coffee,
     titleKey: 'book.giftFinder.tones.COZY.label',
     descriptionKey: 'book.giftFinder.tones.COZY.description',
-    accentClassName: 'bg-amber-500/15 text-amber-700',
+    accentClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   },
   {
     value: 'INSPIRING',
     icon: Sparkles,
     titleKey: 'book.giftFinder.tones.INSPIRING.label',
     descriptionKey: 'book.giftFinder.tones.INSPIRING.description',
-    accentClassName: 'bg-sky-500/15 text-sky-700',
+    accentClassName: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
   },
   {
     value: 'PRACTICAL',
     icon: GraduationCap,
     titleKey: 'book.giftFinder.tones.PRACTICAL.label',
     descriptionKey: 'book.giftFinder.tones.PRACTICAL.description',
-    accentClassName: 'bg-emerald-500/15 text-emerald-700',
+    accentClassName:
+      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
   },
   {
     value: 'ESCAPIST',
     icon: Compass,
     titleKey: 'book.giftFinder.tones.ESCAPIST.label',
     descriptionKey: 'book.giftFinder.tones.ESCAPIST.description',
-    accentClassName: 'bg-violet-500/15 text-violet-700',
+    accentClassName: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
   },
 ]
 
@@ -237,11 +241,11 @@ export default function GiftFinderPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,_rgba(250,204,21,0.14),_transparent_30%),radial-gradient(circle_at_top_left,_rgba(236,72,153,0.12),_transparent_28%),linear-gradient(180deg,_rgba(255,251,235,0.98),_rgba(255,255,255,1))]">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,_rgba(250,204,21,0.14),_transparent_30%),radial-gradient(circle_at_top_left,_rgba(236,72,153,0.12),_transparent_28%),linear-gradient(180deg,_rgba(255,251,235,0.98),_rgba(255,255,255,1))] dark:bg-[radial-gradient(circle_at_top_right,_rgba(250,204,21,0.08),_transparent_32%),radial-gradient(circle_at_top_left,_rgba(236,72,153,0.08),_transparent_30%),linear-gradient(180deg,_rgba(24,20,30,1),_rgba(12,12,19,1))]">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/92 px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:px-8 lg:px-10">
+          <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/92 px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-card/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:px-8 lg:px-10">
             <div className="absolute -right-12 top-6 size-32 rounded-full bg-primary/10 blur-2xl" />
             <div className="absolute -left-8 bottom-0 size-28 rounded-full bg-amber-300/25 blur-2xl" />
             <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
@@ -258,7 +262,7 @@ export default function GiftFinderPage() {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-background/85 p-5 backdrop-blur">
+              <div className="rounded-3xl border border-border/70 bg-background/85 p-5 backdrop-blur dark:border-white/10 dark:bg-background/55">
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span>{t('book.giftFinder.progressTitle')}</span>
                   <span>
@@ -381,7 +385,7 @@ export default function GiftFinderPage() {
             </div>
 
             <aside className="lg:sticky lg:top-24">
-              <div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
+              <div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] dark:border-white/10 dark:shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
                 <div className="flex items-center gap-3">
                   <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Gift className="size-5" />
@@ -590,7 +594,7 @@ function GiftRecommendationCard({
   }
 
   return (
-    <article className="motion-card overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/92 shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
+    <article className="motion-card overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/92 shadow-[0_18px_50px_rgba(15,23,42,0.07)] dark:border-white/10 dark:shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
       <Link to={`/books/${book.id}`} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img
