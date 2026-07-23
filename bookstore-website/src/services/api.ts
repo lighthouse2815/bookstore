@@ -25,6 +25,7 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 
 let refreshPromise: Promise<string | null> | null = null
 let accessToken: string | null = null
+let csrfToken: string | null = null
 
 export function setAccessToken(token: string | null) {
   accessToken = token
@@ -92,21 +93,36 @@ function readCookie(name: string) {
 }
 
 async function ensureCsrfToken() {
-  if (readCookie('BOOKSTORE_CSRF')) return
+  const cookieToken = readCookie('BOOKSTORE_CSRF')
+  if (cookieToken) {
+    csrfToken = cookieToken
+    return cookieToken
+  }
 
-  await axios.get(`${apiBaseURL}/auth/web/csrf`, {
-    withCredentials: true,
-  })
+  if (csrfToken) return csrfToken
+
+  const response = await axios.get<ApiResponse<string>>(
+    `${apiBaseURL}/auth/web/csrf`,
+    {
+      withCredentials: true,
+    },
+  )
+  csrfToken = response.data.data
+
+  if (!csrfToken) {
+    throw new Error('Không thể khởi tạo mã bảo mật')
+  }
+
+  return csrfToken
 }
 
 async function postWebAuth<T>(path: string, data?: unknown) {
-  await ensureCsrfToken()
-  const csrfToken = readCookie('BOOKSTORE_CSRF')
+  const requestCsrfToken = await ensureCsrfToken()
   return axios.post<ApiResponse<T>>(`${apiBaseURL}${path}`, data, {
     withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
-      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      'X-CSRF-Token': requestCsrfToken,
     },
   })
 }

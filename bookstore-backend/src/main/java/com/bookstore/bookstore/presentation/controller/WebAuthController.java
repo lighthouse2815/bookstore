@@ -41,10 +41,11 @@ public class WebAuthController {
     private final AuthSecurityProperties authSecurityProperties;
 
     @GetMapping("/csrf")
-    public ResponseEntity<ApiResponse<Void>> csrf() {
+    public ResponseEntity<ApiResponse<String>> csrf() {
+        String csrfToken = createCsrfToken();
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, csrfCookie().toString())
-                .body(ApiResponse.success(null));
+                .header(HttpHeaders.SET_COOKIE, csrfCookie(csrfToken).toString())
+                .body(ApiResponse.success(csrfToken));
     }
 
     @PostMapping("/login")
@@ -116,10 +117,14 @@ public class WebAuthController {
                 .build();
     }
 
-    private ResponseCookie csrfCookie() {
+    private String createCsrfToken() {
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
-        return ResponseCookie.from(WebAuthCsrfFilter.CSRF_COOKIE, Base64.getUrlEncoder().withoutPadding().encodeToString(bytes))
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private ResponseCookie csrfCookie(String token) {
+        return ResponseCookie.from(WebAuthCsrfFilter.CSRF_COOKIE, token)
                 .httpOnly(false)
                 .secure(authSecurityProperties.web().cookieSecure())
                 .sameSite(authSecurityProperties.web().cookieSameSite())
