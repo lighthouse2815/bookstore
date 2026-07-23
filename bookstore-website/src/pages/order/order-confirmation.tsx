@@ -52,22 +52,29 @@ export default function OrderConfirmationPage() {
   )
   const [hasQrImageError, setHasQrImageError] = useState(false)
   const bankInfo = useMemo(() => {
+    const configuredFallbackQrUrl = readConfiguredValue(
+      import.meta.env.VITE_BANK_TRANSFER_QR_URL,
+    )
+    const fallbackQrConfig = readVietQrConfig(configuredFallbackQrUrl)
     const bankName = readConfiguredValue(
       import.meta.env.VITE_BANK_TRANSFER_BANK_NAME,
     )
-    const bankCode = readConfiguredValue(
-      import.meta.env.VITE_BANK_TRANSFER_BANK_CODE,
-    )
-    const accountNumber = readConfiguredValue(
-      import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NUMBER,
-    )
-    const accountName = readConfiguredValue(
-      import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NAME,
-    )
+    const bankCode =
+      readConfiguredValue(import.meta.env.VITE_BANK_TRANSFER_BANK_CODE) ??
+      fallbackQrConfig?.bankCode ??
+      null
+    const accountNumber =
+      readConfiguredValue(import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NUMBER) ??
+      fallbackQrConfig?.accountNumber ??
+      null
+    const accountName =
+      readConfiguredValue(import.meta.env.VITE_BANK_TRANSFER_ACCOUNT_NAME) ??
+      fallbackQrConfig?.accountName ??
+      null
     const paymentReference = transferContent.trim() || orderCode.trim()
 
     return {
-      bankName: bankName || transferT('bankFallback'),
+      bankName: bankName || bankCode || transferT('bankFallback'),
       accountNumber: accountNumber || transferT('accountNumberFallback'),
       accountName: accountName || transferT('accountNameFallback'),
       dynamicQrUrl: buildVietQrUrl(
@@ -78,7 +85,7 @@ export default function OrderConfirmationPage() {
         paymentReference,
       ),
       fallbackQrUrl: buildFallbackQrUrl(
-        import.meta.env.VITE_BANK_TRANSFER_QR_URL,
+        configuredFallbackQrUrl,
         totalAmount,
         paymentReference,
         accountName,
@@ -164,7 +171,7 @@ export default function OrderConfirmationPage() {
                     {statusMeta.description}
                   </p>
                   {isBankTransferOrder && isPolling && paymentStatus === 'PENDING' && (
-                    <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-amber-800">
+                    <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
                       <RefreshCcw className="size-4 animate-spin" />
                       {transferT('pollingNotice')}
                     </p>
@@ -172,7 +179,7 @@ export default function OrderConfirmationPage() {
                   {isBankTransferOrder &&
                   paymentStatus === 'PENDING' &&
                   remainingPaymentSeconds != null ? (
-                    <p className="mt-3 text-sm font-semibold text-rose-700">
+                    <p className="mt-3 text-sm font-semibold text-rose-700 dark:text-rose-300">
                       {transferT('remainingTime', {
                         time: formatRemainingTime(remainingPaymentSeconds),
                       })}
@@ -265,7 +272,7 @@ export default function OrderConfirmationPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-muted/30">
+                    <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-white">
                       {qrDisplay.url && !hasQrImageError ? (
                         <img
                           key={qrDisplay.url}
@@ -292,7 +299,7 @@ export default function OrderConfirmationPage() {
                     </div>
 
                     {qrDisplay.kind === 'fallback' && !hasQrImageError && (
-                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200">
                         <p className="font-semibold">
                           {transferT('qrFallbackNoticeTitle')}
                         </p>
@@ -345,7 +352,7 @@ export default function OrderConfirmationPage() {
                     />
                   </div>
 
-                  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200">
                     <p className="font-semibold">
                       {cashOnDeliveryT('noteTitle')}
                     </p>
@@ -504,46 +511,56 @@ function getStatusMeta(
           ? cashOnDeliveryT('waitingDescription')
           : transferT('waitingDescription'),
       icon: Clock3,
-      containerClassName: 'border-amber-200 bg-amber-50/80',
-      iconContainerClassName: 'bg-amber-100',
-      iconClassName: 'text-amber-700',
-      badgeClassName: 'bg-amber-100 text-amber-800',
+      containerClassName:
+        'border-amber-200 bg-amber-50/80 dark:border-amber-400/25 dark:bg-amber-400/10',
+      iconContainerClassName: 'bg-amber-100 dark:bg-amber-400/15',
+      iconClassName: 'text-amber-700 dark:text-amber-300',
+      badgeClassName:
+        'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200',
     },
     PAID: {
       title: transferT('paidTitle'),
       description: transferT('paidDescription'),
       icon: CheckCircle2,
-      containerClassName: 'border-emerald-200 bg-emerald-50/80',
-      iconContainerClassName: 'bg-emerald-100',
-      iconClassName: 'text-emerald-700',
-      badgeClassName: 'bg-emerald-100 text-emerald-800',
+      containerClassName:
+        'border-emerald-200 bg-emerald-50/80 dark:border-emerald-400/25 dark:bg-emerald-400/10',
+      iconContainerClassName: 'bg-emerald-100 dark:bg-emerald-400/15',
+      iconClassName: 'text-emerald-700 dark:text-emerald-300',
+      badgeClassName:
+        'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200',
     },
     FAILED: {
       title: transferT('failedTitle'),
       description: transferT('failedDescription'),
       icon: AlertTriangle,
-      containerClassName: 'border-rose-200 bg-rose-50/80',
-      iconContainerClassName: 'bg-rose-100',
-      iconClassName: 'text-rose-700',
-      badgeClassName: 'bg-rose-100 text-rose-800',
+      containerClassName:
+        'border-rose-200 bg-rose-50/80 dark:border-rose-400/25 dark:bg-rose-400/10',
+      iconContainerClassName: 'bg-rose-100 dark:bg-rose-400/15',
+      iconClassName: 'text-rose-700 dark:text-rose-300',
+      badgeClassName:
+        'bg-rose-100 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200',
     },
     CANCELLED: {
       title: transferT('cancelledTitle'),
       description: transferT('cancelledDescription'),
       icon: XCircle,
-      containerClassName: 'border-slate-200 bg-slate-50/80',
-      iconContainerClassName: 'bg-slate-200',
-      iconClassName: 'text-slate-700',
-      badgeClassName: 'bg-slate-200 text-slate-800',
+      containerClassName:
+        'border-slate-200 bg-slate-50/80 dark:border-slate-400/25 dark:bg-slate-400/10',
+      iconContainerClassName: 'bg-slate-200 dark:bg-slate-400/15',
+      iconClassName: 'text-slate-700 dark:text-slate-300',
+      badgeClassName:
+        'bg-slate-200 text-slate-800 dark:bg-slate-400/15 dark:text-slate-200',
     },
     EXPIRED: {
       title: 'Đơn hàng đã hết hạn thanh toán',
       description: 'Đơn hàng đã được hủy để hoàn lại tồn kho và ưu đãi đã giữ.',
       icon: XCircle,
-      containerClassName: 'border-slate-200 bg-slate-50/80',
-      iconContainerClassName: 'bg-slate-200',
-      iconClassName: 'text-slate-700',
-      badgeClassName: 'bg-slate-200 text-slate-800',
+      containerClassName:
+        'border-slate-200 bg-slate-50/80 dark:border-slate-400/25 dark:bg-slate-400/10',
+      iconContainerClassName: 'bg-slate-200 dark:bg-slate-400/15',
+      iconClassName: 'text-slate-700 dark:text-slate-300',
+      badgeClassName:
+        'bg-slate-200 text-slate-800 dark:bg-slate-400/15 dark:text-slate-200',
     },
   }
 
@@ -580,9 +597,74 @@ function formatRemainingTime(seconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`
 }
 
-function readConfiguredValue(value: string | undefined) {
+function readConfiguredValue(value: string | null | undefined) {
   const normalizedValue = value?.trim() || ''
-  return normalizedValue === '' ? null : normalizedValue
+
+  if (normalizedValue === '' || isPlaceholderValue(normalizedValue)) {
+    return null
+  }
+
+  return normalizedValue
+}
+
+function isPlaceholderValue(value: string) {
+  const normalizedValue = value.toLowerCase()
+
+  return (
+    normalizedValue.includes('your-demo') ||
+    normalizedValue.includes('your_account') ||
+    normalizedValue.includes('your-account') ||
+    normalizedValue.includes('placeholder') ||
+    normalizedValue.includes('change-me') ||
+    normalizedValue.includes('changeme') ||
+    normalizedValue.includes('<') ||
+    normalizedValue.includes('>')
+  )
+}
+
+function readVietQrConfig(qrUrl: string | null) {
+  if (!qrUrl) {
+    return null
+  }
+
+  try {
+    const url = new URL(qrUrl)
+
+    if (url.hostname.toLowerCase() !== 'img.vietqr.io') {
+      return null
+    }
+
+    const fileName = decodeURIComponent(url.pathname.split('/').pop() || '')
+    const accountPath = fileName.replace(
+      /-(?:compact2?|print)\.(?:png|jpe?g)$/i,
+      '',
+    )
+    const separatorIndex = accountPath.indexOf('-')
+
+    if (separatorIndex <= 0 || separatorIndex === accountPath.length - 1) {
+      return null
+    }
+
+    const bankCode = readConfiguredValue(accountPath.slice(0, separatorIndex))
+    const accountNumber = readConfiguredValue(
+      accountPath.slice(separatorIndex + 1),
+    )
+    const accountName = readConfiguredValue(
+      url.searchParams.get('accountName') ?? undefined,
+    )
+
+    if (!bankCode || !accountNumber) {
+      return null
+    }
+
+    return {
+      bankCode,
+      accountNumber,
+      accountName,
+    }
+  } catch {
+    return null
+  }
 }
 
 function buildVietQrUrl(
@@ -611,7 +693,7 @@ function buildVietQrUrl(
 }
 
 function buildFallbackQrUrl(
-  fallbackUrl: string | undefined,
+  fallbackUrl: string | null | undefined,
   amount: number,
   content: string | null,
   accountName: string | null,
