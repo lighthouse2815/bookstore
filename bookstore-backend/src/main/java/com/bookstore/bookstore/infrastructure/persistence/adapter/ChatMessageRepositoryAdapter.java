@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IChatMessageRepository;
 import com.bookstore.bookstore.domain.model.ChatMessage;
+import com.bookstore.bookstore.domain.enums.MessageSenderRole;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ChatMessageJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ConversationJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.UserJpaEntity;
@@ -12,6 +13,7 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepo
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -44,6 +46,16 @@ public class ChatMessageRepositoryAdapter implements IChatMessageRepository {
     @Override
     public long countByConversationIdActive(UUID conversationId) {
         return chatMessageJpaRepository.countByConversation_IdAndDeletedAtIsNull(conversationId);
+    }
+
+    @Override
+    public long countBySenderIdAndRoleSince(UUID senderId, MessageSenderRole senderRole, Instant createdAt) {
+        return chatMessageJpaRepository
+                .countBySender_IdAndSenderRoleAndCreatedAtGreaterThanEqualAndDeletedAtIsNull(
+                        senderId,
+                        senderRole,
+                        createdAt
+                );
     }
 
     @Override

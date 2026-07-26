@@ -6,6 +6,7 @@ import com.bookstore.bookstore.presentation.request.CreateAuthorRequest;
 import com.bookstore.bookstore.presentation.request.UpdateAuthorRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.AuthorResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,10 +31,21 @@ public class AuthorController {
     private final AuthorWebMapper authorWebMapper;
 
     @GetMapping("/api/authors")
-    public ApiResponse<List<AuthorResponse>> getAll() {
-        return ApiResponse.success(authorService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<AuthorResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = authorService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(authorWebMapper::toAuthorResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(authorService.getAll().stream()
                 .map(authorWebMapper::toAuthorResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/api/authors/{id}")

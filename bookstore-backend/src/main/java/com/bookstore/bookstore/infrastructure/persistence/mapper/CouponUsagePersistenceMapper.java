@@ -20,6 +20,7 @@ public class CouponUsagePersistenceMapper {
                 entity.getCoupon().getId(),
                 entity.getUser().getId(),
                 entity.getOrder().getId(),
+                entity.getDiscountAmount(),
                 entity.getUsedAt()
         );
     }
@@ -29,7 +30,7 @@ public class CouponUsagePersistenceMapper {
         entity.setCoupon(coupon);
         entity.setUser(user);
         entity.setOrder(order);
-        // discountAmount not in domain model - leave as is
+        entity.setDiscountAmount(couponUsage.getDiscountAmount());
         entity.setUsedAt(couponUsage.getUsedAt());
     }
 }

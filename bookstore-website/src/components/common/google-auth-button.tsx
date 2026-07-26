@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/contexts/language-context'
 import { cn } from '@/utils'
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
 
 let googleScriptPromise: Promise<void> | null = null
+let initializedClientId: string | null = null
+let activeCredentialHandler: ((credential: string) => void) | null = null
 
 type GoogleAuthButtonText = 'continue_with' | 'signin_with' | 'signup_with'
 
@@ -27,6 +30,7 @@ export function GoogleAuthButton({
   onCredential,
   text = 'continue_with',
 }: GoogleAuthButtonProps) {
+  const { t } = useLanguage()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const onCredentialRef = useRef(onCredential)
@@ -64,23 +68,26 @@ export function GoogleAuthButton({
 
         container.replaceChildren()
 
-        googleId.initialize({
+        activeCredentialHandler = (credential: string) => {
+          void onCredentialRef.current(credential)
+        }
+
+        if (initializedClientId !== resolvedClientId) {
+          googleId.initialize({
           callback: (response) => {
             const credential = response.credential?.trim()
 
             if (!credential) {
-              toast.error(
-                locale === 'vi'
-                  ? 'Khong lay duoc Google ID token.'
-                  : 'Unable to get a Google ID token.',
-              )
+              toast.error(t('auth.google.loadError'))
               return
             }
 
-            void onCredentialRef.current(credential)
+            activeCredentialHandler?.(credential)
           },
           client_id: resolvedClientId,
-        })
+          })
+          initializedClientId = resolvedClientId
+        }
 
         googleId.renderButton(container, {
           locale,
@@ -112,7 +119,7 @@ export function GoogleAuthButton({
     return () => {
       isMounted = false
     }
-  }, [clientId, locale, text])
+  }, [clientId, locale, t, text])
 
   if (!clientId) {
     return (
@@ -122,9 +129,7 @@ export function GoogleAuthButton({
           className,
         )}
       >
-        {locale === 'vi'
-          ? 'Thieu cau hinh VITE_GOOGLE_CLIENT_ID de bat dang nhap Google.'
-          : 'Set VITE_GOOGLE_CLIENT_ID to enable Google sign-in.'}
+        {t('auth.google.unavailable')}
       </div>
     )
   }
@@ -137,9 +142,7 @@ export function GoogleAuthButton({
           className,
         )}
       >
-        {locale === 'vi'
-          ? 'Khong tai duoc Google Identity Services. Hay thu lai sau.'
-          : 'Google Identity Services could not be loaded. Please try again.'}
+        {t('auth.google.loadError')}
       </div>
     )
   }
@@ -164,7 +167,7 @@ export function GoogleAuthButton({
       {disabled ? (
         <button
           type="button"
-          aria-label={disabledMessage ?? 'Google auth is disabled'}
+          aria-label={disabledMessage ?? t('auth.google.disabled')}
           onClick={() => {
             if (disabledMessage) {
               toast.error(disabledMessage)
@@ -172,7 +175,7 @@ export function GoogleAuthButton({
           }}
           className="absolute inset-0 h-full w-full cursor-not-allowed rounded-full bg-background/30 text-transparent hover:bg-background/30"
         >
-          Blocked
+          {t('auth.google.blocked')}
         </button>
       ) : null}
 

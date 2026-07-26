@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { useAdminInventoryPage } from '@/hooks/use-admin-inventory-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import type {
@@ -18,6 +19,11 @@ import type {
   AdminStockMovementType,
 } from '@/types/admin-access'
 import type { Book } from '@/types/book'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
+import { useLanguage } from '@/contexts/language-context'
+import { getCategoryLabel } from '@/utils/i18n'
+
+type Translator = (key: string, params?: Record<string, number | string>) => string
 
 export default function AdminInventoryPage() {
   const {
@@ -26,8 +32,10 @@ export default function AdminInventoryPage() {
     formatDate,
     formatNumber,
     labels,
-    isVietnamese,
     books,
+    page,
+    pageSize,
+    totalCount,
     searchTerm,
     isLoading,
     error,
@@ -41,6 +49,7 @@ export default function AdminInventoryPage() {
     outOfStockCount,
     recentMovementCount,
     handleSearchTermChange,
+    handlePageChange,
     openHistory,
     closeHistory,
   } = useAdminInventoryPage()
@@ -70,7 +79,7 @@ export default function AdminInventoryPage() {
                 label={labels.latestMovement}
                 value={
                   bookMovements[0]
-                    ? getMovementTypeLabel(bookMovements[0].type, isVietnamese)
+                    ? getMovementTypeLabel(bookMovements[0].type, t)
                     : labels.noMovement
                 }
               />
@@ -97,53 +106,14 @@ export default function AdminInventoryPage() {
             ) : (
               <div className="space-y-3">
                 {bookMovements.map((movement) => (
-                  <article
+                  <StockMovementRow
                     key={movement.id}
-                    className="grid gap-4 rounded-[22px] border border-border/60 bg-background/55 p-4 md:grid-cols-[12rem_10rem_1fr_10rem]"
-                  >
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(movement.createdAt)}
-                      </p>
-                      <p className="mt-2">
-                        <MovementBadge
-                          type={movement.type}
-                          isVietnamese={isVietnamese}
-                        />
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-                        {labels.quantity}
-                      </p>
-                      <p className="mt-2 text-lg font-semibold text-foreground">
-                        {formatSignedQuantity(movement.type, movement.quantity)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-                        {labels.beforeAfter}
-                      </p>
-                      <p className="mt-2 font-semibold text-foreground">
-                        {formatNumber(movement.beforeQuantity)} →{' '}
-                        {formatNumber(movement.afterQuantity)}
-                      </p>
-                      <p className="mt-2 break-all text-xs text-muted-foreground">
-                        {labels.reference}:{' '}
-                        {movement.referenceType && movement.referenceId
-                          ? `${movement.referenceType} / ${movement.referenceId}`
-                          : labels.unknownReference}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-start md:justify-end">
-                      <Badge variant="outline" className="rounded-2xl px-3 py-1.5">
-                        {formatNumber(movement.afterQuantity)}
-                      </Badge>
-                    </div>
-                  </article>
+                    formatDate={formatDate}
+                    formatNumber={formatNumber}
+                    labels={labels}
+                    movement={movement}
+                    t={t}
+                  />
                 ))}
               </div>
             )}
@@ -171,8 +141,8 @@ export default function AdminInventoryPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <Boxes className="mr-2 h-4 w-4" />
-                    {interpolateLabel(labels.totalBooks, {
-                      count: formatNumber(books.length),
+                    {t('admin.inventoryPage.totalBooks', {
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -239,81 +209,29 @@ export default function AdminInventoryPage() {
                     {labels.empty}
                   </div>
                 ) : (
-                  filteredBooks.map((book) => {
-                    const latestMovement = movementLookup.get(book.id)?.[0]
-
-                    return (
-                      <article
-                        key={book.id}
-                        className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2.2fr)_11rem_1.2fr_12rem] xl:gap-0 xl:p-0"
-                      >
-                        <div className="flex min-w-0 items-center gap-5 xl:px-8 xl:py-6">
-                          <div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-border/60 bg-background/70">
-                            {book.cover ? (
-                              <img
-                                src={book.cover}
-                                alt={book.title}
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <BookOpen className="h-7 w-7 text-primary" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-xl font-semibold text-foreground">
-                              {book.title}
-                            </p>
-                            <p className="mt-2 truncate text-sm text-muted-foreground">
-                              {book.author} · {book.category}
-                            </p>
-                            <p className="mt-2 text-sm font-medium text-foreground">
-                              {labels.price}: {formatCurrency(book.price)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
-                          <StockBadge
-                            count={book.stockQuantity}
-                            isVietnamese={isVietnamese}
-                            formatNumber={formatNumber}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
-                          {latestMovement ? (
-                            <div className="text-left xl:text-center">
-                              <MovementBadge
-                                type={latestMovement.type}
-                                isVietnamese={isVietnamese}
-                              />
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                {formatDate(latestMovement.createdAt)}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              {labels.noMovement}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => void openHistory(book)}
-                            className="rounded-2xl"
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            {labels.movementHistory}
-                          </Button>
-                        </div>
-                      </article>
-                    )
-                  })
+                  filteredBooks.map((book) => (
+                    <InventoryBookRow
+                      key={book.id}
+                      book={book}
+                      formatCurrency={formatCurrency}
+                      formatDate={formatDate}
+                      formatNumber={formatNumber}
+                      labels={labels}
+                      latestMovement={movementLookup.get(book.id)?.[0]}
+                      onOpenHistory={() => void openHistory(book)}
+                      t={t}
+                    />
+                  ))
                 )}
               </div>
+              {!isLoading && !error && totalCount > 0 ? (
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -323,6 +241,148 @@ export default function AdminInventoryPage() {
         ? createPortal(dialogMarkup, document.body)
         : null}
     </>
+  )
+}
+
+function InventoryBookRow({
+  book,
+  formatCurrency,
+  formatDate,
+  formatNumber,
+  labels,
+  latestMovement,
+  onOpenHistory,
+  t,
+}: {
+  book: Book
+  formatCurrency: (value: number) => string
+  formatDate: (value: Date | number | string) => string
+  formatNumber: (value: number) => string
+  labels: InventoryLabels
+  latestMovement?: AdminStockMovementResponse
+  onOpenHistory: () => void
+  t: Translator
+}) {
+  const { language } = useLanguage()
+  return (
+    <article className="flex flex-col gap-5 rounded-[24px] border border-border/60 bg-background/55 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:grid xl:grid-cols-[minmax(0,2.2fr)_11rem_1.2fr_12rem] xl:gap-0 xl:p-0">
+      <div className="flex min-w-0 items-center gap-5 xl:px-8 xl:py-6">
+        <div className="flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-border/60 bg-background/70">
+          {book.cover ? (
+            <img
+              src={getBookCoverUrl(book.cover)}
+              alt={book.title}
+              onError={(event) => setBookCoverFallback(event.currentTarget)}
+              className="size-full object-cover"
+            />
+          ) : (
+            <BookOpen className="h-7 w-7 text-primary" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-xl font-semibold text-foreground">
+            {book.title}
+          </p>
+          <p className="mt-2 truncate text-sm text-muted-foreground">
+            {book.author} - {getCategoryLabel(book.categoryInfo ?? book.category, language)}
+          </p>
+          <p className="mt-2 text-sm font-medium text-foreground">
+            {labels.price}: {formatCurrency(book.price)}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
+        <StockBadge
+          count={book.stockQuantity}
+          formatNumber={formatNumber}
+          labels={labels}
+        />
+      </div>
+
+      <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
+        {latestMovement ? (
+          <div className="text-left xl:text-center">
+            <MovementBadge type={latestMovement.type} t={t} />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {formatDate(latestMovement.createdAt)}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{labels.noMovement}</p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-start border-border/40 xl:justify-center xl:border-l">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onOpenHistory}
+          className="rounded-2xl"
+        >
+          <Eye className="mr-2 h-4 w-4" />
+          {labels.movementHistory}
+        </Button>
+      </div>
+    </article>
+  )
+}
+
+function StockMovementRow({
+  formatDate,
+  formatNumber,
+  labels,
+  movement,
+  t,
+}: {
+  formatDate: (value: Date | number | string) => string
+  formatNumber: (value: number) => string
+  labels: InventoryLabels
+  movement: AdminStockMovementResponse
+  t: Translator
+}) {
+  return (
+    <article className="grid gap-4 rounded-[22px] border border-border/60 bg-background/55 p-4 md:grid-cols-[12rem_10rem_1fr_10rem]">
+      <div>
+        <p className="text-sm text-muted-foreground">
+          {formatDate(movement.createdAt)}
+        </p>
+        <p className="mt-2">
+          <MovementBadge type={movement.type} t={t} />
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+          {labels.quantity}
+        </p>
+        <p className="mt-2 text-lg font-semibold text-foreground">
+          {formatSignedQuantity(movement.type, movement.quantity)}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+          {labels.beforeAfter}
+        </p>
+        <p className="mt-2 font-semibold text-foreground">
+          {formatNumber(movement.beforeQuantity)} {' -> '}
+          {formatNumber(movement.afterQuantity)}
+        </p>
+        <p className="mt-2 break-all text-xs text-muted-foreground">
+          {labels.reference}:{' '}
+          {movement.referenceType && movement.referenceId
+            ? `${movement.referenceType} / ${movement.referenceId}`
+            : labels.unknownReference}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-start md:justify-end">
+        <Badge variant="outline" className="rounded-2xl px-3 py-1.5">
+          {formatNumber(movement.afterQuantity)}
+        </Badge>
+      </div>
+    </article>
   )
 }
 
@@ -377,17 +437,17 @@ function MetricCard({
 function StockBadge({
   count,
   formatNumber,
-  isVietnamese,
+  labels,
 }: {
   count: number
   formatNumber: (value: number) => string
-  isVietnamese: boolean
+  labels: Pick<InventoryLabels, 'inStock' | 'lowStock' | 'outOfStock'>
 }) {
   if (count === 0) {
     return (
       <Badge variant="destructive" className="rounded-2xl px-3 py-1.5">
         <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
-        {isVietnamese ? 'Het hang' : 'Out of stock'}
+        {labels.outOfStock}
       </Badge>
     )
   }
@@ -395,24 +455,24 @@ function StockBadge({
   if (count <= 5) {
     return (
       <Badge variant="outline" className="rounded-2xl px-3 py-1.5 text-amber-500">
-        {formatNumber(count)} · {isVietnamese ? 'Sap het' : 'Low stock'}
+        {formatNumber(count)} - {labels.lowStock}
       </Badge>
     )
   }
 
   return (
     <Badge variant="outline" className="rounded-2xl px-3 py-1.5 text-emerald-500">
-      {formatNumber(count)} · {isVietnamese ? 'Con hang' : 'In stock'}
+      {formatNumber(count)} - {labels.inStock}
     </Badge>
   )
 }
 
 function MovementBadge({
   type,
-  isVietnamese,
+  t,
 }: {
   type: AdminStockMovementType
-  isVietnamese: boolean
+  t: Translator
 }) {
   const tone =
     type === 'IMPORT'
@@ -426,25 +486,13 @@ function MovementBadge({
   return (
     <Badge variant="outline" className={`rounded-2xl px-3 py-1.5 ${tone}`}>
       <ArrowRightLeft className="mr-1.5 h-3.5 w-3.5" />
-      {getMovementTypeLabel(type, isVietnamese)}
+      {getMovementTypeLabel(type, t)}
     </Badge>
   )
 }
 
-function getMovementTypeLabel(
-  type: AdminStockMovementType,
-  isVietnamese: boolean,
-) {
-  switch (type) {
-    case 'IMPORT':
-      return isVietnamese ? 'Nhap kho' : 'Import'
-    case 'SALE':
-      return isVietnamese ? 'Ban hang' : 'Sale'
-    case 'CANCEL_ORDER':
-      return isVietnamese ? 'Huy don' : 'Cancel order'
-    case 'ADJUSTMENT':
-      return isVietnamese ? 'Dieu chinh' : 'Adjustment'
-  }
+function getMovementTypeLabel(type: AdminStockMovementType, t: Translator) {
+  return t(`admin.inventoryPage.movementTypes.${type}`)
 }
 
 function formatSignedQuantity(
@@ -458,11 +506,26 @@ function formatSignedQuantity(
   return `+${quantity}`
 }
 
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
+type InventoryLabels = {
+  beforeAfter: string
+  book: string
+  description: string
+  empty: string
+  historyError: string
+  inStock: string
+  latestMovement: string
+  loadError: string
+  lowStock: string
+  movementHistory: string
+  noMovement: string
+  outOfStock: string
+  price: string
+  quantity: string
+  recentMovements: string
+  reference: string
+  search: string
+  stock: string
+  title: string
+  totalBooks: string
+  unknownReference: string
 }

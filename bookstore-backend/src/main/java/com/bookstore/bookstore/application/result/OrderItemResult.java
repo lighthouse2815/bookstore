@@ -1,11 +1,14 @@
 package com.bookstore.bookstore.application.result;
 
+import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 public record OrderItemResult(
         UUID id,
+        PurchaseItemType itemType,
         UUID bookId,
+        UUID digitalAssetId,
         String bookTitle,
         BigDecimal unitPrice,
         int quantity,

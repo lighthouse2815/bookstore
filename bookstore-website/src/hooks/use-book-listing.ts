@@ -6,47 +6,74 @@ import {
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLanguage } from '@/contexts/language-context'
-import { useBookCatalog } from '@/hooks/use-book-catalog'
-import { getCategoryLabel } from '@/utils/i18n'
+import { useBookCatalogPage } from '@/hooks/use-book-catalog'
+import type { CategoryResponse } from '@/types/book'
+import {
+  createCatalogSearchParams,
+  readCatalogSearchState,
+  type CatalogSearchUpdate,
+} from '@/utils/catalog-search-params'
 
 type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'rating'
 
 const ALL_CATEGORIES = '__all__'
+const PAGE_SIZE = 12
+const BOOK_SORT_KEYS: readonly SortKey[] = [
+  'popular',
+  'price-asc',
+  'price-desc',
+  'rating',
+]
+const BOOK_SEARCH_DEFAULTS = {
+  allCategoriesValue: ALL_CATEGORIES,
+  defaultSort: 'popular' as const,
+  allowedSorts: BOOK_SORT_KEYS,
+}
 const CATEGORY_PRESETS = {
-  '__life-skills__': 'categories.lifeSkills',
-  '__novel__': 'categories.novel',
+  '__life-skills__': 'PERSONAL_DEVELOPMENT',
+  '__novel__': 'LITERATURE',
 } as const
 
 export function useBookListing() {
-  const [searchParams] = useSearchParams()
-  const requestedCategory = searchParams.get('category') ?? ALL_CATEGORIES
-  const requestedQuery = searchParams.get('q')?.trim() ?? ''
-  const { t, formatNumber } = useLanguage()
-  const { books, categories, isLoading, error } = useBookCatalog()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const searchState = readCatalogSearchState(
+    searchParams,
+    BOOK_SEARCH_DEFAULTS,
+  )
+  const requestedCategory = searchState.category
+  const { t, language, formatNumber } = useLanguage()
   const [category, setCategory] = useState(requestedCategory)
-  const [query, setQuery] = useState(requestedQuery)
-  const [sort, setSort] = useState<SortKey>('popular')
+  const [categoryIds, setCategoryIds] = useState<Record<string, string>>({})
+  const { query, sort, page } = searchState
+  const selectedCategoryId =
+    category === ALL_CATEGORIES ? undefined : categoryIds[category]
+  const catalog = useBookCatalogPage({
+    page,
+    size: PAGE_SIZE,
+    keyword: query,
+    categoryId: selectedCategoryId,
+  })
+  const { books, categories, isLoading, error, totalCount } = catalog
 
   useEffect(() => {
-    setCategory(resolveRequestedCategory(requestedCategory, categories, t))
-  }, [categories, requestedCategory, t])
+    setCategoryIds(catalog.categoryIds)
+  }, [catalog.categoryIds])
 
   useEffect(() => {
-    setQuery(requestedQuery)
-  }, [requestedQuery])
+    if (requestedCategory === ALL_CATEGORIES) {
+      setCategory(ALL_CATEGORIES)
+      return
+    }
+
+    if (categories.length === 0) {
+      return
+    }
+
+    setCategory(resolveRequestedCategory(requestedCategory, categories))
+  }, [categories, requestedCategory])
 
   const filteredBooks = useMemo(() => {
-    let result = books.filter((book) => {
-      const matchCategory = category === ALL_CATEGORIES || book.category === category
-      const matchQuery =
-        query.trim() === '' ||
-        book.title.toLowerCase().includes(query.toLowerCase()) ||
-        book.author.toLowerCase().includes(query.toLowerCase())
-
-      return matchCategory && matchQuery
-    })
-
-    result = [...result].sort((firstBook, secondBook) => {
+    return [...books].sort((firstBook, secondBook) => {
       switch (sort) {
         case 'price-asc':
           return firstBook.price - secondBook.price
@@ -62,13 +89,15 @@ export function useBookListing() {
       }
     })
 
-    return result
-  }, [books, category, query, sort])
+  }, [books, sort])
 
-  const categoryOptions = [ALL_CATEGORIES, ...categories]
+  const categoryOptions = categories
 
   function handleQueryChange(event: ChangeEvent<HTMLInputElement>) {
-    setQuery(event.currentTarget.value)
+    updateSearchParams(
+      { query: event.currentTarget.value, page: 0 },
+      true,
+    )
   }
 
   function handleCategorySelect(nextCategory: string | null) {
@@ -77,6 +106,7 @@ export function useBookListing() {
     }
 
     setCategory(nextCategory)
+    updateSearchParams({ category: nextCategory, page: 0 })
   }
 
   function handleSortChange(nextSort: string | null) {
@@ -84,15 +114,38 @@ export function useBookListing() {
       return
     }
 
-    setSort(nextSort as SortKey)
+    updateSearchParams({ sort: nextSort as SortKey, page: 0 })
+  }
+
+  function handlePageChange(nextPage: number) {
+    updateSearchParams({ page: Math.max(0, nextPage) })
+  }
+
+  function updateSearchParams(
+    update: CatalogSearchUpdate<SortKey>,
+    replace = false,
+  ) {
+    setSearchParams(
+      (currentParams) =>
+        createCatalogSearchParams(
+          currentParams,
+          update,
+          BOOK_SEARCH_DEFAULTS,
+        ),
+      { replace },
+    )
   }
 
   return {
     t,
+    language,
     formatNumber,
     isLoading,
     error,
     filteredBooks,
+    totalCount,
+    page,
+    pageSize: PAGE_SIZE,
     category,
     query,
     sort,
@@ -101,28 +154,35 @@ export function useBookListing() {
     handleQueryChange,
     handleCategorySelect,
     handleSortChange,
+    handlePageChange,
   }
 }
 
 function resolveRequestedCategory(
   requestedCategory: string,
-  categories: string[],
-  t: (key: string, params?: Record<string, number | string>) => string,
+  categories: CategoryResponse[],
 ) {
   if (requestedCategory === ALL_CATEGORIES) {
     return ALL_CATEGORIES
   }
 
-  const presetKey =
+  const presetCode =
     CATEGORY_PRESETS[requestedCategory as keyof typeof CATEGORY_PRESETS]
 
-  if (presetKey) {
-    return (
-      categories.find(
-        (category) => getCategoryLabel(category, t) === t(presetKey),
-      ) ?? ALL_CATEGORIES
-    )
+  if (presetCode) {
+    return categories.some((category) => category.code === presetCode)
+      ? presetCode
+      : ALL_CATEGORIES
   }
 
-  return categories.includes(requestedCategory) ? requestedCategory : ALL_CATEGORIES
+  return (
+    categories.find(
+      (category) =>
+        category.code === requestedCategory ||
+        category.name === requestedCategory ||
+        Object.values(category.translations).some(
+          (translation) => translation?.name === requestedCategory,
+        ),
+    )?.code ?? ALL_CATEGORIES
+  )
 }

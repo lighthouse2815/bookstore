@@ -14,6 +14,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { useAdminImportReceiptsPage } from '@/hooks/use-admin-import-receipts-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import type { AdminImportReceiptResponse } from '@/types/admin-access'
@@ -26,6 +27,9 @@ export default function AdminImportReceiptsPage() {
     formatNumber,
     labels,
     receipts,
+    page,
+    pageSize,
+    totalCount,
     suppliers,
     books,
     searchTerm,
@@ -38,6 +42,7 @@ export default function AdminImportReceiptsPage() {
     supplierMap,
     filteredReceipts,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -229,8 +234,8 @@ export default function AdminImportReceiptsPage() {
                     className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary dark:border-primary/30"
                   >
                     <ReceiptText className="mr-2 h-4 w-4" />
-                    {interpolateLabel(labels.total, {
-                      count: formatNumber(receipts.length),
+                    {t('admin.importReceiptsPage.total', {
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -335,6 +340,14 @@ export default function AdminImportReceiptsPage() {
                   ))
                 )}
               </div>
+              {!isLoading && !error && totalCount > 0 ? (
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -445,11 +458,3 @@ function DialogShell({
   )
 }
 
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
-}

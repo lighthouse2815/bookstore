@@ -10,12 +10,13 @@ public record CreatePosOrderRequest(
         String customerName,
         String customerPhone,
 
-        @NotNull(message = "paymentMethod khong duoc null")
+        @NotNull(message = "paymentMethod không được null")
         PaymentMethod paymentMethod,
 
         String couponCode,
 
-        @NotEmpty(message = "items khong duoc de trong")
+        @NotEmpty(message = "items không được để trống")
         List<@Valid CreatePosOrderItemRequest> items
 ) {
 }
+

@@ -9,13 +9,17 @@ public class OrderModel
     public string Status { get; init; } = "";
     public string PaymentMethod { get; init; } = "";
     public string PaymentStatus { get; init; } = "";
+    public string? CustomerName { get; init; }
+    public string? CustomerPhone { get; init; }
+    public decimal ProductTotal { get; init; }
     public decimal TotalAmount { get; init; }
+    public decimal DiscountAmount { get; init; }
     public decimal FinalAmount { get; init; }
     public DateTimeOffset? CreatedAt { get; init; }
     public IReadOnlyList<OrderItemModel> Items { get; init; } = Array.Empty<OrderItemModel>();
 
     public string CodeOrId => string.IsNullOrWhiteSpace(OrderCode) ? OrderId : OrderCode!;
-    public string TotalText => CurrencyHelper.Format(FinalAmount > 0 ? FinalAmount : TotalAmount);
+    public string TotalText => CurrencyHelper.Format(FinalAmount);
     public string CreatedAtText => CreatedAt.HasValue ? DateTimeHelper.Format(CreatedAt.Value) : "";
     public string PaymentStatusText => PaymentStatus?.Trim().ToUpperInvariant() switch
     {

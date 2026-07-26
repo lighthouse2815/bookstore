@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.port.out;
 
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.User;
 import java.time.Instant;
 import java.util.List;
@@ -10,11 +11,15 @@ public interface IUserRepository {
 
     List<User> findAllActive();
 
+    PageSliceResult<User> findPageByRoleNameActive(String roleName, int page, int size);
+
     List<User> findAllIncludingDeleted();
 
     Optional<User> findByIdActive(UUID userId);
 
     Optional<User> findByIdIncludingDeleted(UUID userId);
+
+    Optional<User> findByIdIncludingDeletedForUpdate(UUID userId);
 
     Optional<User> findByUsernameActive(String username);
 
@@ -29,6 +34,8 @@ public interface IUserRepository {
     boolean existsByPhoneNumberIncludingDeleted(String phoneNumber);
 
     boolean existsByEmailIncludingDeleted(String email);
+
+    long countActiveUsers();
 
     long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive);
 

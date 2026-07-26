@@ -44,6 +44,15 @@ public class UserOtpJpaEntity {
     @Column(name = "otp_hash", nullable = false, length = 100)
     private String otpHash;
 
+    @Column(name = "attempt_count", nullable = false)
+    private int attemptCount;
+
+    @Column(name = "max_attempts", nullable = false)
+    private int maxAttempts;
+
+    @Column(name = "last_attempt_at")
+    private Instant lastAttemptAt;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 

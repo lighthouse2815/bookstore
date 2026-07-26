@@ -10,8 +10,11 @@ import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.DigitalAssetResponse;
 import com.bookstore.bookstore.presentation.response.DigitalLibraryAssetResponse;
 import com.bookstore.bookstore.presentation.response.DigitalLibraryItemResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
+import com.bookstore.bookstore.presentation.response.PublicDigitalAssetCatalogItemResponse;
 import com.bookstore.bookstore.presentation.response.PublishedDigitalAssetResponse;
 import com.bookstore.bookstore.presentation.response.ReadingProgressResponse;
+import com.bookstore.bookstore.presentation.response.SignedUrlResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -42,6 +46,37 @@ public class DigitalLibraryController {
         return ApiResponse.success(digitalAssetService.getPublishedByBookId(bookId).stream()
                 .map(digitalLibraryWebMapper::toPublishedDigitalAssetResponse)
                 .toList());
+    }
+
+    @GetMapping("/api/ebooks")
+    public ResponseEntity<ApiResponse<List<PublicDigitalAssetCatalogItemResponse>>> getPublishedDigitalAssetCatalog(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        var result = digitalAssetService.getPublishedCatalog(
+                keyword,
+                categoryId,
+                page == null ? 0 : page,
+                size == null ? 12 : size
+        ).map(digitalLibraryWebMapper::toPublicDigitalAssetCatalogItemResponse);
+
+        return ResponseEntity.ok()
+                .headers(PaginationHeaderUtils.build(result))
+                .body(ApiResponse.success(result.items()));
+    }
+
+    @GetMapping("/api/books/{bookId}/digital-assets/{digitalAssetId}/sample-url")
+    public ApiResponse<SignedUrlResponse> getPublishedDigitalAssetSampleUrl(
+            @PathVariable UUID bookId,
+            @PathVariable UUID digitalAssetId
+    ) {
+        return ApiResponse.success(
+                digitalLibraryWebMapper.toSignedUrlResponse(
+                        digitalLibraryService.getPublishedSampleUrl(bookId, digitalAssetId)
+                )
+        );
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -87,11 +122,26 @@ public class DigitalLibraryController {
     }
 
     @GetMapping("/api/digital-library/me/assets")
-    public ApiResponse<List<DigitalLibraryItemResponse>> getMyLibrary(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<ApiResponse<List<DigitalLibraryItemResponse>>> getMyLibrary(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        return ApiResponse.success(digitalLibraryService.getMyLibrary(userId).stream()
+        if (page != null || size != null) {
+            var result = digitalLibraryService.getMyLibrary(
+                    userId,
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(digitalLibraryWebMapper::toDigitalLibraryItemResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(digitalLibraryService.getMyLibrary(userId).stream()
                 .map(digitalLibraryWebMapper::toDigitalLibraryItemResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/api/digital-library/me/assets/{digitalAssetId}")
@@ -103,6 +153,32 @@ public class DigitalLibraryController {
         return ApiResponse.success(
                 digitalLibraryWebMapper.toDigitalLibraryAssetResponse(
                         digitalLibraryService.getMyAsset(userId, digitalAssetId)
+                )
+        );
+    }
+
+    @GetMapping("/api/digital-library/me/assets/{digitalAssetId}/read-url")
+    public ApiResponse<SignedUrlResponse> getMyReadUrl(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID digitalAssetId
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ApiResponse.success(
+                digitalLibraryWebMapper.toSignedUrlResponse(
+                        digitalLibraryService.getMyReadUrl(userId, digitalAssetId)
+                )
+        );
+    }
+
+    @GetMapping("/api/digital-library/me/assets/{digitalAssetId}/download-url")
+    public ApiResponse<SignedUrlResponse> getMyDownloadUrl(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID digitalAssetId
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ApiResponse.success(
+                digitalLibraryWebMapper.toSignedUrlResponse(
+                        digitalLibraryService.getMyDownloadUrl(userId, digitalAssetId)
                 )
         );
     }

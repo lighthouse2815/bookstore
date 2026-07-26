@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    username: ${DB_USER:bookstore_user}
+    password: ${DB_PASSWORD:123456}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      "[hibernate.format_sql]": true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:01234567890123456789012345678901}
+  admin:
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
+    username: ${ADMIN_USERNAME:admin.dev}
+    password: ${ADMIN_PASSWORD:DevAdmin@12345}
+    phone: ${ADMIN_PHONE:0900000001}
+    email: ${ADMIN_EMAIL:admin.dev@local.bookstore}
+    last-name: ${ADMIN_LAST_NAME:Dev}
+    first-name: ${ADMIN_FIRST_NAME:Admin}

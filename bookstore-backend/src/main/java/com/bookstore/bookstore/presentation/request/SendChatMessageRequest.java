@@ -5,10 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 
 public record SendChatMessageRequest(
         MessageType messageType,
-        @NotBlank(message = "content khong duoc de trong")
+        @NotBlank(message = "content không được để trống")
         String content,
         String attachmentUrl,
         String attachmentName,
         Long attachmentSize
 ) {
 }
+

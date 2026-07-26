@@ -44,7 +44,7 @@ class ProfileTest {
                 profile.updateProfileInfo(
                         "new-last",
                         "new-first",
-                        "new-avatar",
+                        avatarFileAsset(),
                         Gender.FEMALE,
                         LocalDate.of(2000, 1, 1)
                 )
@@ -60,7 +60,7 @@ class ProfileTest {
                 UUID.randomUUID(),
                 "last",
                 "first",
-                "avatar",
+                avatarFileAsset(),
                 Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 Instant.EPOCH,
@@ -83,7 +83,7 @@ class ProfileTest {
                 UUID.randomUUID(),
                 "last",
                 "first",
-                "avatar",
+                avatarFileAsset(),
                 Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 Instant.EPOCH,
@@ -106,7 +106,7 @@ class ProfileTest {
                 UUID.randomUUID(),
                 "last",
                 "first",
-                "avatar",
+                avatarFileAsset(),
                 Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 Instant.EPOCH,
@@ -138,12 +138,34 @@ class ProfileTest {
                 UUID.randomUUID(),
                 "last",
                 "first",
-                "avatar",
+                avatarFileAsset(),
                 Gender.MALE,
                 LocalDate.of(2000, 1, 1),
                 deletedAt,
                 deletedAt,
                 deletedAt
+        );
+    }
+
+    private static com.bookstore.bookstore.domain.model.FileAsset avatarFileAsset() {
+        Instant now = Instant.EPOCH;
+        return new com.bookstore.bookstore.domain.model.FileAsset(
+                UUID.randomUUID(),
+                com.bookstore.bookstore.domain.enums.FileProvider.R2,
+                com.bookstore.bookstore.domain.enums.FilePurpose.USER_AVATAR,
+                "bookstore-assets",
+                "public/users/avatar.jpg",
+                "https://cdn.example.com/public/users/avatar.jpg",
+                "avatar.jpg",
+                "image/jpeg",
+                1024L,
+                "checksum",
+                com.bookstore.bookstore.domain.enums.FileVisibility.PUBLIC,
+                com.bookstore.bookstore.domain.enums.FileStatus.ACTIVE,
+                UUID.randomUUID(),
+                now,
+                now,
+                null
         );
     }
 }

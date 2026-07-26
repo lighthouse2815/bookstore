@@ -1,10 +1,13 @@
 package com.bookstore.bookstore.presentation.request;
 
 import jakarta.validation.constraints.NotBlank;
+import java.util.UUID;
 
 public record UpdatePublisherRequest(
-        @NotBlank(message = "name khong duoc de trong")
+        @NotBlank(message = "name không được để trống")
         String name,
-        String description
+        String description,
+        UUID logoFileAssetId
 ) {
 }
+

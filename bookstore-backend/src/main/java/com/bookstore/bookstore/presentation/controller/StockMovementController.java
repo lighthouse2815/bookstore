@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.port.in.IStockMovementService;
 import com.bookstore.bookstore.presentation.mapper.StockMovementWebMapper;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.StockMovementResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,10 +24,20 @@ public class StockMovementController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/stock-movements")
-    public ApiResponse<List<StockMovementResponse>> getAll() {
-        return ApiResponse.success(stockMovementService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<StockMovementResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = stockMovementService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(stockMovementWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+        return ResponseEntity.ok(ApiResponse.success(stockMovementService.getAll().stream()
                 .map(stockMovementWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

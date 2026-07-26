@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.domain.model.Publisher;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,6 +9,8 @@ import java.util.UUID;
 public interface IPublisherRepository {
 
     List<Publisher> findAllActive();
+
+    PageSliceResult<Publisher> findPageActive(int page, int size);
 
     List<Publisher> findAllIncludingDeleted();
 

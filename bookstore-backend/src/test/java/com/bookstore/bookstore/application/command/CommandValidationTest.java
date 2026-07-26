@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.domain.enums.Gender;
+import com.bookstore.bookstore.domain.enums.PaymentMethod;
+import com.bookstore.bookstore.domain.enums.ShippingMethod;
+import java.util.List;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -29,7 +32,7 @@ class CommandValidationTest {
                         null,
                         "last",
                         "first",
-                        "avatar",
+                        null,
                         Gender.MALE,
                         LocalDate.now()
                 )
@@ -149,5 +152,28 @@ class CommandValidationTest {
         );
 
         assertEquals(ApplicationErrorCode.INVALID_AUTH_PASSWORD, exception.getErrorCode());
+    }
+
+    @Test
+    void createOrderCommand_rejectsMissingOrMalformedIdempotencyKey() {
+        ApplicationException missingKey = assertThrows(ApplicationException.class, () -> createOrderCommand(null));
+        ApplicationException malformedKey = assertThrows(ApplicationException.class, () -> createOrderCommand("checkout-key"));
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, missingKey.getErrorCode());
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, malformedKey.getErrorCode());
+    }
+
+    private static CreateOrderCommand createOrderCommand(String idempotencyKey) {
+        return new CreateOrderCommand(
+                UUID.randomUUID(),
+                List.of(UUID.randomUUID()),
+                UUID.randomUUID(),
+                ShippingMethod.DELIVERY,
+                PaymentMethod.COD,
+                null,
+                null,
+                null,
+                idempotencyKey
+        );
     }
 }

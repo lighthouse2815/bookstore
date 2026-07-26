@@ -4,12 +4,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record CreateUserAddressRequest(
-        @NotBlank(message = "receiverName khong duoc de trong")
+        @NotBlank(message = "receiverName không được để trống")
         String receiverName,
-        @NotBlank(message = "receiverPhone khong duoc de trong")
-        @Pattern(regexp = "0\\d{9}", message = "receiverPhone phai co dung 10 chu so va bat dau bang 0")
+        @NotBlank(message = "receiverPhone không được để trống")
+        @Pattern(regexp = "0\\d{9}", message = "receiverPhone phải có đúng 10 chữ số và bắt đầu bằng 0")
         String receiverPhone,
-        @NotBlank(message = "receiverAddress khong duoc de trong")
+        @NotBlank(message = "receiverAddress không được để trống")
         String receiverAddress
 ) {
 }
+

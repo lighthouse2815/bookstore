@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 public interface UserOtpJpaRepository extends JpaRepository<UserOtpJpaEntity, UUID> {
 
@@ -18,6 +20,12 @@ public interface UserOtpJpaRepository extends JpaRepository<UserOtpJpaEntity, UU
     );
 
     Optional<UserOtpJpaEntity> findFirstByUserIdAndPurposeAndVerifiedAtIsNullAndInvalidatedAtIsNullOrderByCreatedAtDesc(
+            UUID userId,
+            OtpPurpose purpose
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<UserOtpJpaEntity> findTopByUserIdAndPurposeAndVerifiedAtIsNullAndInvalidatedAtIsNullOrderByCreatedAtDesc(
             UUID userId,
             OtpPurpose purpose
     );

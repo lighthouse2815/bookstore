@@ -297,10 +297,16 @@
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Column="0"
                          Style="{StaticResource SearchTextBoxStyle}"
-                         Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
+                         ToolTip="Tìm theo tên sách"
+                         Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button Grid.Column="1"
                         Margin="14,0,0,0"
                         Style="{StaticResource BlueActionButtonStyle}"
+                        IsEnabled="{Binding CanEditCart}"
                         Command="{Binding SearchCommand}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="&#xE721;"
@@ -337,6 +343,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource AddButtonStyle}"
+                                                IsEnabled="{Binding DataContext.CanEditCart, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -388,24 +395,29 @@
                                   HeadersVisibility="Column"
                                   MinHeight="128">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Sách" Binding="{Binding Title}" Width="1.6*" />
-                                <DataGridTextColumn Header="SL" Binding="{Binding Quantity}" Width="0.8*" />
-                                <DataGridTextColumn Header="Tiền" Binding="{Binding LineTotalText}" Width="1.1*" />
+                                 <DataGridTextColumn Header="Sách" Binding="{Binding Title}" Width="1.6*" />
+                                 <DataGridTextColumn Header="SL" Binding="{Binding Quantity}" Width="0.8*" />
+                                 <DataGridTextColumn Header="Đơn giá" Binding="{Binding UnitPriceText}" Width="1*" />
+                                 <DataGridTextColumn Header="Tồn" Binding="{Binding StockText}" Width="0.65*" />
+                                 <DataGridTextColumn Header="Tiền" Binding="{Binding LineTotalText}" Width="1.1*" />
                                 <DataGridTemplateColumn Header="Thao tác" Width="1.2*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <Button Content="-"
-                                                        Style="{StaticResource MiniButtonStyle}"
-                                                        Command="{Binding DataContext.DecreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                 <Button Content="-"
+                                                         Style="{StaticResource MiniButtonStyle}"
+                                                         IsEnabled="{Binding DataContext.CanEditCart, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                         Command="{Binding DataContext.DecreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}" />
-                                                <Button Content="+"
-                                                        Style="{StaticResource MiniButtonStyle}"
-                                                        Command="{Binding DataContext.IncreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                 <Button Content="+"
+                                                         Style="{StaticResource MiniButtonStyle}"
+                                                         IsEnabled="{Binding DataContext.CanEditCart, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                         Command="{Binding DataContext.IncreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}" />
-                                                <Button Content="&#xE74D;"
-                                                        Style="{StaticResource DeleteMiniButtonStyle}"
-                                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                 <Button Content="&#xE74D;"
+                                                         Style="{StaticResource DeleteMiniButtonStyle}"
+                                                         IsEnabled="{Binding DataContext.CanEditCart, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                         Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}" />
                                             </StackPanel>
                                         </DataTemplate>
@@ -451,14 +463,66 @@
                                  Margin="0,0,0,20"
                                  Text="{Binding CouponCode, UpdateSourceTrigger=PropertyChanged}" />
 
+                        <CheckBox Content="Khách lẻ (không nhập thông tin)"
+                                  IsChecked="{Binding UseWalkInCustomer}"
+                                  Foreground="#23375F"
+                                  FontSize="15"
+                                  Margin="0,0,0,12" />
+                        <StackPanel IsEnabled="{Binding IsCustomerDetailsEnabled}">
+                            <TextBlock Text="Tên khách (không bắt buộc)"
+                                       Foreground="#23375F"
+                                       FontSize="15"
+                                       Margin="0,0,0,8" />
+                            <TextBox Style="{StaticResource InputTextBoxStyle}"
+                                     Margin="0,0,0,12"
+                                     Text="{Binding CustomerName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Số điện thoại (không bắt buộc)"
+                                       Foreground="#23375F"
+                                       FontSize="15"
+                                       Margin="0,0,0,8" />
+                            <TextBox Style="{StaticResource InputTextBoxStyle}"
+                                     Margin="0,0,0,20"
+                                     Text="{Binding CustomerPhone, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
                         <TextBlock Text="Phương thức thanh toán"
                                    Foreground="#23375F"
                                    FontSize="15"
                                    Margin="0,0,0,8" />
                         <ComboBox Style="{StaticResource InputComboBoxStyle}"
-                                  Margin="0,0,0,18"
-                                  ItemsSource="{Binding PaymentMethods}"
-                                  SelectedItem="{Binding SelectedPaymentMethod}" />
+                                   Margin="0,0,0,18"
+                                   ItemsSource="{Binding PaymentMethods}"
+                                   DisplayMemberPath="DisplayName"
+                                   SelectedItem="{Binding SelectedPaymentMethod}" />
+
+                        <StackPanel Margin="0,0,0,18">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCashPayment}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="Tiền khách đưa (tùy chọn)"
+                                       Foreground="#23375F"
+                                       FontSize="15"
+                                       Margin="0,0,0,8" />
+                            <TextBox Style="{StaticResource InputTextBoxStyle}"
+                                     Margin="0,0,0,8"
+                                     ToolTip="Để trống nếu không cần tính tiền thừa"
+                                     Text="{Binding CashReceivedText, UpdateSourceTrigger=PropertyChanged}" />
+                            <DockPanel>
+                                <TextBlock Text="Tiền thừa"
+                                           Foreground="#50627E" />
+                                <TextBlock Text="{Binding CashChangeText}"
+                                           DockPanel.Dock="Right"
+                                           Foreground="{StaticResource PosBlueBrush}"
+                                           FontWeight="SemiBold" />
+                            </DockPanel>
+                        </StackPanel>
 
                         <Button Style="{StaticResource CheckoutButtonStyle}"
                                 Margin="0,0,0,14"
@@ -470,12 +534,13 @@
                                            FontSize="16"
                                            Margin="0,0,10,0"
                                            VerticalAlignment="Center" />
-                                <TextBlock Text="Tạo đơn / Thanh toán"
+                                <TextBlock Text="{Binding CheckoutButtonText}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                                IsEnabled="{Binding CanEditCart}"
                                 Command="{Binding ClearCartCommand}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <TextBlock Text="&#xE74D;"
@@ -485,8 +550,37 @@
                                            VerticalAlignment="Center" />
                                 <TextBlock Text="Xóa giỏ"
                                            VerticalAlignment="Center" />
-                            </StackPanel>
+                                </StackPanel>
                         </Button>
+
+                        <StackPanel Margin="0,14,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasLastReceipt}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="{Binding LastOrderSummary}"
+                                       Foreground="{StaticResource PosGreenDarkBrush}"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8" />
+                            <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                                    Height="44"
+                                    Margin="0,0,0,8"
+                                    Command="{Binding OpenLastReceiptCommand}">
+                                <TextBlock Text="Mở hóa đơn / Xuất .txt" />
+                            </Button>
+                            <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                                    Height="44"
+                                    Command="{Binding OpenLastOrderDetailCommand}">
+                                <TextBlock Text="Mở chi tiết đơn vừa tạo" />
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>

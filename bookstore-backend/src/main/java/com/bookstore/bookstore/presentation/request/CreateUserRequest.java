@@ -8,38 +8,40 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record CreateUserRequest(
-        @NotBlank(message = "username khong duoc de trong")
+        @NotBlank(message = "username không được để trống")
         String username,
 
-        @NotBlank(message = "password khong duoc de trong")
-        @Size(min = 8, max = 72, message = "password phai tu 8 den 72 ky tu")
+        @NotBlank(message = "password không được để trống")
+        @Size(min = 8, max = 72, message = "password phải tu 8 den 72 ký tự")
         String password,
 
-        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber khong hop le")
+        @Pattern(regexp = "^\\s*0\\d{9}\\s*$", message = "phoneNumber không hợp lệ")
         String phoneNumber,
 
-        @NotBlank(message = "email khong duoc de trong")
-        @Email(message = "email khong hop le")
+        @NotBlank(message = "email không được để trống")
+        @Email(message = "email không hợp lệ")
         String email,
 
-        @NotBlank(message = "firstName khong duoc de trong")
+        @NotBlank(message = "firstName không được để trống")
         String firstName,
 
-        @NotBlank(message = "lastName khong duoc de trong")
+        @NotBlank(message = "lastName không được để trống")
         String lastName,
 
-        String avatarUrl,
+        UUID avatarFileAssetId,
 
-        @NotNull(message = "gender khong duoc null")
+        @NotNull(message = "gender không được null")
         Gender gender,
 
-        @NotNull(message = "dateOfBirth khong duoc null")
-        @PastOrPresent(message = "dateOfBirth khong duoc nam trong tuong lai")
+        @NotNull(message = "dateOfBirth không được null")
+        @PastOrPresent(message = "dateOfBirth không được nằm trong tương lai")
         LocalDate dateOfBirth,
 
-        @NotBlank(message = "roleName khong duoc de trong")
+        @NotBlank(message = "roleName không được để trống")
         String roleName
 ) {
 }
+

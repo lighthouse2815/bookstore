@@ -7,7 +7,8 @@ import java.util.UUID;
 public record UpdatePublisherCommand(
         UUID publisherId,
         String name,
-        String description
+        String description,
+        UUID logoFileAssetId
 ) {
     public UpdatePublisherCommand {
         if (publisherId == null) {

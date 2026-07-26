@@ -9,9 +9,9 @@ public record PublishedDigitalAssetResponse(
         UUID bookId,
         DigitalAssetFormat format,
         String title,
-        String fileName,
-        String sampleStorageKey,
         BigDecimal price,
-        boolean downloadAllowed
+        boolean downloadAllowed,
+        boolean purchaseAllowed,
+        boolean sampleAvailable
 ) {
 }

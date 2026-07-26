@@ -1,6 +1,7 @@
 // Request types
 export type SearchBooksRequest = {
   keyword?: string
+  categoryId?: string
 }
 
 export type UpsertBookRequest = {
@@ -8,13 +9,29 @@ export type UpsertBookRequest = {
   description?: string | null
   price: number
   stockQuantity: number
-  imageUrl?: string | null
+  images: UpsertBookImageRequest[]
   categoryId: string
   authorId: string
   publisherId: string
 }
 
+export type UpsertBookImageRequest = {
+  id?: string
+  fileAssetId: string
+  primaryImage: boolean
+  sortOrder: number
+  altText?: string | null
+}
+
 export type UpsertCategoryRequest = {
+  code: string
+  translations: CategoryTranslationRequest[]
+  parentId?: string | null
+  imageFileAssetId?: string | null
+}
+
+export type CategoryTranslationRequest = {
+  locale: 'vi' | 'en'
   name: string
   description?: string | null
 }
@@ -22,11 +39,15 @@ export type UpsertCategoryRequest = {
 export type UpsertAuthorRequest = {
   name: string
   biography?: string | null
+  avatarFileAssetId?: string | null
+  birthYear?: number | null
+  deathYear?: number | null
 }
 
 export type UpsertPublisherRequest = {
   name: string
   description?: string | null
+  logoFileAssetId?: string | null
 }
 
 // Response types
@@ -54,6 +75,7 @@ export type BookResponse = {
 export type BookImageResponse = {
   id: string
   bookId: string
+  fileAssetId: string
   imageUrl: string
   primaryImage: boolean
   sortOrder: number
@@ -74,19 +96,33 @@ export type BookDetailResponse = {
   edition: string | null
 }
 
-export type CategoryResponse = {
+export type LocalizedCategory = {
   id: string
+  code: string
   name: string
+  translations: Partial<Record<'vi' | 'en', CategoryTranslationResponse>>
+}
+
+export type CategoryResponse = LocalizedCategory & {
   description: string | null
   parentId: string | null
+  imageFileAssetId: string | null
+  imageUrl: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type CategoryTranslationResponse = {
+  locale: 'vi' | 'en'
+  name: string
+  description: string | null
 }
 
 export type AuthorResponse = {
   id: string
   name: string
   biography: string | null
+  avatarFileAssetId: string | null
   avatarUrl: string | null
   birthYear: number | null
   deathYear: number | null
@@ -98,6 +134,8 @@ export type PublisherResponse = {
   id: string
   name: string
   description: string | null
+  logoFileAssetId: string | null
+  logoUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -109,6 +147,7 @@ export type Book = {
   isbn: string | null
   author: string
   category: string
+  categoryInfo?: LocalizedCategory | null
   price: number
   oldPrice?: number
   rating?: number
@@ -129,9 +168,22 @@ export type Book = {
   updatedAt: string
 }
 
+export type BookCardData = Pick<
+  Book,
+  | 'id'
+  | 'title'
+  | 'author'
+  | 'category'
+  | 'categoryInfo'
+  | 'price'
+  | 'cover'
+> &
+  Partial<Pick<Book, 'oldPrice' | 'rating' | 'reviews' | 'bestseller'>>
+
 export type BookImage = {
   id: string
   bookId: string
+  fileAssetId: string
   imageUrl: string
   primaryImage: boolean
   sortOrder: number
@@ -154,7 +206,16 @@ export type BookDetail = {
 
 export type BookCatalog = {
   books: Book[]
-  categories: string[]
+  categories: CategoryResponse[]
+  categoryIds: Record<string, string>
+}
+
+export type BookCatalogPage = BookCatalog & {
+  totalCount: number
+  page: number
+  size: number
+  hasNext: boolean
+  totalPages: number
 }
 
 export type BookReferenceData = {
@@ -165,9 +226,6 @@ export type BookReferenceData = {
 
 export type BookReviewResponse = {
   reviewId: string
-  userId: string
-  bookId: string
-  orderItemId: string
   reviewerName: string
   reviewerAvatarUrl: string | null
   verifiedPurchase: boolean
@@ -181,9 +239,6 @@ export type BookReviewResponse = {
 
 export type BookReview = {
   reviewId: string
-  userId: string
-  bookId: string
-  orderItemId: string
   reviewerName: string
   reviewerAvatarUrl: string | null
   verifiedPurchase: boolean
@@ -229,15 +284,9 @@ export type BookPromotion = {
   updatedAt: string
 }
 
-export type BookCategoryTrailItemResponse = {
-  id: string
-  name: string
-}
+export type BookCategoryTrailItemResponse = LocalizedCategory
 
-export type BookCategoryTrailItem = {
-  id: string
-  name: string
-}
+export type BookCategoryTrailItem = LocalizedCategory
 
 export type BookRatingSummaryResponse = {
   averageRating: number | null

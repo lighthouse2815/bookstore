@@ -75,10 +75,27 @@ public class AuthService
         });
     }
 
-    public Task LogoutAsync()
+    public async Task LogoutAsync()
     {
-        authStore.Clear();
-        return Task.CompletedTask;
+        var refreshToken = authStore.RefreshToken;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                await apiClient.PostAsync("/api/auth/logout", new LogoutRequest
+                {
+                    RefreshToken = refreshToken
+                });
+            }
+        }
+        catch
+        {
+            // Local logout still wins if the network session is already unavailable.
+        }
+        finally
+        {
+            authStore.Clear();
+        }
     }
 
     private async Task ApplySessionAsync(LoginResponse session)

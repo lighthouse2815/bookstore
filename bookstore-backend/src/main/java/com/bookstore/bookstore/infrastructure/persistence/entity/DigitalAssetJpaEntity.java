@@ -47,16 +47,20 @@ public class DigitalAssetJpaEntity {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(name = "file_name", nullable = false, length = 255)
+    @Column(name = "file_name", length = 255)
     private String fileName;
 
-    @Column(name = "storage_key", nullable = false, length = 500)
+    @Column(name = "storage_key", length = 500)
     private String storageKey;
 
-    @Column(name = "mime_type", nullable = false, length = 100)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_asset_id")
+    private FileAssetJpaEntity fileAsset;
+
+    @Column(name = "mime_type", length = 100)
     private String mimeType;
 
-    @Column(name = "file_size", nullable = false)
+    @Column(name = "file_size")
     private Long fileSize;
 
     @Column(length = 128)
@@ -65,11 +69,18 @@ public class DigitalAssetJpaEntity {
     @Column(name = "sample_storage_key", length = 500)
     private String sampleStorageKey;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sample_file_asset_id")
+    private FileAssetJpaEntity sampleFileAsset;
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
     @Column(name = "download_allowed", nullable = false)
     private boolean downloadAllowed;
+
+    @Column(name = "purchase_allowed")
+    private Boolean purchaseAllowed;
 
     @Column(nullable = false)
     private boolean published;

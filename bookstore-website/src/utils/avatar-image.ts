@@ -4,6 +4,8 @@ const AVATAR_MIME_TYPES = ['image/webp', 'image/jpeg'] as const
 const AVATAR_EDGE_SIZES = [128, 96, 80, 72, 64, 56, 48, 40, 32, 24, 20, 16] as const
 const AVATAR_QUALITIES = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.15, 0.1, 0.05] as const
 
+type Translator = (key: string, params?: Record<string, number | string>) => string
+
 export type AvatarFileErrorCode = 'invalid_type' | 'decode_failed' | 'too_large'
 
 export class AvatarFileError extends Error {
@@ -63,7 +65,7 @@ export async function compressAvatarFile(file: File): Promise<string> {
 
 export function getAvatarFileErrorMessage(
   error: unknown,
-  isVietnamese: boolean,
+  t: Translator,
   fallbackMessage: string,
 ) {
   if (!(error instanceof AvatarFileError)) {
@@ -72,17 +74,11 @@ export function getAvatarFileErrorMessage(
 
   switch (error.code) {
     case 'invalid_type':
-      return isVietnamese
-        ? 'Vui lòng chọn một file ảnh hợp lệ.'
-        : 'Please choose a valid image file.'
+      return t('common.avatarFileErrors.invalidType')
     case 'decode_failed':
-      return isVietnamese
-        ? 'Không đọc được file ảnh đã chọn.'
-        : 'Could not read the selected image file.'
+      return t('common.avatarFileErrors.decodeFailed')
     case 'too_large':
-      return isVietnamese
-        ? 'Ảnh này quá lớn để lưu. Hãy chọn ảnh nhỏ hơn.'
-        : 'This image is too large to save. Please choose a smaller one.'
+      return t('common.avatarFileErrors.tooLarge')
   }
 
   return fallbackMessage

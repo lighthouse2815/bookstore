@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { messages, type AppLanguage } from '@/locales/messages'
+import { formatYearValue } from '@/utils/locale-format'
 
 type TranslationParams = Record<string, number | string>
 
@@ -15,10 +16,12 @@ type LanguageContextValue = {
   locale: string
   setLanguage: (language: AppLanguage) => void
   toggleLanguage: () => void
+  getMessage: <T = unknown>(key: string) => T | undefined
   t: (key: string, params?: TranslationParams) => string
   formatCurrency: (value: number) => string
   formatDate: (value: Date | number | string) => string
   formatNumber: (value: number) => string
+  formatYear: (value: number) => string
 }
 
 const LANGUAGE_STORAGE_KEY = 'bookstore-language'
@@ -78,17 +81,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const locale = LOCALE_BY_LANGUAGE[language]
 
   const value = useMemo<LanguageContextValue>(() => {
-    const t = (key: string, params?: TranslationParams) => {
+    const getMessage = <T = unknown>(key: string) => {
       const currentValue = getMessageValue(language, key)
       const fallbackValue = getMessageValue('vi', key)
-      const template =
-        typeof currentValue === 'string'
-          ? currentValue
-          : typeof fallbackValue === 'string'
-            ? fallbackValue
-            : key
+      return (currentValue ?? fallbackValue) as T | undefined
+    }
 
-      return interpolate(template, params)
+    const t = (key: string, params?: TranslationParams) => {
+      const template = getMessage<string>(key)
+      const nextValue = typeof template === 'string' ? template : key
+
+      return interpolate(nextValue, params)
     }
 
     return {
@@ -99,6 +102,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguage((currentLanguage) =>
           currentLanguage === 'vi' ? 'en' : 'vi',
         ),
+      getMessage,
       t,
       formatCurrency: (value: number) =>
         new Intl.NumberFormat(locale, {
@@ -111,6 +115,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           new Date(value),
         ),
       formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value),
+      formatYear: (value: number) => formatYearValue(value, locale),
     }
   }, [language, locale])
 

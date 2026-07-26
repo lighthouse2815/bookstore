@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.result;
 
+import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +17,11 @@ public record ReviewResult(
         long helpfulCount,
         int rating,
         String comment,
+        ReviewStatus status,
+        String moderationReason,
+        UUID moderatedBy,
+        String moderatedByName,
+        Instant moderatedAt,
         Instant createdAt,
         Instant updatedAt
 ) {

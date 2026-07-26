@@ -1,14 +1,14 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, ChevronRight, Loader2, Trash2, Wifi, WifiOff } from 'lucide-react'
+import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
 import { useNotifications } from '@/contexts/notification-context'
 import { cn, getErrorMessage } from '@/utils'
-import { toast } from 'sonner'
 
 export function NotificationBell() {
   const navigate = useNavigate()
-  const { language, locale } = useLanguage()
+  const { locale, t } = useLanguage()
   const {
     notifications,
     unreadCount,
@@ -25,30 +25,6 @@ export function NotificationBell() {
     void refresh()
   })
 
-  const labels = useMemo(
-    () => ({
-      title: language === 'vi' ? 'Thong bao' : 'Notifications',
-      empty:
-        language === 'vi'
-          ? 'Chua co thong bao nao'
-          : 'No notifications yet',
-      viewAll: language === 'vi' ? 'Xem tat ca' : 'View all',
-      delete: language === 'vi' ? 'Xoa' : 'Delete',
-      loading: language === 'vi' ? 'Dang tai thong bao...' : 'Loading notifications...',
-      openLabel:
-        language === 'vi' ? 'Mo thong bao' : 'Open notifications',
-      fallbackContent:
-        language === 'vi' ? 'Khong co noi dung' : 'No content',
-      realtimeLive:
-        language === 'vi' ? 'Realtime dang bat' : 'Realtime connected',
-      realtimeFallback:
-        language === 'vi' ? 'Dang dung REST fallback' : 'Using REST fallback',
-      deleteSuccess:
-        language === 'vi' ? 'Da xoa thong bao' : 'Notification deleted',
-    }),
-    [language],
-  )
-
   useEffect(() => {
     if (!open) {
       return
@@ -64,7 +40,17 @@ export function NotificationBell() {
     }
 
     document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
   }, [open])
 
   useEffect(() => {
@@ -88,7 +74,7 @@ export function NotificationBell() {
   async function handleDelete(notificationId: string) {
     try {
       await deleteNotification(notificationId)
-      toast.success(labels.deleteSuccess)
+      toast.success(t('notifications.bell.deleteSuccess'))
     } catch (currentError) {
       toast.error(getErrorMessage(currentError))
     }
@@ -101,8 +87,10 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="relative flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
-        aria-label={labels.openLabel}
+        className="relative flex size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        aria-label={t('notifications.bell.openLabel')}
+        aria-expanded={open}
+        aria-controls="notification-preview-panel"
       >
         <Bell className="size-5" />
         {unreadCount > 0 ? (
@@ -113,11 +101,14 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[70] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-[0_32px_90px_rgba(15,23,42,0.32)] backdrop-blur">
-          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+        <div
+          id="notification-preview-panel"
+          className="absolute right-0 z-[70] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-[0_32px_90px_rgba(15,23,42,0.32)] backdrop-blur dark:border-white/10 dark:bg-card/95 dark:shadow-[0_32px_90px_rgba(0,0,0,0.45)]"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-4 dark:border-white/10">
             <div>
               <p className="text-base font-semibold text-foreground">
-                {labels.title}
+                {t('notifications.bell.title')}
               </p>
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 {isRealtimeConnected ? (
@@ -127,13 +118,13 @@ export function NotificationBell() {
                 )}
                 <span>
                   {isRealtimeConnected
-                    ? labels.realtimeLive
-                    : labels.realtimeFallback}
+                    ? t('notifications.realtimeConnected')
+                    : t('notifications.realtimeFallback')}
                 </span>
               </div>
             </div>
             {unreadCount > 0 ? (
-              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary dark:border-primary/30 dark:bg-primary/15">
                 {unreadCount}
               </span>
             ) : null}
@@ -143,15 +134,15 @@ export function NotificationBell() {
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 rounded-2xl px-4 py-8 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {labels.loading}
+                {t('notifications.bell.loading')}
               </div>
             ) : error ? (
               <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             ) : previewNotifications.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                {labels.empty}
+              <div className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground dark:border-white/10 dark:bg-background/35">
+                {t('notifications.bell.empty')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -159,10 +150,10 @@ export function NotificationBell() {
                   <div
                     key={notification.notificationId}
                     className={cn(
-                      'flex items-start gap-2 rounded-2xl border px-3 py-3 transition-colors',
+                      'flex items-start gap-2 rounded-2xl border px-3 py-3 transition-colors dark:shadow-[0_14px_34px_rgba(0,0,0,0.18)]',
                       notification.read
-                        ? 'border-border/60 bg-card/50'
-                        : 'border-primary/20 bg-primary/5',
+                        ? 'border-border/60 bg-card/50 dark:border-white/10 dark:bg-background/45'
+                        : 'border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/12',
                     )}
                   >
                     <button
@@ -173,7 +164,7 @@ export function NotificationBell() {
                           notification.link,
                         )
                       }
-                      className="min-w-0 flex-1 text-left"
+                      className="min-h-11 min-w-0 flex-1 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="line-clamp-1 text-sm font-semibold text-foreground">
@@ -184,7 +175,7 @@ export function NotificationBell() {
                         ) : null}
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                        {notification.content || labels.fallbackContent}
+                        {notification.content || t('notifications.emptyContent')}
                       </p>
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                         <span>
@@ -200,8 +191,8 @@ export function NotificationBell() {
                     <button
                       type="button"
                       onClick={() => void handleDelete(notification.notificationId)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                      aria-label={labels.delete}
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                      aria-label={t('notifications.bell.delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -211,16 +202,16 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="border-t border-border/60 p-3">
+          <div className="border-t border-border/60 p-3 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
                 setOpen(false)
                 navigate('/notifications')
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 dark:hover:bg-primary/15"
             >
-              {labels.viewAll}
+              {t('notifications.bell.viewAll')}
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

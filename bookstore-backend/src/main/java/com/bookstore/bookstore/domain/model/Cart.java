@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.CartRule;
 import com.bookstore.bookstore.domain.validation.Guard;
@@ -33,9 +34,13 @@ public class Cart {
     }
 
     public void addItem(UUID bookId, int quantity, int stockQuantity) {
+        addPhysicalItem(bookId, quantity, stockQuantity);
+    }
+
+    public void addPhysicalItem(UUID bookId, int quantity, int stockQuantity) {
         Guard.notNull(bookId, DomainErrorCode.INVALID_CART_ITEM_BOOK_ID, "bookId");
 
-        CartItem existingItem = findItemByBookId(bookId);
+        CartItem existingItem = findPhysicalItemByBookId(bookId);
         if (existingItem != null) {
             existingItem.increaseQuantity(quantity, stockQuantity);
         } else {
@@ -43,8 +48,30 @@ public class Cart {
             Instant now = Instant.now();
             items.add(new CartItem(
                     UUID.randomUUID(),
+                    PurchaseItemType.PHYSICAL_BOOK,
                     bookId,
+                    null,
                     quantity,
+                    now,
+                    now
+            ));
+        }
+
+        setUpdatedAt(Instant.now());
+    }
+
+    public void addDigitalItem(UUID digitalAssetId) {
+        Guard.notNull(digitalAssetId, DomainErrorCode.INVALID_CART_ITEM_DIGITAL_ASSET_ID, "digitalAssetId");
+
+        CartItem existingItem = findDigitalItemByDigitalAssetId(digitalAssetId);
+        if (existingItem == null) {
+            Instant now = Instant.now();
+            items.add(new CartItem(
+                    UUID.randomUUID(),
+                    PurchaseItemType.DIGITAL_ASSET,
+                    null,
+                    digitalAssetId,
+                    1,
                     now,
                     now
             ));
@@ -55,16 +82,51 @@ public class Cart {
 
     public void updateItem(UUID bookId, int quantity, int stockQuantity) {
         Guard.notNull(bookId, DomainErrorCode.INVALID_CART_ITEM_BOOK_ID, "bookId");
-        CartItem existingItem = requireExistingItem(bookId);
+        CartItem existingItem = requireExistingPhysicalItem(bookId);
+        existingItem.updateQuantity(quantity, stockQuantity);
+        setUpdatedAt(Instant.now());
+    }
+
+    public void updatePhysicalItem(UUID itemId, int quantity, int stockQuantity) {
+        CartItem existingItem = requireExistingItem(itemId);
         existingItem.updateQuantity(quantity, stockQuantity);
         setUpdatedAt(Instant.now());
     }
 
     public void removeItem(UUID bookId) {
         Guard.notNull(bookId, DomainErrorCode.INVALID_CART_ITEM_BOOK_ID, "bookId");
-        CartItem existingItem = requireExistingItem(bookId);
+        CartItem existingItem = requireExistingPhysicalItem(bookId);
         items.remove(existingItem);
         setUpdatedAt(Instant.now());
+    }
+
+    public void removeItemById(UUID itemId) {
+        CartItem existingItem = requireExistingItem(itemId);
+        items.remove(existingItem);
+        setUpdatedAt(Instant.now());
+    }
+
+    public CartItem findItemById(UUID itemId) {
+        return items.stream()
+                .filter(item -> item.getId().equals(itemId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public CartItem findPhysicalItemByBookId(UUID bookId) {
+        return items.stream()
+                .filter(CartItem::isPhysicalBook)
+                .filter(item -> item.getBookId().equals(bookId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public CartItem findDigitalItemByDigitalAssetId(UUID digitalAssetId) {
+        return items.stream()
+                .filter(CartItem::isDigitalAsset)
+                .filter(item -> item.getDigitalAssetId().equals(digitalAssetId))
+                .findFirst()
+                .orElse(null);
     }
 
     public void clear() {
@@ -76,17 +138,16 @@ public class Cart {
         setUpdatedAt(Instant.now());
     }
 
-    private CartItem requireExistingItem(UUID bookId) {
-        CartItem existingItem = findItemByBookId(bookId);
+    private CartItem requireExistingItem(UUID itemId) {
+        CartItem existingItem = findItemById(itemId);
         CartRule.requireItemExists(existingItem);
         return existingItem;
     }
 
-    private CartItem findItemByBookId(UUID bookId) {
-        return items.stream()
-                .filter(item -> item.getBookId().equals(bookId))
-                .findFirst()
-                .orElse(null);
+    private CartItem requireExistingPhysicalItem(UUID bookId) {
+        CartItem existingItem = findPhysicalItemByBookId(bookId);
+        CartRule.requireItemExists(existingItem);
+        return existingItem;
     }
 
     private void setUserId(UUID userId) {
@@ -132,5 +193,4 @@ public class Cart {
         );
         this.updatedAt = validUpdatedAt;
     }
-
 }

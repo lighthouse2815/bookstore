@@ -14,12 +14,12 @@ public final class AuthorRule {
             Instant deletedAt,
             String currentName,
             String currentBiography,
-            String currentAvatarUrl,
+            Object currentAvatarFileAssetId,
             Integer currentBirthYear,
             Integer currentDeathYear,
             String newName,
             String newBiography,
-            String newAvatarUrl,
+            Object newAvatarFileAssetId,
             Integer newBirthYear,
             Integer newDeathYear
     ) {
@@ -29,7 +29,7 @@ public final class AuthorRule {
 
         if (Objects.equals(currentName, newName)
                 && Objects.equals(currentBiography, newBiography)
-                && Objects.equals(currentAvatarUrl, newAvatarUrl)
+                && Objects.equals(currentAvatarFileAssetId, newAvatarFileAssetId)
                 && Objects.equals(currentBirthYear, newBirthYear)
                 && Objects.equals(currentDeathYear, newDeathYear)) {
             throw new DomainException(DomainErrorCode.AUTHOR_DATA_NOT_CHANGED);

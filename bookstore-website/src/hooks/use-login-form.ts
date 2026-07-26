@@ -4,10 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { OTP_LENGTH, sanitizeOtpCode } from '@/utils/auth-flow'
-import {
-  getLoginRestrictionCopy,
-  parseLoginRestrictionMessage,
-} from '@/utils/login-restrictions'
+import { parseLoginRestrictionMessage } from '@/utils/login-restrictions'
 
 type LoginFormState = {
   username: string
@@ -60,7 +57,7 @@ export function useLoginForm() {
     requestRegistrationOtp,
     verifyRegistrationOtp,
   } = useAuth()
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const [formData, setFormData] = useState(initialFormData)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
@@ -75,9 +72,27 @@ export function useLoginForm() {
     useState<PendingActivationCredentials | null>(null)
 
   const restrictionCopy = loginRestriction
-    ? getLoginRestrictionCopy(loginRestriction.kind, language)
+    ? {
+        title: t(`auth.login.restrictions.${loginRestriction.kind}.title`),
+        description: t(
+          `auth.login.restrictions.${loginRestriction.kind}.description`,
+        ),
+      }
     : null
-  const flowCopy = getLoginFlowCopy(language)
+  const flowCopy: LoginFlowCopy = {
+    lockedActionLabel: t('auth.login.flow.lockedActionLabel'),
+    inactiveActionLabel: t('auth.login.flow.inactiveActionLabel'),
+    inactiveOtpLead: t('auth.login.flow.inactiveOtpLead'),
+    inactiveOtpReadyHint: t('auth.login.flow.inactiveOtpReadyHint'),
+    inactiveBackLabel: t('auth.login.flow.inactiveBackLabel'),
+    inactiveVerifyLabel: t('auth.login.flow.inactiveVerifyLabel'),
+    inactiveEmailRequiredMessage: t(
+      'auth.login.flow.inactiveEmailRequiredMessage',
+    ),
+    inactiveRequestErrorFallback: t(
+      'auth.login.flow.inactiveRequestErrorFallback',
+    ),
+  }
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
@@ -339,34 +354,3 @@ function getGoogleEmailFromIdToken(idToken: string) {
   }
 }
 
-function getLoginFlowCopy(language: 'vi' | 'en'): LoginFlowCopy {
-  if (language === 'vi') {
-    return {
-      lockedActionLabel: 'Dùng tài khoản khác',
-      inactiveActionLabel: 'Gửi lại OTP',
-      inactiveOtpLead:
-        'Nhập mã OTP kích hoạt gần nhất trong email của bạn. Nếu chưa nhận được hoặc mã đã hết hạn, bạn có thể gửi lại ngay từ đây.',
-      inactiveOtpReadyHint:
-        'Nhập đúng mã OTP 6 chữ số rồi hệ thống sẽ tự đăng nhập lại bằng tài khoản bạn vừa nhập.',
-      inactiveBackLabel: 'Quay lại đăng nhập',
-      inactiveVerifyLabel: 'Xác thực và đăng nhập',
-      inactiveEmailRequiredMessage:
-        'Tài khoản chưa kích hoạt cần đăng nhập bằng email để xác thực OTP.',
-      inactiveRequestErrorFallback: 'Không thể gửi lại mã OTP kích hoạt',
-    }
-  }
-
-  return {
-    lockedActionLabel: 'Use another account',
-    inactiveActionLabel: 'Resend OTP',
-    inactiveOtpLead:
-      'Enter the latest activation OTP from your email. If you did not receive one or it has expired, request a new code here.',
-    inactiveOtpReadyHint:
-      'Enter the correct 6-digit OTP and the app will sign you in again with the same account.',
-    inactiveBackLabel: 'Back to login',
-    inactiveVerifyLabel: 'Verify and sign in',
-    inactiveEmailRequiredMessage:
-      'Inactive accounts must sign in with an email address before OTP verification.',
-    inactiveRequestErrorFallback: 'Unable to send a new activation OTP',
-  }
-}

@@ -2,6 +2,7 @@ import api from './api'
 import type { ApiResponse } from '@/types/api'
 import type {
   AdminCreateImportReceiptRequest,
+  AdminModerateReviewRequest,
   AdminCreateNotificationRequest,
   AdminCreateUserRequest,
   AdminImportReceiptResponse,
@@ -10,6 +11,7 @@ import type {
   AdminPromotionResponse,
   AdminPromotionMutationRequest,
   AdminReviewResponse,
+  AdminReviewStatus,
   AdminRoleMutationRequest,
   AdminRoleResponse,
   AdminStockMovementResponse,
@@ -19,6 +21,8 @@ import type {
   AdminUserResponse,
 } from '@/types/admin-access'
 import { unwrapResponse } from '@/utils'
+import { toPageResult } from '@/services/pagination'
+import type { PageRequest, PageResult } from '@/types/pagination'
 
 export async function createAdminUser(
   data: AdminCreateUserRequest,
@@ -37,11 +41,23 @@ export async function getAdminCustomers(): Promise<AdminUserResponse[]> {
   return unwrapResponse(response)
 }
 
+export async function getAdminCustomersPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminUserResponse>> {
+  return getAdminUsersPage('/admin/users/customers', params)
+}
+
 export async function getAdminStaffs(): Promise<AdminUserResponse[]> {
   const response = await api.get<ApiResponse<AdminUserResponse[]>>(
     '/admin/users/staff',
   )
   return unwrapResponse(response)
+}
+
+export async function getAdminStaffsPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminUserResponse>> {
+  return getAdminUsersPage('/admin/users/staff', params)
 }
 
 export async function getAdminAdmins(): Promise<AdminUserResponse[]> {
@@ -51,39 +67,50 @@ export async function getAdminAdmins(): Promise<AdminUserResponse[]> {
   return unwrapResponse(response)
 }
 
+export async function getAdminShippers(): Promise<AdminUserResponse[]> {
+  const response = await api.get<ApiResponse<AdminUserResponse[]>>(
+    '/admin/users/shippers',
+  )
+  return unwrapResponse(response).sort((leftUser, rightUser) =>
+    leftUser.username.localeCompare(rightUser.username),
+  )
+}
+
 export async function getAdminEmployees(): Promise<AdminUserResponse[]> {
   const [staffs, admins] = await Promise.all([
     getAdminStaffs(),
     getAdminAdmins(),
   ])
 
-  return Array.from(
-    [...staffs, ...admins].reduce(
-      (usersMap, currentUser) => {
-        const existingUser = usersMap.get(currentUser.userId)
+  return mergeAdminUsers(staffs, admins)
+}
 
-        if (!existingUser) {
-          usersMap.set(currentUser.userId, currentUser)
-          return usersMap
-        }
+export async function getAdminManagedUsers(): Promise<AdminUserResponse[]> {
+  const [staffs, admins, shippers] = await Promise.all([
+    getAdminStaffs(),
+    getAdminAdmins(),
+    getAdminShippers(),
+  ])
 
-        usersMap.set(currentUser.userId, {
-          ...existingUser,
-          ...currentUser,
-          roles: Array.from(
-            new Set([...existingUser.roles, ...currentUser.roles]),
-          ),
-        })
+  return mergeAdminUsers(staffs, admins, shippers)
+}
 
-        return usersMap
-      },
-      new Map<string, AdminUserResponse>(),
-    ),
-  )
-    .map(([, user]) => user)
-    .sort((leftUser, rightUser) =>
-      leftUser.username.localeCompare(rightUser.username),
-    )
+export async function getAdminManagedUsersPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminUserResponse>> {
+  const page = params.page ?? 0
+  const size = params.size ?? 10
+  const users = await getAdminManagedUsers()
+  const start = page * size
+
+  return {
+    items: users.slice(start, start + size),
+    totalCount: users.length,
+    page,
+    size,
+    hasNext: start + size < users.length,
+    totalPages: users.length === 0 ? 0 : Math.ceil(users.length / size),
+  }
 }
 
 export async function updateAdminStaffUser(
@@ -161,6 +188,12 @@ export async function getAdminSuppliers(): Promise<AdminSupplierResponse[]> {
   return unwrapResponse(response)
 }
 
+export async function getAdminSuppliersPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminSupplierResponse>> {
+  return getAdminPage('/admin/suppliers', params, 10)
+}
+
 export async function createAdminSupplier(
   data: AdminSupplierMutationRequest,
 ): Promise<AdminSupplierResponse> {
@@ -195,6 +228,12 @@ export async function getAdminImportReceipts(): Promise<
   return unwrapResponse(response)
 }
 
+export async function getAdminImportReceiptsPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminImportReceiptResponse>> {
+  return getAdminPage('/admin/import-receipts', params, 10)
+}
+
 export async function createAdminImportReceipt(
   data: AdminCreateImportReceiptRequest,
 ): Promise<AdminImportReceiptResponse> {
@@ -208,6 +247,52 @@ export async function createAdminImportReceipt(
 export async function getAdminReviews(): Promise<AdminReviewResponse[]> {
   const response =
     await api.get<ApiResponse<AdminReviewResponse[]>>('/admin/reviews')
+  return unwrapResponse(response)
+}
+
+export type AdminReviewFilter = PageRequest & {
+  status?: AdminReviewStatus
+  bookId?: string
+  userId?: string
+  rating?: number
+}
+
+export async function getAdminReviewsPage(
+  params: AdminReviewFilter = {},
+): Promise<PageResult<AdminReviewResponse>> {
+  const request = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+    status: params.status || undefined,
+    bookId: params.bookId || undefined,
+    userId: params.userId || undefined,
+    rating: typeof params.rating === 'number' ? params.rating : undefined,
+  }
+  const response = await api.get<ApiResponse<AdminReviewResponse[]>>(
+    '/admin/reviews',
+    { params: request },
+  )
+  return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
+export async function hideAdminReview(
+  reviewId: string,
+  data: AdminModerateReviewRequest = {},
+): Promise<AdminReviewResponse> {
+  const request = normalizeAdminModerationRequest(data)
+  const response = await api.put<ApiResponse<AdminReviewResponse>>(
+    `/admin/reviews/${reviewId}/hide`,
+    request,
+  )
+  return unwrapResponse(response)
+}
+
+export async function approveAdminReview(
+  reviewId: string,
+): Promise<AdminReviewResponse> {
+  const response = await api.put<ApiResponse<AdminReviewResponse>>(
+    `/admin/reviews/${reviewId}/approve`,
+  )
   return unwrapResponse(response)
 }
 
@@ -239,6 +324,12 @@ export async function getAdminPromotions(): Promise<AdminPromotionResponse[]> {
     '/admin/coupons',
   )
   return unwrapResponse(response)
+}
+
+export async function getAdminPromotionsPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminPromotionResponse>> {
+  return getAdminPage('/admin/coupons', params, 10)
 }
 
 export async function createAdminPromotion(
@@ -282,4 +373,71 @@ export async function getAdminBookStockMovements(
     `/admin/books/${bookId}/stock-movements`,
   )
   return unwrapResponse(response)
+}
+
+export async function getAdminStockMovementsPage(
+  params: PageRequest = {},
+): Promise<PageResult<AdminStockMovementResponse>> {
+  return getAdminPage('/admin/stock-movements', params, 10)
+}
+
+async function getAdminUsersPage(
+  endpoint: string,
+  params: PageRequest,
+): Promise<PageResult<AdminUserResponse>> {
+  const request = { page: params.page ?? 0, size: params.size ?? 10 }
+  const response = await api.get<ApiResponse<AdminUserResponse[]>>(endpoint, {
+    params: request,
+  })
+  return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
+async function getAdminPage<T>(
+  endpoint: string,
+  params: PageRequest,
+  defaultSize: number,
+): Promise<PageResult<T>> {
+  const request = { page: params.page ?? 0, size: params.size ?? defaultSize }
+  const response = await api.get<ApiResponse<T[]>>(endpoint, { params: request })
+  return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
+function mergeAdminUsers(
+  ...groups: AdminUserResponse[][]
+): AdminUserResponse[] {
+  return Array.from(
+    groups.flat().reduce(
+      (usersMap, currentUser) => {
+        const existingUser = usersMap.get(currentUser.userId)
+
+        if (!existingUser) {
+          usersMap.set(currentUser.userId, currentUser)
+          return usersMap
+        }
+
+        usersMap.set(currentUser.userId, {
+          ...existingUser,
+          ...currentUser,
+          roles: Array.from(new Set([...existingUser.roles, ...currentUser.roles])),
+        })
+
+        return usersMap
+      },
+      new Map<string, AdminUserResponse>(),
+    ),
+  )
+    .map(([, user]) => user)
+    .sort((leftUser, rightUser) =>
+      leftUser.username.localeCompare(rightUser.username),
+    )
+}
+
+function normalizeAdminModerationRequest(
+  data: AdminModerateReviewRequest,
+): AdminModerateReviewRequest {
+  const normalizedReason = data.reason?.trim()
+
+  return {
+    reason: normalizedReason ? normalizedReason : undefined,
+  }
 }

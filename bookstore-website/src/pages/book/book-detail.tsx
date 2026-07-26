@@ -1,33 +1,49 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
 import {
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import {
+  BookPlus,
   BookOpenText,
   ChevronRight,
-  ExternalLink,
+  Heart,
   Headphones,
+  PackageCheck,
   ShieldCheck,
   Star,
   TicketPercent,
   Truck,
   Undo2,
   UserRound,
+  PencilLine,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { AddToCart } from '@/components/book/add-to-cart'
 import { BookCard } from '@/components/book/book-card'
+import { StatePanel, SurfaceCard } from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
+import { useWishlist } from '@/contexts/wishlist-context'
 import { useBookDetail } from '@/hooks/use-book-detail'
 import NotFoundPage from '@/pages/home/not-found'
 import type {
   AuthorResponse,
   Book,
+  BookCardData,
   BookPromotion,
   BookRatingSummary,
 } from '@/types/book'
-import { getBookCoverUrl } from '@/utils/book-cover'
-import { resolveDigitalAssetUrl } from '@/utils/digital-asset'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
+import {
+  getRecentlyViewedBooks,
+  pushRecentlyViewedBook,
+} from '@/utils/recently-viewed'
 
 type TranslateFunction = (
   key: string,
@@ -45,9 +61,16 @@ type DetailItem = {
   value: string
 }
 
+const BOOK_DETAIL_TAB_IDS = ['details', 'description', 'reviews'] as const
+
+type BookDetailTab = (typeof BOOK_DETAIL_TAB_IDS)[number]
+
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { t, formatCurrency, formatDate, formatNumber, language } = useLanguage()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { isWishlisted, toggleBook } = useWishlist()
+  const { t, language, formatCurrency, formatDate, formatNumber, formatYear } = useLanguage()
   const {
     book,
     suggestions,
@@ -62,22 +85,116 @@ export default function BookDetailPage() {
     notFound,
   } = useBookDetail(id)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const digitalAssetsCopy = getDigitalAssetsSectionCopy(language)
+  const [activeDetailTab, setActiveDetailTab] =
+    useState<BookDetailTab>('details')
+  const [recentlyViewedBooks, setRecentlyViewedBooks] = useState<BookCardData[]>(
+    [],
+  )
 
   useEffect(() => {
     setSelectedImageIndex(0)
+    setActiveDetailTab('details')
   }, [id])
+
+  useEffect(() => {
+    if (!book) {
+      setRecentlyViewedBooks([])
+      return
+    }
+
+    pushRecentlyViewedBook(book)
+    setRecentlyViewedBooks(
+      getRecentlyViewedBooks().filter((item) => item.id !== book.id).slice(0, 4),
+    )
+  }, [book])
+
+  async function handleToggleWishlist() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('wishlist.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    try {
+      const added = await toggleBook(toBookCardData(book))
+      toast.success(
+        added
+          ? t('wishlist.added', { title: book.title })
+          : t('wishlist.removed', { title: book.title }),
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('wishlist.updateError'),
+      )
+    }
+  }
+
+  function handleAddToShelf() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('shelves.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    navigate(`/shelves?addBook=${book.id}`)
+  }
+
+  function handleAddJournalEntry() {
+    if (!book) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('readingJournal.loginRequired'))
+      navigate('/login')
+      return
+    }
+
+    navigate(`/reading-journal?bookId=${book.id}`)
+  }
+
+  function handleDetailTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) {
+    let nextIndex: number | null = null
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % BOOK_DETAIL_TAB_IDS.length
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex =
+        (currentIndex - 1 + BOOK_DETAIL_TAB_IDS.length) %
+        BOOK_DETAIL_TAB_IDS.length
+    } else if (event.key === 'Home') {
+      nextIndex = 0
+    } else if (event.key === 'End') {
+      nextIndex = BOOK_DETAIL_TAB_IDS.length - 1
+    }
+
+    if (nextIndex === null) {
+      return
+    }
+
+    event.preventDefault()
+    const nextTab = BOOK_DETAIL_TAB_IDS[nextIndex]
+    setActiveDetailTab(nextTab)
+    document.getElementById(`book-detail-tab-${nextTab}`)?.focus()
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('common.loading')}
-            </p>
-          </div>
+          <StatePanel title={t('common.loading')} />
         </main>
         <Footer />
       </div>
@@ -89,14 +206,11 @@ export default function BookDetailPage() {
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('book.listing.errorTitle')}
-            </p>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              {error}
-            </p>
-          </div>
+          <StatePanel
+            tone="error"
+            title={t('book.listing.errorTitle')}
+            description={error}
+          />
         </main>
         <Footer />
       </div>
@@ -122,6 +236,24 @@ export default function BookDetailPage() {
   const reviewCount = resolvedRatingSummary.reviewCount
   const reviewItems = reviews.slice(0, 3)
   const brandName = t('common.brand')
+  const isFavorite = isWishlisted(book.id)
+  const detailTabs = [
+    {
+      id: 'details' as const,
+      label: t('book.detail.detailsTitle'),
+      icon: BookOpenText,
+    },
+    {
+      id: 'description' as const,
+      label: t('book.detail.descriptionTitle'),
+      icon: PencilLine,
+    },
+    {
+      id: 'reviews' as const,
+      label: `${t('book.detail.reviewTitle')} (${formatNumber(reviewCount)})`,
+      icon: Star,
+    },
+  ]
 
   const detailItems = [
     createTextDetailItem(t('book.detail.specIsbn'), book.isbn, detailFallback),
@@ -155,7 +287,7 @@ export default function BookDetailPage() {
     createNumberDetailItem(
       t('book.detail.specPublicationYear'),
       book.detail?.publicationYear,
-      (value) => formatNumber(value),
+      (value) => formatYear(value),
       detailFallback,
     ),
     createNumberDetailItem(
@@ -191,7 +323,7 @@ export default function BookDetailPage() {
           {categoryTrail.map((category) => (
             <div key={category.id} className="flex items-center gap-1">
               <ChevronRight className="size-4" />
-              <span>{getCategoryLabel(category.name, t)}</span>
+              <span>{getCategoryLabel(category, language)}</span>
             </div>
           ))}
           <ChevronRight className="size-4" />
@@ -216,6 +348,7 @@ export default function BookDetailPage() {
                 <img
                   src={image.src}
                   alt={image.alt}
+                  onError={(event) => setBookCoverFallback(event.currentTarget)}
                   className="absolute inset-0 size-full object-cover"
                 />
               </button>
@@ -228,6 +361,7 @@ export default function BookDetailPage() {
                 <img
                   src={activeImage.src}
                   alt={activeImage.alt}
+                  onError={(event) => setBookCoverFallback(event.currentTarget)}
                   className="absolute inset-0 size-full object-cover"
                 />
                 {discount > 0 && (
@@ -242,7 +376,7 @@ export default function BookDetailPage() {
           <section className="order-3 min-w-0 space-y-6 xl:pt-6">
             <div className="space-y-4">
               <span className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                {getCategoryLabel(book.category, t)}
+                {getCategoryLabel(book.categoryInfo ?? book.category, language)}
               </span>
               <div className="space-y-3">
                 <h1 className="font-heading text-4xl font-bold tracking-tight text-balance text-foreground lg:text-5xl">
@@ -266,7 +400,9 @@ export default function BookDetailPage() {
                   <span>
                     {t('book.detail.specPublicationYear')}{' '}
                     <span className="font-semibold text-foreground">
-                      {book.detail?.publicationYear ?? detailFallback}
+                      {book.detail?.publicationYear
+                        ? formatYear(book.detail.publicationYear)
+                        : detailFallback}
                     </span>
                   </span>
                 </div>
@@ -322,122 +458,41 @@ export default function BookDetailPage() {
               )}
             </div>
 
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold ${
-                    book.stockQuantity > 0
-                      ? 'bg-emerald-500/10 text-emerald-600'
-                      : 'bg-destructive/10 text-destructive'
-                  }`}
-                >
-                  <span
-                    className={`size-2 rounded-full ${
-                      book.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-destructive'
-                    }`}
-                  />
-                  {book.stockQuantity > 0
-                    ? t('book.detail.stockValue', {
-                        count: formatNumber(book.stockQuantity),
-                      })
-                    : t('book.detail.stockOut')}
-                </span>
-                <span className="text-muted-foreground">
-                  {t('book.detail.shippingInfo', {
-                    amount: formatCurrency(200000),
-                  })}
-                </span>
+            {digitalAssets.length > 0 ? (
+              <div className="rounded-[1.75rem] border border-primary/20 bg-[linear-gradient(135deg,hsl(var(--primary)/0.1),hsl(var(--background))_62%)] p-4 shadow-[0_18px_45px_rgba(99,102,241,0.12)]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                      <BookOpenText className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="font-heading text-lg font-bold text-foreground">
+                        {t('book.detail.digitalAssets.calloutTitle', {
+                          count: formatNumber(digitalAssets.length),
+                        })}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {t('book.detail.digitalAssets.teaserDescription')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <Link
+                      to={`/books/${book.id}/ebook`}
+                      className="inline-flex items-center rounded-2xl border border-border bg-background/70 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+                    >
+                      {t('book.detail.digitalAssets.viewOptions')}
+                    </Link>
+                  </div>
+                </div>
               </div>
-            
-            </div>
+            ) : null}
 
-            <AddToCart book={book} />
-
-            {digitalAssets.length > 0 && (
-              <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <BookOpenText className="size-5 text-primary" />
-                  <h2 className="font-heading text-xl font-bold">
-                    {digitalAssetsCopy.title}
-                  </h2>
-                </div>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {digitalAssetsCopy.description}
-                </p>
-
-                <div className="mt-4 grid gap-3">
-                  {digitalAssets.map((asset) => {
-                    const sampleUrl = resolveDigitalAssetUrl(asset.sampleStorageKey)
-
-                    return (
-                      <article
-                        key={asset.id}
-                        className="rounded-[1.5rem] border border-border bg-muted/20 p-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              {asset.format === 'AUDIO' ? (
-                                <Headphones className="size-4 text-primary" />
-                              ) : (
-                                <BookOpenText className="size-4 text-primary" />
-                              )}
-                              <p className="font-semibold text-foreground">
-                                {asset.title}
-                              </p>
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {asset.fileName}
-                            </p>
-                          </div>
-
-                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                            {asset.format}
-                          </span>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <InfoPill>{formatCurrency(asset.price)}</InfoPill>
-                          <InfoPill>
-                            {asset.downloadAllowed
-                              ? digitalAssetsCopy.downloadAllowed
-                              : digitalAssetsCopy.downloadRestricted}
-                          </InfoPill>
-                          <InfoPill>
-                            {asset.sampleStorageKey
-                              ? digitalAssetsCopy.sampleAvailable
-                              : digitalAssetsCopy.noSample}
-                          </InfoPill>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          {sampleUrl ? (
-                            <a href={sampleUrl} target="_blank" rel="noreferrer">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-2xl"
-                              >
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                {digitalAssetsCopy.openSample}
-                              </Button>
-                            </a>
-                          ) : asset.sampleStorageKey ? (
-                            <span className="text-sm text-muted-foreground">
-                              {digitalAssetsCopy.sampleMetadataOnly}
-                            </span>
-                          ) : null}
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
           </section>
 
           <aside className="order-4 space-y-4 xl:pt-1">
-            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+            <SurfaceCard className="p-5">
               <div className="mb-4 flex items-center gap-2">
                 <TicketPercent className="size-5 text-primary" />
                 <h2 className="font-heading text-xl font-bold">
@@ -489,9 +544,9 @@ export default function BookDetailPage() {
                   </p>
                 )}
               </div>
-            </section>
+            </SurfaceCard>
 
-            <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+            <SurfaceCard className="p-5">
               <h2 className="mb-4 font-heading text-xl font-bold">
                 {t('book.detail.commitmentsTitle', { brand: brandName })}
               </h2>
@@ -513,35 +568,172 @@ export default function BookDetailPage() {
                   text={t('book.detail.commitmentSupport')}
                 />
               </div>
-            </section>
+            </SurfaceCard>
           </aside>
         </section>
 
-        <div className="mt-12 flex flex-wrap gap-6 border-b border-border text-sm">
-          <a
-            href="#book-details"
-            className="border-b-2 border-primary pb-3 font-semibold text-primary"
-          >
-            {t('book.detail.detailsTitle')}
-          </a>
-          <a
-            href="#book-description"
-            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {t('book.detail.descriptionTitle')}
-          </a>
-          <a
-            href="#book-reviews"
-            className="pb-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {`${t('book.detail.reviewTitle')} (${formatNumber(reviewCount)})`}
-          </a>
-        </div>
+        <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-primary/15 bg-card/55 shadow-[0_24px_70px_-44px_hsl(var(--primary)/0.5)]">
+          <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4 sm:px-6">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {t('book.detail.availabilityLabel')}
+            </h2>
+            <span
+              className={`inline-flex items-center gap-2 text-sm font-semibold tabular-nums ${
+                book.stockQuantity > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-destructive'
+              }`}
+            >
+              <span
+                className={`size-2 rounded-full ${
+                  book.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-destructive'
+                }`}
+              />
+              {book.stockQuantity > 0
+                ? t('book.detail.stockValue', {
+                    count: formatNumber(book.stockQuantity),
+                  })
+                : t('book.detail.stockOut')}
+            </span>
+          </div>
+
+          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-5">
+            <div className="flex min-h-24 min-w-0 items-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Truck className="size-[1.125rem]" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {t('book.detail.deliveryTitle')}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-foreground">
+                  {t('book.detail.deliveryTime')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex min-h-24 min-w-0 items-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <PackageCheck className="size-[1.125rem]" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {t('book.detail.freeShippingTitle')}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-foreground">
+                  {t('book.detail.freeShippingThreshold', {
+                    amount: formatCurrency(200000),
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleToggleWishlist()
+              }}
+              className={`group flex min-h-24 items-center justify-center gap-3 rounded-2xl border px-4 py-4 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0 ${
+                isFavorite
+                  ? 'border-primary/35 bg-primary/10 text-primary'
+                  : 'border-border/80 bg-background/55 text-foreground hover:border-primary/35 hover:bg-primary/5'
+              }`}
+              aria-label={
+                isFavorite
+                  ? t('book.detail.removeFromWishlist')
+                  : t('book.detail.addToWishlist')
+              }
+              aria-pressed={isFavorite}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <Heart
+                  className={`size-[1.125rem] ${isFavorite ? 'fill-current' : ''}`}
+                />
+              </span>
+              {isFavorite
+                ? t('book.detail.wishlistedShort')
+                : t('book.detail.wishlistShort')}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAddToShelf}
+              className="group flex min-h-24 items-center justify-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4 text-sm font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0"
+              aria-label={t('shelves.addToShelfAction')}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <BookPlus className="size-[1.125rem]" />
+              </span>
+              {t('book.detail.shelfShort')}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAddJournalEntry}
+              className="group flex min-h-24 items-center justify-center gap-3 rounded-2xl border border-border/80 bg-background/55 px-4 py-4 text-sm font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0 sm:col-span-2 lg:col-span-1"
+              aria-label={t('readingJournal.openFromBookDetail')}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+                <PencilLine className="size-[1.125rem]" />
+              </span>
+              {t('book.detail.journalShort')}
+            </button>
+          </div>
+        </section>
 
         <section
-          id="book-details"
-          className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_360px]"
+          aria-label={t('book.addToCart.addToCart')}
+          className="mt-4 rounded-[1.75rem] border border-primary/15 bg-card/55 p-4 shadow-[0_22px_60px_-46px_hsl(var(--primary)/0.45)] sm:p-5"
         >
+          <AddToCart book={book} />
+        </section>
+
+        <div className="mt-12 overflow-x-auto pb-1">
+          <div
+            role="tablist"
+            aria-label={`${book.title} - ${t('book.detail.detailsTitle')}`}
+            className="inline-flex min-w-full gap-1 rounded-2xl border border-border/70 bg-muted/30 p-1.5 sm:grid sm:grid-cols-3"
+          >
+            {detailTabs.map((tab, index) => {
+              const TabIcon = tab.icon
+              const isActive = activeDetailTab === tab.id
+
+              return (
+                <button
+                  key={tab.id}
+                  id={`book-detail-tab-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`book-detail-panel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveDetailTab(tab.id)}
+                  onKeyDown={(event) => handleDetailTabKeyDown(event, index)}
+                  className={`inline-flex min-h-12 min-w-[12rem] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:min-w-0 ${
+                    isActive
+                      ? 'bg-card text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-border/70 dark:shadow-[0_8px_24px_rgba(0,0,0,0.24)]'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground active:scale-[0.99]'
+                  }`}
+                >
+                  <TabIcon
+                    className={`size-4 ${isActive ? 'text-primary' : ''}`}
+                    strokeWidth={1.8}
+                  />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {activeDetailTab === 'details' ? (
+          <section
+            id="book-detail-panel-details"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-details"
+            tabIndex={0}
+            className="mt-6 grid animate-fade-in gap-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 xl:grid-cols-[minmax(0,1.5fr)_360px]"
+          >
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
               <BookOpenText className="size-5 text-primary" />
@@ -605,24 +797,34 @@ export default function BookDetailPage() {
               </p>
             )}
           </section>
-        </section>
+          </section>
+        ) : null}
 
-        <section
-          id="book-description"
-          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
-        >
+        {activeDetailTab === 'description' ? (
+          <section
+            id="book-detail-panel-description"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-description"
+            tabIndex={0}
+            className="mt-6 animate-fade-in rounded-3xl border border-border bg-card p-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-8"
+          >
           <h2 className="font-heading text-2xl font-bold">
             {t('book.detail.descriptionTitle')}
           </h2>
           <p className="mt-4 max-w-4xl leading-8 text-muted-foreground">
             {book.description || t('book.detail.descriptionFallback')}
           </p>
-        </section>
+          </section>
+        ) : null}
 
-        <section
-          id="book-reviews"
-          className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm"
-        >
+        {activeDetailTab === 'reviews' ? (
+          <section
+            id="book-detail-panel-reviews"
+            role="tabpanel"
+            aria-labelledby="book-detail-tab-reviews"
+            tabIndex={0}
+            className="mt-6 animate-fade-in rounded-3xl border border-border bg-card p-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-8"
+          >
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h2 className="font-heading text-2xl font-bold">
@@ -754,15 +956,15 @@ export default function BookDetailPage() {
                   </article>
                 ))
               ) : (
-                <div className="rounded-3xl border border-dashed border-border px-6 py-10 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {t('book.detail.reviewEmpty')}
-                  </p>
-                </div>
+                <StatePanel
+                  minHeightClassName="min-h-[160px]"
+                  title={t('book.detail.reviewEmpty')}
+                />
               )}
             </div>
           </div>
-        </section>
+          </section>
+        ) : null}
 
         {suggestions.length > 0 && (
           <section className="mt-16">
@@ -772,6 +974,19 @@ export default function BookDetailPage() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {suggestions.map((suggestedBook) => (
                 <BookCard key={suggestedBook.id} book={suggestedBook} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {recentlyViewedBooks.length > 0 && (
+          <section className="mt-10">
+            <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight">
+              {t('book.detail.recentlyViewedTitle')}
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {recentlyViewedBooks.map((recentBook) => (
+                <BookCard key={recentBook.id} book={recentBook} />
               ))}
             </div>
           </section>
@@ -786,7 +1001,7 @@ function CommitmentRow({
   icon,
   text,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   text: string
 }) {
   return (
@@ -907,40 +1122,17 @@ function createNumberDetailItem(
   }
 }
 
-function InfoPill({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-      {children}
-    </span>
-  )
-}
-
-function getDigitalAssetsSectionCopy(language: 'vi' | 'en') {
-  if (language === 'en') {
-    return {
-      description:
-        'These are the published digital editions currently exposed by the backend for this book.',
-      downloadAllowed: 'Download allowed',
-      downloadRestricted: 'Download restricted',
-      noSample: 'No sample',
-      openSample: 'Open sample',
-      sampleAvailable: 'Sample available',
-      sampleMetadataOnly:
-        'Sample metadata exists, but the backend has not exposed a direct preview URL yet.',
-      title: 'Digital editions',
-    }
-  }
-
+function toBookCardData(book: Book): BookCardData {
   return {
-    description:
-      'Đây là các phiên bản số đang được backend publish công khai cho cuốn sách này.',
-    downloadAllowed: 'Cho phép tải',
-    downloadRestricted: 'Giới hạn tải',
-    noSample: 'Không có bản mẫu',
-    openSample: 'Mở bản mẫu',
-    sampleAvailable: 'Có bản mẫu',
-    sampleMetadataOnly:
-      'Backend có trả sample key nhưng hiện chưa phải URL preview mở trực tiếp.',
-    title: 'Phiên bản số',
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    category: book.category,
+    price: book.price,
+    cover: book.cover,
+    oldPrice: book.oldPrice,
+    rating: book.rating,
+    reviews: book.reviews,
+    bestseller: book.bestseller,
   }
 }

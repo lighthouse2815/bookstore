@@ -16,7 +16,18 @@ public class RefreshTokenPersistenceMapper {
         return new RefreshToken(
                 entity.getId(),
                 entity.getUser().getId(),
-                entity.getToken(),
+                entity.getTokenHash(),
+                entity.getFamilyId(),
+                entity.getParentTokenId(),
+                entity.getReplacedByTokenId(),
+                entity.getDeviceId(),
+                entity.getDeviceName(),
+                entity.getUserAgent(),
+                entity.getIpAddress(),
+                entity.getIssuedAt(),
+                entity.getLastUsedAt(),
+                entity.getRevokedAt(),
+                entity.getRevokeReason(),
                 entity.getExpiresAt(),
                 entity.isRevoked(),
                 entity.getCreatedAt()
@@ -26,7 +37,18 @@ public class RefreshTokenPersistenceMapper {
     public void copyToEntity(RefreshToken refreshToken, RefreshTokenJpaEntity entity, UserJpaEntity user) {
         entity.setId(refreshToken.getId());
         entity.setUser(user);
-        entity.setToken(refreshToken.getToken());
+        entity.setTokenHash(refreshToken.getTokenHash());
+        entity.setFamilyId(refreshToken.getFamilyId());
+        entity.setParentTokenId(refreshToken.getParentTokenId());
+        entity.setReplacedByTokenId(refreshToken.getReplacedByTokenId());
+        entity.setDeviceId(refreshToken.getDeviceId());
+        entity.setDeviceName(refreshToken.getDeviceName());
+        entity.setUserAgent(refreshToken.getUserAgent());
+        entity.setIpAddress(refreshToken.getIpAddress());
+        entity.setIssuedAt(refreshToken.getIssuedAt());
+        entity.setLastUsedAt(refreshToken.getLastUsedAt());
+        entity.setRevokedAt(refreshToken.getRevokedAt());
+        entity.setRevokeReason(refreshToken.getRevokeReason());
         entity.setExpiresAt(refreshToken.getExpiresAt());
         entity.setRevoked(refreshToken.isRevoked());
         entity.setCreatedAt(refreshToken.getCreatedAt());

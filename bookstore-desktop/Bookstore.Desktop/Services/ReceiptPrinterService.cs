@@ -26,8 +26,19 @@ public class ReceiptPrinterService
         builder.AppendLine(receipt.StoreName);
         builder.AppendLine($"Mã đơn: {receipt.OrderCode}");
         builder.AppendLine($"Ngày: {receipt.CreatedAtText}");
-        builder.AppendLine($"Nhân viên: {receipt.StaffName}");
-        builder.AppendLine($"Thanh toán: {receipt.PaymentMethod}");
+        if (receipt.HasStaffName)
+        {
+            builder.AppendLine($"Nhân viên: {receipt.StaffName}");
+        }
+        if (receipt.HasCustomerName)
+        {
+            builder.AppendLine($"Khách hàng: {receipt.CustomerName}");
+        }
+        if (receipt.HasCustomerPhone)
+        {
+            builder.AppendLine($"SĐT: {receipt.CustomerPhone}");
+        }
+        builder.AppendLine($"Thanh toán: {receipt.PaymentMethodText}");
         builder.AppendLine(new string('-', 42));
         foreach (var item in receipt.Items)
         {
@@ -38,6 +49,11 @@ public class ReceiptPrinterService
         builder.AppendLine($"Tạm tính: {receipt.TotalText}");
         builder.AppendLine($"Giảm giá: {receipt.DiscountText}");
         builder.AppendLine($"Tổng cộng: {receipt.FinalText}");
+        if (receipt.HasCashReceived)
+        {
+            builder.AppendLine($"Tiền khách đưa: {receipt.CashReceivedText}");
+            builder.AppendLine($"Tiền thừa: {receipt.ChangeAmountText}");
+        }
         return builder.ToString();
     }
 

@@ -6,11 +6,15 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -22,6 +26,7 @@ public class ProfileService implements IProfileService {
 
     private final IProfileRepository profileRepository;
     private final IUserRepository userRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Profile> getAll() {
@@ -33,7 +38,6 @@ public class ProfileService implements IProfileService {
         return profileRepository.findAllIncludingDeleted();
     }
 
-    // TODO : chuc nang tao acc lai khi da xoa + khoi phuc
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Profile create(Profile profile) {
@@ -74,6 +78,33 @@ public class ProfileService implements IProfileService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public Profile restoreForUser(UUID userId) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        if (userRepository.findByIdActive(userId).isEmpty()) {
+            throw new ApplicationException(ApplicationErrorCode.PROFILE_USER_NOT_FOUND);
+        }
+
+        Profile existingProfile = profileRepository.findByUserIdIncludingDeleted(userId).orElse(null);
+        if (existingProfile == null) {
+            Instant now = Instant.now();
+            return create(new Profile(
+                    UUID.randomUUID(), userId, null, null, null, null, null, now, now, null
+            ));
+        }
+
+        if (existingProfile.getDeletedAt() != null) {
+            existingProfile.restore();
+            return profileRepository.save(existingProfile);
+        }
+
+        return existingProfile;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Profile update(UpdateProfileCommand command) {
         if (command == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
@@ -89,12 +120,16 @@ public class ProfileService implements IProfileService {
 
         String lastName = StringUtils.trimToNull(command.lastName());
         String firstName = StringUtils.trimToNull(command.firstName());
-        String avatarUrl = StringUtils.trimToNull(command.avatarUrl());
+        FileAsset avatarFileAsset = resolveAvatarFileAsset(
+                command.avatarFileAssetId(),
+                currentProfile,
+                userId
+        );
 
         currentProfile.updateProfileInfo(
                 lastName,
                 firstName,
-                avatarUrl,
+                avatarFileAsset,
                 command.gender(),
                 command.dateOfBirth()
         );
@@ -113,5 +148,22 @@ public class ProfileService implements IProfileService {
 
         currentProfile.softDelete();
         profileRepository.save(currentProfile);
+    }
+
+    private FileAsset resolveAvatarFileAsset(UUID avatarFileAssetId, Profile currentProfile, UUID ownerId) {
+        if (avatarFileAssetId == null) {
+            return null;
+        }
+
+        if (currentProfile != null && avatarFileAssetId.equals(currentProfile.getAvatarFileAssetId())) {
+            return currentProfile.getAvatarFileAsset();
+        }
+
+        return fileAssetPolicyService.requireActiveOwnedAsset(
+                avatarFileAssetId,
+                FilePurpose.USER_AVATAR,
+                FileVisibility.PUBLIC,
+                ownerId
+        );
     }
 }

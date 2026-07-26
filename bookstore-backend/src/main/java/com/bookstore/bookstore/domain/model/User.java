@@ -111,6 +111,15 @@ public class User {
         setDeletedAt(now);
     }
 
+    public void restoreForRegistration(String passwordHash, Set<Role> roles) {
+        setDeletedAt(null);
+        setPasswordHash(passwordHash);
+        setStatus(UserStatus.INACTIVE);
+        setLocked(false);
+        setRoles(roles);
+        setUpdatedAt(Instant.now());
+    }
+
     public void requireCanLogin() {
         UserRule.requireCanLogin(status, locked, deletedAt);
     }

@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -10,11 +11,13 @@ import { toast } from 'sonner'
 import { useCart } from '@/contexts/cart-context'
 import { useLanguage } from '@/contexts/language-context'
 import { createAddress, getMyAddresses } from '@/services/address-service'
+import { getBestCartCoupon } from '@/services/cart-service'
 import { getActiveCoupons } from '@/services/coupon-service'
 import { createOrder } from '@/services/order-service'
 import type { UserAddressResponse } from '@/types/address'
+import type { BestCouponSuggestion } from '@/types/cart'
 import type { CouponResponse, CouponType } from '@/types/coupon'
-import type { PaymentMethod, ShippingMethod } from '@/types/order'
+import type { CreateOrderRequest, PaymentMethod, ShippingMethod } from '@/types/order'
 import {
   calculateCouponDiscount,
   findCouponByCode,
@@ -53,6 +56,13 @@ const initialFormData: CheckoutFormState = {
   note: '',
 }
 
+type CheckoutAttempt = {
+  addressSignature: string | null
+  createdAddressId: string | null
+  requestSignature: string | null
+  idempotencyKey: string | null
+}
+
 export function useCheckoutFlow() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -63,12 +73,21 @@ export function useCheckoutFlow() {
   const [isCouponLoading, setIsCouponLoading] = useState(true)
   const [savedAddresses, setSavedAddresses] = useState<UserAddressResponse[]>([])
   const [activeCoupons, setActiveCoupons] = useState<CouponResponse[]>([])
+  const [bestCouponSuggestion, setBestCouponSuggestion] =
+    useState<BestCouponSuggestion | null>(null)
+  const [isBestCouponLoading, setIsBestCouponLoading] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState(NO_ADDRESS_VALUE)
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethod>(DEFAULT_SHIPPING_METHOD)
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>(DEFAULT_PAYMENT_METHOD)
   const [formData, setFormData] = useState(initialFormData)
+  const checkoutAttemptRef = useRef<CheckoutAttempt>({
+    addressSignature: null,
+    createdAddressId: null,
+    requestSignature: null,
+    idempotencyKey: null,
+  })
 
   const selectedCartItemIds = useMemo(() => {
     const value = searchParams.get('items')
@@ -94,19 +113,29 @@ export function useCheckoutFlow() {
     const selectedCartItemIdSet = new Set(selectedCartItemIds)
     return cartItems.filter((item) => selectedCartItemIdSet.has(item.id))
   }, [cartItems, selectedCartItemIds])
+  const selectedItemIdsKey = useMemo(
+    () => items.map((item) => item.id).join(','),
+    [items],
+  )
 
+  const hasPhysicalItems = useMemo(
+    () => items.some((item) => item.itemType === 'PHYSICAL_BOOK'),
+    [items],
+  )
+  const isDigitalOnly = items.length > 0 && !hasPhysicalItems
   const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0)
   const shippingFee =
-    items.length > 0 ? getShippingFee(shippingMethod, subtotal) : 0
+    items.length > 0 ? getShippingFee(shippingMethod, subtotal, hasPhysicalItems) : 0
   const selectedBookCoupon = useMemo(
-    () =>
-      findCouponByCode(activeCoupons, formData.bookCouponCode, 'BOOK'),
+    () => findCouponByCode(activeCoupons, formData.bookCouponCode, 'BOOK'),
     [activeCoupons, formData.bookCouponCode],
   )
   const selectedShippingCoupon = useMemo(
     () =>
-      findCouponByCode(activeCoupons, formData.shippingCouponCode, 'SHIPPING'),
-    [activeCoupons, formData.shippingCouponCode],
+      hasPhysicalItems
+        ? findCouponByCode(activeCoupons, formData.shippingCouponCode, 'SHIPPING')
+        : null,
+    [activeCoupons, formData.shippingCouponCode, hasPhysicalItems],
   )
   const shippingDiscount =
     selectedShippingCoupon
@@ -199,6 +228,73 @@ export function useCheckoutFlow() {
     }
   }, [t])
 
+  useEffect(() => {
+    if (!isDigitalOnly) {
+      return
+    }
+
+    setShippingMethod('PICKUP')
+    setPaymentMethod('BANK_TRANSFER_QR')
+    setSelectedAddressId(NO_ADDRESS_VALUE)
+  }, [isDigitalOnly])
+
+  useEffect(() => {
+    const nextBookCouponCode =
+      normalizeCouponCode(searchParams.get('bookCoupon')) || null
+    const nextShippingCouponCode =
+      normalizeCouponCode(searchParams.get('shippingCoupon')) || null
+
+    if (!nextBookCouponCode && !nextShippingCouponCode) {
+      return
+    }
+
+    setFormData((previousValue) => ({
+      ...previousValue,
+      bookCouponCode: nextBookCouponCode ?? previousValue.bookCouponCode,
+      shippingCouponCode:
+        nextShippingCouponCode ?? previousValue.shippingCouponCode,
+    }))
+  }, [searchParams])
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setBestCouponSuggestion(null)
+      setIsBestCouponLoading(false)
+      return
+    }
+
+    let isCancelled = false
+
+    async function loadBestCouponSuggestion() {
+      setIsBestCouponLoading(true)
+
+      try {
+        const suggestion = await getBestCartCoupon({
+          itemIds: items.map((item) => item.id),
+          shippingMethod: hasPhysicalItems ? shippingMethod : 'PICKUP',
+        })
+
+        if (!isCancelled) {
+          setBestCouponSuggestion(suggestion)
+        }
+      } catch {
+        if (!isCancelled) {
+          setBestCouponSuggestion(null)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsBestCouponLoading(false)
+        }
+      }
+    }
+
+    void loadBestCouponSuggestion()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [items, shippingMethod, hasPhysicalItems, selectedItemIdsKey])
+
   function handleChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
@@ -218,6 +314,10 @@ export function useCheckoutFlow() {
   }
 
   function handleSelectAddressChange(nextValue: string) {
+    if (isDigitalOnly) {
+      return
+    }
+
     setSelectedAddressId(nextValue)
 
     if (nextValue === NEW_ADDRESS_VALUE) {
@@ -243,18 +343,45 @@ export function useCheckoutFlow() {
   }
 
   function handleShippingMethodChange(nextShippingMethod: ShippingMethod) {
+    if (isDigitalOnly) {
+      setShippingMethod('PICKUP')
+      return
+    }
+
     setShippingMethod(nextShippingMethod)
   }
 
   function handlePaymentMethodChange(nextPaymentMethod: PaymentMethod) {
+    if (isDigitalOnly && nextPaymentMethod === 'COD') {
+      return
+    }
+
     setPaymentMethod(nextPaymentMethod)
+  }
+
+  function applySuggestedCoupon() {
+    if (
+      !bestCouponSuggestion?.available ||
+      !bestCouponSuggestion.couponCode ||
+      !bestCouponSuggestion.couponType
+    ) {
+      return
+    }
+
+    handleCouponCodeChange(
+      bestCouponSuggestion.couponType,
+      bestCouponSuggestion.couponCode,
+    )
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const hasNoSelectedAddress = selectedAddressId === NO_ADDRESS_VALUE
-    const shouldCreateAddress = selectedAddressId === NEW_ADDRESS_VALUE
+    const requiresAddress = hasPhysicalItems
+    const hasNoSelectedAddress =
+      requiresAddress && selectedAddressId === NO_ADDRESS_VALUE
+    const shouldCreateAddress =
+      requiresAddress && selectedAddressId === NEW_ADDRESS_VALUE
     const hasMissingAddressInfo =
       shouldCreateAddress &&
       (!formData.fullName ||
@@ -272,19 +399,40 @@ export function useCheckoutFlow() {
     setLoading(true)
 
     try {
-      const addressId = shouldCreateAddress
-        ? (
-            await createAddress({
-              receiverName: formData.fullName,
-              receiverPhone: formData.phone,
-              receiverAddress: buildReceiverAddress(formData),
-            })
-          ).id
-        : selectedAddressId
+      const addressSignature = shouldCreateAddress
+        ? [formData.fullName, formData.phone, buildReceiverAddress(formData)]
+            .map((value) => value.trim())
+            .join('|')
+        : null
+      const retryAddressId =
+        addressSignature !== null &&
+        checkoutAttemptRef.current.addressSignature === addressSignature
+          ? checkoutAttemptRef.current.createdAddressId
+          : null
+      const addressId = !requiresAddress
+        ? null
+        : shouldCreateAddress
+          ? retryAddressId ??
+            (
+              await createAddress({
+                receiverName: formData.fullName,
+                receiverPhone: formData.phone,
+                receiverAddress: buildReceiverAddress(formData),
+              })
+            ).id
+          : selectedAddressId
+      if (addressSignature !== null && addressId !== null) {
+        checkoutAttemptRef.current = {
+          ...checkoutAttemptRef.current,
+          addressSignature,
+          createdAddressId: addressId,
+        }
+      }
       const normalizedBookCouponCode =
         normalizeCouponCode(formData.bookCouponCode) || null
-      const normalizedShippingCouponCode =
-        normalizeCouponCode(formData.shippingCouponCode) || null
+      const normalizedShippingCouponCode = hasPhysicalItems
+        ? normalizeCouponCode(formData.shippingCouponCode) || null
+        : null
       const orderCartItemIds = items.map((item) => item.id)
 
       if (orderCartItemIds.length === 0) {
@@ -292,17 +440,38 @@ export function useCheckoutFlow() {
         return
       }
 
-      const order = await createOrder({
+      const checkoutRequest: CreateOrderRequest = {
         cartItemIds: orderCartItemIds,
         addressId,
-        shippingMethod,
-        paymentMethod,
+        shippingMethod: hasPhysicalItems ? shippingMethod : 'PICKUP',
+        paymentMethod: isDigitalOnly ? 'BANK_TRANSFER_QR' : paymentMethod,
         bookCouponCode: normalizedBookCouponCode,
         shippingCouponCode: normalizedShippingCouponCode,
         note: formData.note.trim() || null,
+      }
+      const requestSignature = JSON.stringify({
+        ...checkoutRequest,
+        cartItemIds: [...checkoutRequest.cartItemIds].sort(),
       })
+      const idempotencyKey =
+        checkoutAttemptRef.current.requestSignature === requestSignature
+          ? checkoutAttemptRef.current.idempotencyKey ?? createIdempotencyKey()
+          : createIdempotencyKey()
+      checkoutAttemptRef.current = {
+        ...checkoutAttemptRef.current,
+        requestSignature,
+        idempotencyKey,
+      }
+
+      const order = await createOrder(checkoutRequest, idempotencyKey)
 
       await refreshCart()
+      checkoutAttemptRef.current = {
+        addressSignature: null,
+        createdAddressId: null,
+        requestSignature: null,
+        idempotencyKey: null,
+      }
       toast.success(t('checkout.success'))
 
       const nextSearchParams = new URLSearchParams({
@@ -311,6 +480,7 @@ export function useCheckoutFlow() {
         paymentMethod: order.paymentMethod,
         transferContent: order.transferContent,
         totalAmount: String(order.totalAmount),
+        paymentExpiresAt: order.paymentExpiresAt ?? '',
       })
 
       navigate(`/order-confirmation?${nextSearchParams.toString()}`, {
@@ -326,6 +496,8 @@ export function useCheckoutFlow() {
   return {
     items,
     subtotal,
+    hasPhysicalItems,
+    isDigitalOnly,
     shippingMethod,
     paymentMethod,
     shippingFee,
@@ -336,6 +508,8 @@ export function useCheckoutFlow() {
     isAddressLoading,
     isCartLoading,
     isCouponLoading,
+    bestCouponSuggestion,
+    isBestCouponLoading,
     savedAddresses,
     activeCoupons,
     selectedBookCoupon,
@@ -348,8 +522,13 @@ export function useCheckoutFlow() {
     handleSelectAddressChange,
     handleShippingMethodChange,
     handlePaymentMethodChange,
+    applySuggestedCoupon,
     handleSubmit,
   }
+}
+
+function createIdempotencyKey() {
+  return crypto.randomUUID()
 }
 
 function buildReceiverAddress(formData: CheckoutFormState) {
@@ -378,7 +557,15 @@ function prefillAddressForm(address: UserAddressResponse): CheckoutFormState {
   }
 }
 
-function getShippingFee(shippingMethod: ShippingMethod, subtotal: number) {
+function getShippingFee(
+  shippingMethod: ShippingMethod,
+  subtotal: number,
+  hasPhysicalItems: boolean,
+) {
+  if (!hasPhysicalItems) {
+    return 0
+  }
+
   switch (shippingMethod) {
     case 'DELIVERY':
       return subtotal < FREE_SHIPPING_THRESHOLD ? DELIVERY_SHIPPING_FEE : 0

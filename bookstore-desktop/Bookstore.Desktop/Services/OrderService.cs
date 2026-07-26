@@ -18,15 +18,28 @@ public class OrderService
         var normalized = query.Trim();
         if (Guid.TryParse(normalized, out _))
         {
-            var element = await apiClient.GetAsync("/api/staff/pos/orders/" + Uri.EscapeDataString(normalized));
-            return MapOrder(element);
+            return await GetByIdAsync(normalized);
         }
 
-        var all = await GetRecentAsync();
+        var all = await GetAllAsync();
         return all.FirstOrDefault(order => string.Equals(order.OrderCode, normalized, StringComparison.OrdinalIgnoreCase));
     }
 
+    public async Task<OrderModel?> GetByIdAsync(string orderId)
+    {
+        var element = await apiClient.GetAsync("/api/staff/pos/orders/" + Uri.EscapeDataString(orderId));
+        return MapOrder(element);
+    }
+
     public async Task<IReadOnlyList<OrderModel>> GetRecentAsync()
+    {
+        return (await GetAllAsync())
+            .OrderByDescending(order => order.CreatedAt)
+            .Take(30)
+            .ToArray();
+    }
+
+    private async Task<IReadOnlyList<OrderModel>> GetAllAsync()
     {
         var element = await apiClient.GetAsync("/api/staff/pos/orders");
         if (element.ValueKind != JsonValueKind.Array)
@@ -38,8 +51,6 @@ public class OrderService
             .Select(MapOrder)
             .Where(order => order != null)
             .Select(order => order!)
-            .OrderByDescending(order => order.CreatedAt)
-            .Take(30)
             .ToArray();
     }
 
@@ -61,7 +72,9 @@ public class OrderService
 
         var createdAtText = JsonHelper.GetString(element, "createdAt");
         DateTimeOffset? createdAt = DateTimeOffset.TryParse(createdAtText, out var parsedDate) ? parsedDate : null;
+        var productTotal = JsonHelper.GetDecimal(element, "productTotal", "subtotal");
         var total = JsonHelper.GetDecimal(element, "totalAmount");
+        var discount = JsonHelper.GetDecimal(element, "discountAmount", "couponDiscount");
         var final = JsonHelper.GetDecimal(element, "finalAmount");
 
         return new OrderModel
@@ -71,8 +84,12 @@ public class OrderService
             Status = JsonHelper.GetString(element, "status", "orderStatus") ?? "",
             PaymentMethod = JsonHelper.GetString(element, "paymentMethod") ?? "",
             PaymentStatus = JsonHelper.GetString(element, "paymentStatus") ?? "",
+            CustomerName = JsonHelper.GetString(element, "receiverName", "customerName"),
+            CustomerPhone = JsonHelper.GetString(element, "receiverPhone", "customerPhone"),
+            ProductTotal = productTotal,
             TotalAmount = total,
-            FinalAmount = final == 0 ? total : final,
+            DiscountAmount = discount,
+            FinalAmount = final,
             CreatedAt = createdAt,
             Items = items
         };

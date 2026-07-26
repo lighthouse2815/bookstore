@@ -8,6 +8,16 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
 
 export type MessageSenderRole = 'USER' | 'ADMIN' | 'STAFF' | 'SYSTEM'
 
+export type ChatSupportMode = 'AI' | 'HUMAN'
+
+export type AiChatReplyStatus =
+  | 'ANSWERED'
+  | 'ALREADY_ANSWERED'
+  | 'DISABLED'
+  | 'RATE_LIMITED'
+  | 'UNAVAILABLE'
+  | 'NO_PENDING_MESSAGE'
+
 export type ConversationResponse = {
   conversationId: string
   customerId: string
@@ -89,4 +99,10 @@ export type ChatMessagePageResult = {
   size: number
   totalCount: number
   hasNext: boolean
+}
+
+export type AiChatReplyResponse = {
+  status: AiChatReplyStatus
+  message: ChatMessageResponse | null
+  remainingRequests: number
 }

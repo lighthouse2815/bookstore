@@ -5,8 +5,7 @@ import type { AdminPermissionResponse } from '@/types/admin-access'
 import { getErrorMessage } from '@/utils'
 
 export function useAdminPermissionsPage() {
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const [permissions, setPermissions] = useState<AdminPermissionResponse[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -16,14 +15,12 @@ export function useAdminPermissionsPage() {
 
   const labels = useMemo(
     () => ({
-      detailTitle: isVietnamese ? 'Chi tiet quyen' : 'Permission details',
-      permissionCode: isVietnamese ? 'Ma quyen' : 'Permission code',
-      permissionDescription: isVietnamese ? 'Mo ta' : 'Description',
-      showingCount: isVietnamese
-        ? 'Hien thi {count} tren {total} quyen'
-        : 'Showing {count} of {total} permissions',
+      detailTitle: t('admin.permissionsPage.details.title'),
+      permissionCode: t('admin.permissionsPage.details.code'),
+      permissionDescription: t('admin.permissionsPage.details.description'),
+      showingCount: t('admin.permissionsPage.showingCount'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   useEffect(() => {

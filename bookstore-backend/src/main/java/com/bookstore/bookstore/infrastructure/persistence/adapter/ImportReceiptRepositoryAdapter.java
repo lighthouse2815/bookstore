@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IImportReceiptRepository;
 import com.bookstore.bookstore.domain.model.ImportReceipt;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.infrastructure.persistence.entity.ImportReceiptJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.SupplierJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.ImportReceiptPersistenceMapper;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 
 @Repository
 @RequiredArgsConstructor
@@ -26,6 +28,17 @@ public class ImportReceiptRepositoryAdapter implements IImportReceiptRepository 
         return importReceiptJpaRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(importReceiptPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<ImportReceipt> findPage(int page, int size) {
+        var result = importReceiptJpaRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                result.getContent().stream().map(importReceiptPersistenceMapper::toDomain).toList(),
+                result.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override

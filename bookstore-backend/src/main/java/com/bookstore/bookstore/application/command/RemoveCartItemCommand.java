@@ -6,14 +6,14 @@ import java.util.UUID;
 
 public record RemoveCartItemCommand(
         UUID userId,
-        UUID bookId
+        UUID itemReferenceId
 ) {
     public RemoveCartItemCommand {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
         }
-        if (bookId == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
+        if (itemReferenceId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "itemReferenceId");
         }
     }
 }

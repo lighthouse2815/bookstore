@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Bookstore.Desktop.Dtos;
 using Bookstore.Desktop.Helpers;
 using Bookstore.Desktop.Stores;
 
@@ -10,14 +11,19 @@ namespace Bookstore.Desktop.Services;
 
 public class ApiClient
 {
-    private readonly HttpClient httpClient = new();
+    private readonly HttpClient httpClient;
+    private readonly SemaphoreSlim refreshLock = new(1, 1);
     private readonly AppSettingsStore settingsStore;
     private readonly AuthStore authStore;
 
-    public ApiClient(AppSettingsStore settingsStore, AuthStore authStore)
+    public ApiClient(
+        AppSettingsStore settingsStore,
+        AuthStore authStore,
+        HttpMessageHandler? messageHandler = null)
     {
         this.settingsStore = settingsStore;
         this.authStore = authStore;
+        httpClient = messageHandler == null ? new HttpClient() : new HttpClient(messageHandler);
     }
 
     public Task<JsonElement> GetAsync(string path)
@@ -25,41 +31,118 @@ public class ApiClient
         return SendAsync(HttpMethod.Get, path, null);
     }
 
-    public async Task<JsonElement> PostAsync<T>(string path, T payload)
+    public Task<JsonElement> PostAsync<T>(string path, T payload)
     {
         var json = JsonSerializer.Serialize(payload, JsonHelper.Options);
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        return await SendAsync(HttpMethod.Post, path, content);
+        return SendAsync(HttpMethod.Post, path, json);
     }
 
-    private async Task<JsonElement> SendAsync(HttpMethod method, string path, HttpContent? content)
+    private async Task<JsonElement> SendAsync(HttpMethod method, string path, string? json)
     {
-        using var request = new HttpRequestMessage(method, BuildUri(path));
-        if (!string.IsNullOrWhiteSpace(authStore.AccessToken))
+        var accessTokenUsed = authStore.AccessToken;
+        var response = await SendOnceAsync(method, path, json, includeAccessToken: true);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized
+            && ShouldTryRefresh(path)
+            && await RefreshAccessTokenAsync(accessTokenUsed))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authStore.AccessToken);
+            response = await SendOnceAsync(method, path, json, includeAccessToken: true);
         }
 
-        if (content != null)
-        {
-            request.Content = content;
-        }
-
-        using var response = await httpClient.SendAsync(request);
-        var body = await response.Content.ReadAsStringAsync();
         if (!response.IsSuccessStatusCode)
         {
-            throw new ApiClientException(CreateErrorMessage(response.StatusCode, body), response.StatusCode);
+            throw new ApiClientException(CreateErrorMessage(response.StatusCode, response.Body), response.StatusCode);
         }
 
-        if (string.IsNullOrWhiteSpace(body))
+        if (string.IsNullOrWhiteSpace(response.Body))
         {
             return default;
         }
 
-        using var document = JsonDocument.Parse(body);
-        var root = document.RootElement.Clone();
-        return Unwrap(root);
+        using var document = JsonDocument.Parse(response.Body);
+        return Unwrap(document.RootElement.Clone());
+    }
+
+    private async Task<ApiHttpResponse> SendOnceAsync(
+        HttpMethod method,
+        string path,
+        string? json,
+        bool includeAccessToken)
+    {
+        using var request = new HttpRequestMessage(method, BuildUri(path));
+        if (includeAccessToken && !string.IsNullOrWhiteSpace(authStore.AccessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authStore.AccessToken);
+        }
+
+        if (json != null)
+        {
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        using var response = await httpClient.SendAsync(request);
+        var body = await response.Content.ReadAsStringAsync();
+        return new ApiHttpResponse(response.IsSuccessStatusCode, response.StatusCode, body);
+    }
+
+    private async Task<bool> RefreshAccessTokenAsync(string? accessTokenUsed)
+    {
+        await refreshLock.WaitAsync();
+        try
+        {
+            if (!string.Equals(authStore.AccessToken, accessTokenUsed, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(authStore.AccessToken))
+            {
+                return true;
+            }
+
+            var refreshToken = authStore.RefreshToken;
+            var currentUser = authStore.CurrentUser;
+            if (string.IsNullOrWhiteSpace(refreshToken) || currentUser == null)
+            {
+                authStore.Clear();
+                return false;
+            }
+
+            var json = JsonSerializer.Serialize(new { refreshToken }, JsonHelper.Options);
+            var response = await SendOnceAsync(HttpMethod.Post, "/api/auth/refresh", json, includeAccessToken: false);
+            if (!response.IsSuccessStatusCode || string.IsNullOrWhiteSpace(response.Body))
+            {
+                authStore.Clear();
+                return false;
+            }
+
+            using var document = JsonDocument.Parse(response.Body);
+            var session = Unwrap(document.RootElement.Clone()).Deserialize<LoginResponse>(JsonHelper.Options);
+            if (session == null
+                || string.IsNullOrWhiteSpace(session.AccessToken)
+                || string.IsNullOrWhiteSpace(session.RefreshToken))
+            {
+                authStore.Clear();
+                return false;
+            }
+
+            authStore.SetSession(session.AccessToken, session.RefreshToken, currentUser);
+            return true;
+        }
+        catch (HttpRequestException)
+        {
+            return false;
+        }
+        catch (JsonException)
+        {
+            authStore.Clear();
+            return false;
+        }
+        finally
+        {
+            refreshLock.Release();
+        }
+    }
+
+    private static bool ShouldTryRefresh(string path)
+    {
+        return !path.StartsWith("/api/auth/", StringComparison.OrdinalIgnoreCase);
     }
 
     private string BuildUri(string path)
@@ -115,6 +198,8 @@ public class ApiClient
             return body;
         }
     }
+
+    private sealed record ApiHttpResponse(bool IsSuccessStatusCode, HttpStatusCode StatusCode, string Body);
 }
 
 public class ApiClientException : Exception

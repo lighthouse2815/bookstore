@@ -6,12 +6,12 @@ import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
-import com.bookstore.bookstore.application.result.dashboard.DashboardSummaryResult;
-import com.bookstore.bookstore.application.result.dashboard.LowStockBookResult;
-import com.bookstore.bookstore.application.result.dashboard.OrderStatusStatsResult;
-import com.bookstore.bookstore.application.result.dashboard.RecentOrderResult;
-import com.bookstore.bookstore.application.result.dashboard.RevenueChartResult;
-import com.bookstore.bookstore.application.result.dashboard.TopBookStatsResult;
+import com.bookstore.bookstore.application.result.DashboardSummaryResult;
+import com.bookstore.bookstore.application.result.LowStockBookResult;
+import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
+import com.bookstore.bookstore.application.result.RecentOrderResult;
+import com.bookstore.bookstore.application.result.RevenueChartResult;
+import com.bookstore.bookstore.application.result.TopBookStatsResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,8 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AdminDashboardService implements IAdminDashboardService {
-
-    private static final int DEFAULT_LIMIT = 10;
+    
     private static final int MAX_LIMIT = 50;
     private static final int DEFAULT_THRESHOLD = 10;
     private static final int DEFAULT_REVENUE_DAYS = 30;
@@ -53,12 +52,19 @@ public class AdminDashboardService implements IAdminDashboardService {
         Instant todayStart = toStartOfDay(today);
         Instant tomorrowStart = toStartOfDay(today.plusDays(1));
         Instant monthStart = toStartOfDay(today.withDayOfMonth(1));
+        Instant epochStart = Instant.EPOCH;
 
         return new DashboardSummaryResult(
+                orderRepository.sumDeliveredRevenueBetween(epochStart, tomorrowStart),
                 orderRepository.sumDeliveredRevenueBetween(todayStart, tomorrowStart),
                 orderRepository.sumDeliveredRevenueBetween(monthStart, tomorrowStart),
+                orderRepository.countCreatedBetween(epochStart, tomorrowStart),
                 orderRepository.countCreatedBetween(todayStart, tomorrowStart),
                 orderRepository.countByStatus(OrderStatus.PENDING),
+                orderRepository.countByStatus(OrderStatus.DELIVERED),
+                orderRepository.countByStatus(OrderStatus.CANCELLED),
+                userRepository.countActiveUsers(),
+                bookRepository.countActiveBooks(),
                 bookRepository.countLowStockBooks(DEFAULT_THRESHOLD),
                 userRepository.countNewCustomersBetween(todayStart, tomorrowStart),
                 reviewRepository.countNewReviewsBetween(todayStart, tomorrowStart),

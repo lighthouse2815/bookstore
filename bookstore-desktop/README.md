@@ -1,71 +1,81 @@
 # Bookstore Desktop POS
 
-Desktop app demo bán hàng tại quầy cho nhân viên Bookstore.
+Ứng dụng desktop bán hàng tại quầy dành cho nhân viên Bookstore.
 
 ## Công nghệ
 
 - C# .NET 8
 - WPF
 - MVVM
-- `HttpClient` gọi REST API backend Spring Boot
-- `System.Text.Json`
+- HttpClient gọi REST API của backend Spring Boot
 - `CommunityToolkit.Mvvm`
 
-Desktop app chỉ là client, không có database riêng và không gọi trực tiếp MySQL.
+Ứng dụng desktop chỉ là client. Dữ liệu vẫn được lưu trên backend và MySQL.
 
-## Cách chạy backend
+## Chạy backend
 
-```bash
-cd ../bookstore-backend
+```powershell
+cd D:\bookstore\bookstore-backend
 docker-compose up -d
-./mvnw.cmd spring-boot:run
+.\mvnw.cmd --% spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Backend mặc định chạy tại:
+Địa chỉ backend mặc định:
 
 ```txt
 http://localhost:8080
 ```
 
-Backend đã có seed role `ADMIN`, `STAFF` và admin demo trong `PersistenceDataInitializer`. Không ghi password seed vào README; nếu cần tài khoản demo, kiểm tra file seed nội bộ hoặc tạo tài khoản staff/admin bằng API admin.
-
-## Cách chạy desktop app
+## Chạy ứng dụng desktop
 
 Cần máy Windows có .NET 8 SDK và workload WPF.
 
-```bash
-cd Bookstore.Desktop
+```powershell
+cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
 dotnet restore
 dotnet build
 dotnet run
 ```
 
-Nếu `dotnet` không được nhận diện, cài .NET 8 SDK hoặc thêm `dotnet.exe` vào PATH.
+Chạy script hỗ trợ publish:
 
-## Cấu hình Base URL
+```powershell
+cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
+.\run-publish.ps1
+```
 
-Mặc định desktop gọi backend:
+## Cấu hình base URL của backend
+
+Ứng dụng desktop mặc định gọi backend tại:
 
 ```txt
 http://localhost:8080
 ```
 
-Sau khi login, vào màn hình `Cài đặt` để đổi Backend Base URL. Nhập URL gốc, không cần thêm `/api`.
+Sau khi đăng nhập, vào màn hình `Cài đặt` để đổi Backend Base URL. Chỉ nhập URL gốc, không cần thêm `/api`.
+
+## Tài khoản demo
+
+- Tài khoản quản trị demo được backend tạo khi `APP_ADMIN_SEED_ENABLED=true`. Tên đăng nhập và mật khẩu lấy từ `ADMIN_USERNAME` và `ADMIN_PASSWORD`.
+- Tài khoản nhân viên demo cho POS: nếu chạy backend với profile `seed`, tài khoản nhân viên đầu tiên là `anhtuan.truong`.
+- Tất cả tài khoản khách hàng, nhân viên và người giao hàng của profile `seed` dùng chung mật khẩu từ `APP_DEMO_USER_PASSWORD`.
+
+Không commit mật khẩu thật vào repository. Hãy đặt giá trị demo trong file `.env` cục bộ.
 
 ## Luồng demo
 
-1. Login bằng tài khoản có role `ADMIN` hoặc `STAFF`.
-2. Vào `POS bán hàng`.
-3. Search sách theo keyword.
-4. Thêm sách vào giỏ.
-5. Tăng/giảm/xóa item, xem tổng tiền cập nhật ngay.
+1. Đăng nhập bằng tài khoản có vai trò `ADMIN` hoặc `STAFF`.
+2. Vào màn hình `POS bán hàng`.
+3. Tìm sách theo từ khóa.
+4. Thêm sách vào giỏ hàng.
+5. Tăng, giảm hoặc xóa sản phẩm và xem tổng tiền cập nhật ngay.
 6. Chọn phương thức thanh toán `CASH`, `BANK_TRANSFER` hoặc `COD`.
 7. Bấm `Tạo đơn / Thanh toán`.
 8. Xem hóa đơn demo và bấm `In hóa đơn demo` để xuất file `.txt`.
-9. Vào `Tra cứu đơn` để tìm theo order id hoặc order code.
-10. Vào `Tồn kho` để search sách và xem tồn kho từ API.
+9. Vào `Tra cứu đơn` để tìm theo ID đơn hàng hoặc mã đơn hàng.
+10. Vào `Tồn kho` để tìm sách và xem số lượng tồn kho từ API.
 
-## API đang dùng
+## Các API đang sử dụng
 
 - `POST /api/auth/login`
 - `GET /api/users/me`
@@ -75,39 +85,10 @@ Sau khi login, vào màn hình `Cài đặt` để đổi Backend Base URL. Nh�
 - `GET /api/staff/pos/orders`
 - `GET /api/staff/pos/orders/{id}`
 
-## Backend POS endpoint mới
+## Giới hạn của bản demo
 
-Desktop dùng endpoint POS tối thiểu:
-
-```http
-POST /api/staff/pos/orders
-```
-
-Request:
-
-```json
-{
-  "customerName": "Khách lẻ",
-  "customerPhone": null,
-  "paymentMethod": "CASH",
-  "couponCode": null,
-  "items": [
-    {
-      "bookId": "uuid",
-      "quantity": 2
-    }
-  ]
-}
-```
-
-Endpoint này dùng domain/backend hiện có để kiểm tra sách, trừ tồn kho, lưu order, payment và stock movement.
-
-## Giới hạn demo
-
-- Không có offline sync.
-- Không có database local.
+- Không có đồng bộ ngoại tuyến.
+- Không có cơ sở dữ liệu cục bộ.
 - Không tích hợp máy in nhiệt ESC/POS.
-- Hóa đơn demo xuất `.txt` trong `%LOCALAPPDATA%\BookstorePOS\Receipts`.
-- Search sách phụ thuộc API hiện có của backend.
-- POS dùng khách lẻ mặc định, chưa có quản lý ca bán hàng.
-- Checkout web cũ không bị đổi; POS dùng endpoint riêng.
+- Hóa đơn demo được xuất dưới dạng `.txt` trong `%LOCALAPPDATA%\BookstorePOS\Receipts`.
+- Chưa có màn hình báo cáo doanh thu riêng. Dùng `Tra cứu đơn` và `Tồn kho` để demo nghiệp vụ hỗ trợ.

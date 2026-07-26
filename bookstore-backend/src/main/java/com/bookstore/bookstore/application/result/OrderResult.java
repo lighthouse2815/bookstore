@@ -34,8 +34,43 @@ public record OrderResult(
         String receiverAddress,
         Instant createdAt,
         Instant updatedAt,
-        Instant cancelledAt
+        Instant cancelledAt,
+        Instant paymentExpiresAt
 ) {
+    public OrderResult(
+            UUID orderId,
+            String orderCode,
+            UUID userId,
+            List<OrderItemResult> items,
+            BigDecimal productTotal,
+            BigDecimal totalAmount,
+            BigDecimal discountAmount,
+            BigDecimal shippingFee,
+            BigDecimal shippingDiscount,
+            BigDecimal couponDiscount,
+            BigDecimal finalAmount,
+            UUID couponId,
+            String couponCode,
+            UUID bookCouponId,
+            String bookCouponCode,
+            UUID shippingCouponId,
+            String shippingCouponCode,
+            PaymentMethod paymentMethod,
+            PaymentStatus paymentStatus,
+            OrderStatus status,
+            String receiverName,
+            String receiverPhone,
+            String receiverAddress,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant cancelledAt
+    ) {
+        this(orderId, orderCode, userId, items, productTotal, totalAmount, discountAmount, shippingFee,
+                shippingDiscount, couponDiscount, finalAmount, couponId, couponCode, bookCouponId,
+                bookCouponCode, shippingCouponId, shippingCouponCode, paymentMethod, paymentStatus,
+                status, receiverName, receiverPhone, receiverAddress, createdAt, updatedAt, cancelledAt, null);
+    }
+
     public OrderResult(
             UUID orderId,
             UUID userId,
@@ -82,7 +117,8 @@ public record OrderResult(
                 receiverAddress,
                 createdAt,
                 updatedAt,
-                cancelledAt
+                cancelledAt,
+                null
         );
     }
 

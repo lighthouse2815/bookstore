@@ -18,15 +18,21 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import { Textarea } from '@/components/common/textarea'
 import {
   getReferenceDescription,
+  getReferenceImageUrl,
   useAdminReferenceManagementPage,
   type ReferenceItem,
+  type ReferenceFormState,
   type ReferenceSectionKey,
 } from '@/hooks/use-admin-reference-management-page'
 import { AdminLayout } from '@/components/layout/admin-layout'
+import { getBookCoverUrl } from '@/utils/book-cover'
 import { cn } from '@/utils'
+import { getCategoryDescription, getCategoryLabel } from '@/utils/i18n'
+import type { AppLanguage } from '@/locales/messages'
 
 type SectionVisual = {
   icon: LucideIcon
@@ -117,9 +123,9 @@ export function AdminReferenceManagementPage({
 }) {
   const {
     t,
+    language,
     formatDate,
     formatNumber,
-    items,
     isLoading,
     error,
     form,
@@ -129,9 +135,15 @@ export function AdminReferenceManagementPage({
     isSubmitting,
     isDeleting,
     filteredItems,
+    paginatedItems,
+    totalCount,
+    page,
+    pageSize,
     isDialogLocked,
+    isUploadingReferenceImage,
     handleSearchTermChange,
     handleFormChange,
+    handleReferenceImageFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -140,6 +152,7 @@ export function AdminReferenceManagementPage({
     openDeleteDialog,
     handleSubmit,
     handleDeleteConfirm,
+    handlePageChange,
   } = useAdminReferenceManagementPage(sectionKey)
 
   const sectionLabel = t(sectionLabelKeys[sectionKey])
@@ -149,6 +162,17 @@ export function AdminReferenceManagementPage({
       : t('common.description')
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
+  const imageLabel = t(
+    sectionKey === 'authors'
+      ? 'auth.profile.avatarUrl'
+      : sectionKey === 'categories'
+        ? 'admin.references.categoryImage'
+        : 'admin.references.publisherLogo',
+  )
+  const imagePreviewUrl =
+    sectionKey === 'authors'
+      ? form.avatarPreviewUrl
+      : form.referenceImagePreviewUrl
 
   const dialogMarkup = dialogMode ? (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -180,6 +204,7 @@ export function AdminReferenceManagementPage({
             onClose={closeDialog}
             onEdit={openEditFromDetail}
             t={t}
+            language={language}
           />
         ) : dialogMode === 'delete' && selectedItem ? (
           <ReferenceDeleteDialogContent
@@ -190,6 +215,7 @@ export function AdminReferenceManagementPage({
             onClose={closeDialog}
             onConfirm={handleDeleteConfirm}
             t={t}
+            language={language}
           />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -222,20 +248,105 @@ export function AdminReferenceManagementPage({
             </div>
 
             <div className="space-y-5">
-              <div>
-                <Label htmlFor={`${sectionKey}-name`}>{t('common.name')}</Label>
-                <Input
-                  id={`${sectionKey}-name`}
-                  value={form.name}
-                  onChange={(event) =>
-                    handleFormChange('name', event.currentTarget.value)
-                  }
-                  className="mt-2 h-12 rounded-2xl bg-background/60"
-                  required
+              {sectionKey === 'categories' ? (
+                <CategoryLocalizationFields
+                  form={form}
+                  onChange={handleFormChange}
+                  t={t}
                 />
-              </div>
+              ) : (
+                <div>
+                  <Label htmlFor={`${sectionKey}-name`}>{t('common.name')}</Label>
+                  <Input
+                    id={`${sectionKey}-name`}
+                    value={form.name}
+                    onChange={(event) =>
+                      handleFormChange('name', event.currentTarget.value)
+                    }
+                    className="mt-2 h-12 rounded-2xl bg-background/60"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
+                <Label htmlFor={`${sectionKey}-image-upload`}>{imageLabel}</Label>
+                <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div
+                    className={cn(
+                      'flex size-20 items-center justify-center overflow-hidden border border-border/60 bg-background/70 text-lg font-semibold text-primary',
+                      sectionKey === 'authors' ? 'rounded-full' : 'rounded-[20px]',
+                    )}
+                  >
+                    {imagePreviewUrl ? (
+                      <img
+                        src={getBookCoverUrl(imagePreviewUrl)}
+                        alt={form.name || form.categoryNameVi || t('common.name')}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <ItemIcon className={cn('h-7 w-7', visual.tileIconClassName)} />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      id={`${sectionKey}-image-upload`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) =>
+                        void handleReferenceImageFileChange(
+                          event.currentTarget.files?.[0] ?? null,
+                        )
+                      }
+                      className="h-12 rounded-2xl bg-background/60"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {isUploadingReferenceImage
+                        ? t('common.processing')
+                        : t('admin.references.imageUploadHint')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {sectionKey === 'authors' ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="author-birth-year">
+                        {t('admin.referencePages.authors.birthYear')}
+                      </Label>
+                      <Input
+                        id="author-birth-year"
+                        type="number"
+                        min="1"
+                        value={form.birthYear}
+                        onChange={(event) =>
+                          handleFormChange('birthYear', event.currentTarget.value)
+                        }
+                        className="mt-2 h-12 rounded-2xl bg-background/60"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="author-death-year">
+                        {t('admin.referencePages.authors.deathYear')}
+                      </Label>
+                      <Input
+                        id="author-death-year"
+                        type="number"
+                        min="1"
+                        value={form.deathYear}
+                        onChange={(event) =>
+                          handleFormChange('deathYear', event.currentTarget.value)
+                        }
+                        className="mt-2 h-12 rounded-2xl bg-background/60"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : null}
+
+              {sectionKey !== 'categories' ? <div>
                 <Label htmlFor={`${sectionKey}-description`}>
                   {descriptionLabel}
                 </Label>
@@ -248,7 +359,7 @@ export function AdminReferenceManagementPage({
                   className="mt-2 min-h-32 rounded-2xl bg-background/60"
                   rows={5}
                 />
-              </div>
+              </div> : null}
             </div>
 
             <div className="flex flex-wrap justify-end gap-3">
@@ -295,7 +406,7 @@ export function AdminReferenceManagementPage({
                     )}
                   >
                     {t(countLabelKeys[sectionKey], {
-                      count: formatNumber(items.length),
+                      count: formatNumber(totalCount),
                     })}
                   </Badge>
                 </div>
@@ -353,7 +464,8 @@ export function AdminReferenceManagementPage({
                     </p>
                   </div>
                 ) : (
-                  filteredItems.map((item) => {
+                  paginatedItems.map((item) => {
+                    const imageUrl = getReferenceImageUrl(sectionKey, item)
                     return (
                       <div
                         key={item.id}
@@ -362,18 +474,26 @@ export function AdminReferenceManagementPage({
                         <div className="flex min-w-0 items-center gap-4">
                           <div
                             className={cn(
-                              'flex size-18 shrink-0 items-center justify-center rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+                              'flex size-18 shrink-0 items-center justify-center overflow-hidden rounded-[22px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
                               visual.tileClassName,
                             )}
                           >
-                            <ItemIcon
-                              className={cn('h-8 w-8', visual.tileIconClassName)}
-                            />
+                            {imageUrl ? (
+                              <img
+                                src={getBookCoverUrl(imageUrl)}
+                                alt={getReferenceDisplayName(sectionKey, item, language)}
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              <ItemIcon
+                                className={cn('h-8 w-8', visual.tileIconClassName)}
+                              />
+                            )}
                           </div>
 
                           <div className="min-w-0">
                             <p className="truncate text-2xl font-semibold text-foreground">
-                              {item.name}
+                              {getReferenceDisplayName(sectionKey, item, language)}
                             </p>
                           </div>
                         </div>
@@ -412,6 +532,15 @@ export function AdminReferenceManagementPage({
                   })
                 )}
               </div>
+
+              {!isLoading && filteredItems.length > 0 ? (
+                <PaginationControls
+                  page={page}
+                  size={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -420,6 +549,103 @@ export function AdminReferenceManagementPage({
         ? createPortal(dialogMarkup, document.body)
         : null}
     </>
+  )
+}
+
+function CategoryLocalizationFields({
+  form,
+  onChange,
+  t,
+}: {
+  form: ReferenceFormState
+  onChange: (field: keyof ReferenceFormState, value: string) => void
+  t: (key: string, params?: Record<string, number | string>) => string
+}) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <Label htmlFor="category-code">
+          {t('admin.referencePages.categories.code')}
+        </Label>
+        <Input
+          id="category-code"
+          value={form.categoryCode}
+          onChange={(event) =>
+            onChange(
+              'categoryCode',
+              event.currentTarget.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''),
+            )
+          }
+          className="mt-2 h-12 rounded-2xl bg-background/60 font-mono uppercase"
+          placeholder="LITERATURE"
+          required
+        />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <fieldset className="space-y-4 rounded-[24px] border border-border/60 bg-background/40 p-5">
+          <legend className="px-2 text-sm font-semibold text-primary">
+            {t('admin.referencePages.categories.vietnamese')}
+          </legend>
+          <div>
+            <Label htmlFor="category-name-vi">
+              {t('admin.referencePages.categories.localizedName')}
+            </Label>
+            <Input
+              id="category-name-vi"
+              value={form.categoryNameVi}
+              onChange={(event) => onChange('categoryNameVi', event.currentTarget.value)}
+              className="mt-2 h-12 rounded-2xl bg-background/60"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="category-description-vi">
+              {t('admin.referencePages.categories.localizedDescription')}
+            </Label>
+            <Textarea
+              id="category-description-vi"
+              value={form.categoryDescriptionVi}
+              onChange={(event) =>
+                onChange('categoryDescriptionVi', event.currentTarget.value)
+              }
+              className="mt-2 min-h-28 rounded-2xl bg-background/60"
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-4 rounded-[24px] border border-border/60 bg-background/40 p-5">
+          <legend className="px-2 text-sm font-semibold text-primary">
+            {t('admin.referencePages.categories.english')}
+          </legend>
+          <div>
+            <Label htmlFor="category-name-en">
+              {t('admin.referencePages.categories.localizedName')}
+            </Label>
+            <Input
+              id="category-name-en"
+              value={form.categoryNameEn}
+              onChange={(event) => onChange('categoryNameEn', event.currentTarget.value)}
+              className="mt-2 h-12 rounded-2xl bg-background/60"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="category-description-en">
+              {t('admin.referencePages.categories.localizedDescription')}
+            </Label>
+            <Textarea
+              id="category-description-en"
+              value={form.categoryDescriptionEn}
+              onChange={(event) =>
+                onChange('categoryDescriptionEn', event.currentTarget.value)
+              }
+              className="mt-2 min-h-28 rounded-2xl bg-background/60"
+            />
+          </div>
+        </fieldset>
+      </div>
+    </div>
   )
 }
 
@@ -432,6 +658,7 @@ type ReferenceDetailDialogContentProps = {
   onClose: () => void
   onEdit: () => void
   t: (key: string, params?: Record<string, number | string>) => string
+  language: AppLanguage
 }
 
 function ReferenceDetailDialogContent({
@@ -443,10 +670,21 @@ function ReferenceDetailDialogContent({
   onClose,
   onEdit,
   t,
+  language,
 }: ReferenceDetailDialogContentProps) {
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
-  const description = getReferenceDescription(sectionKey, item)
+  const description =
+    sectionKey === 'categories' && 'translations' in item
+      ? getCategoryDescription(item, language) ?? ''
+      : getReferenceDescription(sectionKey, item)
+  const displayName = getReferenceDisplayName(sectionKey, item, language)
+  const authorAvatarUrl =
+    sectionKey === 'authors' && 'avatarUrl' in item ? item.avatarUrl : null
+  const authorBirthYear =
+    sectionKey === 'authors' && 'birthYear' in item ? item.birthYear : null
+  const authorDeathYear =
+    sectionKey === 'authors' && 'deathYear' in item ? item.deathYear : null
 
   return (
     <div className="space-y-6">
@@ -467,7 +705,7 @@ function ReferenceDetailDialogContent({
           <div>
             <p className="text-sm font-medium text-primary">{sectionLabel}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">
-              {item.name}
+              {displayName}
             </p>
           </div>
         </div>
@@ -485,6 +723,36 @@ function ReferenceDetailDialogContent({
           value={formatDate(item.updatedAt)}
         />
       </div>
+
+      {sectionKey === 'authors' ? (
+        <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
+          <div className="overflow-hidden rounded-[24px] border border-border/60 bg-background/55">
+            {authorAvatarUrl ? (
+              <img
+                src={getBookCoverUrl(authorAvatarUrl)}
+                alt={item.name}
+                className="aspect-square w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-square items-center justify-center text-muted-foreground">
+                <ItemIcon className={cn('h-8 w-8', visual.tileIconClassName)} />
+              </div>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DetailMetaCard
+              icon={CalendarDays}
+              label={t('admin.referencePages.authors.birthYear')}
+              value={authorBirthYear ? String(authorBirthYear) : '...'}
+            />
+            <DetailMetaCard
+              icon={CalendarDays}
+              label={t('admin.referencePages.authors.deathYear')}
+              value={authorDeathYear ? String(authorDeathYear) : '...'}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-[24px] border border-border/60 bg-background/55 p-5">
         <p className="text-sm font-semibold text-foreground">{descriptionLabel}</p>
@@ -514,6 +782,7 @@ type ReferenceDeleteDialogContentProps = {
   onClose: () => void
   onConfirm: () => void
   t: (key: string, params?: Record<string, number | string>) => string
+  language: AppLanguage
 }
 
 function ReferenceDeleteDialogContent({
@@ -524,9 +793,11 @@ function ReferenceDeleteDialogContent({
   onClose,
   onConfirm,
   t,
+  language,
 }: ReferenceDeleteDialogContentProps) {
   const visual = sectionVisuals[sectionKey]
   const ItemIcon = visual.icon
+  const displayName = getReferenceDisplayName(sectionKey, item, language)
 
   return (
     <div className="space-y-6">
@@ -538,7 +809,7 @@ function ReferenceDeleteDialogContent({
           {t('admin.references.deleteTitle')}
         </h2>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          {t('admin.references.confirmDelete', { name: item.name })}
+          {t('admin.references.confirmDelete', { name: displayName })}
         </p>
       </div>
 
@@ -554,7 +825,7 @@ function ReferenceDeleteDialogContent({
         <div className="min-w-0">
           <p className="text-sm font-medium text-primary">{sectionLabel}</p>
           <p className="mt-1 truncate text-xl font-semibold text-foreground">
-            {item.name}
+            {displayName}
           </p>
         </div>
       </div>
@@ -586,6 +857,16 @@ function ReferenceDeleteDialogContent({
       </div>
     </div>
   )
+}
+
+function getReferenceDisplayName(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+  language: AppLanguage,
+) {
+  return sectionKey === 'categories' && 'translations' in item
+    ? getCategoryLabel(item, language)
+    : item.name
 }
 
 function DetailMetaCard({

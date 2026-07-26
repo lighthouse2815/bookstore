@@ -20,13 +20,18 @@ export function useRegistrationVerification() {
   const location = useLocation()
   const navigate = useNavigate()
   const { requestRegistrationOtp, verifyRegistrationOtp } = useAuth()
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const [currentStep, setCurrentStep] = useState<RegisterStep>('register')
   const [verificationEmail, setVerificationEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isRequestingOtp, setIsRequestingOtp] = useState(false)
-  const copy = getRegistrationVerificationCopy(language)
+  const copy: RegistrationVerificationCopy = {
+    resendOtpLabel: t('auth.register.verification.resendOtpLabel'),
+    requestOtpErrorFallback: t(
+      'auth.register.verification.requestOtpErrorFallback',
+    ),
+  }
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
@@ -138,21 +143,5 @@ export function useRegistrationVerification() {
     goBackToRegister,
     resendOtp,
     submit,
-  }
-}
-
-function getRegistrationVerificationCopy(
-  language: 'vi' | 'en',
-): RegistrationVerificationCopy {
-  if (language === 'vi') {
-    return {
-      resendOtpLabel: 'Gửi lại mã OTP',
-      requestOtpErrorFallback: 'Không thể gửi lại mã OTP kích hoạt',
-    }
-  }
-
-  return {
-    resendOtpLabel: 'Resend OTP',
-    requestOtpErrorFallback: 'Unable to send a new activation OTP',
   }
 }

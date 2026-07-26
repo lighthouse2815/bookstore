@@ -4,9 +4,10 @@ import com.bookstore.bookstore.domain.enums.PermissionCode;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdatePermissionRequest(
-        @NotNull(message = "code khong duoc null")
+        @NotNull(message = "code không được null")
         PermissionCode code,
 
         String description
 ) {
 }
+

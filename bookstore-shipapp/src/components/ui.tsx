@@ -146,6 +146,11 @@ export function ShipmentCard({
       </View>
 
       <View style={styles.metaRow}>
+        <MaterialCommunityIcons color={palette.textMuted} name="phone-outline" size={18} />
+        <Text style={styles.metaText}>{shipment.receiverPhone || 'Chua co so dien thoai'}</Text>
+      </View>
+
+      <View style={styles.metaRow}>
         <MaterialCommunityIcons color={palette.textMuted} name="cash-multiple" size={18} />
         <Text style={styles.metaText}>{formatCurrency(shipment.finalAmount)}</Text>
       </View>

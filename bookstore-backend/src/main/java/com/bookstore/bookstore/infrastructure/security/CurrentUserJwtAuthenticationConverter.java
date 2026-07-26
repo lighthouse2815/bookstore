@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.infrastructure.security;
 
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.port.out.IRefreshTokenRepository;
+import com.bookstore.bookstore.domain.model.RefreshToken;
+import java.time.Instant;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class CurrentUserJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private final IUserRepository userRepository;
+    private final IRefreshTokenRepository refreshTokenRepository;
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
@@ -38,6 +42,8 @@ public class CurrentUserJwtAuthenticationConverter implements Converter<Jwt, Abs
             throw unauthorized("User is not allowed to use this token");
         }
 
+        requireActiveSession(jwt, user.getId());
+
         Collection<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(Role::getName)
                 .filter(Objects::nonNull)
@@ -45,6 +51,23 @@ public class CurrentUserJwtAuthenticationConverter implements Converter<Jwt, Abs
                 .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
 
         return new JwtAuthenticationToken(jwt, authorities);
+    }
+
+    private void requireActiveSession(Jwt jwt, UUID userId) {
+        String sessionId = jwt.getClaimAsString("sid");
+        if (sessionId == null || sessionId.isBlank()) {
+            // Access tokens issued before the session hardening migration remain valid only until their normal expiry.
+            return;
+        }
+        try {
+            RefreshToken token = refreshTokenRepository.findById(UUID.fromString(sessionId))
+                    .orElseThrow(() -> unauthorized("Session not found"));
+            if (!token.getUserId().equals(userId) || token.isRevoked() || token.isExpiredAt(Instant.now())) {
+                throw unauthorized("Session is not active");
+            }
+        } catch (IllegalArgumentException exception) {
+            throw unauthorized("Invalid session claim");
+        }
     }
 
     private UUID parseUserId(String subject) {

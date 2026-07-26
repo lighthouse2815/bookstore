@@ -5,6 +5,8 @@ import com.bookstore.bookstore.application.command.DeleteDigitalAssetCommand;
 import com.bookstore.bookstore.application.command.UpdateDigitalAssetCommand;
 import com.bookstore.bookstore.application.command.UpdateReadingProgressCommand;
 import com.bookstore.bookstore.application.result.DigitalLibraryAssetResult;
+import com.bookstore.bookstore.application.result.PublicDigitalAssetCatalogItemResult;
+import com.bookstore.bookstore.application.result.SignedUrlResult;
 import com.bookstore.bookstore.domain.model.DigitalAsset;
 import com.bookstore.bookstore.domain.model.ReadingProgress;
 import com.bookstore.bookstore.presentation.request.CreateDigitalAssetRequest;
@@ -13,8 +15,10 @@ import com.bookstore.bookstore.presentation.request.UpdateReadingProgressRequest
 import com.bookstore.bookstore.presentation.response.DigitalAssetResponse;
 import com.bookstore.bookstore.presentation.response.DigitalLibraryAssetResponse;
 import com.bookstore.bookstore.presentation.response.DigitalLibraryItemResponse;
+import com.bookstore.bookstore.presentation.response.PublicDigitalAssetCatalogItemResponse;
 import com.bookstore.bookstore.presentation.response.PublishedDigitalAssetResponse;
 import com.bookstore.bookstore.presentation.response.ReadingProgressResponse;
+import com.bookstore.bookstore.presentation.response.SignedUrlResponse;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -26,14 +30,11 @@ public class DigitalLibraryWebMapper {
                 bookId,
                 request.format(),
                 request.title(),
-                request.fileName(),
-                request.storageKey(),
-                request.mimeType(),
-                request.fileSize(),
-                request.checksum(),
-                request.sampleStorageKey(),
+                request.fileAssetId(),
+                request.sampleFileAssetId(),
                 request.price(),
                 Boolean.TRUE.equals(request.downloadAllowed()),
+                Boolean.TRUE.equals(request.purchaseAllowed()),
                 Boolean.TRUE.equals(request.published())
         );
     }
@@ -48,14 +49,11 @@ public class DigitalLibraryWebMapper {
                 digitalAssetId,
                 request.format(),
                 request.title(),
-                request.fileName(),
-                request.storageKey(),
-                request.mimeType(),
-                request.fileSize(),
-                request.checksum(),
-                request.sampleStorageKey(),
+                request.fileAssetId(),
+                request.sampleFileAssetId(),
                 request.price(),
                 Boolean.TRUE.equals(request.downloadAllowed()),
+                Boolean.TRUE.equals(request.purchaseAllowed()),
                 Boolean.TRUE.equals(request.published())
         );
     }
@@ -84,14 +82,15 @@ public class DigitalLibraryWebMapper {
                 asset.getBookId(),
                 asset.getFormat(),
                 asset.getTitle(),
+                asset.getFileAssetId(),
+                asset.getSampleFileAssetId(),
                 asset.getFileName(),
-                asset.getStorageKey(),
                 asset.getMimeType(),
                 asset.getFileSize(),
                 asset.getChecksum(),
-                asset.getSampleStorageKey(),
                 asset.getPrice(),
                 asset.isDownloadAllowed(),
+                asset.isPurchaseAllowed(),
                 asset.isPublished(),
                 asset.getCreatedAt(),
                 asset.getUpdatedAt(),
@@ -105,10 +104,31 @@ public class DigitalLibraryWebMapper {
                 asset.getBookId(),
                 asset.getFormat(),
                 asset.getTitle(),
-                asset.getFileName(),
-                asset.getSampleStorageKey(),
                 asset.getPrice(),
-                asset.isDownloadAllowed()
+                asset.isDownloadAllowed(),
+                asset.isPurchaseAllowed(),
+                asset.getSampleFileAsset() != null
+        );
+    }
+
+    public PublicDigitalAssetCatalogItemResponse toPublicDigitalAssetCatalogItemResponse(
+            PublicDigitalAssetCatalogItemResult result
+    ) {
+        return new PublicDigitalAssetCatalogItemResponse(
+                result.asset().getId(),
+                result.book().getId(),
+                result.book().getCategoryId(),
+                result.book().getAuthorId(),
+                result.book().getPublisherId(),
+                result.asset().getFormat(),
+                result.asset().getTitle(),
+                result.asset().getPrice(),
+                result.asset().isDownloadAllowed(),
+                result.asset().isPurchaseAllowed(),
+                result.asset().getSampleFileAsset() != null,
+                result.book().getTitle(),
+                result.book().getDescription(),
+                result.book().getPrimaryImageUrl()
         );
     }
 
@@ -122,7 +142,7 @@ public class DigitalLibraryWebMapper {
                 result.asset().getFormat(),
                 result.asset().getPrice(),
                 result.asset().isDownloadAllowed(),
-                result.asset().getSampleStorageKey(),
+                result.asset().getSampleFileAsset() != null,
                 result.access().getAccessType(),
                 result.access().getStatus(),
                 result.access().getSourceOrderId(),
@@ -142,13 +162,11 @@ public class DigitalLibraryWebMapper {
                 result.asset().getTitle(),
                 result.asset().getFormat(),
                 result.asset().getFileName(),
-                result.asset().getStorageKey(),
-                result.asset().getSampleStorageKey(),
                 result.asset().getMimeType(),
                 result.asset().getFileSize(),
-                result.asset().getChecksum(),
                 result.asset().getPrice(),
                 result.asset().isDownloadAllowed(),
+                result.asset().getSampleFileAsset() != null,
                 result.access().getAccessType(),
                 result.access().getStatus(),
                 result.access().getSourceOrderId(),
@@ -175,5 +193,9 @@ public class DigitalLibraryWebMapper {
                 progress.getCreatedAt(),
                 progress.getUpdatedAt()
         );
+    }
+
+    public SignedUrlResponse toSignedUrlResponse(SignedUrlResult result) {
+        return new SignedUrlResponse(result.url(), result.expiresAt());
     }
 }

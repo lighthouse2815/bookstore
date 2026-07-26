@@ -8,7 +8,7 @@ public record UpdateAuthorCommand(
         UUID authorId,
         String name,
         String biography,
-        String avatarUrl,
+        UUID avatarFileAssetId,
         Integer birthYear,
         Integer deathYear
 ) {

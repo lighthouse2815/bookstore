@@ -9,9 +9,13 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICartService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
+import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
 import com.bookstore.bookstore.application.result.CartResult;
+import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.Cart;
+import com.bookstore.bookstore.domain.model.CartItem;
+import com.bookstore.bookstore.domain.model.DigitalAsset;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +29,7 @@ public class CartService implements ICartService {
 
     private final ICartRepository cartRepository;
     private final IBookRepository bookRepository;
+    private final IDigitalAssetRepository digitalAssetRepository;
     private final CartAssembler cartAssembler;
 
     @Override
@@ -42,26 +47,19 @@ public class CartService implements ICartService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        UUID userId = command.userId();
-        UUID bookId = command.bookId();
+        Cart cart = cartRepository.findByUserId(command.userId())
+                .orElseGet(() -> createEmptyCart(command.userId()));
 
-        Book book = bookRepository.findByIdActive(bookId)
+        if (command.itemType() == PurchaseItemType.DIGITAL_ASSET) {
+            DigitalAsset digitalAsset = requirePurchasableDigitalAsset(command.digitalAssetId());
+            cart.addDigitalItem(digitalAsset.getId());
+            return cartAssembler.toResult(cartRepository.save(cart));
+        }
+
+        Book book = bookRepository.findByIdActive(command.bookId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
 
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    Instant now = Instant.now();
-                    return new Cart(
-                            UUID.randomUUID(),
-                            userId,
-                            List.of(),
-                            now,
-                            now
-                    );
-                });
-
-        cart.addItem(book.getId(), command.quantity(), book.getStockQuantity());
-
+        cart.addPhysicalItem(book.getId(), command.quantity(), book.getStockQuantity());
         return cartAssembler.toResult(cartRepository.save(cart));
     }
 
@@ -72,17 +70,21 @@ public class CartService implements ICartService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        UUID userId = command.userId();
-        UUID bookId = command.bookId();
+        Cart cart = cartRepository.findByUserId(command.userId())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_NOT_FOUND));
+        CartItem cartItem = resolveCartItem(cart, command.itemReferenceId());
 
-        Book book = bookRepository.findByIdActive(bookId)
+        if (cartItem.isDigitalAsset()) {
+            if (command.quantity() != 1) {
+                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "quantity");
+            }
+            return cartAssembler.toResult(cart);
+        }
+
+        Book book = bookRepository.findByIdActive(cartItem.getBookId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
 
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_NOT_FOUND));
-
-        cart.updateItem(book.getId(), command.quantity(), book.getStockQuantity());
-
+        cart.updatePhysicalItem(cartItem.getId(), command.quantity(), book.getStockQuantity());
         return cartAssembler.toResult(cartRepository.save(cart));
     }
 
@@ -93,12 +95,11 @@ public class CartService implements ICartService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        UUID userId = command.userId();
-
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CART_NOT_FOUND));
 
-        cart.removeItem(command.bookId());
+        CartItem cartItem = resolveCartItem(cart, command.itemReferenceId());
+        cart.removeItemById(cartItem.getId());
         cartRepository.save(cart);
     }
 
@@ -109,5 +110,46 @@ public class CartService implements ICartService {
             cart.clear();
             cartRepository.save(cart);
         });
+    }
+
+    private Cart createEmptyCart(UUID userId) {
+        Instant now = Instant.now();
+        return new Cart(
+                UUID.randomUUID(),
+                userId,
+                List.of(),
+                now,
+                now
+        );
+    }
+
+    private DigitalAsset requirePurchasableDigitalAsset(UUID digitalAssetId) {
+        DigitalAsset digitalAsset = digitalAssetRepository.findByIdActive(digitalAssetId)
+                .filter(DigitalAsset::isPublished)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND));
+
+        if (!digitalAsset.isPurchaseAllowed()) {
+            throw new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_PURCHASE_NOT_ALLOWED);
+        }
+        return digitalAsset;
+    }
+
+    private CartItem resolveCartItem(Cart cart, UUID itemReferenceId) {
+        CartItem cartItem = cart.findItemById(itemReferenceId);
+        if (cartItem != null) {
+            return cartItem;
+        }
+
+        cartItem = cart.findPhysicalItemByBookId(itemReferenceId);
+        if (cartItem != null) {
+            return cartItem;
+        }
+
+        cartItem = cart.findDigitalItemByDigitalAssetId(itemReferenceId);
+        if (cartItem != null) {
+            return cartItem;
+        }
+
+        throw new ApplicationException(ApplicationErrorCode.CART_ITEM_NOT_FOUND);
     }
 }

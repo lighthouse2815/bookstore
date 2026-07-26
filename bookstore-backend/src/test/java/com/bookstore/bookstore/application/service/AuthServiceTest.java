@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,7 +20,9 @@ import com.bookstore.bookstore.application.exception.GoogleIdTokenVerificationEx
 import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.port.out.IGoogleIdTokenVerifier;
+import com.bookstore.bookstore.application.port.out.IAuthThrottleService;
 import com.bookstore.bookstore.application.port.out.IJwtService;
 import com.bookstore.bookstore.application.port.out.IPasswordResetTokenRepository;
 import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
@@ -29,6 +33,7 @@ import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.application.port.out.VerifiedGoogleIdToken;
 import com.bookstore.bookstore.application.result.RegisterResult;
 import com.bookstore.bookstore.domain.enums.AuthProvider;
+import com.bookstore.bookstore.domain.enums.RefreshTokenRevokeReason;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
@@ -85,6 +90,12 @@ class AuthServiceTest {
 
     @Mock
     private IGoogleIdTokenVerifier googleIdTokenVerifier;
+
+    @Mock
+    private IAuthThrottleService authThrottleService;
+
+    @Mock
+    private IAuditLogService auditLogService;
 
     @InjectMocks
     private AuthService authService;
@@ -143,12 +154,44 @@ class AuthServiceTest {
     }
 
     @Test
+    void register_restoresDeletedAccountAsInactiveUserAndRevokesOldSessions() {
+        User deletedUser = userWithPassword(
+                UserStatus.ACTIVE,
+                true,
+                Instant.now().minusSeconds(60),
+                "old-password"
+        );
+        Role defaultRole = defaultRole();
+        when(roleRepository.findByNameActive(USER_ROLE)).thenReturn(Optional.of(defaultRole));
+        when(passwordEncoder.encode("new-password")).thenReturn("new-password-hash");
+        when(userRepository.findByEmailIncludingDeleted("test@gmail.com")).thenReturn(Optional.of(deletedUser));
+        when(userRepository.save(deletedUser)).thenReturn(deletedUser);
+
+        RegisterResult result = authService.register(new RegisterCommand("test@gmail.com", "new-password"));
+
+        assertEquals(deletedUser.getUsername(), result.username());
+        assertNull(deletedUser.getDeletedAt());
+        assertEquals(UserStatus.INACTIVE, deletedUser.getStatus());
+        assertEquals("new-password-hash", deletedUser.getPasswordHash());
+        assertTrue(!deletedUser.isLocked());
+        assertEquals(Set.of(defaultRole), deletedUser.getRoles());
+        verify(userService, never()).create(any(User.class));
+        verify(profileService).restoreForUser(deletedUser.getId());
+        verify(refreshTokenRepository).revokeAllByUserId(
+                eq(deletedUser.getId()),
+                any(Instant.class),
+                eq(RefreshTokenRevokeReason.SESSION_REVOKED)
+        );
+        verify(otpService).sendRegistrationOtp(deletedUser);
+    }
+
+    @Test
     void login_doesNotTrimPassword() {
         String password = "  secret  ";
         User user = activeUserWithPassword(password);
         when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(true);
-        when(jwtService.generateAccessToken(user)).thenReturn("jwt-token");
+        when(jwtService.generateAccessToken(eq(user), any(UUID.class))).thenReturn("jwt-token");
         when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class))).thenReturn(Instant.now().plusSeconds(300));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -170,7 +213,7 @@ class AuthServiceTest {
                 () -> authService.login(new LoginCommand("missing", "secret"))
         );
 
-        assertEquals(ApplicationErrorCode.AUTH_USER_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -178,12 +221,12 @@ class AuthServiceTest {
         User user = userWithPassword(UserStatus.INACTIVE, false, null, "secret");
         when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
 
-        DomainException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DomainException.class,
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
                 () -> authService.login(new LoginCommand("username", "secret"))
         );
 
-        assertEquals(DomainErrorCode.USER_NOT_ACTIVE_CANNOT_LOGIN, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -191,12 +234,12 @@ class AuthServiceTest {
         User user = userWithPassword(UserStatus.ACTIVE, true, null, "secret");
         when(userRepository.findByUsernameActive("username")).thenReturn(Optional.of(user));
 
-        DomainException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DomainException.class,
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
                 () -> authService.login(new LoginCommand("username", "secret"))
         );
 
-        assertEquals(DomainErrorCode.BLOCKED_USER_CANNOT_LOGIN, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -208,7 +251,7 @@ class AuthServiceTest {
                 () -> authService.login(new LoginCommand("username", "secret"))
         );
 
-        assertEquals(ApplicationErrorCode.AUTH_USER_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -222,7 +265,40 @@ class AuthServiceTest {
                 () -> authService.login(new LoginCommand("username", "wrong-password"))
         );
 
-        assertEquals(ApplicationErrorCode.AUTH_INVALID_PASSWORD, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
+    }
+
+    @Test
+    void login_whenFailureTelemetryIsUnavailable_preservesInvalidCredentialsError() {
+        when(userRepository.findByUsernameActive("missing")).thenReturn(Optional.empty());
+        doThrow(new IllegalStateException("throttle unavailable"))
+                .when(authThrottleService)
+                .recordLoginFailure(any(), org.mockito.ArgumentMatchers.nullable(String.class));
+        doThrow(new IllegalStateException("audit unavailable"))
+                .when(auditLogService)
+                .record(any());
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.login(new LoginCommand("missing", "secret"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
+    }
+
+    @Test
+    void login_whenThrottlePrecheckIsUnavailable_stillValidatesCredentials() {
+        doThrow(new IllegalStateException("throttle unavailable"))
+                .when(authThrottleService)
+                .assertLoginAllowed(any(), org.mockito.ArgumentMatchers.nullable(String.class));
+        when(userRepository.findByUsernameActive("missing")).thenReturn(Optional.empty());
+
+        ApplicationException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                ApplicationException.class,
+                () -> authService.login(new LoginCommand("missing", "secret"))
+        );
+
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -235,7 +311,7 @@ class AuthServiceTest {
                 () -> authService.login(new LoginCommand("username", "secret"))
         );
 
-        assertEquals(ApplicationErrorCode.AUTH_PASSWORD_LOGIN_NOT_AVAILABLE, exception.getErrorCode());
+        assertEquals(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
@@ -269,7 +345,7 @@ class AuthServiceTest {
         assertEquals("test@gmail.com", userCaptor.getValue().getEmail());
         assertEquals("First", profileCaptor.getValue().getFirstName());
         assertEquals("Last", profileCaptor.getValue().getLastName());
-        assertEquals("https://avatar.example.com/user.png", profileCaptor.getValue().getAvatarUrl());
+        assertNull(profileCaptor.getValue().getAvatarUrl());
         assertEquals(AuthProvider.GOOGLE, identityCaptor.getValue().getProvider());
         assertEquals("google-subject-123", identityCaptor.getValue().getProviderSubject());
     }
@@ -334,7 +410,7 @@ class AuthServiceTest {
     }
 
     private void stubTokenIssuance() {
-        when(jwtService.generateAccessToken(any(User.class))).thenReturn("jwt-token");
+        when(jwtService.generateAccessToken(any(User.class), any(UUID.class))).thenReturn("jwt-token");
         when(jwtService.calculateRefreshTokenExpiresAt(any(Instant.class))).thenReturn(Instant.now().plusSeconds(300));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }

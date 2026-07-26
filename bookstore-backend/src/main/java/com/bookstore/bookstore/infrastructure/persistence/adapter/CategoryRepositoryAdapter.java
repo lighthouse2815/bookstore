@@ -1,14 +1,17 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.CategoryPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CategoryJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Repository;
 public class CategoryRepositoryAdapter implements ICategoryRepository {
 
     private final CategoryJpaRepository categoryJpaRepository;
+    private final FileAssetJpaRepository fileAssetJpaRepository;
     private final CategoryPersistenceMapper categoryPersistenceMapper;
 
     @Override
@@ -23,6 +27,17 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
         return categoryJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(categoryPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Category> findPageActive(int page, int size) {
+        var resultPage = categoryJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream().map(categoryPersistenceMapper::toDomain).toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
@@ -62,11 +77,19 @@ public class CategoryRepositoryAdapter implements ICategoryRepository {
     }
 
     @Override
+    public boolean existsByCodeIncludingDeleted(String categoryCode) {
+        return categoryJpaRepository.existsByCode(categoryCode);
+    }
+
+    @Override
     public Category save(Category category) {
         CategoryJpaEntity entity = categoryJpaRepository.findById(category.getId())
                 .orElseGet(CategoryJpaEntity::new);
 
-        categoryPersistenceMapper.copyToEntity(entity, category);
+        var imageFileAsset = category.getImageFileAssetId() == null
+                ? null
+                : fileAssetJpaRepository.getReferenceById(category.getImageFileAssetId());
+        categoryPersistenceMapper.copyToEntity(entity, category, imageFileAsset);
         return categoryPersistenceMapper.toDomain(categoryJpaRepository.save(entity));
     }
 

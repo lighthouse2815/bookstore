@@ -82,7 +82,7 @@ public class Supplier {
     }
 
     private void setPhone(String phone) {
-        this.phone = Guard.phoneNumberOrNull(phone, DomainErrorCode.INVALID_SUPPLIER_PHONE, "phone");
+        this.phone = Guard.contactPhoneNumberOrNull(phone, DomainErrorCode.INVALID_SUPPLIER_PHONE, "phone");
     }
 
     private void setEmail(String email) {

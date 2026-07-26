@@ -23,6 +23,8 @@ public interface IChatService {
 
     ChatMessageResult sendUserMessage(SendChatMessageCommand command);
 
+    ChatMessageResult sendSystemMessage(UUID userId, UUID conversationId, String content);
+
     ConversationResult markConversationRead(UUID userId, UUID conversationId);
 
     ConversationResult closeMyConversation(UUID userId, UUID conversationId);

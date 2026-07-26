@@ -10,10 +10,10 @@ public record CreateOrderRequest(
         List<UUID> cartItemIds,
         UUID addressId,
 
-        @NotNull(message = "shippingMethod khong duoc null")
+        @NotNull(message = "shippingMethod không được null")
         ShippingMethod shippingMethod,
 
-        @NotNull(message = "paymentMethod khong duoc null")
+        @NotNull(message = "paymentMethod không được null")
         PaymentMethod paymentMethod,
 
         String bookCouponCode,
@@ -23,3 +23,4 @@ public record CreateOrderRequest(
         String note
 ) {
 }
+

@@ -13,6 +13,7 @@ import com.bookstore.bookstore.application.port.out.IReviewRepository;
 import com.bookstore.bookstore.application.result.BookPageDetailResult;
 import com.bookstore.bookstore.application.result.BookQueryResult;
 import com.bookstore.bookstore.application.result.BookRatingSummaryResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.shared.util.StringUtils;
@@ -55,12 +56,43 @@ public class BookQueryService implements IBookQueryService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageSliceResult<BookQueryResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return enrichBookPage(bookRepository.findPageActive(page, size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<BookQueryResult> search(String keyword) {
         String normalizedKeyword = StringUtils.trimToNull(keyword);
         if (normalizedKeyword == null) {
             return getAll();
         }
         return enrichBooks(bookRepository.searchByKeywordActive(normalizedKeyword));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<BookQueryResult> search(String keyword, int page, int size) {
+        validatePageRequest(page, size);
+        String normalizedKeyword = StringUtils.trimToNull(keyword);
+        if (normalizedKeyword == null) {
+            return getAll(page, size);
+        }
+        return enrichBookPage(bookRepository.searchPageByKeywordActive(normalizedKeyword, page, size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<BookQueryResult> search(String keyword, UUID categoryId, int page, int size) {
+        validatePageRequest(page, size);
+        String normalizedKeyword = StringUtils.trimToNull(keyword);
+
+        if (normalizedKeyword == null && categoryId == null) {
+            return getAll(page, size);
+        }
+
+        return enrichBookPage(bookRepository.searchPageActive(normalizedKeyword, categoryId, page, size));
     }
 
     @Override
@@ -130,6 +162,15 @@ public class BookQueryService implements IBookQueryService {
                         ratingSummaries.getOrDefault(book.getId(), emptyRatingSummary())
                 ))
                 .toList();
+    }
+
+    private PageSliceResult<BookQueryResult> enrichBookPage(PageSliceResult<Book> pageResult) {
+        return new PageSliceResult<>(
+                enrichBooks(pageResult.items()),
+                pageResult.totalCount(),
+                pageResult.page(),
+                pageResult.size()
+        );
     }
 
     private Map<UUID, BookRatingSummaryResult> buildRatingSummaries(Map<UUID, List<Integer>> ratingsByBookId) {
@@ -203,5 +244,15 @@ public class BookQueryService implements IBookQueryService {
             return DEFAULT_RELATED_LIMIT;
         }
         return Math.min(limit, MAX_RELATED_LIMIT);
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

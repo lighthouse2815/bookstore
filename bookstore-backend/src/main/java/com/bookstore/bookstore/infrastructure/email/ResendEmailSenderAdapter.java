@@ -27,9 +27,9 @@ public class ResendEmailSenderAdapter implements IEmailSender {
                 recipientEmail,
                 otpCode,
                 expirationMinutes,
-                "Ma OTP xac thuc tai khoan Bookstore",
-                "Xac thuc tai khoan Bookstore",
-                "Su dung ma OTP ben duoi de kich hoat tai khoan cua ban:"
+                "Mã OTP xác thực tài khoản Bookstore",
+                "Xác thực tài khoản Bookstore",
+                "Sử dụng mã OTP bên dưới để kích hoạt tài khoản của bạn:"
         );
 
         send(request);
@@ -43,9 +43,9 @@ public class ResendEmailSenderAdapter implements IEmailSender {
                 recipientEmail,
                 otpCode,
                 expirationMinutes,
-                "Ma OTP dat lai mat khau Bookstore",
-                "Dat lai mat khau Bookstore",
-                "Su dung ma OTP ben duoi de dat lai mat khau cua ban:"
+                "Mã OTP đặt lại mật khẩu Bookstore",
+                "Đặt lại mật khẩu Bookstore",
+                "Sử dụng mã OTP bên dưới để đặt lại mật khẩu của bạn:"
         );
 
         send(request);
@@ -101,11 +101,11 @@ public class ResendEmailSenderAdapter implements IEmailSender {
     private String buildTextBody(String otpCode, long expirationMinutes, String description) {
         return description
                 + System.lineSeparator()
-                + "Ma OTP cua ban la "
+                + "Mã OTP của bạn là "
                 + otpCode
-                + ". Ma co hieu luc trong "
+                + ". Mã có hiệu lực trong "
                 + expirationMinutes
-                + " phut.";
+                + " phút.";
     }
 
     private String buildHtmlBody(String otpCode, long expirationMinutes, String heading, String description) {
@@ -116,8 +116,8 @@ public class ResendEmailSenderAdapter implements IEmailSender {
                   <div style="display:inline-block;padding:12px 20px;margin:12px 0;background:#111827;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:4px">
                     %s
                   </div>
-                  <p>Ma co hieu luc trong %d phut.</p>
-                  <p>Neu ban khong thuc hien yeu cau nay, vui long bo qua email.</p>
+                  <p>Mã có hiệu lực trong %d phút.</p>
+                  <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
                 </div>
                 """.formatted(heading, description, otpCode, expirationMinutes);
     }
@@ -131,3 +131,4 @@ public class ResendEmailSenderAdapter implements IEmailSender {
     ) {
     }
 }
+

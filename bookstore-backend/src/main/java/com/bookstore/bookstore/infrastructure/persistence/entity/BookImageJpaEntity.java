@@ -28,7 +28,11 @@ public class BookImageJpaEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private BookJpaEntity book;
 
-    @Column(name = "image_url", nullable = false, columnDefinition = "TEXT")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_asset_id")
+    private FileAssetJpaEntity fileAsset;
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     @Column(name = "primary_image", nullable = false)

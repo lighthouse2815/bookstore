@@ -11,28 +11,29 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public record UpdateCouponRequest(
-        @NotBlank(message = "code khong duoc de trong")
+        @NotBlank(message = "code không được để trống")
         String code,
-        @Pattern(regexp = "^(?!\\s*$).+", message = "description khong duoc de trong")
+        @Pattern(regexp = "^(?!\\s*$).+", message = "description không được để trống")
         String description,
-        @NotNull(message = "couponType khong duoc null")
+        @NotNull(message = "couponType không được null")
         CouponType couponType,
-        @NotNull(message = "discountType khong duoc null")
+        @NotNull(message = "discountType không được null")
         CouponDiscountType discountType,
-        @NotNull(message = "discountValue khong duoc null")
-        @Positive(message = "discountValue phai lon hon 0")
+        @NotNull(message = "discountValue không được null")
+        @Positive(message = "discountValue phải lớn hơn 0")
         BigDecimal discountValue,
-        @NotNull(message = "minOrderAmount khong duoc null")
-        @DecimalMin(value = "0.0", message = "minOrderAmount khong duoc am")
+        @NotNull(message = "minOrderAmount không được null")
+        @DecimalMin(value = "0.0", message = "minOrderAmount không được âm")
         BigDecimal minOrderAmount,
-        @DecimalMin(value = "0.0", message = "maxDiscountAmount khong duoc am")
+        @DecimalMin(value = "0.0", message = "maxDiscountAmount không được âm")
         BigDecimal maxDiscountAmount,
-        @Positive(message = "maxUsageCount phai lon hon 0")
+        @Positive(message = "maxUsageCount phải lớn hơn 0")
         Integer maxUsageCount,
-        @NotNull(message = "startsAt khong duoc null")
+        @NotNull(message = "startsAt không được null")
         Instant startsAt,
-        @NotNull(message = "expiresAt khong duoc null")
+        @NotNull(message = "expiresAt không được null")
         Instant expiresAt,
         boolean active
 ) {
 }
+

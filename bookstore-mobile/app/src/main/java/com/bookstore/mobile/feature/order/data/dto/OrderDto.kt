@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OrderDto(
     val orderId: String,
+    val orderCode: String,
     val userId: String,
     val items: List<OrderItemDto> = emptyList(),
     val productTotal: Double = 0.0,
@@ -31,9 +32,11 @@ data class OrderDto(
     val createdAt: String,
     val updatedAt: String,
     val cancelledAt: String? = null,
+    val paymentExpiresAt: String? = null,
 ) {
     fun toModel(): Order = Order(
         id = orderId,
+        orderCode = orderCode,
         items = items.map { it.toModel() },
         productTotal = productTotal,
         shippingFee = shippingFee,

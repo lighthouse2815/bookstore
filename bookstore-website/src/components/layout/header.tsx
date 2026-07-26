@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import {
   BookOpen,
+  Heart,
   LayoutDashboard,
   LogOut,
   Menu,
+  Package,
   Search,
   ShoppingCart,
   User,
@@ -24,6 +26,7 @@ export function Header() {
     brandSuffix,
     totalItems,
     navLinks,
+    searchTargetPath,
     open,
     profileOpen,
     searchQuery,
@@ -38,15 +41,19 @@ export function Header() {
     handleSearchQueryChange,
     submitSearch,
   } = useHeaderState()
+  const userRoles = user?.roles ?? []
   const canOpenAdminArea =
-    Boolean(user) &&
-    (user.roles.includes('ADMIN') || user.roles.includes('STAFF'))
-  const adminLinkTarget = user?.roles.includes('ADMIN') ? '/admin' : '/admin/chat'
+    userRoles.includes('ADMIN') || userRoles.includes('STAFF')
+  const adminLinkTarget = userRoles.includes('ADMIN') ? '/admin' : '/admin/chat'
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">
       <div className="mx-auto flex min-h-[78px] max-w-[1380px] items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="shrink-0">
+        <Link
+          to="/"
+          aria-label={t('header.nav.home')}
+          className="shrink-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
           <div className="flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
               <BookOpen className="size-5" />
@@ -58,13 +65,16 @@ export function Header() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav
+          aria-label={t('header.primaryNavigation')}
+          className="hidden items-center gap-1 lg:flex"
+        >
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               className={cn(
-                'rounded-full px-4 py-2 text-sm font-medium transition-colors',
+                'min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                 isActiveLink(link.to)
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground',
@@ -94,7 +104,7 @@ export function Header() {
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="absolute right-0.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label={t('header.searchAria')}
             >
               <Search className="size-4" />
@@ -106,8 +116,8 @@ export function Header() {
           <LanguageSwitcher className="hidden sm:inline-flex" />
 
           <Link
-            to="/books"
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
+            to={searchTargetPath}
+            className="hidden size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:flex lg:hidden"
             aria-label={t('header.searchAria')}
           >
             <Search className="size-5" />
@@ -116,6 +126,7 @@ export function Header() {
           <ThemeSwitch
             checked={theme === 'dark'}
             onToggle={toggleTheme}
+            className="hidden sm:inline-flex"
             label={
               theme === 'dark'
                 ? t('header.switchToLight')
@@ -128,7 +139,7 @@ export function Header() {
           {user && (
             <Link
               to="/cart"
-              className="relative flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+              className="relative flex size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label={t('header.cartAria')}
             >
               <ShoppingCart className="size-5" />
@@ -144,13 +155,13 @@ export function Header() {
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="hidden rounded-full px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:inline-flex"
+                className="hidden min-h-11 rounded-full px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:inline-flex"
               >
                 {t('header.login')}
               </Link>
               <Link
                 to="/login"
-                className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:opacity-90 sm:hidden"
+                className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:hidden"
                 aria-label={t('header.login')}
               >
                 <User className="size-5" />
@@ -159,15 +170,21 @@ export function Header() {
           ) : (
             <div className="relative" ref={profileRef}>
               <button
+                type="button"
                 onClick={toggleProfileMenu}
-                className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 aria-label={t('header.profileMenu')}
+                aria-expanded={profileOpen}
+                aria-controls="header-profile-menu"
               >
                 <span className="text-lg">{user.avatar}</span>
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
+                <div
+                  id="header-profile-menu"
+                  className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-background shadow-lg"
+                >
                   <div className="border-b border-border px-4 py-3">
                     <p className="text-sm font-semibold text-foreground">
                       {user.name}
@@ -176,7 +193,10 @@ export function Header() {
                       {user.email}
                     </p>
                   </div>
-                  <nav className="flex flex-col">
+                  <nav
+                    aria-label={t('header.profileMenu')}
+                    className="flex flex-col"
+                  >
                     <Link
                       to="/profile"
                       onClick={closeProfileMenu}
@@ -184,6 +204,22 @@ export function Header() {
                     >
                       <User className="h-4 w-4" />
                       {t('header.myProfile')}
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={closeProfileMenu}
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Package className="h-4 w-4" />
+                      {t('orderDetail.orderHistory')}
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={closeProfileMenu}
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Heart className="h-4 w-4" />
+                      {t('header.myWishlist')}
                     </Link>
                     <Link
                       to="/library"
@@ -204,6 +240,7 @@ export function Header() {
                       </Link>
                     )}
                     <button
+                      type="button"
                       onClick={() => {
                         void handleLogout()
                       }}
@@ -221,8 +258,12 @@ export function Header() {
           <button
             type="button"
             onClick={toggleMenu}
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
-            aria-label="Menu"
+            className="flex size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 lg:hidden"
+            aria-label={
+              open ? t('header.mobileMenuClose') : t('header.mobileMenuOpen')
+            }
+            aria-expanded={open}
+            aria-controls="header-mobile-menu"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -230,7 +271,10 @@ export function Header() {
       </div>
 
       {open && (
-        <div className="border-t border-border bg-background lg:hidden">
+        <div
+          id="header-mobile-menu"
+          className="border-t border-border bg-background lg:hidden"
+        >
           <div className="mx-auto max-w-[1380px] px-4 py-4 sm:px-6">
             <form
               onSubmit={(event) => {
@@ -250,8 +294,22 @@ export function Header() {
               />
             </form>
 
-            <div className="mb-4">
+            <div className="mb-4 flex min-h-14 items-center justify-between gap-4 rounded-2xl border border-border/70 bg-card/70 px-3 py-2">
               <LanguageSwitcher />
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {t('header.appearanceLabel')}
+                </span>
+                <ThemeSwitch
+                  checked={theme === 'dark'}
+                  onToggle={toggleTheme}
+                  label={
+                    theme === 'dark'
+                      ? t('header.switchToLight')
+                      : t('header.switchToDark')
+                  }
+                />
+              </div>
             </div>
 
             <nav className="flex flex-col gap-2">
@@ -260,7 +318,12 @@ export function Header() {
                   key={link.to}
                   to={link.to}
                   onClick={closeMenu}
-                  className="rounded-2xl px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  className={cn(
+                    'min-h-11 rounded-2xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+                    isActiveLink(link.to)
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-foreground hover:bg-muted',
+                  )}
                 >
                   {link.label}
                 </Link>

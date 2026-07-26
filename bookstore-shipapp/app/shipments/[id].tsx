@@ -1,17 +1,20 @@
 import { palette } from '@/src/config';
 import { formatCurrency, formatDateTime } from '@/src/lib/format';
 import { getNextShipmentActions } from '@/src/lib/status';
+import { prepareShipmentStatusUpdate, requiresShipmentStatusConfirmation } from '@/src/lib/shipment-workflow';
 import { fetchShipmentById, updateShipmentStatus } from '@/src/services/shipments';
 import type { Shipment, ShipmentStatus } from '@/src/types/shipment';
 import { ActionButton, Panel, SectionTitle, StatusBadge } from '@/src/components/ui';
 import { useSession } from '@/src/context/session-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,6 +30,7 @@ export default function ShipmentDetailScreen() {
   const [savingStatus, setSavingStatus] = useState<ShipmentStatus | null>(null);
   const [failureReason, setFailureReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const statusUpdateInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!hydrated || !session || !id) {
@@ -59,55 +63,142 @@ export default function ShipmentDetailScreen() {
   }
 
   async function handleStatusUpdate(nextStatus: ShipmentStatus) {
-    if (!shipment) {
+    if (!shipment || statusUpdateInFlightRef.current) {
       return;
     }
 
-    if (nextStatus === 'FAILED' && !failureReason.trim()) {
-      setError('Nhap ly do that bai truoc khi gui cap nhat');
+    let payload;
+    try {
+      payload = prepareShipmentStatusUpdate(shipment.shipmentStatus, nextStatus, failureReason);
+    } catch (validationError) {
+      setError(validationError instanceof Error ? validationError.message : 'Cap nhat trang thai khong hop le');
       return;
     }
 
     try {
+      statusUpdateInFlightRef.current = true;
       setSavingStatus(nextStatus);
       setError(null);
-      const updatedShipment = await updateShipmentStatus(request, shipment.shipmentId, {
-        status: nextStatus,
-        failureReason: nextStatus === 'FAILED' ? failureReason.trim() : null,
-      });
+      const updatedShipment = await updateShipmentStatus(request, shipment.shipmentId, payload);
       setShipment(updatedShipment);
       setFailureReason(updatedShipment.failureReason ?? '');
+      void refreshShipmentAfterStatusUpdate();
       Alert.alert('Cap nhat thanh cong', 'Backend da ghi nhan trang thai moi cua chuyen giao.');
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Cap nhat trang thai that bai');
     } finally {
+      statusUpdateInFlightRef.current = false;
       setSavingStatus(null);
     }
   }
 
-  function openPhoneCall() {
-    if (!shipment?.receiverPhone) {
+  async function refreshShipmentAfterStatusUpdate() {
+    if (!id) {
       return;
     }
 
-    void Linking.openURL(`tel:${shipment.receiverPhone}`);
+    try {
+      const refreshedShipment = await fetchShipmentById(request, id);
+      setShipment(refreshedShipment);
+      setFailureReason(refreshedShipment.failureReason ?? '');
+    } catch {
+      // The successful status response remains the server-confirmed state.
+    }
   }
 
-  function openMaps() {
-    if (!shipment?.receiverAddress) {
+  function requestStatusUpdate(nextStatus: ShipmentStatus) {
+    if (savingStatus || statusUpdateInFlightRef.current) {
       return;
     }
 
-    const encodedAddress = encodeURIComponent(shipment.receiverAddress);
-    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`);
+    if (!shipment) {
+      return;
+    }
+
+    try {
+      prepareShipmentStatusUpdate(shipment.shipmentStatus, nextStatus, failureReason);
+    } catch (validationError) {
+      setError(validationError instanceof Error ? validationError.message : 'Cap nhat trang thai khong hop le');
+      return;
+    }
+
+    if (requiresShipmentStatusConfirmation(nextStatus)) {
+      const isDelivered = nextStatus === 'DELIVERED';
+      Alert.alert(
+        isDelivered ? 'Xac nhan giao thanh cong' : 'Xac nhan giao that bai',
+        isDelivered
+          ? 'Trang thai giao thanh cong la trang thai cuoi va khong the cap nhat them.'
+          : 'Trang thai giao that bai la trang thai cuoi va se luu ly do ban da nhap.',
+        [
+          { text: 'Huy', style: 'cancel' },
+          {
+            text: 'Xac nhan',
+            style: 'destructive',
+            onPress: () => {
+              void handleStatusUpdate(nextStatus);
+            },
+          },
+        ],
+      );
+      return;
+    }
+
+    void handleStatusUpdate(nextStatus);
+  }
+
+  async function openPhoneCall() {
+    const phone = getCallablePhone(shipment?.receiverPhone);
+
+    if (!phone) {
+      return;
+    }
+
+    try {
+      const phoneUrl = `tel:${phone}`;
+
+      if (!(await Linking.canOpenURL(phoneUrl))) {
+        throw new Error('unsupported');
+      }
+
+      await Linking.openURL(phoneUrl);
+    } catch {
+      setError('Thiet bi khong the mo ung dung goi dien. Vui long sao chep so dien thoai de goi.');
+    }
+  }
+
+  async function openMaps() {
+    const address = shipment?.receiverAddress?.trim();
+
+    if (!address) {
+      return;
+    }
+
+    try {
+      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+      if (!(await Linking.canOpenURL(mapUrl))) {
+        throw new Error('unsupported');
+      }
+
+      await Linking.openURL(mapUrl);
+    } catch {
+      setError('Thiet bi khong the mo ban do. Vui long sao chep dia chi de tim thu cong.');
+    }
   }
 
   const nextActions = shipment ? getNextShipmentActions(shipment.shipmentStatus) : [];
+  const canCallCustomer = Boolean(getCallablePhone(shipment?.receiverPhone));
+  const canOpenMaps = Boolean(shipment?.receiverAddress?.trim());
+  const canReportFailure = nextActions.some((action) => action.status === 'FAILED');
 
   return (
     <>
       <Stack.Screen options={{ title: shipment?.orderCode ?? 'Chi tiet chuyen' }} />
-      <ScrollView contentContainerStyle={styles.content} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          style={styles.container}>
         {loading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator color={palette.primary} size="large" />
@@ -139,23 +230,55 @@ export default function ShipmentDetailScreen() {
                 <StatusBadge status={shipment.shipmentStatus} />
                 <Text style={styles.amount}>{formatCurrency(shipment.finalAmount)}</Text>
               </View>
-              <Text style={styles.address}>{shipment.receiverAddress}</Text>
+              <Text selectable style={styles.address}>
+                {shipment.receiverAddress || 'Chua co dia chi giao hang'}
+              </Text>
             </Panel>
 
             <Panel style={styles.quickActions}>
-              <ActionButton icon="phone-outline" label="Goi khach" onPress={openPhoneCall} variant="soft" />
-              <ActionButton icon="map-marker-radius-outline" label="Mo ban do" onPress={openMaps} variant="soft" />
+              <ActionButton
+                disabled={!canCallCustomer}
+                icon="phone-outline"
+                label={canCallCustomer ? 'Goi khach' : 'Chua co so hop le'}
+                onPress={() => {
+                  void openPhoneCall();
+                }}
+                variant="soft"
+              />
+              <ActionButton
+                disabled={!canOpenMaps}
+                icon="map-marker-radius-outline"
+                label={canOpenMaps ? 'Mo ban do' : 'Chua co dia chi'}
+                onPress={() => {
+                  void openMaps();
+                }}
+                variant="soft"
+              />
             </Panel>
+
+            {error ? <Text style={styles.inlineError}>{error}</Text> : null}
 
             <Panel style={styles.detailPanel}>
               <SectionTitle title="Nguoi nhan" />
               <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Ma don</Text>
+                <Text selectable style={styles.detailValue}>{shipment.orderCode}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Ma shipment</Text>
+                <Text selectable style={styles.detailValue}>{shipment.shipmentId}</Text>
+              </View>
+              <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Ten</Text>
-                <Text style={styles.detailValue}>{shipment.receiverName}</Text>
+                <Text selectable style={styles.detailValue}>{shipment.receiverName || 'Chua cap nhat'}</Text>
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>So dien thoai</Text>
-                <Text style={styles.detailValue}>{shipment.receiverPhone}</Text>
+                <Text selectable style={styles.detailValue}>{shipment.receiverPhone || 'Chua cap nhat'}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Dia chi</Text>
+                <Text selectable style={styles.detailValue}>{shipment.receiverAddress || 'Chua cap nhat'}</Text>
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Thanh toan</Text>
@@ -163,6 +286,12 @@ export default function ShipmentDetailScreen() {
                   {shipment.paymentMethod} / {shipment.paymentStatus}
                 </Text>
               </View>
+              {shipment.paymentMethod === 'COD' ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Tien thu ho</Text>
+                  <Text style={styles.detailValue}>{formatCurrency(shipment.finalAmount)}</Text>
+                </View>
+              ) : null}
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Don hang</Text>
                 <Text style={styles.detailValue}>{shipment.orderStatus}</Text>
@@ -204,21 +333,21 @@ export default function ShipmentDetailScreen() {
                   title="Cap nhat trang thai"
                 />
 
-                <View style={styles.failureBox}>
-                  <Text style={styles.failureLabel}>Ly do that bai</Text>
-                  <TextInput
-                    multiline
-                    numberOfLines={3}
-                    onChangeText={setFailureReason}
-                    placeholder="Chi nhap khi can bao giao that bai"
-                    placeholderTextColor={palette.textMuted}
-                    style={styles.failureInput}
-                    textAlignVertical="top"
-                    value={failureReason}
-                  />
-                </View>
-
-                {error ? <Text style={styles.inlineError}>{error}</Text> : null}
+                {canReportFailure ? (
+                  <View style={styles.failureBox}>
+                    <Text style={styles.failureLabel}>Ly do that bai</Text>
+                    <TextInput
+                      multiline
+                      numberOfLines={3}
+                      onChangeText={setFailureReason}
+                      placeholder="Bat buoc khi bao giao that bai"
+                      placeholderTextColor={palette.textMuted}
+                      style={styles.failureInput}
+                      textAlignVertical="top"
+                      value={failureReason}
+                    />
+                  </View>
+                ) : null}
 
                 <View style={styles.actionList}>
                   {nextActions.map((action) => (
@@ -226,9 +355,10 @@ export default function ShipmentDetailScreen() {
                       key={action.status}
                       icon={action.icon}
                       label={action.label}
+                      disabled={Boolean(savingStatus)}
                       loading={savingStatus === action.status}
                       onPress={() => {
-                        void handleStatusUpdate(action.status);
+                        requestStatusUpdate(action.status);
                       }}
                       tone={action.status === 'FAILED' ? palette.danger : palette.primary}
                     />
@@ -251,9 +381,16 @@ export default function ShipmentDetailScreen() {
             )}
           </>
         ) : null}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
+}
+
+function getCallablePhone(phone: string | null | undefined) {
+  const normalizedPhone = phone?.trim().replace(/[\s().-]/g, '') ?? '';
+
+  return /^\+?[0-9]{7,15}$/.test(normalizedPhone) ? normalizedPhone : null;
 }
 
 const styles = StyleSheet.create({

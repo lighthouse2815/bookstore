@@ -10,7 +10,7 @@ public record UpdateProfileCommand(
         UUID userId,
         String lastName,
         String firstName,
-        String avatarUrl,
+        UUID avatarFileAssetId,
         Gender gender,
         LocalDate dateOfBirth
 ) {

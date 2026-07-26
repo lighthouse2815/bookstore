@@ -6,6 +6,7 @@ import com.bookstore.bookstore.presentation.request.CreateCategoryRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCategoryRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.CategoryResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,10 +31,21 @@ public class CategoryController {
     private final CategoryWebMapper categoryWebMapper;
 
     @GetMapping("/api/categories")
-    public ApiResponse<List<CategoryResponse>> getAll() {
-        return ApiResponse.success(categoryService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = categoryService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(categoryWebMapper::toCategoryResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(categoryService.getAll().stream()
                 .map(categoryWebMapper::toCategoryResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/api/categories/{id}")

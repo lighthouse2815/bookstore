@@ -12,9 +12,12 @@ import com.bookstore.bookstore.application.port.out.IAuthorRepository;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookDetail;
 import com.bookstore.bookstore.domain.model.BookImage;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,6 +38,7 @@ public class BookService implements IBookService {
     private final ICategoryRepository categoryRepository;
     private final IAuthorRepository authorRepository;
     private final IPublisherRepository publisherRepository;
+    private final FileAssetPolicyService fileAssetPolicyService;
 
     @Override
     public List<Book> getAll() {
@@ -170,26 +174,19 @@ public class BookService implements IBookService {
         bookRepository.save(currentBook);
     }
 
-    public void xemchitietsach(){
-        // TODO : the loai, tac gia , nha xuat ban bi xoa thi van cho hien, dung ham getAllIncludingDeleted
-    }
-
     private void requireActiveCategory(UUID categoryId) {
-        if (!categoryRepository.existsByIdIncludingDeleted(categoryId)) {
-            throw new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND);
-        }
+        categoryRepository.findByIdActive(categoryId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
     }
 
     private void requireActiveAuthor(UUID authorId) {
-        if (!authorRepository.existsByIdIncludingDeleted(authorId)) {
-            throw new ApplicationException(ApplicationErrorCode.AUTHOR_NOT_FOUND);
-        }
+        authorRepository.findByIdActive(authorId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTHOR_NOT_FOUND));
     }
 
     private void requireActivePublisher(UUID publisherId) {
-        if (!publisherRepository.existsByIdIncludingDeleted(publisherId)) {
-            throw new ApplicationException(ApplicationErrorCode.PUBLISHER_NOT_FOUND);
-        }
+        publisherRepository.findByIdActive(publisherId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PUBLISHER_NOT_FOUND));
     }
 
     private List<BookImage> toBookImages(
@@ -237,7 +234,11 @@ public class BookService implements IBookService {
         return new BookImage(
                 imageId,
                 bookId,
-                StringUtils.trimToNull(imageCommand.imageUrl()),
+                fileAssetPolicyService.requireActiveAsset(
+                        imageCommand.fileAssetId(),
+                        FilePurpose.BOOK_IMAGE,
+                        FileVisibility.PUBLIC
+                ),
                 imageCommand.primaryImage() != null ? imageCommand.primaryImage() : false,
                 imageCommand.sortOrder() != null ? imageCommand.sortOrder() : index,
                 StringUtils.trimToNull(imageCommand.altText()),

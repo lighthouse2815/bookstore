@@ -16,6 +16,7 @@ public partial class PosCartItemModel : ObservableObject
     public string Title => Book.Title;
     public string? Isbn => Book.Isbn;
     public decimal UnitPrice => Book.Price;
+    public string StockText => Book.StockText;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(LineTotal))]

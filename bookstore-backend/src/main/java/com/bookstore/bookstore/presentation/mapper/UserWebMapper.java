@@ -34,7 +34,7 @@ public class UserWebMapper {
                 request.email(),
                 request.firstName(),
                 request.lastName(),
-                request.avatarUrl(),
+                request.avatarFileAssetId(),
                 request.gender(),
                 request.dateOfBirth(),
                 request.roleName()

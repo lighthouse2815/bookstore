@@ -2,11 +2,12 @@ package com.bookstore.bookstore.application.command;
 
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import java.util.UUID;
 
 public record CreateAuthorCommand(
         String name,
         String biography,
-        String avatarUrl,
+        UUID avatarFileAssetId,
         Integer birthYear,
         Integer deathYear
 ) {

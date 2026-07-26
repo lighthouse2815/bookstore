@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   Edit2,
   Eye,
   Lock,
@@ -23,6 +21,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import {
   Select,
   SelectContent,
@@ -38,6 +37,7 @@ import {
 import { AdminLayout } from '@/components/layout/admin-layout'
 import type { AdminUserResponse } from '@/types/admin-access'
 import type { UserRole, UserStatus } from '@/types/auth'
+import type { PageRequest, PageResult } from '@/types/pagination'
 import { cn } from '@/utils'
 import { getGenderLabel, getUserRoleLabel } from '@/utils/i18n'
 
@@ -45,7 +45,7 @@ type AdminUserManagementPageProps = {
   countIcon: LucideIcon
   description: string
   emptyLabel: string
-  fetchUsers: () => Promise<AdminUserResponse[]>
+  fetchUsers: (params: PageRequest) => Promise<PageResult<AdminUserResponse>>
   loadErrorLabel: string
   mode: AdminUserManagementMode
   searchPlaceholder: string
@@ -64,7 +64,7 @@ const statusVariants: Record<
 const tableGridClassName =
   'xl:grid xl:grid-cols-[minmax(0,2.2fr)_1fr_1fr_1fr_34rem]'
 
-const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'USER']
+const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'SHIPPER', 'USER']
 
 export function AdminUserManagementPage({
   countIcon: CountIcon,
@@ -81,10 +81,12 @@ export function AdminUserManagementPage({
     t,
     formatDate,
     formatNumber,
-    isVietnamese,
     canCreate,
     canEdit,
     users,
+    page,
+    pageSize,
+    totalCount,
     filteredUsers,
     searchTerm,
     isLoading,
@@ -100,7 +102,9 @@ export function AdminUserManagementPage({
     roleOptions,
     createDialogDescription,
     editDialogDescription,
+    showingCountLabel,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -674,7 +678,7 @@ export function AdminUserManagementPage({
                               ) : (
                                 <Lock className="mr-2 h-4 w-4" />
                               )}
-                              {getLockButtonLabel(currentUser.locked, isVietnamese)}
+                              {getLockButtonLabel(currentUser.locked, t)}
                             </Button>
 
                             <Button
@@ -696,35 +700,17 @@ export function AdminUserManagementPage({
               </div>
 
               {!isLoading && !error && filteredUsers.length > 0 ? (
-                <div className="grid gap-4 border-t border-border/60 px-6 py-5 text-sm text-muted-foreground xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-center">
-                  <p className="min-w-0 xl:self-center">
-                    {interpolateLabel(labels.showingCount, {
-                      count: formatNumber(filteredUsers.length),
-                      total: formatNumber(users.length),
-                    })}
+                <div>
+                  <p className="px-6 pt-4 text-sm text-muted-foreground">
+                    {showingCountLabel}
                   </p>
-                  <div className="flex items-center justify-center gap-3 xl:justify-self-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="size-12 rounded-2xl border-border/60 bg-background/40 p-0 text-muted-foreground opacity-60"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex h-12 min-w-[52px] items-center justify-center rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_18px_40px_rgba(99,102,241,0.35)]">
-                      1
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="size-12 rounded-2xl border-border/60 bg-background/40 p-0 text-muted-foreground opacity-60"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="hidden xl:block" />
+                  <PaginationControls
+                    page={page}
+                    size={pageSize}
+                    totalCount={totalCount}
+                    disabled={isLoading}
+                    onPageChange={handlePageChange}
+                  />
                 </div>
               ) : null}
             </section>
@@ -999,19 +985,13 @@ function getStatusLabel(
     : t('admin.usersPage.inactive')
 }
 
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
+function getLockButtonLabel(
+  locked: boolean,
+  t: (key: string, params?: Record<string, number | string>) => string,
 ) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
-}
-
-function getLockButtonLabel(locked: boolean, isVietnamese: boolean) {
   if (locked) {
-    return isVietnamese ? 'Mở khóa' : 'Unlock'
+    return t('admin.userManagement.lockAction.unlock')
   }
 
-  return isVietnamese ? 'Khóa' : 'Lock'
+  return t('admin.userManagement.lockAction.lock')
 }

@@ -5,12 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank(message = "email khong duoc de trong")
-        @Email(message = "email khong hop le")
+        @NotBlank(message = "email không được để trống")
+        @Email(message = "email không hợp lệ")
         String email,
 
-        @NotBlank(message = "password khong duoc de trong")
-        @Size(min = 8, max = 72, message = "password phai tu 8 den 72 ky tu")
+        @NotBlank(message = "password không được để trống")
+        @Size(min = 8, max = 72, message = "password phải tu 8 den 72 ký tự")
         String password
 ) {
 }
+

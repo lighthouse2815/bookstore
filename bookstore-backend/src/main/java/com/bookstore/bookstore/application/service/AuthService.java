@@ -10,11 +10,14 @@ import com.bookstore.bookstore.application.command.ResetPasswordCommand;
 import com.bookstore.bookstore.application.command.VerifyOtpCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
+import com.bookstore.bookstore.application.exception.AuthRateLimitException;
 import com.bookstore.bookstore.application.exception.GoogleIdTokenVerificationException;
 import com.bookstore.bookstore.application.port.in.IAuthService;
 import com.bookstore.bookstore.application.port.in.IOtpService;
 import com.bookstore.bookstore.application.port.in.IProfileService;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.application.port.in.IAuditLogService;
+import com.bookstore.bookstore.application.port.out.IAuthThrottleService;
 import com.bookstore.bookstore.application.port.out.IGoogleIdTokenVerifier;
 import com.bookstore.bookstore.application.port.out.IJwtService;
 import com.bookstore.bookstore.application.port.out.IPasswordResetTokenRepository;
@@ -27,10 +30,14 @@ import com.bookstore.bookstore.application.port.out.VerifiedGoogleIdToken;
 import com.bookstore.bookstore.application.result.LoginResult;
 import com.bookstore.bookstore.application.result.PasswordResetTokenResult;
 import com.bookstore.bookstore.application.result.RegisterResult;
+import com.bookstore.bookstore.application.result.SessionResult;
 import com.bookstore.bookstore.domain.enums.AuthProvider;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.PasswordResetToken;
 import com.bookstore.bookstore.domain.model.RefreshToken;
+import com.bookstore.bookstore.domain.enums.RefreshTokenRevokeReason;
+import com.bookstore.bookstore.application.command.AuthRequestMetadata;
+import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.domain.model.Role;
@@ -39,6 +46,7 @@ import com.bookstore.bookstore.domain.model.UserAuthIdentity;
 import com.bookstore.bookstore.shared.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService implements IAuthService {
 
     private static final String USER_ROLE = "USER";
@@ -72,8 +81,9 @@ public class AuthService implements IAuthService {
     private final IJwtService jwtService;
     private final IRefreshTokenRepository refreshTokenRepository;
     private final IGoogleIdTokenVerifier googleIdTokenVerifier;
+    private final IAuthThrottleService authThrottleService;
+    private final IAuditLogService auditLogService;
 
-    // TODO : THEM CHUC NANG TAO MOI TAI KHOAN KHI DA CO TAI KHOAN KHOA, CHECK TRONG BANG DELETE_USER
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RegisterResult register(RegisterCommand command) {
@@ -84,10 +94,28 @@ public class AuthService implements IAuthService {
         Instant now = Instant.now();
         String email = StringUtils.trimToNull(command.email());
         Role defaultRole = loadDefaultUserRole();
+        String passwordHash = passwordEncoder.encode(command.password());
+
+        User deletedUser = userRepository.findByEmailIncludingDeleted(email)
+                .filter(user -> user.getDeletedAt() != null)
+                .orElse(null);
+        if (deletedUser != null) {
+            deletedUser.restoreForRegistration(passwordHash, Set.of(defaultRole));
+            User restoredUser = userRepository.save(deletedUser);
+            profileService.restoreForUser(restoredUser.getId());
+            refreshTokenRepository.revokeAllByUserId(
+                    restoredUser.getId(), now, RefreshTokenRevokeReason.SESSION_REVOKED
+            );
+            otpService.sendRegistrationOtp(restoredUser);
+            audit(restoredUser, "ACCOUNT_RESTORED_FOR_REGISTRATION", "USER", restoredUser.getId().toString(),
+                    AuthRequestMetadata.empty(), null);
+            return new RegisterResult(restoredUser.getUsername(), restoredUser.getCreatedAt());
+        }
+
         User user = new User(
                 UUID.randomUUID(),
                 email,
-                passwordEncoder.encode(command.password()),
+                passwordHash,
                 null,
                 email,
                 UserStatus.INACTIVE,
@@ -141,7 +169,7 @@ public class AuthService implements IAuthService {
             identity.syncProviderState(googleIdToken.email(), googleIdToken.emailVerified());
             userAuthIdentityRepository.save(identity);
             User user = prepareUserForGoogleLogin(loadUserForGoogleIdentity(identity.getUserId()));
-            return issueTokens(user);
+            return issueTokens(user, AuthRequestMetadata.empty(), null, null);
         }
 
         User user = userRepository.findByEmailIncludingDeleted(googleIdToken.email())
@@ -161,11 +189,11 @@ public class AuthService implements IAuthService {
 
             existingIdentityForUser.syncProviderState(googleIdToken.email(), googleIdToken.emailVerified());
             userAuthIdentityRepository.save(existingIdentityForUser);
-            return issueTokens(user);
+            return issueTokens(user, AuthRequestMetadata.empty(), null, null);
         }
 
         userAuthIdentityRepository.save(createGoogleIdentity(user.getId(), googleIdToken));
-        return issueTokens(user);
+        return issueTokens(user, AuthRequestMetadata.empty(), null, null);
     }
 
     @Override
@@ -175,23 +203,50 @@ public class AuthService implements IAuthService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        String username = StringUtils.trimToNull(command.username());
+        String username = normalizeLoginIdentifier(command.username());
         String password = command.password();
+        AuthRequestMetadata metadata = command.metadata();
 
-        User user = userRepository.findByUsernameActive(username)
-                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_USER_NOT_FOUND));
-
-        user.requireCanLogin();
-
-        if (!user.hasPassword()) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_PASSWORD_LOGIN_NOT_AVAILABLE);
+        if (authThrottleService != null) {
+            try {
+                authThrottleService.assertLoginAllowed(username, metadata.ipAddress());
+            } catch (AuthRateLimitException exception) {
+                audit(null, "LOGIN_THROTTLED", "LOGIN", null, metadata, null);
+                throw exception;
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable during pre-check", exception);
+            }
         }
 
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD);
+        User user = userRepository.findByUsernameActive(username).orElse(null);
+        if (user == null) {
+            // Keep password verification timing comparable for an unknown account.
+            passwordEncoder.matches(password, "$2a$10$7EqJtq98hPqEX7fNZaFWoO5L0w8F3e5l7WfZMQIFwHixh0yNfEDYa");
+            recordLoginFailure(username, metadata);
+            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        return issueTokens(user);
+        if (!user.hasPassword() || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            recordLoginFailure(username, metadata);
+            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+
+        try {
+            user.requireCanLogin();
+        } catch (DomainException exception) {
+            recordLoginFailure(username, metadata);
+            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+
+        if (authThrottleService != null) {
+            try {
+                authThrottleService.clearLoginFailures(username);
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable while clearing failures", exception);
+            }
+        }
+        audit(user, "LOGIN_SUCCEEDED", "USER", user.getId().toString(), metadata, null);
+        return issueTokens(user, metadata, null, null);
     }
 
     @Override
@@ -202,21 +257,44 @@ public class AuthService implements IAuthService {
         }
 
         String rawRefreshToken = StringUtils.trimToNull(command.refreshToken());
-        RefreshToken currentRefreshToken = refreshTokenRepository.findByToken(rawRefreshToken)
+        String tokenHash = hashRefreshToken(rawRefreshToken);
+        RefreshToken preview = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN));
 
+        // Lock the user first so logout-all/password reset cannot miss a newly rotated session.
+        User user = loadUserForRefreshWithLock(preview.getUserId());
+        RefreshToken currentRefreshToken = refreshTokenRepository.findByTokenHashForUpdate(tokenHash)
+                .orElse(preview);
+        Instant now = Instant.now();
+
         if (currentRefreshToken.isRevoked()) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+            if (currentRefreshToken.getRevokeReason() == RefreshTokenRevokeReason.ROTATED) {
+                refreshTokenRepository.revokeFamily(
+                        currentRefreshToken.getFamilyId(), now, RefreshTokenRevokeReason.FAMILY_COMPROMISED
+                );
+                audit(user, "REFRESH_TOKEN_REUSE_DETECTED", "REFRESH_TOKEN_FAMILY",
+                        currentRefreshToken.getFamilyId().toString(), command.metadata(), null);
+                throw new ApplicationException(ApplicationErrorCode.AUTH_REFRESH_REUSE_DETECTED);
+            }
+            throw new ApplicationException(ApplicationErrorCode.AUTH_SESSION_REVOKED);
         }
 
-        if (currentRefreshToken.isExpiredAt(Instant.now())) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
+        if (currentRefreshToken.isExpiredAt(now)) {
+            currentRefreshToken.revoke(now, RefreshTokenRevokeReason.SESSION_REVOKED);
+            refreshTokenRepository.save(currentRefreshToken);
+            throw new ApplicationException(ApplicationErrorCode.AUTH_SESSION_EXPIRED);
         }
 
-        User user = loadUserForRefresh(currentRefreshToken.getUserId());
-        currentRefreshToken.revoke();
+        String nextRawRefreshToken = generateSecureTokenValue();
+        RefreshToken nextRefreshToken = createRefreshToken(
+                user.getId(), nextRawRefreshToken, currentRefreshToken.getFamilyId(), currentRefreshToken.getId(), command.metadata()
+        );
+        currentRefreshToken.rotateTo(nextRefreshToken.getId(), now);
+        currentRefreshToken.markUsed(now);
         refreshTokenRepository.save(currentRefreshToken);
-        return issueTokens(user);
+        refreshTokenRepository.save(nextRefreshToken);
+        audit(user, "REFRESH_TOKEN_ROTATED", "REFRESH_TOKEN", nextRefreshToken.getId().toString(), command.metadata(), null);
+        return toLoginResult(user, nextRefreshToken, nextRawRefreshToken);
     }
 
     @Override
@@ -227,12 +305,20 @@ public class AuthService implements IAuthService {
         }
 
         String rawRefreshToken = StringUtils.trimToNull(command.refreshToken());
-        refreshTokenRepository.findByToken(rawRefreshToken).ifPresent(refreshToken -> {
-            if (!refreshToken.isRevoked()) {
-                refreshToken.revoke();
-                refreshTokenRepository.save(refreshToken);
-            }
-        });
+        String tokenHash = hashRefreshToken(rawRefreshToken);
+        RefreshToken preview = refreshTokenRepository.findByTokenHash(tokenHash).orElse(null);
+        if (preview == null) {
+            return;
+        }
+        User user = userRepository.findByIdIncludingDeletedForUpdate(preview.getUserId())
+                .or(() -> userRepository.findByIdIncludingDeleted(preview.getUserId()))
+                .orElse(null);
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHashForUpdate(tokenHash).orElse(preview);
+        if (refreshToken != null && !refreshToken.isRevoked()) {
+            refreshToken.revoke(Instant.now(), RefreshTokenRevokeReason.LOGOUT);
+            refreshTokenRepository.save(refreshToken);
+            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN", refreshToken.getId().toString(), command.metadata(), null);
+        }
     }
 
     @Override
@@ -243,6 +329,11 @@ public class AuthService implements IAuthService {
         }
 
         String email = StringUtils.trimToNull(command.email());
+        AuthRequestMetadata metadata = command.metadata();
+        if (authThrottleService != null) {
+            authThrottleService.assertPasswordResetAllowed(email, metadata.ipAddress());
+            authThrottleService.recordPasswordResetRequest(email, metadata.ipAddress());
+        }
 
         userRepository.findByEmailIncludingDeleted(email).ifPresent(user -> {
             try {
@@ -252,6 +343,7 @@ public class AuthService implements IAuthService {
                 // Không throw ra FE để tránh lộ tài khoản bị khóa/ban/xóa
             }
         });
+        audit(null, "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET", null, metadata, java.util.Map.of("email", "redacted"));
     }
 
     @Override
@@ -273,7 +365,8 @@ public class AuthService implements IAuthService {
         }
 
         String rawResetToken = StringUtils.trimToNull(command.resetToken());
-        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHash(hashToken(rawResetToken))
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHashForUpdate(hashPasswordResetToken(rawResetToken))
+                .or(() -> passwordResetTokenRepository.findByTokenHash(hashPasswordResetToken(rawResetToken)))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN));
 
         if (passwordResetToken.isUsed()) {
@@ -285,29 +378,85 @@ public class AuthService implements IAuthService {
             throw new ApplicationException(ApplicationErrorCode.AUTH_PASSWORD_RESET_TOKEN_EXPIRED);
         }
 
-        User user = loadUserForPasswordReset(passwordResetToken.getUserId());
+        User user = loadUserForPasswordResetWithLock(passwordResetToken.getUserId());
         passwordResetToken.markUsed(now);
         passwordResetTokenRepository.save(passwordResetToken);
         user.updatePasswordHash(passwordEncoder.encode(command.newPassword()));
         userRepository.save(user);
-        refreshTokenRepository.revokeAllByUserId(user.getId());
+        refreshTokenRepository.revokeAllByUserId(user.getId(), now, RefreshTokenRevokeReason.PASSWORD_RESET);
+        audit(user, "PASSWORD_RESET_COMPLETED", "USER", user.getId().toString(), AuthRequestMetadata.empty(), null);
     }
 
-    private LoginResult issueTokens(User user) {
-        String accessToken = jwtService.generateAccessToken(user);
-        RefreshToken refreshToken = createRefreshToken(user.getId());
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void logoutAll(UUID userId) {
+        User user = loadUserForRefreshWithLock(userId);
+        Instant now = Instant.now();
+        refreshTokenRepository.revokeAllByUserId(user.getId(), now, RefreshTokenRevokeReason.LOGOUT_ALL);
+        audit(user, "ALL_SESSIONS_REVOKED", "USER", user.getId().toString(), AuthRequestMetadata.empty(), null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<SessionResult> getSessions(UUID userId, UUID currentSessionId) {
+        return refreshTokenRepository.findActiveByUserId(userId).stream()
+                .map(token -> new SessionResult(
+                        token.getId(),
+                        token.getDeviceName(),
+                        token.getDeviceId(),
+                        token.getUserAgent(),
+                        maskIp(token.getIpAddress()),
+                        token.getCreatedAt(),
+                        token.getLastUsedAt(),
+                        token.getExpiresAt(),
+                        token.getId().equals(currentSessionId)
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void revokeSession(UUID userId, UUID sessionId, UUID currentSessionId) {
+        User user = loadUserForRefreshWithLock(userId);
+        RefreshToken token = refreshTokenRepository.findByIdForUpdate(sessionId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_SESSION_REVOKED));
+        if (!token.getUserId().equals(user.getId())) {
+            throw new ApplicationException(ApplicationErrorCode.AUTH_SESSION_REVOKED);
+        }
+        if (token.getRevokeReason() == RefreshTokenRevokeReason.ROTATED) {
+            refreshTokenRepository.revokeFamily(token.getFamilyId(), Instant.now(), RefreshTokenRevokeReason.SESSION_REVOKED);
+            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN_FAMILY", token.getFamilyId().toString(), AuthRequestMetadata.empty(), null);
+            return;
+        }
+        if (!token.isRevoked()) {
+            token.revoke(Instant.now(), RefreshTokenRevokeReason.SESSION_REVOKED);
+            refreshTokenRepository.save(token);
+            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN", token.getId().toString(), AuthRequestMetadata.empty(),
+                    java.util.Map.of("currentSession", token.getId().equals(currentSessionId)));
+        }
+    }
+
+    private LoginResult issueTokens(User user, AuthRequestMetadata metadata, UUID familyId, UUID parentTokenId) {
+        String rawRefreshToken = generateSecureTokenValue();
+        RefreshToken refreshToken = createRefreshToken(user.getId(), rawRefreshToken, familyId, parentTokenId, metadata);
         refreshTokenRepository.save(refreshToken);
+        return toLoginResult(user, refreshToken, rawRefreshToken);
+    }
+
+    private LoginResult toLoginResult(User user, RefreshToken refreshToken, String rawRefreshToken) {
+        String accessToken = jwtService.generateAccessToken(user, refreshToken.getId());
         return new LoginResult(
                 user.getId(),
                 user.getStatus(),
                 toRoleNames(user.getRoles()),
                 accessToken,
-                refreshToken.getToken()
+                rawRefreshToken
         );
     }
 
-    private User loadUserForRefresh(UUID userId) {
-        User user = userRepository.findByIdIncludingDeleted(userId)
+    private User loadUserForRefreshWithLock(UUID userId) {
+        User user = userRepository.findByIdIncludingDeletedForUpdate(userId)
+                .or(() -> userRepository.findByIdIncludingDeleted(userId))
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN));
         try {
             user.requireCanLogin();
@@ -317,8 +466,8 @@ public class AuthService implements IAuthService {
         return user;
     }
 
-    private User loadUserForPasswordReset(UUID userId) {
-        User user = userRepository.findByIdIncludingDeleted(userId)
+    private User loadUserForPasswordResetWithLock(UUID userId) {
+        User user = userRepository.findByIdIncludingDeletedForUpdate(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN));
         try {
             user.requireCanLogin();
@@ -328,12 +477,30 @@ public class AuthService implements IAuthService {
         return user;
     }
 
-    private RefreshToken createRefreshToken(UUID userId) {
+    private RefreshToken createRefreshToken(
+            UUID userId,
+            String rawRefreshToken,
+            UUID familyId,
+            UUID parentTokenId,
+            AuthRequestMetadata metadata
+    ) {
         Instant now = Instant.now();
+        UUID tokenId = UUID.randomUUID();
         return new RefreshToken(
-                UUID.randomUUID(),
+                tokenId,
                 userId,
-                generateSecureTokenValue(),
+                hashRefreshToken(rawRefreshToken),
+                familyId == null ? tokenId : familyId,
+                parentTokenId,
+                null,
+                metadata == null ? null : metadata.deviceId(),
+                metadata == null ? null : metadata.deviceName(),
+                metadata == null ? null : metadata.userAgent(),
+                metadata == null ? null : metadata.ipAddress(),
+                now,
+                now,
+                null,
+                null,
                 jwtService.calculateRefreshTokenExpiresAt(now),
                 false,
                 now
@@ -347,7 +514,7 @@ public class AuthService implements IAuthService {
         PasswordResetToken passwordResetToken = new PasswordResetToken(
                 UUID.randomUUID(),
                 userId,
-                hashToken(rawToken),
+                hashPasswordResetToken(rawToken),
                 now.plusSeconds(PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES * 60),
                 null,
                 now
@@ -406,7 +573,7 @@ public class AuthService implements IAuthService {
                 savedUser.getId(),
                 googleIdToken.familyName(),
                 googleIdToken.givenName(),
-                googleIdToken.pictureUrl(),
+                null,
                 null,
                 null,
                 now,
@@ -456,9 +623,17 @@ public class AuthService implements IAuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private String hashToken(String rawToken) {
+    private String hashRefreshToken(String rawToken) {
+        return hashToken(rawToken, ApplicationErrorCode.AUTH_INVALID_REFRESH_TOKEN, "refresh token");
+    }
+
+    private String hashPasswordResetToken(String rawToken) {
+        return hashToken(rawToken, ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN, "password reset token");
+    }
+
+    private String hashToken(String rawToken, ApplicationErrorCode errorCode, String tokenKind) {
         if (rawToken == null) {
-            throw new ApplicationException(ApplicationErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN);
+            throw new ApplicationException(errorCode);
         }
 
         try {
@@ -466,7 +641,69 @@ public class AuthService implements IAuthService {
             byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hashed);
         } catch (Exception exception) {
-            throw new IllegalStateException("Unable to hash password reset token", exception);
+            throw new IllegalStateException("Unable to hash " + tokenKind, exception);
+        }
+    }
+
+    private String normalizeLoginIdentifier(String value) {
+        String normalized = StringUtils.trimToNull(value);
+        return normalized == null ? "" : normalized.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private String maskIp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (value.contains(":")) {
+            int index = value.lastIndexOf(':');
+            return index <= 0 ? "***" : value.substring(0, index) + ":***";
+        }
+        int index = value.lastIndexOf('.');
+        return index <= 0 ? "***" : value.substring(0, index) + ".***";
+    }
+
+    private void recordLoginFailure(String normalizedIdentifier, AuthRequestMetadata metadata) {
+        if (authThrottleService != null) {
+            try {
+                authThrottleService.recordLoginFailure(
+                        normalizedIdentifier,
+                        metadata == null ? null : metadata.ipAddress()
+                );
+            } catch (RuntimeException exception) {
+                log.warn("Login rate limiter unavailable while recording a failed login", exception);
+            }
+        }
+        audit(null, "LOGIN_FAILED", "LOGIN", null, metadata, java.util.Map.of("identifier", "redacted"));
+    }
+
+    private void audit(
+            User user,
+            String action,
+            String targetType,
+            String targetId,
+            AuthRequestMetadata metadata,
+            Object details
+    ) {
+        if (auditLogService == null) {
+            return;
+        }
+        try {
+            auditLogService.record(new AuditLogCommand(
+                    user == null ? null : user.getId(),
+                    user == null ? null : user.getUsername(),
+                    user == null ? null : toRoleNames(user.getRoles()).stream().findFirst().orElse(null),
+                    action,
+                    targetType,
+                    targetId,
+                    action,
+                    null,
+                    details,
+                    metadata == null ? null : metadata.ipAddress(),
+                    metadata == null ? null : metadata.userAgent(),
+                    Instant.now()
+            ));
+        } catch (RuntimeException exception) {
+            log.warn("Authentication audit log unavailable for action {}", action, exception);
         }
     }
 

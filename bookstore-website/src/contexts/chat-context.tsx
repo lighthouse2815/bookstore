@@ -16,14 +16,18 @@ import {
   getMessages,
   getMyConversations,
   markConversationRead as markConversationReadRequest,
+  requestAiReply,
   sendMessage as sendMessageRequest,
 } from '@/services/chat-service'
 import {
   connectChatRealtime,
   disconnectChatRealtime,
 } from '@/services/chat-realtime-service'
+import { getAccessToken } from '@/services/api'
 import type {
   ChatMessageResponse,
+  AiChatReplyStatus,
+  ChatSupportMode,
   ConversationResponse,
   CreateConversationRequest,
   SendChatMessageRequest,
@@ -43,6 +47,7 @@ type MessagePageState = {
 type SendMessageOptions = {
   conversationId?: string | null
   createConversation?: CreateConversationRequest
+  responseMode?: ChatSupportMode
 }
 
 type ChatContextType = {
@@ -54,6 +59,8 @@ type ChatContextType = {
   isRealtimeConnected: boolean
   error: string | null
   lastIncomingMessage: ChatMessageResponse | null
+  isAiReplying: boolean
+  aiReplyStatus: AiChatReplyStatus | null
   refresh: () => Promise<void>
   createConversation: (
     data?: CreateConversationRequest,
@@ -75,7 +82,6 @@ type ChatContextType = {
   getMessagePageState: (conversationId: string | null) => MessagePageState
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const DEFAULT_MESSAGE_PAGE_SIZE = 30
 
 const defaultMessagePageState: MessagePageState = {
@@ -92,7 +98,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const { language } = useLanguage()
+  const { t } = useLanguage()
   const [conversations, setConversations] = useState<ConversationResponse[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     null,
@@ -108,6 +114,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [lastIncomingMessage, setLastIncomingMessage] =
     useState<ChatMessageResponse | null>(null)
+  const [isAiReplying, setIsAiReplying] = useState(false)
+  const [aiReplyStatus, setAiReplyStatus] = useState<AiChatReplyStatus | null>(
+    null,
+  )
   const conversationsRef = useRef<ConversationResponse[]>([])
   const activeConversationIdRef = useRef<string | null>(null)
 
@@ -148,6 +158,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     if (message.senderRole !== 'USER') {
       setLastIncomingMessage(message)
+    }
+
+    if (message.senderRole === 'SYSTEM') {
+      setIsAiReplying(false)
+      setAiReplyStatus('ANSWERED')
     }
   })
 
@@ -195,7 +210,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setError(getErrorMessage(currentError, getLoadErrorMessage(language)))
+        setError(
+          getErrorMessage(currentError, t('chat.errors.loadConversations')),
+        )
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -206,7 +223,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+      const accessToken = getAccessToken()
       if (!accessToken) {
         setIsRealtimeConnected(false)
         return
@@ -235,7 +252,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       disconnectChatRealtime()
       setIsRealtimeConnected(false)
     }
-  }, [canUseChat, handleRealtimeConversation, handleRealtimeMessage, isAuthLoading, language])
+  }, [canUseChat, isAuthLoading, t])
 
   useEffect(() => {
     if (!canUseChat || !activeConversationId) {
@@ -285,7 +302,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       )
       setError(null)
     } catch (currentError) {
-      setError(getErrorMessage(currentError, getLoadErrorMessage(language)))
+      setError(getErrorMessage(currentError, t('chat.errors.loadConversations')))
     } finally {
       setIsLoading(false)
     }
@@ -296,7 +313,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   ): Promise<ConversationResponse> {
     const nextConversation = await createConversationRequest({
       subject:
-        toNullableString(data.subject) ?? getDefaultConversationSubject(language),
+        toNullableString(data.subject) ?? t('chat.customer.defaultSubject'),
       priority: data.priority ?? 'NORMAL',
       targetType: data.targetType ?? 'GENERAL',
       targetId: data.targetId ?? null,
@@ -370,7 +387,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           isLoadingMore: false,
         },
       }))
-      throw new Error(getErrorMessage(currentError, getLoadMessagesError(language)))
+      throw new Error(getErrorMessage(currentError, t('chat.errors.loadMessages')))
     }
   }
 
@@ -413,7 +430,47 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       ]),
     )
     setActiveConversationId(currentConversation.conversationId)
+    setAiReplyStatus(null)
     setError(null)
+
+    if (
+      options.responseMode === 'AI' &&
+      (payload.messageType ?? 'TEXT') === 'TEXT'
+    ) {
+      setIsAiReplying(true)
+
+      try {
+        const aiReply = await requestAiReply(currentConversation.conversationId)
+        setAiReplyStatus(aiReply.status)
+
+        if (aiReply.message) {
+          setMessagesByConversation((currentMessagesByConversation) => ({
+            ...currentMessagesByConversation,
+            [currentConversation.conversationId]: mergeMessages(
+              currentMessagesByConversation[currentConversation.conversationId] ??
+                [],
+              [aiReply.message!],
+            ),
+          }))
+          setConversations((currentConversations) =>
+            mergeConversations(currentConversations, [
+              {
+                ...currentConversation,
+                lastMessageId: aiReply.message!.messageId,
+                lastMessagePreview: aiReply.message!.content,
+                lastMessageAt: aiReply.message!.createdAt,
+                updatedAt: aiReply.message!.updatedAt,
+              },
+            ]),
+          )
+        }
+      } catch {
+        setAiReplyStatus('UNAVAILABLE')
+      } finally {
+        setIsAiReplying(false)
+      }
+    }
+
     return currentConversation
   }
 
@@ -464,6 +521,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessagesByConversation({})
     setMessagePages({})
     setLastIncomingMessage(null)
+    setIsAiReplying(false)
+    setAiReplyStatus(null)
     setIsLoading(false)
     setError(null)
     setIsRealtimeConnected(false)
@@ -479,6 +538,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isRealtimeConnected,
       error,
       lastIncomingMessage,
+      isAiReplying,
+      aiReplyStatus,
       refresh,
       createConversation,
       setActiveConversation: setActiveConversationId,
@@ -497,6 +558,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isLoading,
       isRealtimeConnected,
       lastIncomingMessage,
+      isAiReplying,
+      aiReplyStatus,
       unreadCount,
     ],
   )
@@ -590,22 +653,6 @@ function resolveNextActiveConversationId(
   }
 
   return nextConversations[0]?.conversationId ?? null
-}
-
-function getLoadErrorMessage(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong tai duoc cuoc tro chuyen ho tro'
-    : 'Unable to load support conversations'
-}
-
-function getLoadMessagesError(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong tai duoc lich su tin nhan'
-    : 'Unable to load chat history'
-}
-
-function getDefaultConversationSubject(language: 'en' | 'vi') {
-  return language === 'vi' ? 'Ho tro khach hang' : 'Customer support'
 }
 
 function toNullableString(value?: string | null) {

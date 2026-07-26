@@ -1,27 +1,112 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  ArrowUpRight,
   BookMarked,
+  BookOpen,
+  Brain,
+  Briefcase,
+  Cpu,
+  GraduationCap,
+  Landmark,
+  Palette,
+  Rocket,
   Sparkles,
   Truck,
   Wallet,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { BookCard } from '@/components/book/book-card'
+import {
+  StatePanel,
+  primaryLinkButtonClassName,
+  secondaryLinkButtonClassName,
+} from '@/components/common/page-shell'
+import { FunDiscoverySection } from '@/components/home/fun-discovery-section'
+import { PersonalizedRecommendations } from '@/components/home/personalized-recommendations'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
 import { useBookCatalog } from '@/hooks/use-book-catalog'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 import { getCategoryLabel } from '@/utils/i18n'
 
-export function HomePage (){
-  const { t } = useLanguage()
-  const { books, categories, isLoading, error } = useBookCatalog()
-  const hero = books[0]
-  const highlightedBooks = books.filter((book) => book.id !== hero?.id).slice(0, 2)
+const CATEGORY_PREVIEW_LIMIT = 8
+
+type CatalogStateCardProps = {
+  title: string
+  description: string
+  detail?: string | null
+  className?: string
+}
+
+function CatalogStateCard({
+  title,
+  description,
+  detail,
+  className = '',
+}: CatalogStateCardProps) {
+  return (
+    <StatePanel
+      title={title}
+      description={description}
+      detail={detail}
+      minHeightClassName="min-h-[220px]"
+      className={className}
+    />
+  )
+}
+
+function getCategoryIcon(categoryCode: string): LucideIcon {
+  return {
+    SCIENCE_FICTION: Rocket,
+    EDUCATION: GraduationCap,
+    SCIENCE_TECHNOLOGY: Cpu,
+    BUSINESS_MANAGEMENT: Briefcase,
+    PERSONAL_DEVELOPMENT: Brain,
+    HISTORY_MEMOIR: Landmark,
+    ART_CREATIVITY: Palette,
+    FANTASY: Sparkles,
+  }[categoryCode] ?? BookOpen
+}
+
+export default function HomePage() {
+  const { t, language, formatNumber } = useLanguage()
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
+  const { books, categories, isLoading, bookError, categoryError } =
+    useBookCatalog()
+  const hasBookError = Boolean(bookError)
+  const hasCategoryError = Boolean(categoryError)
+  const heroBooks = books.slice(0, 4)
   const featured = books.slice(0, 4)
+  const featuredCategories = categories.slice(0, CATEGORY_PREVIEW_LIMIT)
   const bestsellers =
     books.length > 4 ? books.slice(4, 8) : books.slice(0, Math.min(4, books.length))
+  const totalSoldCount = books.reduce((sum, book) => sum + book.soldCount, 0)
+  const totalReviewCount = books.reduce((sum, book) => sum + (book.reviews ?? 0), 0)
+  const weightedRatingTotal = books.reduce(
+    (sum, book) => sum + (book.rating ?? 0) * (book.reviews ?? 0),
+    0,
+  )
+  const averageRating =
+    totalReviewCount > 0 ? weightedRatingTotal / totalReviewCount : 0
+  const heroStats = [
+    {
+      value: isLoading ? '...' : hasBookError ? '--' : formatNumber(books.length),
+      label: t('home.stats.books'),
+    },
+    {
+      value: isLoading ? '...' : hasBookError ? '--' : formatNumber(totalSoldCount),
+      label: t('home.stats.sales'),
+    },
+    {
+      value: isLoading ? '...' : hasBookError ? '--' : `${averageRating.toFixed(1)}/5`,
+      label: t('home.stats.reviewsCount', {
+        count: formatNumber(totalReviewCount),
+      }),
+    },
+  ]
 
   const valueProps = [
     {
@@ -40,41 +125,6 @@ export function HomePage (){
       description: t('home.values.authenticDesc'),
     },
   ]
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('common.loading')}
-            </p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-dashed border-border px-8 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              {t('book.listing.errorTitle')}
-            </p>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              {error}
-            </p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -99,68 +149,58 @@ export function HomePage (){
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   to="/books"
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                  className={primaryLinkButtonClassName}
                 >
                   {t('home.shopNow')}
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
                   to="/books?category=__life-skills__"
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+                  className={secondaryLinkButtonClassName}
                 >
                   {t('home.lifeSkillsBooks')}
                 </Link>
               </div>
               <div className="flex flex-wrap gap-6 pt-2">
-                <div>
-                  <p className="font-heading text-2xl font-bold">10K+</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.books')}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-heading text-2xl font-bold">50K+</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.customers')}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-heading text-2xl font-bold">4.9/5</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('home.stats.reviews')}
-                  </p>
-                </div>
+                {heroStats.map((item) => (
+                  <div key={item.label}>
+                    <p className="font-heading text-2xl font-bold">{item.value}</p>
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-md">
-              {hero ? (
+            <div className="relative mx-auto w-full max-w-lg">
+              {isLoading ? (
+                <CatalogStateCard
+                  title={t('home.catalogLoadingTitle')}
+                  description={t('home.catalogLoadingDescription')}
+                  className="px-6 py-12 shadow-sm"
+                />
+              ) : hasBookError ? (
+                <CatalogStateCard
+                  title={t('home.catalogBooksErrorTitle')}
+                  description={t('home.catalogBooksErrorDescription')}
+                  detail={bookError}
+                  className="px-6 py-12 shadow-sm"
+                />
+              ) : heroBooks.length > 0 ? (
                 <>
                   <div className="absolute -right-4 -top-4 hidden size-24 rounded-full bg-accent/20 lg:block" />
                   <div className="absolute -bottom-6 -left-6 hidden size-32 rounded-full bg-primary/10 lg:block" />
                   <div className="relative grid grid-cols-2 gap-4">
-                    <Link
-                      to={`/books/${hero.id}`}
-                      className="col-span-1 row-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
-                    >
-                      <div className="relative aspect-[3/4]">
-                        <img
-                          src={getBookCoverUrl(hero.cover)}
-                          alt={hero.title}
-                          className="absolute inset-0 size-full object-cover"
-                        />
-                      </div>
-                    </Link>
-                    {highlightedBooks.map((book) => (
+                    {heroBooks.map((book) => (
                       <Link
                         key={book.id}
                         to={`/books/${book.id}`}
-                        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                        className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
                       >
-                        <div className="relative aspect-[3/4]">
+                        <div className="relative aspect-[4/5]">
                           <img
                             src={getBookCoverUrl(book.cover)}
                             alt={book.title}
+                            onError={(event) => setBookCoverFallback(event.currentTarget)}
                             className="absolute inset-0 size-full object-cover"
                           />
                         </div>
@@ -169,14 +209,11 @@ export function HomePage (){
                   </div>
                 </>
               ) : (
-                <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center shadow-sm">
-                  <p className="font-heading text-lg font-semibold">
-                    {t('home.emptyTitle')}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('home.emptyDescription')}
-                  </p>
-                </div>
+                <CatalogStateCard
+                  title={t('home.emptyTitle')}
+                  description={t('home.emptyDescription')}
+                  className="px-6 py-12 shadow-sm"
+                />
               )}
             </div>
           </div>
@@ -200,33 +237,84 @@ export function HomePage (){
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight">
-            {t('home.categoriesTitle')}
-          </h2>
-          {categories.length > 0 ? (
-            <div className="flex flex-wrap gap-3">
-              {categories.map((category) => (
-                <Link
-                  key={category}
-                  to={`/books?category=${encodeURIComponent(category)}`}
-                  className="rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  {getCategoryLabel(category, t)}
-                </Link>
-              ))}
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-muted/30 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10 dark:shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+            <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-xl">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <BookOpen className="size-4 text-primary" strokeWidth={1.8} />
+                  <span>
+                    {isLoading
+                      ? t('home.catalogLoadingTitle')
+                      : hasCategoryError
+                        ? t('home.catalogCategoriesErrorTitle')
+                        : t('home.categoriesCount', { count: categories.length })}
+                  </span>
+                </div>
+                <h2 className="font-heading text-3xl font-bold tracking-[-0.03em] text-balance sm:text-4xl">
+                  {t('home.categoriesTitle')}
+                </h2>
+              </div>
+              <Link
+                to="/books"
+                className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-border/70 bg-background px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-0"
+              >
+                {t('home.allCategories')}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
-              <p className="font-heading text-lg font-semibold">
-                {t('home.emptyTitle')}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('home.emptyDescription')}
-              </p>
-            </div>
-          )}
+
+            {isLoading ? (
+              <CatalogStateCard
+                title={t('home.catalogLoadingTitle')}
+                description={t('home.catalogLoadingDescription')}
+              />
+            ) : hasCategoryError ? (
+              <CatalogStateCard
+                title={t('home.catalogCategoriesErrorTitle')}
+                description={t('home.catalogCategoriesErrorDescription')}
+                detail={categoryError}
+              />
+            ) : categories.length > 0 ? (
+              <div className="grid gap-px overflow-hidden rounded-[1.5rem] border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
+                {featuredCategories.map((category) => {
+                  const CategoryIcon = getCategoryIcon(category.code)
+
+                  return (
+                    <Link
+                      key={category.id}
+                      to={`/books?category=${encodeURIComponent(category.code)}`}
+                      className="group flex min-h-32 flex-col justify-between gap-6 bg-card p-5 transition-all duration-300 hover:bg-primary/5 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60 active:bg-primary/10"
+                    >
+                      <span className="flex items-start justify-between gap-4">
+                        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground">
+                          <CategoryIcon className="size-5" strokeWidth={1.8} />
+                        </span>
+                        <span className="flex size-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+                          <ArrowUpRight className="size-4" />
+                        </span>
+                      </span>
+                      <span className="max-w-[15rem] text-base font-semibold leading-snug text-foreground text-pretty transition-colors group-hover:text-primary">
+                        {getCategoryLabel(category, language)}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <CatalogStateCard
+                title={t('home.emptyTitle')}
+                description={t('home.emptyDescription')}
+              />
+            )}
+          </div>
         </section>
+
+        <FunDiscoverySection />
+
+        <PersonalizedRecommendations
+          enabled={isAuthenticated && !isAuthLoading}
+        />
 
         <section className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mb-6 flex items-end justify-between">
@@ -242,16 +330,29 @@ export function HomePage (){
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {featured.length > 0 ? (
+            {isLoading ? (
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.catalogLoadingTitle')}
+                  description={t('home.catalogLoadingDescription')}
+                />
+              </div>
+            ) : hasBookError ? (
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.catalogBooksErrorTitle')}
+                  description={t('home.catalogBooksErrorDescription')}
+                  detail={bookError}
+                />
+              </div>
+            ) : featured.length > 0 ? (
               featured.map((book) => <BookCard key={book.id} book={book} />)
             ) : (
-              <div className="col-span-full rounded-2xl border border-dashed border-border px-6 py-10 text-center">
-                <p className="font-heading text-lg font-semibold">
-                  {t('home.emptyTitle')}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t('home.emptyDescription')}
-                </p>
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.emptyTitle')}
+                  description={t('home.emptyDescription')}
+                />
               </div>
             )}
           </div>
@@ -290,16 +391,29 @@ export function HomePage (){
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {bestsellers.length > 0 ? (
+            {isLoading ? (
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.catalogLoadingTitle')}
+                  description={t('home.catalogLoadingDescription')}
+                />
+              </div>
+            ) : hasBookError ? (
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.catalogBooksErrorTitle')}
+                  description={t('home.catalogBooksErrorDescription')}
+                  detail={bookError}
+                />
+              </div>
+            ) : bestsellers.length > 0 ? (
               bestsellers.map((book) => <BookCard key={book.id} book={book} />)
             ) : (
-              <div className="col-span-full rounded-2xl border border-dashed border-border px-6 py-10 text-center">
-                <p className="font-heading text-lg font-semibold">
-                  {t('home.emptyTitle')}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t('home.emptyDescription')}
-                </p>
+              <div className="col-span-full">
+                <CatalogStateCard
+                  title={t('home.emptyTitle')}
+                  description={t('home.emptyDescription')}
+                />
               </div>
             )}
           </div>

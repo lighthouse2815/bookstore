@@ -6,17 +6,26 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
+import com.bookstore.bookstore.application.port.out.IFileStorage;
+import com.bookstore.bookstore.application.port.out.IFileStorageSettings;
 import com.bookstore.bookstore.application.port.out.IReadingProgressRepository;
 import com.bookstore.bookstore.application.port.out.IUserDigitalAccessRepository;
 import com.bookstore.bookstore.application.result.DigitalLibraryAssetResult;
+import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.application.result.SignedUrlResult;
 import com.bookstore.bookstore.domain.enums.DigitalAccessStatus;
 import com.bookstore.bookstore.domain.enums.DigitalAccessType;
+import com.bookstore.bookstore.domain.enums.FilePurpose;
+import com.bookstore.bookstore.domain.enums.FileStatus;
+import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.DigitalAsset;
+import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.ReadingProgress;
 import com.bookstore.bookstore.domain.model.UserDigitalAccess;
 import com.bookstore.bookstore.shared.util.StringUtils;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +44,8 @@ public class DigitalLibraryService implements IDigitalLibraryService {
     private final IDigitalAssetRepository digitalAssetRepository;
     private final IReadingProgressRepository readingProgressRepository;
     private final IBookRepository bookRepository;
+    private final IFileStorage fileStorage;
+    private final IFileStorageSettings fileStorageSettings;
 
     @Override
     @Transactional(readOnly = true)
@@ -46,6 +57,32 @@ public class DigitalLibraryService implements IDigitalLibraryService {
         List<UserDigitalAccess> activeAccesses = userDigitalAccessRepository.findAllByUserIdActive(userId).stream()
                 .filter(this::isAccessibleAccess)
                 .toList();
+        return toLibraryResults(userId, activeAccesses);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<DigitalLibraryAssetResult> getMyLibrary(UUID userId, int page, int size) {
+        if (userId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
+        }
+
+        validatePageRequest(page, size);
+        PageSliceResult<UserDigitalAccess> accessPage = userDigitalAccessRepository.findAccessiblePageByUserId(
+                userId,
+                Instant.now(),
+                page,
+                size
+        );
+        return new PageSliceResult<>(
+                toLibraryResults(userId, accessPage.items()),
+                accessPage.totalCount(),
+                accessPage.page(),
+                accessPage.size()
+        );
+    }
+
+    private List<DigitalLibraryAssetResult> toLibraryResults(UUID userId, List<UserDigitalAccess> activeAccesses) {
         if (activeAccesses.isEmpty()) {
             return List.of();
         }
@@ -101,6 +138,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
 
         UserDigitalAccess access = loadAccessibleAccess(userId, digitalAssetId);
         DigitalAsset digitalAsset = digitalAssetRepository.findByIdActive(digitalAssetId)
+                .filter(DigitalAsset::isPublished)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND));
         Book book = bookRepository.findByIdActive(digitalAsset.getBookId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.BOOK_NOT_FOUND));
@@ -108,6 +146,66 @@ public class DigitalLibraryService implements IDigitalLibraryService {
                 .orElse(null);
 
         return new DigitalLibraryAssetResult(access, digitalAsset, book, progress);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SignedUrlResult getPublishedSampleUrl(UUID bookId, UUID digitalAssetId) {
+        if (bookId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "bookId");
+        }
+        if (digitalAssetId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "digitalAssetId");
+        }
+
+        DigitalAsset asset = digitalAssetRepository.findByIdActive(digitalAssetId)
+                .filter(currentAsset -> currentAsset.getBookId().equals(bookId))
+                .filter(DigitalAsset::isPublished)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.DIGITAL_ASSET_NOT_FOUND));
+
+        requireStorageConfigured();
+        FileAsset sampleFileAsset = requirePrivateFileAsset(asset.getSampleFileAsset(), FilePurpose.SAMPLE_FILE);
+        return fileStorage.createPresignedDownloadUrl(
+                resolveBucket(sampleFileAsset),
+                sampleFileAsset.getStorageKey(),
+                sampleFileAsset.getOriginalName(),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
+                false
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SignedUrlResult getMyReadUrl(UUID userId, UUID digitalAssetId) {
+        DigitalAsset asset = getMyAsset(userId, digitalAssetId).asset();
+        requireStorageConfigured();
+        FileAsset fileAsset = requirePrivateFileAsset(asset.getFileAsset(), FilePurpose.EBOOK_FILE);
+        return fileStorage.createPresignedDownloadUrl(
+                resolveBucket(fileAsset),
+                fileAsset.getStorageKey(),
+                fileAsset.getOriginalName(),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
+                false
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SignedUrlResult getMyDownloadUrl(UUID userId, UUID digitalAssetId) {
+        DigitalLibraryAssetResult result = getMyAsset(userId, digitalAssetId);
+        if (!result.asset().isDownloadAllowed()) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_DOWNLOAD_NOT_ALLOWED);
+        }
+
+        requireStorageConfigured();
+        FileAsset fileAsset = requirePrivateFileAsset(result.asset().getFileAsset(), FilePurpose.EBOOK_FILE);
+        return fileStorage.createPresignedDownloadUrl(
+                resolveBucket(fileAsset),
+                fileAsset.getStorageKey(),
+                fileAsset.getOriginalName(),
+                Duration.ofMinutes(fileStorageSettings.resolvedPresignDownloadExpireMinutes()),
+                true
+        );
     }
 
     @Override
@@ -152,27 +250,31 @@ public class DigitalLibraryService implements IDigitalLibraryService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "order");
         }
 
-        List<UUID> bookIds = order.getItems().stream()
-                .map(item -> item.getBookId())
+        List<UUID> digitalAssetIds = order.getItems().stream()
+                .filter(item -> item.getItemType() == com.bookstore.bookstore.domain.enums.PurchaseItemType.DIGITAL_ASSET)
+                .map(item -> item.getDigitalAssetId())
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .toList();
-        if (bookIds.isEmpty()) {
+        if (digitalAssetIds.isEmpty()) {
             return;
         }
 
-        List<DigitalAsset> digitalAssets = digitalAssetRepository.findAllByBookIdsActive(bookIds);
+        List<DigitalAsset> digitalAssets = digitalAssetRepository.findAllByIdsActive(digitalAssetIds).stream()
+                .filter(DigitalAsset::isPublished)
+                .filter(DigitalAsset::isPurchaseAllowed)
+                .toList();
         if (digitalAssets.isEmpty()) {
             return;
         }
 
         Instant now = Instant.now();
         for (DigitalAsset digitalAsset : digitalAssets) {
-            UserDigitalAccess currentAccess = userDigitalAccessRepository
-                    .findAllByUserIdAndDigitalAssetIdActive(order.getUserId(), digitalAsset.getId())
-                    .stream()
-                    .filter(access -> access.getAccessType() == DigitalAccessType.PURCHASED)
-                    .findFirst()
-                    .orElse(null);
+            UserDigitalAccess currentAccess = userDigitalAccessRepository.findLatestByUserIdAndDigitalAssetIdAndAccessType(
+                    order.getUserId(),
+                    digitalAsset.getId(),
+                    DigitalAccessType.PURCHASED
+            ).orElse(null);
 
             if (currentAccess == null) {
                 userDigitalAccessRepository.save(new UserDigitalAccess(
@@ -239,7 +341,7 @@ public class DigitalLibraryService implements IDigitalLibraryService {
             Map<UUID, Book> booksById,
             Map<UUID, ReadingProgress> progressByAssetId
     ) {
-        if (digitalAsset == null) {
+        if (digitalAsset == null || !digitalAsset.isPublished()) {
             return null;
         }
         Book book = booksById.get(digitalAsset.getBookId());
@@ -252,5 +354,47 @@ public class DigitalLibraryService implements IDigitalLibraryService {
                 book,
                 progressByAssetId.get(digitalAsset.getId())
         );
+    }
+
+    private void requireStorageConfigured() {
+        if (!fileStorageSettings.isConfigured()) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_STORAGE_NOT_CONFIGURED);
+        }
+    }
+
+    private FileAsset requirePrivateFileAsset(FileAsset fileAsset, FilePurpose purpose) {
+        if (fileAsset == null) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_NOT_FOUND);
+        }
+        if (fileAsset.getStatus() == FileStatus.PENDING) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_UPLOAD_NOT_COMPLETED);
+        }
+        if (!fileAsset.isActive()) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_NOT_FOUND);
+        }
+        if (fileAsset.getVisibility() != FileVisibility.PRIVATE) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_INVALID_VISIBILITY);
+        }
+        if (fileAsset.getPurpose() != purpose) {
+            throw new ApplicationException(ApplicationErrorCode.FILE_ASSET_INVALID_PURPOSE);
+        }
+        return fileAsset;
+    }
+
+    private String resolveBucket(FileAsset fileAsset) {
+        if (fileAsset.getBucket() != null && !fileAsset.getBucket().isBlank()) {
+            return fileAsset.getBucket();
+        }
+        return fileStorageSettings.bucket();
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
     }
 }

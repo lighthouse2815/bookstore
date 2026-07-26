@@ -1,14 +1,17 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Publisher;
 import com.bookstore.bookstore.infrastructure.persistence.entity.PublisherJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.PublisherPersistenceMapper;
+import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
 import com.bookstore.bookstore.infrastructure.persistence.repository.PublisherJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Repository;
 public class PublisherRepositoryAdapter implements IPublisherRepository {
 
     private final PublisherJpaRepository publisherJpaRepository;
+    private final FileAssetJpaRepository fileAssetJpaRepository;
     private final PublisherPersistenceMapper publisherPersistenceMapper;
 
     @Override
@@ -23,6 +27,17 @@ public class PublisherRepositoryAdapter implements IPublisherRepository {
         return publisherJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(publisherPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Publisher> findPageActive(int page, int size) {
+        var resultPage = publisherJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream().map(publisherPersistenceMapper::toDomain).toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
@@ -64,7 +79,10 @@ public class PublisherRepositoryAdapter implements IPublisherRepository {
     public Publisher save(Publisher publisher) {
         PublisherJpaEntity entity = publisherJpaRepository.findById(publisher.getId())
                 .orElseGet(PublisherJpaEntity::new);
-        publisherPersistenceMapper.copyToEntity(entity, publisher);
+        var logoFileAsset = publisher.getLogoFileAssetId() == null
+                ? null
+                : fileAssetJpaRepository.getReferenceById(publisher.getLogoFileAssetId());
+        publisherPersistenceMapper.copyToEntity(entity, publisher, logoFileAsset);
         return publisherPersistenceMapper.toDomain(publisherJpaRepository.save(entity));
     }
 

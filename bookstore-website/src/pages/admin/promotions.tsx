@@ -19,6 +19,7 @@ import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import { PaginationControls } from '@/components/common/pagination-controls'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,9 @@ export default function AdminPromotionsPage() {
     formatDate,
     formatNumber,
     promotions,
+    page,
+    pageSize,
+    totalCount,
     filteredPromotions,
     searchTerm,
     isLoading,
@@ -56,6 +60,7 @@ export default function AdminPromotionsPage() {
     labels,
     isDialogLocked,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -137,10 +142,8 @@ export default function AdminPromotionsPage() {
                   className="rounded-2xl border-primary/20 bg-primary/12 px-4 py-1.5 text-sm font-semibold text-primary"
                 >
                   <TicketPercent className="mr-2 h-4 w-4" />
-                  {interpolateLabel(t('admin.promotionsPage.totalPromotions', {
-                    count: formatNumber(promotions.length),
-                  }), {
-                    count: formatNumber(promotions.length),
+                  {t('admin.promotionsPage.totalPromotions', {
+                    count: formatNumber(totalCount),
                   })}
                 </Badge>
               </div>
@@ -161,9 +164,9 @@ export default function AdminPromotionsPage() {
 
           <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-muted-foreground">
-              {interpolateLabel(labels.showingCount, {
+              {t('admin.promotionsPage.showingCount', {
                 count: formatNumber(filteredPromotions.length),
-                total: formatNumber(promotions.length),
+                total: formatNumber(totalCount),
               })}
             </p>
             <div className="relative w-full lg:max-w-sm">
@@ -234,6 +237,14 @@ export default function AdminPromotionsPage() {
                 </tbody>
               </table>
             )}
+            {!isLoading && !error && totalCount > 0 ? (
+              <PaginationControls
+                page={page}
+                size={pageSize}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+              />
+            ) : null}
           </div>
         </div>
       </AdminLayout>
@@ -1035,13 +1046,4 @@ function getPromotionStatusLabel(
   }
 
   return t('admin.promotionsPage.statuses.active')
-}
-
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
 }

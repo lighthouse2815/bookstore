@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import {
   createAdminUser,
   deleteAdminUser,
@@ -21,10 +22,7 @@ import type {
   ManagedAdminUserRole,
 } from '@/types/admin-access'
 import type { Gender } from '@/types/auth'
-import {
-  compressAvatarFile,
-  getAvatarFileErrorMessage,
-} from '@/utils/avatar-image'
+import type { PageRequest, PageResult } from '@/types/pagination'
 import { getErrorMessage } from '@/utils'
 
 export type AdminUserManagementMode = 'customer' | 'staff'
@@ -38,6 +36,8 @@ export type CreateStaffFormState = {
   email: string
   firstName: string
   lastName: string
+  avatarFileAssetId: string
+  avatarPreviewUrl: string
   avatarUrl: string
   gender: Gender
   dateOfBirth: string
@@ -72,12 +72,11 @@ export type AdminUserManagementLabels = {
   lockTitle: string
   role: string
   selfManageBlocked: string
-  showingCount: string
   status: string
 }
 
 type UseAdminUserManagementPageOptions = {
-  fetchUsers: () => Promise<AdminUserResponse[]>
+  fetchUsers: (params: PageRequest) => Promise<PageResult<AdminUserResponse>>
   loadErrorLabel: string
   mode: AdminUserManagementMode
 }
@@ -89,6 +88,8 @@ const initialCreateFormState: CreateStaffFormState = {
   email: '',
   firstName: '',
   lastName: '',
+  avatarFileAssetId: '',
+  avatarPreviewUrl: '',
   avatarUrl: '',
   gender: 'OTHER',
   dateOfBirth: '',
@@ -102,7 +103,8 @@ const initialEditFormState: EditStaffFormState = {
 }
 
 const genderOptions: Gender[] = ['MALE', 'FEMALE', 'OTHER']
-const roleOptions: ManagedAdminUserRole[] = ['STAFF', 'ADMIN']
+const roleOptions: ManagedAdminUserRole[] = ['STAFF', 'SHIPPER', 'ADMIN']
+const PAGE_SIZE = 10
 
 export function useAdminUserManagementPage({
   fetchUsers,
@@ -110,11 +112,12 @@ export function useAdminUserManagementPage({
   mode,
 }: UseAdminUserManagementPageOptions) {
   const { user } = useAuth()
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const canCreate = mode === 'staff'
   const canEdit = mode === 'staff'
   const [users, setUsers] = useState<AdminUserResponse[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -149,16 +152,60 @@ export function useAdminUserManagementPage({
     )
   }, [searchTerm, users])
 
-  const labels = useMemo(
-    () =>
-      getAdminUserManagementLabels({
-        isVietnamese,
-        locked: selectedUser?.locked ?? false,
-        mode,
-        t,
-      }),
-    [isVietnamese, mode, selectedUser?.locked, t],
+  const labels = useMemo<AdminUserManagementLabels>(
+    () => ({
+      actions: t('common.actions'),
+      addEmployee: t('admin.userManagement.addEmployee'),
+      cancel: t('common.cancel'),
+      createError: t('admin.userManagement.createError'),
+      createSuccess: t('admin.userManagement.createSuccess'),
+      deleteDescription: t('admin.userManagement.deleteDescription'),
+      deleteError: t('admin.userManagement.deleteError'),
+      deleteSuccess: t('admin.userManagement.deleteSuccess'),
+      deleteTitle: t('admin.userManagement.deleteTitle'),
+      details: t(
+        mode === 'staff'
+          ? 'admin.userManagement.detailsStaff'
+          : 'admin.userManagement.detailsCustomer',
+      ),
+      editError: t('admin.userManagement.editError'),
+      editLockedHint: t('admin.userManagement.editLockedHint'),
+      editSuccess: t('admin.userManagement.editSuccess'),
+      editTitle: t('admin.userManagement.editTitle'),
+      lockColumn: t('admin.usersPage.columns.locked'),
+      lockDescription: t(
+        selectedUser?.locked
+          ? 'admin.userManagement.lockDescription.unlock'
+          : 'admin.userManagement.lockDescription.lock',
+      ),
+      lockError: t('admin.userManagement.lockError'),
+      lockSuccess: t(
+        selectedUser?.locked
+          ? 'admin.userManagement.lockSuccess.unlock'
+          : 'admin.userManagement.lockSuccess.lock',
+      ),
+      lockTitle: t(
+        selectedUser?.locked
+          ? 'admin.userManagement.lockTitle.unlock'
+          : 'admin.userManagement.lockTitle.lock',
+      ),
+      role: t('admin.userManagement.role'),
+      selfManageBlocked: t('admin.userManagement.selfManageBlocked'),
+      status: t('admin.usersPage.columns.status'),
+    }),
+    [mode, selectedUser?.locked, t],
   )
+
+  const avatarLabel = t('admin.userManagement.avatarLabel')
+  const createDialogDescription = t('admin.userManagement.createDialogDescription')
+  const editDialogDescription =
+    selectedUser && canEditUser(selectedUser)
+      ? t('admin.userManagement.editDialogDescription')
+      : labels.editLockedHint
+  const showingCountLabel = t('admin.userManagement.showingCount', {
+    count: formatNumber(filteredUsers.length),
+    total: formatNumber(totalCount),
+  })
 
   useEffect(() => {
     let isCancelled = false
@@ -167,13 +214,14 @@ export function useAdminUserManagementPage({
       setIsLoading(true)
 
       try {
-        const response = await fetchUsers()
+        const response = await fetchUsers({ page, size: PAGE_SIZE })
 
         if (isCancelled) {
           return
         }
 
-        setUsers(response)
+        setUsers(response.items)
+        setTotalCount(response.totalCount)
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -193,7 +241,7 @@ export function useAdminUserManagementPage({
     return () => {
       isCancelled = true
     }
-  }, [fetchUsers, loadErrorLabel])
+  }, [fetchUsers, loadErrorLabel, page])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -219,6 +267,10 @@ export function useAdminUserManagementPage({
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function resetDialog() {
@@ -321,15 +373,18 @@ export function useAdminUserManagementPage({
     }
 
     try {
-      const avatarUrl = await compressAvatarFile(file)
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'USER_AVATAR',
+        visibility: 'PUBLIC',
+      })
       setCreateForm((currentForm) => ({
         ...currentForm,
-        avatarUrl,
+        avatarFileAssetId: uploadedFile.id,
+        avatarPreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+        avatarUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
       }))
     } catch (error) {
-      toast.error(
-        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
-      )
+      toast.error(getErrorMessage(error, t('checkout.error')))
     }
   }
 
@@ -344,8 +399,9 @@ export function useAdminUserManagementPage({
     setIsLoading(true)
 
     try {
-      const response = await fetchUsers()
-      setUsers(response)
+      const response = await fetchUsers({ page, size: PAGE_SIZE })
+      setUsers(response.items)
+      setTotalCount(response.totalCount)
       setError(null)
     } catch (currentError) {
       setError(getErrorMessage(currentError, loadErrorLabel))
@@ -367,7 +423,7 @@ export function useAdminUserManagementPage({
         email: createForm.email.trim(),
         firstName: createForm.firstName.trim(),
         lastName: createForm.lastName.trim(),
-        avatarUrl: toNullableString(createForm.avatarUrl),
+        avatarFileAssetId: toNullableString(createForm.avatarFileAssetId),
         gender: createForm.gender,
         dateOfBirth: createForm.dateOfBirth,
         roleName: createForm.roleName,
@@ -467,10 +523,12 @@ export function useAdminUserManagementPage({
     t,
     formatDate,
     formatNumber,
-    isVietnamese,
     canCreate,
     canEdit,
     users,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     filteredUsers,
     searchTerm,
     isLoading,
@@ -481,19 +539,14 @@ export function useAdminUserManagementPage({
     createForm,
     editForm,
     labels,
-    avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
+    avatarLabel,
     genderOptions,
     roleOptions,
-    createDialogDescription: isVietnamese
-      ? 'Tạo tài khoản nhân viên hoặc admin trực tiếp từ khu vực quản trị.'
-      : 'Create a staff or admin account directly from the admin area.',
-    editDialogDescription:
-      selectedUser && canEditUser(selectedUser)
-        ? isVietnamese
-          ? 'Chỉnh sửa thông tin backend hiện cho phép với tài khoản nhân viên.'
-          : 'Edit the fields currently supported by the backend for staff accounts.'
-        : labels.editLockedHint,
+    createDialogDescription,
+    editDialogDescription,
+    showingCountLabel,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -514,100 +567,24 @@ export function useAdminUserManagementPage({
   }
 }
 
-function getAdminUserManagementLabels({
-  isVietnamese,
-  locked,
-  mode,
-  t,
-}: {
-  isVietnamese: boolean
-  locked: boolean
-  mode: AdminUserManagementMode
-  t: (key: string, params?: Record<string, number | string>) => string
-}): AdminUserManagementLabels {
-  return {
-    actions: t('common.actions'),
-    addEmployee: isVietnamese ? 'Thêm nhân viên' : 'Add employee',
-    cancel: t('common.cancel'),
-    createError: isVietnamese
-      ? 'Không tạo được nhân viên'
-      : 'Unable to create employee',
-    createSuccess: isVietnamese
-      ? 'Đã tạo nhân viên'
-      : 'Employee created successfully',
-    deleteDescription: isVietnamese
-      ? 'Hành động này sẽ xóa tài khoản khỏi hệ thống quản trị và không thể hoàn tác.'
-      : 'This action removes the account from the admin system and cannot be undone.',
-    deleteError: isVietnamese
-      ? 'Không xóa được tài khoản'
-      : 'Unable to delete account',
-    deleteSuccess: isVietnamese
-      ? 'Đã xóa tài khoản'
-      : 'Account deleted successfully',
-    deleteTitle: isVietnamese
-      ? 'Xác nhận xóa tài khoản'
-      : 'Confirm account deletion',
-    details: isVietnamese
-      ? mode === 'staff'
-        ? 'Chi tiết nhân viên'
-        : 'Chi tiết khách hàng'
-      : mode === 'staff'
-        ? 'Employee details'
-        : 'Customer details',
-    editError: isVietnamese
-      ? 'Không cập nhật được nhân viên'
-      : 'Unable to update employee',
-    editLockedHint: isVietnamese
-      ? 'API hiện tại chưa hỗ trợ sửa tài khoản admin thuần.'
-      : 'The current API does not support editing admin-only accounts.',
-    editSuccess: isVietnamese
-      ? 'Đã cập nhật nhân viên'
-      : 'Employee updated successfully',
-    editTitle: isVietnamese ? 'Sửa nhân viên' : 'Edit employee',
-    lockColumn: t('admin.usersPage.columns.locked'),
-    lockDescription: isVietnamese
-      ? locked
-        ? 'Tài khoản này sẽ được mở lại để có thể đăng nhập và sử dụng hệ thống.'
-        : 'Tài khoản này sẽ bị khóa và không thể đăng nhập cho đến khi được mở lại.'
-      : locked
-        ? 'This account will be unlocked so it can sign in and use the system again.'
-        : 'This account will be locked and cannot sign in until it is unlocked again.',
-    lockError: isVietnamese
-      ? 'Không cập nhật được trạng thái khóa'
-      : 'Unable to update lock status',
-    lockSuccess: isVietnamese
-      ? locked
-        ? 'Đã mở khóa tài khoản'
-        : 'Đã khóa tài khoản'
-      : locked
-        ? 'Account unlocked successfully'
-        : 'Account locked successfully',
-    lockTitle: isVietnamese
-      ? locked
-        ? 'Mở khóa tài khoản'
-        : 'Khóa tài khoản'
-      : locked
-        ? 'Unlock account'
-        : 'Lock account',
-    role: isVietnamese ? 'Vai trò' : 'Role',
-    selfManageBlocked: isVietnamese
-      ? 'Không thể tự khóa hoặc xóa chính tài khoản đang đăng nhập.'
-      : 'You cannot lock or delete the currently signed-in account.',
-    showingCount: isVietnamese
-      ? 'Hiển thị {count} trên {total} tài khoản'
-      : 'Showing {count} of {total} accounts',
-    status: t('admin.usersPage.columns.status'),
-  }
-}
-
 function canEditUser(currentUser: AdminUserResponse) {
   return (
-    currentUser.roles.includes('STAFF') || currentUser.roles.includes('ADMIN')
+    currentUser.roles.includes('ADMIN') ||
+    currentUser.roles.includes('STAFF') ||
+    currentUser.roles.includes('SHIPPER')
   )
 }
 
 function getManagedRole(currentUser: AdminUserResponse): ManagedAdminUserRole {
-  return currentUser.roles.includes('ADMIN') ? 'ADMIN' : 'STAFF'
+  if (currentUser.roles.includes('ADMIN')) {
+    return 'ADMIN'
+  }
+
+  if (currentUser.roles.includes('SHIPPER')) {
+    return 'SHIPPER'
+  }
+
+  return 'STAFF'
 }
 
 function isSelfManagedUser(

@@ -1,7 +1,7 @@
 import type { Gender, UserRole, UserStatus } from '@/types/auth'
 import type { CouponDiscountType, CouponType } from '@/types/coupon'
 
-export type ManagedAdminUserRole = 'ADMIN' | 'STAFF'
+export type ManagedAdminUserRole = 'ADMIN' | 'STAFF' | 'SHIPPER'
 
 export type AdminUserResponse = {
   userId: string
@@ -22,7 +22,7 @@ export type AdminCreateUserRequest = {
   email: string
   firstName: string
   lastName: string
-  avatarUrl?: string | null
+  avatarFileAssetId?: string | null
   gender: Gender
   dateOfBirth: string
   roleName: ManagedAdminUserRole
@@ -108,15 +108,31 @@ export type AdminCreateImportReceiptRequest = {
   note: string
 }
 
+export type AdminReviewStatus = 'PENDING' | 'APPROVED' | 'HIDDEN'
+
 export type AdminReviewResponse = {
   reviewId: string
   userId: string
   bookId: string
   orderItemId: string
+  reviewerName: string | null
+  reviewerAvatarUrl: string | null
+  verifiedPurchase: boolean
+  reviewImages: string[]
+  helpfulCount: number
   rating: number
   comment: string | null
+  status: AdminReviewStatus
+  moderationReason: string | null
+  moderatedBy: string | null
+  moderatedByName: string | null
+  moderatedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type AdminModerateReviewRequest = {
+  reason?: string | null
 }
 
 export type AdminNotificationResponse = {

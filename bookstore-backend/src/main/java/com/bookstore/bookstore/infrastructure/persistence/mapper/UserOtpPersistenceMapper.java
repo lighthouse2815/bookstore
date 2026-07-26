@@ -18,6 +18,9 @@ public class UserOtpPersistenceMapper {
                 entity.getUser().getId(),
                 entity.getPurpose(),
                 entity.getOtpHash(),
+                entity.getAttemptCount(),
+                entity.getMaxAttempts(),
+                entity.getLastAttemptAt(),
                 entity.getExpiresAt(),
                 entity.getVerifiedAt(),
                 entity.getInvalidatedAt(),
@@ -31,6 +34,9 @@ public class UserOtpPersistenceMapper {
         entity.setUser(user);
         entity.setPurpose(userOtp.getPurpose());
         entity.setOtpHash(userOtp.getOtpHash());
+        entity.setAttemptCount(userOtp.getAttemptCount());
+        entity.setMaxAttempts(userOtp.getMaxAttempts());
+        entity.setLastAttemptAt(userOtp.getLastAttemptAt());
         entity.setExpiresAt(userOtp.getExpiresAt());
         entity.setVerifiedAt(userOtp.getVerifiedAt());
         entity.setInvalidatedAt(userOtp.getInvalidatedAt());

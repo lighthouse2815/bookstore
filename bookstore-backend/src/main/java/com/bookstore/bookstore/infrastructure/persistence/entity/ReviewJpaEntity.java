@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
+import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -46,6 +49,19 @@ public class ReviewJpaEntity {
 
     @Column(columnDefinition = "TEXT")
     private String comment;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReviewStatus status;
+
+    @Column(name = "moderation_reason", length = 500)
+    private String moderationReason;
+
+    @Column(name = "moderated_by")
+    private UUID moderatedBy;
+
+    @Column(name = "moderated_at")
+    private Instant moderatedAt;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

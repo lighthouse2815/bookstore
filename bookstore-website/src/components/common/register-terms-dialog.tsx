@@ -29,7 +29,7 @@ export function RegisterTermsDialog({
           <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary/80">
-                SáchVui Terms
+                {termsCopy.badge}
               </p>
               <h3
                 id="register-terms-title"

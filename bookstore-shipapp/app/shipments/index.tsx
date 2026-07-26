@@ -183,6 +183,15 @@ export default function ShipmentsScreen() {
         <Panel style={styles.errorPanel}>
           <Text style={styles.errorTitle}>Khong tai duoc du lieu</Text>
           <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.errorAction}>
+            <ActionButton
+              icon="refresh"
+              label="Thu lai"
+              onPress={() => {
+                void loadShipments(true);
+              }}
+            />
+          </View>
         </Panel>
       ) : null}
 
@@ -295,6 +304,9 @@ const styles = StyleSheet.create({
     color: palette.text,
     fontSize: 14,
     lineHeight: 22,
+  },
+  errorAction: {
+    marginTop: 8,
   },
   emptyTitle: {
     color: palette.text,

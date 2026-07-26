@@ -21,7 +21,7 @@ import org.springframework.stereotype.Repository;
 public class ConversationRepositoryAdapter implements IConversationRepository {
 
     private static final Sort CONVERSATION_SORT = Sort.by(
-            Sort.Order.desc("lastMessageAt").nullsLast(),
+            Sort.Order.desc("lastMessageAt"),
             Sort.Order.desc("createdAt")
     );
 

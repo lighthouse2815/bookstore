@@ -32,10 +32,23 @@ public partial class App : Application
             var orderService = new OrderService(apiClient);
             var inventoryService = new InventoryService(bookService);
             var printerService = new ReceiptPrinterService();
+            var receiptFactory = new ReceiptFactory();
 
             var receiptViewModel = new ReceiptPreviewViewModel(printerService);
-            var posViewModel = new PosViewModel(bookService, posService, cartStore, navigationService, receiptViewModel, authStore);
-            var orderLookupViewModel = new OrderLookupViewModel(orderService);
+            var orderLookupViewModel = new OrderLookupViewModel(
+                orderService,
+                receiptFactory,
+                receiptViewModel,
+                navigationService);
+            var posViewModel = new PosViewModel(
+                bookService,
+                posService,
+                cartStore,
+                navigationService,
+                receiptViewModel,
+                orderLookupViewModel,
+                receiptFactory,
+                authStore);
             var inventoryViewModel = new InventoryViewModel(inventoryService);
             var settingsViewModel = new SettingsViewModel(settingsStore);
 

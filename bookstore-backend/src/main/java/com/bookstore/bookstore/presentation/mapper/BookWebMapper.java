@@ -34,6 +34,7 @@ public class BookWebMapper {
 
     private final AuthorWebMapper authorWebMapper;
     private final CouponWebMapper couponWebMapper;
+    private final CategoryWebMapper categoryWebMapper;
 
     public CreateBookCommand toCreateCommand(CreateBookRequest request) {
         return new CreateBookCommand(
@@ -42,7 +43,7 @@ public class BookWebMapper {
                 request.description(),
                 request.price(),
                 request.stockQuantity(),
-                toBookImageCommands(request.imageUrl(), request.images()),
+                toBookImageCommands(request.images()),
                 toBookDetailCommand(request.detail()),
                 request.categoryId(),
                 request.authorId(),
@@ -58,7 +59,7 @@ public class BookWebMapper {
                 request.description(),
                 request.price(),
                 request.stockQuantity(),
-                toBookImageCommands(request.imageUrl(), request.images()),
+                toBookImageCommands(request.images()),
                 toBookDetailCommand(request.detail()),
                 request.categoryId(),
                 request.authorId(),
@@ -104,7 +105,9 @@ public class BookWebMapper {
                 result.categoryTrail().stream()
                         .map(category -> new BookPageDetailResponse.CategoryTrailItemResponse(
                                 category.getId(),
-                                category.getName()
+                                category.getCode(),
+                                category.getName(),
+                                categoryWebMapper.toTranslationResponses(category)
                         ))
                         .toList(),
                 new BookPageDetailResponse.RatingSummaryResponse(
@@ -154,25 +157,14 @@ public class BookWebMapper {
         return new BookRatingSummaryResult(BigDecimal.ZERO.setScale(1), 0L, Map.copyOf(starBreakdown));
     }
 
-    private List<BookImageCommand> toBookImageCommands(String imageUrl, List<BookImageRequest> images) {
-        if (images != null && !images.isEmpty()) {
-            return images.stream()
-                    .map(this::toBookImageCommand)
-                    .toList();
-        }
-
-        String legacyImageUrl = StringUtils.trimToNull(imageUrl);
-        if (legacyImageUrl == null) {
+    private List<BookImageCommand> toBookImageCommands(List<BookImageRequest> images) {
+        if (images == null || images.isEmpty()) {
             return List.of();
         }
 
-        return List.of(new BookImageCommand(
-                null,
-                legacyImageUrl,
-                true,
-                0,
-                null
-        ));
+        return images.stream()
+                .map(this::toBookImageCommand)
+                .toList();
     }
 
     private BookImageCommand toBookImageCommand(BookImageRequest request) {
@@ -182,7 +174,7 @@ public class BookWebMapper {
 
         return new BookImageCommand(
                 request.id(),
-                request.imageUrl(),
+                request.fileAssetId(),
                 request.primaryImage(),
                 request.sortOrder(),
                 request.altText()
@@ -211,6 +203,7 @@ public class BookWebMapper {
         return new BookImageResponse(
                 image.getId(),
                 image.getBookId(),
+                image.getFileAssetId(),
                 image.getImageUrl(),
                 image.getPrimaryImage(),
                 image.getSortOrder(),

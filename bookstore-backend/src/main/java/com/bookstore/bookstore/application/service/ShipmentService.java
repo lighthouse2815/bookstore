@@ -8,11 +8,13 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
 import com.bookstore.bookstore.application.port.in.INotificationService;
+import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.port.in.IShipmentService;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IShipmentRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ShipmentResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
@@ -43,6 +45,7 @@ public class ShipmentService implements IShipmentService {
     private final INotificationService notificationService;
     private final ShipmentAssembler shipmentAssembler;
     private final IDigitalLibraryService digitalLibraryService;
+    private final IOrderTimelineService orderTimelineService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -51,10 +54,12 @@ public class ShipmentService implements IShipmentService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
         }
 
-        Order order = loadOrder(command.orderId());
+        Order order = orderRepository.findByIdForUpdate(command.orderId())
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
         requireOrderReady(order);
         requireNoActiveAssignment(command.orderId());
         User shipper = loadShipper(command.shipperId());
+        OrderStatus oldOrderStatus = order.getStatus();
 
         Order orderForResponse = order;
         if (order.getStatus() == OrderStatus.CONFIRMED) {
@@ -78,6 +83,10 @@ public class ShipmentService implements IShipmentService {
         );
         Shipment savedShipment = shipmentRepository.save(shipment);
         notificationService.create(newShipmentAssignedNotification(orderForResponse, shipper));
+        if (oldOrderStatus != orderForResponse.getStatus()) {
+            orderTimelineService.recordStatusChanged(orderForResponse, oldOrderStatus, orderForResponse.getStatus());
+        }
+        orderTimelineService.recordShipmentAssigned(orderForResponse, savedShipment, shipper.getUsername());
         return shipmentAssembler.toResult(savedShipment, orderForResponse);
     }
 
@@ -87,6 +96,13 @@ public class ShipmentService implements IShipmentService {
         return shipmentRepository.findAll().stream()
                 .map(this::toResult)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageSliceResult<ShipmentResult> getAll(int page, int size) {
+        validatePageRequest(page, size);
+        return shipmentRepository.findPageAll(page, size).map(this::toResult);
     }
 
     @Override
@@ -115,6 +131,17 @@ public class ShipmentService implements IShipmentService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageSliceResult<ShipmentResult> getMyShipments(UUID shipperId, int page, int size) {
+        if (shipperId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "shipperId");
+        }
+
+        validatePageRequest(page, size);
+        return shipmentRepository.findPageByShipperId(shipperId, page, size).map(this::toResult);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ShipmentResult getMyShipment(UUID shipperId, UUID shipmentId) {
         if (shipperId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "shipperId");
@@ -137,21 +164,40 @@ public class ShipmentService implements IShipmentService {
 
         Shipment shipment = shipmentRepository.findByIdAndShipperId(command.shipmentId(), command.shipperId())
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHIPMENT_NOT_FOUND));
-        Order order = loadOrder(shipment.getOrderId());
+        ShipmentStatus oldShipmentStatus = shipment.getStatus();
 
         switch (command.status()) {
             case ASSIGNED -> throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "status");
-            case PICKED_UP -> shipment.markPickedUp();
-            case DELIVERING -> shipment.startDelivering();
-            case DELIVERED -> {
-                return completeDeliveredShipment(shipment, order, false);
+            case PICKED_UP -> {
+                Order order = loadOrder(shipment.getOrderId());
+                shipment.markPickedUp();
+                Shipment savedShipment = shipmentRepository.save(shipment);
+                notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
+                return shipmentAssembler.toResult(savedShipment, order);
             }
-            case FAILED -> shipment.markFailed(StringUtils.trimToNull(command.failureReason()));
+            case DELIVERING -> {
+                Order order = loadOrder(shipment.getOrderId());
+                shipment.startDelivering();
+                Shipment savedShipment = shipmentRepository.save(shipment);
+                notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
+                return shipmentAssembler.toResult(savedShipment, order);
+            }
+            case DELIVERED -> {
+                return completeDeliveredShipment(shipment, loadOrderForUpdate(shipment.getOrderId()), false);
+            }
+            case FAILED -> {
+                Order order = loadOrder(shipment.getOrderId());
+                shipment.markFailed(StringUtils.trimToNull(command.failureReason()));
+                Shipment savedShipment = shipmentRepository.save(shipment);
+                notificationService.create(newShipmentStatusNotification(order, savedShipment));
+                orderTimelineService.recordShipmentStatusChanged(order, savedShipment, oldShipmentStatus, savedShipment.getStatus());
+                return shipmentAssembler.toResult(savedShipment, order);
+            }
         }
 
-        Shipment savedShipment = shipmentRepository.save(shipment);
-        notificationService.create(newShipmentStatusNotification(order, savedShipment));
-        return shipmentAssembler.toResult(savedShipment, order);
+        throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "status");
     }
 
     @Override
@@ -163,7 +209,7 @@ public class ShipmentService implements IShipmentService {
 
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.SHIPMENT_NOT_FOUND));
-        Order order = loadOrder(shipment.getOrderId());
+        Order order = loadOrderForUpdate(shipment.getOrderId());
         return completeDeliveredShipment(shipment, order, true);
     }
 
@@ -173,6 +219,11 @@ public class ShipmentService implements IShipmentService {
 
     private Order loadOrder(UUID orderId) {
         return orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
+    }
+
+    private Order loadOrderForUpdate(UUID orderId) {
+        return orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND));
     }
 
@@ -197,11 +248,21 @@ public class ShipmentService implements IShipmentService {
         }
     }
 
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
+        }
+
+        if (size <= 0) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
+        }
+    }
+
     private CreateNotificationCommand newShipmentAssignedNotification(Order order, User shipper) {
         return new CreateNotificationCommand(
                 order.getUserId(),
-                "Don hang da duoc giao shipper",
-                "Don hang " + order.getOrderCode() + " da duoc giao cho shipper " + shipper.getUsername() + ".",
+                "Đơn hàng đã được giao shipper",
+                "Đơn hàng " + order.getOrderCode() + " đã được giao cho shipper " + shipper.getUsername() + ".",
                 "SHIPMENT",
                 "ORDER",
                 order.getId(),
@@ -212,8 +273,8 @@ public class ShipmentService implements IShipmentService {
     private CreateNotificationCommand newShipmentStatusNotification(Order order, Shipment shipment) {
         return new CreateNotificationCommand(
                 order.getUserId(),
-                "Cap nhat giao hang",
-                "Don hang " + order.getOrderCode() + " dang o trang thai giao hang " + shipment.getStatus().name() + ".",
+                "Cập nhật giao hàng",
+                "Đơn hàng " + order.getOrderCode() + " đang ở trạng thái giao hàng " + shipment.getStatus().name() + ".",
                 "SHIPMENT",
                 "ORDER",
                 order.getId(),
@@ -222,6 +283,10 @@ public class ShipmentService implements IShipmentService {
     }
 
     private ShipmentResult completeDeliveredShipment(Shipment shipment, Order order, boolean settleCodPaymentOnDelivery) {
+        ShipmentStatus oldShipmentStatus = shipment.getStatus();
+        OrderStatus oldOrderStatus = order.getStatus();
+        PaymentStatus oldPaymentStatus = order.getPaymentStatus();
+        requirePaymentReadyForDelivery(order);
         boolean shipmentStatusChanged = shipment.getStatus() != ShipmentStatus.DELIVERED;
         if (shipmentStatusChanged) {
             shipment.markDelivered();
@@ -240,8 +305,26 @@ public class ShipmentService implements IShipmentService {
         if (savedOrder.getPaymentMethod() == PaymentMethod.COD && (shipmentStatusChanged || codPaymentSettled)) {
             digitalLibraryService.grantPurchasedAccessForOrder(savedOrder);
         }
+        if (shipmentStatusChanged) {
+            orderTimelineService.recordShipmentStatusChanged(savedOrder, savedShipment, oldShipmentStatus, savedShipment.getStatus());
+        }
+        if (oldOrderStatus != savedOrder.getStatus()) {
+            orderTimelineService.recordStatusChanged(savedOrder, oldOrderStatus, savedOrder.getStatus());
+        }
+        if (oldPaymentStatus != savedOrder.getPaymentStatus()
+                && savedOrder.getPaymentStatus() == PaymentStatus.PAID) {
+            paymentRepository.findByOrderId(savedOrder.getId())
+                    .ifPresent(payment -> orderTimelineService.recordPaymentPaid(savedOrder, payment));
+        }
 
         return shipmentAssembler.toResult(savedShipment, savedOrder);
+    }
+
+    private void requirePaymentReadyForDelivery(Order order) {
+        if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER_QR
+                && order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new ApplicationException(ApplicationErrorCode.ORDER_PAYMENT_NOT_PAID);
+        }
     }
 
     private boolean settleCodPayment(Order order) {
@@ -275,3 +358,4 @@ public class ShipmentService implements IShipmentService {
         return paymentChanged;
     }
 }
+

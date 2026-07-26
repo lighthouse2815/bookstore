@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import {
   createBook,
   deleteBook,
-  getBookCatalog,
+  getBookCatalogPage,
   getBookReferences,
   updateBook,
 } from '@/services/book-service'
@@ -13,23 +14,33 @@ import { getErrorMessage } from '@/utils'
 
 type BookDialogMode = 'create' | 'view' | 'edit' | 'delete'
 
+type BookFormImage = {
+  id?: string
+  fileAssetId: string
+  previewUrl: string
+  altText: string
+  primaryImage: boolean
+}
+
 type BookFormState = {
   title: string
   description: string
   price: string
   stockQuantity: string
-  imageUrl: string
+  images: BookFormImage[]
   categoryId: string
   authorId: string
   publisherId: string
 }
+
+type BookFormTextField = Exclude<keyof BookFormState, 'images'>
 
 const initialFormState: BookFormState = {
   title: '',
   description: '',
   price: '',
   stockQuantity: '',
-  imageUrl: '',
+  images: [],
   categoryId: '',
   authorId: '',
   publisherId: '',
@@ -41,9 +52,13 @@ const initialReferences: BookReferenceData = {
   publishers: [],
 }
 
+const PAGE_SIZE = 10
+
 export function useAdminBooksPage() {
   const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const [books, setBooks] = useState<Book[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [references, setReferences] = useState<BookReferenceData>(
     initialReferences,
   )
@@ -52,6 +67,7 @@ export function useAdminBooksPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [dialogMode, setDialogMode] = useState<BookDialogMode | null>(null)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
@@ -62,7 +78,8 @@ export function useAdminBooksPage() {
     references.authors.length > 0 &&
     references.publishers.length > 0
 
-  const isDialogLocked = dialogMode === 'delete' && isDeleting
+  const isDialogLocked =
+    (dialogMode === 'delete' && isDeleting) || isUploadingImage || isSubmitting
 
   const filteredBooks = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase()
@@ -103,7 +120,7 @@ export function useAdminBooksPage() {
 
       try {
         const [catalog, referenceData] = await Promise.all([
-          getBookCatalog(),
+          getBookCatalogPage({ page, size: PAGE_SIZE }),
           getBookReferences(),
         ])
 
@@ -112,6 +129,7 @@ export function useAdminBooksPage() {
         }
 
         setBooks(catalog.books)
+        setTotalCount(catalog.totalCount)
         setReferences(referenceData)
         setError(null)
       } catch (currentError) {
@@ -132,7 +150,7 @@ export function useAdminBooksPage() {
     return () => {
       isCancelled = true
     }
-  }, [t])
+  }, [page, t])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -158,19 +176,33 @@ export function useAdminBooksPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
   }
 
   function handleCategoryChange(nextValue: string | null) {
     setSelectedCategoryId(nextValue ?? 'all')
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function createFormState(book: Book): BookFormState {
+    const hasPrimaryImage = book.images.some((image) => image.primaryImage)
+
     return {
       title: book.title,
       description: book.description ?? '',
       price: String(book.price),
       stockQuantity: String(book.stockQuantity),
-      imageUrl: book.cover ?? '',
+      images: book.images.map((image, index) => ({
+        id: image.id,
+        fileAssetId: image.fileAssetId,
+        previewUrl: image.imageUrl,
+        altText: image.altText ?? '',
+        primaryImage: hasPrimaryImage ? image.primaryImage : index === 0,
+      })),
       categoryId: book.categoryId,
       authorId: book.authorId,
       publisherId: book.publisherId,
@@ -213,11 +245,116 @@ export function useAdminBooksPage() {
     setForm(initialFormState)
   }
 
-  function handleFormChange(field: keyof BookFormState, value: string) {
+  function handleFormChange(field: BookFormTextField, value: string) {
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
     }))
+  }
+
+  async function handleImageFilesChange(files: File[]) {
+    if (files.length === 0) {
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    try {
+      const uploadedImages: BookFormImage[] = []
+      let failedUploadCount = 0
+
+      for (const file of files) {
+        try {
+          const uploadedFile = await uploadManagedFile(file, {
+            purpose: 'BOOK_IMAGE',
+            visibility: 'PUBLIC',
+            bookId: dialogMode === 'edit' ? selectedBook?.id : undefined,
+          })
+
+          uploadedImages.push({
+            fileAssetId: uploadedFile.id,
+            previewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            altText: '',
+            primaryImage: false,
+          })
+        } catch {
+          failedUploadCount += 1
+        }
+      }
+
+      if (uploadedImages.length > 0) {
+        setForm((currentForm) => {
+          const shouldAssignPrimaryImage = currentForm.images.length === 0
+          const normalizedUploadedImages = uploadedImages.map((image, index) => ({
+            ...image,
+            primaryImage: shouldAssignPrimaryImage && index === 0,
+          }))
+
+          return {
+            ...currentForm,
+            images: [...currentForm.images, ...normalizedUploadedImages],
+          }
+        })
+      }
+
+      if (failedUploadCount > 0) {
+        toast.error(
+          t('admin.books.imageUploadPartial', {
+            failed: failedUploadCount,
+            total: files.length,
+          }),
+        )
+      }
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
+  function handleBookImageAltTextChange(imageIndex: number, value: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      images: currentForm.images.map((image, index) =>
+        index === imageIndex ? { ...image, altText: value } : image,
+      ),
+    }))
+  }
+
+  function setPrimaryBookImage(imageIndex: number) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      images: currentForm.images.map((image, index) => ({
+        ...image,
+        primaryImage: index === imageIndex,
+      })),
+    }))
+  }
+
+  function moveBookImage(imageIndex: number, direction: -1 | 1) {
+    setForm((currentForm) => {
+      const nextIndex = imageIndex + direction
+
+      if (nextIndex < 0 || nextIndex >= currentForm.images.length) {
+        return currentForm
+      }
+
+      const images = [...currentForm.images]
+      ;[images[imageIndex], images[nextIndex]] = [images[nextIndex], images[imageIndex]]
+
+      return { ...currentForm, images }
+    })
+  }
+
+  function removeBookImage(imageIndex: number) {
+    setForm((currentForm) => {
+      const removedImageWasPrimary = currentForm.images[imageIndex]?.primaryImage === true
+      const images = currentForm.images.filter((_, index) => index !== imageIndex)
+
+      if (removedImageWasPrimary && images.length > 0) {
+        images[0] = { ...images[0], primaryImage: true }
+      }
+
+      return { ...currentForm, images }
+    })
   }
 
   async function reloadBooks() {
@@ -225,11 +362,12 @@ export function useAdminBooksPage() {
 
     try {
       const [catalog, referenceData] = await Promise.all([
-        getBookCatalog(),
+        getBookCatalogPage({ page, size: PAGE_SIZE }),
         getBookReferences(),
       ])
 
       setBooks(catalog.books)
+      setTotalCount(catalog.totalCount)
       setReferences(referenceData)
       setError(null)
     } catch (currentError) {
@@ -255,7 +393,13 @@ export function useAdminBooksPage() {
         description: form.description.trim() || null,
         price: Number(form.price),
         stockQuantity: Number(form.stockQuantity),
-        imageUrl: form.imageUrl.trim() || null,
+        images: form.images.map((image, index) => ({
+          id: image.id,
+          fileAssetId: image.fileAssetId,
+          primaryImage: image.primaryImage,
+          sortOrder: index,
+          altText: image.altText.trim() || null,
+        })),
         categoryId: form.categoryId,
         authorId: form.authorId,
         publisherId: form.publisherId,
@@ -303,6 +447,9 @@ export function useAdminBooksPage() {
     formatDate,
     formatNumber,
     books,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     references,
     searchTerm,
     selectedCategoryId,
@@ -315,10 +462,12 @@ export function useAdminBooksPage() {
     form,
     hasReferenceData,
     isDialogLocked,
+    isUploadingImage,
     filteredBooks,
     dialogSizeClassName,
     handleSearchTermChange,
     handleCategoryChange,
+    handlePageChange,
     openCreateDialog,
     openViewDialog,
     openEditDialog,
@@ -326,6 +475,11 @@ export function useAdminBooksPage() {
     openDeleteDialog,
     closeDialog,
     handleFormChange,
+    handleImageFilesChange,
+    handleBookImageAltTextChange,
+    setPrimaryBookImage,
+    moveBookImage,
+    removeBookImage,
     handleSubmit,
     confirmDelete,
   }

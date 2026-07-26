@@ -1,8 +1,12 @@
 package com.bookstore.bookstore.application.port.in;
 
+import com.bookstore.bookstore.application.command.ApproveReviewCommand;
 import com.bookstore.bookstore.application.command.CreateReviewCommand;
 import com.bookstore.bookstore.application.command.DeleteReviewCommand;
+import com.bookstore.bookstore.application.command.HideReviewCommand;
 import com.bookstore.bookstore.application.command.UpdateReviewCommand;
+import com.bookstore.bookstore.domain.enums.ReviewStatus;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +14,8 @@ import java.util.UUID;
 public interface IReviewService {
 
     List<ReviewResult> getByBookId(UUID bookId);
+
+    PageSliceResult<ReviewResult> getByBookId(UUID bookId, int page, int size);
 
     ReviewResult create(CreateReviewCommand command);
 
@@ -19,5 +25,20 @@ public interface IReviewService {
 
     List<ReviewResult> getAll();
 
-    void adminDelete(UUID reviewId);
+    PageSliceResult<ReviewResult> getAll(int page, int size);
+
+    PageSliceResult<ReviewResult> getAll(
+            int page,
+            int size,
+            ReviewStatus status,
+            UUID bookId,
+            UUID userId,
+            Integer rating
+    );
+
+    ReviewResult hide(HideReviewCommand command);
+
+    ReviewResult approve(ApproveReviewCommand command);
+
+    ReviewResult adminDelete(UUID reviewId);
 }

@@ -3,7 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
-import { updateCurrentUser } from '@/services/auth-service'
+import { uploadManagedFile } from '@/services/file-service'
+import {
+  getSessions,
+  logoutAllDevices,
+  revokeSession,
+  updateCurrentUser,
+} from '@/services/auth-service'
 import { getMyOrders } from '@/services/order-service'
 import {
   getCurrentProfile,
@@ -11,10 +17,7 @@ import {
 } from '@/services/profile-service'
 import type { OrderResponse } from '@/types/order'
 import type { ProfileResponse } from '@/types/profile'
-import {
-  compressAvatarFile,
-  getAvatarFileErrorMessage,
-} from '@/utils/avatar-image'
+import type { SessionResponse } from '@/types/auth'
 import { getErrorMessage } from '@/utils'
 
 type AccountFormState = {
@@ -26,6 +29,7 @@ type AccountFormState = {
 type ProfileFormState = {
   lastName: string
   firstName: string
+  avatarFileAssetId: string
   avatarUrl: string
   gender: ProfileResponse['gender']
   dateOfBirth: string
@@ -33,14 +37,16 @@ type ProfileFormState = {
 
 export function useProfilePage() {
   const { user, logout, refreshUser } = useAuth()
-  const { t, language } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingAccount, setIsSavingAccount] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [sessions, setSessions] = useState<SessionResponse[]>([])
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false)
+  const [sessionError, setSessionError] = useState<string | null>(null)
   const [accountForm, setAccountForm] = useState<AccountFormState>({
     username: user?.username ?? '',
     email: user?.email ?? '',
@@ -49,6 +55,7 @@ export function useProfilePage() {
   const [profileForm, setProfileForm] = useState<ProfileFormState>({
     lastName: '',
     firstName: '',
+    avatarFileAssetId: '',
     avatarUrl: '',
     gender: 'OTHER',
     dateOfBirth: '',
@@ -60,9 +67,9 @@ export function useProfilePage() {
     }
 
     setAccountForm({
-      username: user.username,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
+      username: user.username ?? '',
+      email: user.email ?? '',
+      phoneNumber: user.phoneNumber ?? '',
     })
   }, [user])
 
@@ -82,11 +89,12 @@ export function useProfilePage() {
 
         setProfile(profileResponse)
         setProfileForm({
-          lastName: profileResponse.lastName,
-          firstName: profileResponse.firstName,
+          lastName: profileResponse.lastName ?? '',
+          firstName: profileResponse.firstName ?? '',
+          avatarFileAssetId: profileResponse.avatarFileAssetId ?? '',
           avatarUrl: profileResponse.avatarUrl ?? '',
-          gender: profileResponse.gender,
-          dateOfBirth: profileResponse.dateOfBirth,
+          gender: profileResponse.gender ?? 'OTHER',
+          dateOfBirth: profileResponse.dateOfBirth ?? '',
         })
         setOrders(ordersResponse)
       } catch (error) {
@@ -140,21 +148,55 @@ export function useProfilePage() {
     }
 
     try {
-      const avatarUrl = await compressAvatarFile(file)
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'USER_AVATAR',
+        visibility: 'PUBLIC',
+      })
       setProfileForm((currentForm) => ({
         ...currentForm,
-        avatarUrl,
+        avatarFileAssetId: uploadedFile.id,
+        avatarUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
       }))
     } catch (error) {
-      toast.error(
-        getAvatarFileErrorMessage(error, isVietnamese, t('checkout.error')),
-      )
+      toast.error(getErrorMessage(error, t('checkout.error')))
     }
   }
 
   async function handleLogout() {
     await logout()
     navigate('/')
+  }
+
+  async function loadSessions() {
+    setIsLoadingSessions(true)
+    try {
+      setSessions(await getSessions())
+      setSessionError(null)
+    } catch (error) {
+      setSessionError(getErrorMessage(error, t('checkout.error')))
+    } finally {
+      setIsLoadingSessions(false)
+    }
+  }
+
+  async function handleRevokeSession(sessionId: string) {
+    try {
+      await revokeSession(sessionId)
+      await loadSessions()
+      toast.success('Đã thu hồi phiên đăng nhập')
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('checkout.error')))
+    }
+  }
+
+  async function handleLogoutAllDevices() {
+    try {
+      await logoutAllDevices()
+      await logout()
+      navigate('/login')
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('checkout.error')))
+    }
   }
 
   async function handleSaveAccount(event: FormEvent<HTMLFormElement>) {
@@ -180,7 +222,7 @@ export function useProfilePage() {
       const response = await updateCurrentProfile({
         lastName: profileForm.lastName,
         firstName: profileForm.firstName,
-        avatarUrl: profileForm.avatarUrl || null,
+        avatarFileAssetId: profileForm.avatarFileAssetId || null,
         gender: profileForm.gender,
         dateOfBirth: profileForm.dateOfBirth,
       })
@@ -201,6 +243,9 @@ export function useProfilePage() {
     isLoading,
     isSavingAccount,
     isSavingProfile,
+    sessions,
+    isLoadingSessions,
+    sessionError,
     accountForm,
     profileForm,
     handleAccountChange,
@@ -208,8 +253,11 @@ export function useProfilePage() {
     handleProfileAvatarFileChange,
     handleProfileGenderChange,
     handleLogout,
+    loadSessions,
+    handleRevokeSession,
+    handleLogoutAllDevices,
     handleSaveAccount,
     handleSaveProfile,
-    avatarLabel: isVietnamese ? 'Ảnh đại diện' : 'Avatar image',
+    avatarLabel: t('auth.profile.avatarLabel'),
   }
 }

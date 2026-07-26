@@ -4,6 +4,7 @@ import type {
   AuthorResponse,
   Book,
   BookCatalog,
+  BookCatalogPage,
   BookDetail,
   BookDetailResponse,
   BookImage,
@@ -24,7 +25,54 @@ import type {
   UpsertBookRequest,
 } from '@/types/book'
 import { getBookCoverUrl } from '@/utils/book-cover'
-import { unwrapResponse } from '@/utils'
+import { getErrorMessage, unwrapResponse } from '@/utils'
+import { toPageResult } from '@/services/pagination'
+import type { PageRequest } from '@/types/pagination'
+
+type BookCatalogLoadState = BookCatalog & {
+  bookError: string | null
+  categoryError: string | null
+}
+
+export async function getBookCatalogLoadState(
+  request: SearchBooksRequest = {},
+): Promise<BookCatalogLoadState> {
+  const [bookResponsesResult, categoriesResult, authorsResult, publishersResult] =
+    await Promise.allSettled([
+      getBookResponses(request),
+      getCategoryResponses(),
+      getAuthorResponses(),
+      getPublisherResponses(),
+    ])
+
+  const categories =
+    categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
+  const referenceMaps = buildBookReferenceMaps({
+    categories,
+    authors: authorsResult.status === 'fulfilled' ? authorsResult.value : [],
+    publishers:
+      publishersResult.status === 'fulfilled' ? publishersResult.value : [],
+  })
+
+  return {
+    books:
+      bookResponsesResult.status === 'fulfilled'
+        ? bookResponsesResult.value.map((bookResponse) =>
+            mapBookResponseToBook(bookResponse, referenceMaps),
+          )
+        : [],
+    categories: sortCategories(categories),
+    categoryIds: getCategoryIds(categories),
+    bookError:
+      bookResponsesResult.status === 'rejected'
+        ? getErrorMessage(bookResponsesResult.reason)
+        : null,
+    categoryError:
+      categoriesResult.status === 'rejected'
+        ? getErrorMessage(categoriesResult.reason)
+        : null,
+  }
+}
 
 export async function getBookCatalog(
   request: SearchBooksRequest = {},
@@ -39,7 +87,31 @@ export async function getBookCatalog(
     books: bookResponses.map((bookResponse) =>
       mapBookResponseToBook(bookResponse, referenceMaps),
     ),
-    categories: getCategoryNames(referenceData.categories),
+    categories: sortCategories(referenceData.categories),
+    categoryIds: getCategoryIds(referenceData.categories),
+  }
+}
+
+export async function getBookCatalogPage(
+  request: SearchBooksRequest & PageRequest = {},
+): Promise<BookCatalogPage> {
+  const [bookPage, referenceData] = await Promise.all([
+    getBookResponsesPage(request),
+    getBookReferenceData(),
+  ])
+  const referenceMaps = buildBookReferenceMaps(referenceData)
+
+  return {
+    books: bookPage.items.map((bookResponse) =>
+      mapBookResponseToBook(bookResponse, referenceMaps),
+    ),
+    categories: sortCategories(referenceData.categories),
+    categoryIds: getCategoryIds(referenceData.categories),
+    totalCount: bookPage.totalCount,
+    page: bookPage.page,
+    size: bookPage.size,
+    hasNext: bookPage.hasNext,
+    totalPages: bookPage.totalPages,
   }
 }
 
@@ -113,6 +185,21 @@ async function getBookResponses(
   return unwrapResponse(response)
 }
 
+async function getBookResponsesPage(request: SearchBooksRequest & PageRequest) {
+  const keyword = request.keyword?.trim()
+  const categoryId = request.categoryId?.trim()
+  const endpoint = keyword || categoryId ? '/books/search' : '/books'
+  const pageRequest = { page: request.page ?? 0, size: request.size ?? 10 }
+  const response = await api.get<ApiResponse<BookResponse[]>>(endpoint, {
+    params:
+      keyword || categoryId
+        ? { ...pageRequest, keyword, categoryId }
+        : pageRequest,
+  })
+
+  return toPageResult(unwrapResponse(response), response.headers, pageRequest)
+}
+
 async function getBookResponseById(id: string): Promise<BookResponse> {
   const response = await api.get<ApiResponse<BookResponse>>(`/books/${id}`)
   return unwrapResponse(response)
@@ -142,7 +229,7 @@ async function getPublisherResponses(): Promise<PublisherResponse[]> {
   return unwrapResponse(response)
 }
 
-async function getBookReferenceData(): Promise<BookReferenceData> {
+export async function getBookReferenceData(): Promise<BookReferenceData> {
   const [categoriesResult, authorsResult, publishersResult] =
     await Promise.allSettled([
       getCategoryResponses(),
@@ -159,7 +246,7 @@ async function getBookReferenceData(): Promise<BookReferenceData> {
   }
 }
 
-function mapBookResponseToBook(
+export function mapBookResponseToBook(
   bookResponse: BookResponse,
   referenceMaps: BookReferenceMaps,
 ): Book {
@@ -174,7 +261,8 @@ function mapBookResponseToBook(
     title: bookResponse.title,
     isbn: bookResponse.isbn,
     author: referenceMaps.authorMap.get(bookResponse.authorId) ?? '',
-    category: referenceMaps.categoryMap.get(bookResponse.categoryId) ?? '',
+    category: referenceMaps.categoryMap.get(bookResponse.categoryId)?.name ?? '',
+    categoryInfo: referenceMaps.categoryMap.get(bookResponse.categoryId) ?? null,
     price: bookResponse.price,
     oldPrice: undefined,
     rating: normalizeRatingValue(bookResponse.averageRating) ?? undefined,
@@ -217,6 +305,7 @@ function mapBookPageDetailResponseToBookPageDetail(
       isbn: pageDetailResponse.book.isbn,
       author: pageDetailResponse.author.name,
       category: leafCategory?.name ?? '',
+      categoryInfo: leafCategory ?? null,
       price: pageDetailResponse.book.price,
       oldPrice: pageDetailResponse.book.originalPrice ?? undefined,
       rating:
@@ -249,7 +338,9 @@ function mapBookPageDetailResponseToBookPageDetail(
     },
     categoryTrail: categoryTrail.map((category) => ({
       id: category.id,
+      code: category.code,
       name: category.name,
+      translations: category.translations,
     })),
     ratingSummary,
     promotions: pageDetailResponse.promotions.map(
@@ -265,6 +356,7 @@ function mapBookImageResponses(imageResponses: BookImageResponse[]): BookImage[]
   return imageResponses.map((imageResponse) => ({
     id: imageResponse.id,
     bookId: imageResponse.bookId,
+    fileAssetId: imageResponse.fileAssetId,
     imageUrl: resolveBookImageUrl(imageResponse.imageUrl),
     primaryImage: imageResponse.primaryImage,
     sortOrder: imageResponse.sortOrder,
@@ -330,9 +422,6 @@ function mapBookReviewResponseToBookReview(
 ): BookReview {
   return {
     reviewId: reviewResponse.reviewId,
-    userId: reviewResponse.userId,
-    bookId: reviewResponse.bookId,
-    orderItemId: reviewResponse.orderItemId,
     reviewerName: reviewResponse.reviewerName,
     reviewerAvatarUrl: reviewResponse.reviewerAvatarUrl
       ? resolveBookImageUrl(reviewResponse.reviewerAvatarUrl)
@@ -347,9 +436,9 @@ function mapBookReviewResponseToBookReview(
   }
 }
 
-type BookReferenceMaps = {
+export type BookReferenceMaps = {
   authorMap: Map<string, string>
-  categoryMap: Map<string, string>
+  categoryMap: Map<string, CategoryResponse>
   publisherMap: Map<string, string>
 }
 
@@ -361,7 +450,7 @@ function buildBookReferenceMaps(
       referenceData.authors.map((author) => [author.id, author.name]),
     ),
     categoryMap: new Map(
-      referenceData.categories.map((category) => [category.id, category.name]),
+      referenceData.categories.map((category) => [category.id, category]),
     ),
     publisherMap: new Map(
       referenceData.publishers.map((publisher) => [publisher.id, publisher.name]),
@@ -369,11 +458,16 @@ function buildBookReferenceMaps(
   }
 }
 
-function getCategoryNames(categories: CategoryResponse[]) {
-  return [...new Set(categories.map((category) => category.name).filter(Boolean))]
-    .sort((firstCategory, secondCategory) =>
-      firstCategory.localeCompare(secondCategory, 'vi'),
-    )
+function sortCategories(categories: CategoryResponse[]) {
+  return [...categories].sort((firstCategory, secondCategory) =>
+    firstCategory.name.localeCompare(secondCategory.name, 'vi'),
+  )
+}
+
+function getCategoryIds(categories: CategoryResponse[]) {
+  return Object.fromEntries(
+    categories.map((category) => [category.code, category.id]),
+  )
 }
 
 function normalizeRatingValue(rating: number | null | undefined) {

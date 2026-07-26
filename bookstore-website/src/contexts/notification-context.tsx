@@ -21,6 +21,7 @@ import {
   connectNotificationRealtime,
   disconnectNotificationRealtime,
 } from '@/services/notification-realtime-service'
+import { getAccessToken } from '@/services/api'
 import type { NotificationResponse } from '@/types/notification'
 import { getErrorMessage } from '@/utils'
 
@@ -36,7 +37,6 @@ type NotificationContextType = {
   deleteNotification: (notificationId: string) => Promise<void>
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const INITIAL_PAGE_SIZE = 10
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -45,7 +45,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const { language } = useLanguage()
+  const { t } = useLanguage()
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -91,7 +91,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setError(getErrorMessage(currentError, getFetchErrorMessage(language)))
+        setError(getErrorMessage(currentError, t('notifications.errors.fetch')))
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -102,7 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+      const accessToken = getAccessToken()
       if (!accessToken) {
         setIsRealtimeConnected(false)
         return
@@ -133,7 +133,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           toast.success(notification.title, {
             description:
               notification.content.trim() === ''
-                ? getEmptyContentMessage(language)
+                ? t('notifications.newNotificationFallback')
                 : notification.content,
           })
         },
@@ -157,7 +157,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       disconnectNotificationRealtime()
       setIsRealtimeConnected(false)
     }
-  }, [isAuthenticated, isAuthLoading, language])
+  }, [isAuthenticated, isAuthLoading, t])
 
   async function refresh() {
     if (!isAuthenticated) {
@@ -177,7 +177,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setUnreadCount(nextUnreadCount)
       setError(null)
     } catch (currentError) {
-      setError(getErrorMessage(currentError, getFetchErrorMessage(language)))
+      setError(getErrorMessage(currentError, t('notifications.errors.fetch')))
     } finally {
       setIsLoading(false)
     }
@@ -207,7 +207,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       )
       setUnreadCount((currentUnreadCount) => Math.max(0, currentUnreadCount - 1))
     } catch (currentError) {
-      throw new Error(getErrorMessage(currentError, getUpdateErrorMessage(language)))
+      throw new Error(
+        getErrorMessage(currentError, t('notifications.errors.update')),
+      )
     }
   }
 
@@ -223,7 +225,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       )
       setUnreadCount(0)
     } catch (currentError) {
-      throw new Error(getErrorMessage(currentError, getUpdateErrorMessage(language)))
+      throw new Error(
+        getErrorMessage(currentError, t('notifications.errors.update')),
+      )
     }
   }
 
@@ -246,7 +250,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         )
       }
     } catch (currentError) {
-      throw new Error(getErrorMessage(currentError, getDeleteErrorMessage(language)))
+      throw new Error(
+        getErrorMessage(currentError, t('notifications.errors.delete')),
+      )
     }
   }
 
@@ -270,7 +276,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       markAllAsRead,
       deleteNotification,
     }),
-    [notifications, unreadCount, isLoading, error, isRealtimeConnected, language],
+    [notifications, unreadCount, isLoading, error, isRealtimeConnected],
   )
 
   return (
@@ -299,26 +305,4 @@ function mergeLatestNotifications(
   )
 
   return [nextNotification, ...filteredNotifications].slice(0, INITIAL_PAGE_SIZE)
-}
-
-function getFetchErrorMessage(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong tai duoc thong bao'
-    : 'Unable to load notifications'
-}
-
-function getUpdateErrorMessage(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong cap nhat duoc thong bao'
-    : 'Unable to update the notification'
-}
-
-function getDeleteErrorMessage(language: 'en' | 'vi') {
-  return language === 'vi'
-    ? 'Khong xoa duoc thong bao'
-    : 'Unable to delete the notification'
-}
-
-function getEmptyContentMessage(language: 'en' | 'vi') {
-  return language === 'vi' ? 'Thong bao moi' : 'New notification'
 }

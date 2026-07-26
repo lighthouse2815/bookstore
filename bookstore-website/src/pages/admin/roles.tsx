@@ -30,7 +30,7 @@ import type { UserRole } from '@/types/auth'
 import { cn } from '@/utils'
 import { getUserRoleLabel } from '@/utils/i18n'
 
-const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'USER']
+const knownRoles: UserRole[] = ['ADMIN', 'STAFF', 'SHIPPER', 'USER']
 
 export default function AdminRolesPage() {
   const {
@@ -251,7 +251,7 @@ export default function AdminRolesPage() {
 
               {!isLoading && !error && filteredRoles.length > 0 ? (
                 <div className="border-t border-border/60 px-6 py-5 text-sm text-muted-foreground">
-                  {interpolateLabel(labels.showingCount, {
+                  {t('admin.rolesPage.showingCount', {
                     count: formatNumber(filteredRoles.length),
                     total: formatNumber(roles.length),
                   })}
@@ -628,13 +628,4 @@ function getRoleLabel(
   return knownRoles.includes(roleName as UserRole)
     ? getUserRoleLabel(roleName as UserRole, t)
     : roleName
-}
-
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
 }

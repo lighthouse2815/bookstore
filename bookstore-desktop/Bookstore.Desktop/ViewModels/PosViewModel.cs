@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
-using Bookstore.Desktop.Dtos;
+using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 using Bookstore.Desktop.Helpers;
 using Bookstore.Desktop.Models;
 using Bookstore.Desktop.Services;
@@ -11,11 +13,15 @@ namespace Bookstore.Desktop.ViewModels;
 
 public partial class PosViewModel : ObservableObject
 {
+    private static readonly Regex PhoneInputPattern = new(@"^[0-9+\-\s()]{8,20}$", RegexOptions.Compiled);
+
     private readonly BookService bookService;
     private readonly PosService posService;
     private readonly PosCartStore cartStore;
     private readonly NavigationService navigationService;
     private readonly ReceiptPreviewViewModel receiptPreviewViewModel;
+    private readonly OrderLookupViewModel orderLookupViewModel;
+    private readonly ReceiptFactory receiptFactory;
     private readonly AuthStore authStore;
 
     public PosViewModel(
@@ -24,6 +30,8 @@ public partial class PosViewModel : ObservableObject
         PosCartStore cartStore,
         NavigationService navigationService,
         ReceiptPreviewViewModel receiptPreviewViewModel,
+        OrderLookupViewModel orderLookupViewModel,
+        ReceiptFactory receiptFactory,
         AuthStore authStore)
     {
         this.bookService = bookService;
@@ -31,22 +39,45 @@ public partial class PosViewModel : ObservableObject
         this.cartStore = cartStore;
         this.navigationService = navigationService;
         this.receiptPreviewViewModel = receiptPreviewViewModel;
+        this.orderLookupViewModel = orderLookupViewModel;
+        this.receiptFactory = receiptFactory;
         this.authStore = authStore;
+        PaymentMethods = new[]
+        {
+            new PaymentMethodOption("CASH", "Tiền mặt"),
+            new PaymentMethodOption("BANK_TRANSFER", "Chuyển khoản"),
+            new PaymentMethodOption("BANK_TRANSFER_QR", "Chuyển khoản QR"),
+            new PaymentMethodOption("COD", "COD")
+        };
+        SelectedPaymentMethod = PaymentMethods[0];
         cartStore.PropertyChanged += (_, _) => RefreshCartTotals();
     }
 
     public ObservableCollection<BookModel> SearchResults { get; } = new();
     public ObservableCollection<PosCartItemModel> CartItems => cartStore.Items;
-    public IReadOnlyList<string> PaymentMethods { get; } = new[] { "CASH", "BANK_TRANSFER", "COD" };
+    public IReadOnlyList<PaymentMethodOption> PaymentMethods { get; }
 
     [ObservableProperty]
     private string searchKeyword = "";
 
     [ObservableProperty]
-    private string selectedPaymentMethod = "CASH";
+    private PaymentMethodOption? selectedPaymentMethod;
 
     [ObservableProperty]
     private string? couponCode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCustomerDetailsEnabled))]
+    private bool useWalkInCustomer = true;
+
+    [ObservableProperty]
+    private string? customerName;
+
+    [ObservableProperty]
+    private string? customerPhone;
+
+    [ObservableProperty]
+    private string cashReceivedText = "";
 
     [ObservableProperty]
     private string message = "";
@@ -54,17 +85,45 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty]
     private bool isLoading;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCheckout))]
+    [NotifyPropertyChangedFor(nameof(CanEditCart))]
+    [NotifyPropertyChangedFor(nameof(CheckoutButtonText))]
+    private bool isCreatingOrder;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLastReceipt))]
+    [NotifyPropertyChangedFor(nameof(LastOrderSummary))]
+    private ReceiptModel? lastReceipt;
+
     public string TotalAmountText => CurrencyHelper.Format(cartStore.TotalAmount);
     public string TotalQuantityText => cartStore.TotalQuantity.ToString();
-    public bool CanCheckout => !cartStore.IsEmpty && !IsLoading;
+    public bool CanCheckout => PosCheckoutRules.CanStartCheckout(IsCreatingOrder, cartStore.IsEmpty);
+    public bool CanEditCart => !IsCreatingOrder;
+    public bool IsCustomerDetailsEnabled => !UseWalkInCustomer;
+    public bool IsCashPayment => string.Equals(SelectedPaymentMethod?.Code, "CASH", StringComparison.OrdinalIgnoreCase);
+    public bool HasCashReceived => TryParseCashReceived(out _);
+    public string CashChangeText => TryParseCashReceived(out var amount)
+        ? CurrencyHelper.Format(PosCheckoutRules.CalculateChange(amount, cartStore.TotalAmount))
+        : "--";
+    public string CheckoutButtonText => IsCreatingOrder ? "Đang tạo đơn..." : "Tạo đơn / Thanh toán";
+    public bool HasLastReceipt => LastReceipt != null;
+    public string LastOrderSummary => LastReceipt == null
+        ? ""
+        : $"Đơn {LastReceipt.OrderCode} · {LastReceipt.FinalText}";
 
     [RelayCommand]
     private async Task SearchAsync()
     {
+        if (IsCreatingOrder)
+        {
+            return;
+        }
+
         try
         {
             IsLoading = true;
-            Message = "";
+            Message = "Đang tìm sách...";
             SearchResults.Clear();
             var books = await bookService.SearchAsync(SearchKeyword);
             foreach (var book in books)
@@ -72,6 +131,14 @@ public partial class PosViewModel : ObservableObject
                 SearchResults.Add(book);
             }
             Message = books.Count == 0 ? "Không tìm thấy sách phù hợp." : $"Tìm thấy {books.Count} sách.";
+        }
+        catch (ApiClientException exception)
+        {
+            Message = FormatApiError(exception, "tìm sách");
+        }
+        catch (HttpRequestException)
+        {
+            Message = "Không thể kết nối backend khi tìm sách. Kiểm tra URL API và mạng.";
         }
         catch (Exception exception)
         {
@@ -86,6 +153,11 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void AddToCart(BookModel book)
     {
+        if (!CanEditCart)
+        {
+            return;
+        }
+
         if (book.StockQuantity.HasValue && book.StockQuantity.Value <= 0)
         {
             Message = "Sách này đã hết tồn kho.";
@@ -93,7 +165,7 @@ public partial class PosViewModel : ObservableObject
         }
 
         var currentQuantity = CartItems.FirstOrDefault(item => item.BookId == book.Id)?.Quantity ?? 0;
-        if (book.StockQuantity.HasValue && currentQuantity >= book.StockQuantity.Value)
+        if (!PosCheckoutRules.CanIncreaseQuantity(currentQuantity, book.StockQuantity))
         {
             Message = "Số lượng trong giỏ đã bằng tồn kho hiện tại.";
             return;
@@ -106,7 +178,12 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void Increase(PosCartItemModel item)
     {
-        if (item.Book.StockQuantity.HasValue && item.Quantity >= item.Book.StockQuantity.Value)
+        if (!CanEditCart)
+        {
+            return;
+        }
+
+        if (!PosCheckoutRules.CanIncreaseQuantity(item.Quantity, item.Book.StockQuantity))
         {
             Message = "Không thể tăng quá tồn kho hiện tại.";
             return;
@@ -118,18 +195,29 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private void Decrease(PosCartItemModel item)
     {
-        cartStore.Decrease(item);
+        if (CanEditCart)
+        {
+            cartStore.Decrease(item);
+        }
     }
 
     [RelayCommand]
     private void Remove(PosCartItemModel item)
     {
-        cartStore.Remove(item);
+        if (CanEditCart)
+        {
+            cartStore.Remove(item);
+        }
     }
 
     [RelayCommand]
     private void ClearCart()
     {
+        if (!CanEditCart)
+        {
+            return;
+        }
+
         cartStore.Clear();
         Message = "Đã xóa giỏ hàng.";
     }
@@ -137,23 +225,63 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private async Task CheckoutAsync()
     {
-        if (cartStore.IsEmpty)
+        if (!PosCheckoutRules.CanStartCheckout(IsCreatingOrder, cartStore.IsEmpty))
         {
-            Message = "Giỏ hàng đang trống.";
+            if (cartStore.IsEmpty)
+            {
+                Message = "Giỏ hàng đang trống.";
+            }
+            return;
+        }
+
+        if (SelectedPaymentMethod == null)
+        {
+            Message = "Chọn phương thức thanh toán trước khi tạo đơn.";
+            return;
+        }
+
+        if (!TryResolveCustomer(out var customerName, out var customerPhone))
+        {
+            return;
+        }
+
+        if (!TryValidateCashReceived(out var cashReceived))
+        {
             return;
         }
 
         try
         {
-            IsLoading = true;
-            Message = "";
+            IsCreatingOrder = true;
+            Message = "Đang tạo đơn POS...";
             var snapshot = CartItems.Select(item => new PosCartItemModel(item.Book, item.Quantity)).ToArray();
-            var response = await posService.CreateOrderAsync(snapshot, SelectedPaymentMethod, CouponCode);
-            var receipt = BuildReceipt(snapshot, response);
+            var response = await posService.CreateOrderAsync(
+                snapshot,
+                SelectedPaymentMethod.Code,
+                CouponCode,
+                customerName,
+                customerPhone);
+            var receipt = receiptFactory.CreateFromPosOrder(
+                snapshot,
+                response,
+                authStore.CurrentUser,
+                customerName,
+                customerPhone,
+                cashReceived);
+
+            LastReceipt = receipt;
             receiptPreviewViewModel.SetReceipt(receipt);
             cartStore.Clear();
-            Message = $"Thanh toán thành công. Mã đơn: {receipt.OrderCode}";
-            navigationService.NavigateTo(receiptPreviewViewModel);
+            ResetSaleInputs();
+            Message = $"Thanh toán thành công. Mã đơn: {receipt.OrderCode}. Tổng tiền: {receipt.FinalText}.";
+        }
+        catch (ApiClientException exception)
+        {
+            Message = FormatApiError(exception, "tạo đơn");
+        }
+        catch (HttpRequestException)
+        {
+            Message = "Không thể kết nối backend khi tạo đơn. Kiểm tra URL API và mạng rồi thử lại.";
         }
         catch (Exception exception)
         {
@@ -161,13 +289,48 @@ public partial class PosViewModel : ObservableObject
         }
         finally
         {
-            IsLoading = false;
+            IsCreatingOrder = false;
         }
     }
 
-    partial void OnIsLoadingChanged(bool value)
+    [RelayCommand]
+    private void OpenLastReceipt()
     {
-        OnPropertyChanged(nameof(CanCheckout));
+        if (LastReceipt == null)
+        {
+            Message = "Chưa có hóa đơn vừa tạo để xuất.";
+            return;
+        }
+
+        receiptPreviewViewModel.SetReceipt(LastReceipt);
+        navigationService.NavigateTo(receiptPreviewViewModel);
+    }
+
+    [RelayCommand]
+    private async Task OpenLastOrderDetailAsync()
+    {
+        if (LastReceipt == null)
+        {
+            Message = "Chưa có đơn vừa tạo để mở chi tiết.";
+            return;
+        }
+
+        if (await orderLookupViewModel.LoadOrderAsync(LastReceipt.OrderId, "Đã mở chi tiết đơn vừa tạo."))
+        {
+            navigationService.NavigateTo(orderLookupViewModel);
+        }
+    }
+
+    partial void OnSelectedPaymentMethodChanged(PaymentMethodOption? value)
+    {
+        OnPropertyChanged(nameof(IsCashPayment));
+        OnPropertyChanged(nameof(CashChangeText));
+    }
+
+    partial void OnCashReceivedTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasCashReceived));
+        OnPropertyChanged(nameof(CashChangeText));
     }
 
     private void RefreshCartTotals()
@@ -175,30 +338,88 @@ public partial class PosViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalAmountText));
         OnPropertyChanged(nameof(TotalQuantityText));
         OnPropertyChanged(nameof(CanCheckout));
+        OnPropertyChanged(nameof(CashChangeText));
     }
 
-    private ReceiptModel BuildReceipt(IReadOnlyList<PosCartItemModel> items, OrderResponse response)
+    private bool TryResolveCustomer(out string? resolvedCustomerName, out string? resolvedCustomerPhone)
     {
-        var total = response.TotalAmount > 0 ? response.TotalAmount : items.Sum(item => item.LineTotal);
-        var final = response.FinalAmount > 0 ? response.FinalAmount : total;
-        return new ReceiptModel
+        resolvedCustomerName = null;
+        resolvedCustomerPhone = null;
+
+        if (UseWalkInCustomer)
         {
-            OrderId = response.OrderId,
-            OrderCode = string.IsNullOrWhiteSpace(response.OrderCode) ? response.OrderId : response.OrderCode!,
-            CreatedAt = DateTimeOffset.Now,
-            StaffName = authStore.CurrentUser?.DisplayName ?? "",
-            PaymentMethod = response.PaymentMethod,
-            Items = items.Select(item => new OrderItemModel
-            {
-                BookId = item.BookId,
-                BookTitle = item.Title,
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
-                LineTotal = item.LineTotal
-            }).ToArray(),
-            TotalAmount = total,
-            DiscountAmount = response.DiscountAmount,
-            FinalAmount = final
+            return true;
+        }
+
+        resolvedCustomerName = NormalizeOptional(CustomerName);
+        resolvedCustomerPhone = NormalizeOptional(CustomerPhone);
+        if (resolvedCustomerPhone == null)
+        {
+            return true;
+        }
+
+        var digitCount = resolvedCustomerPhone.Count(char.IsDigit);
+        if (!PhoneInputPattern.IsMatch(resolvedCustomerPhone) || digitCount is < 8 or > 15)
+        {
+            Message = "Số điện thoại chỉ nên gồm 8-15 chữ số; có thể dùng dấu +, khoảng trắng hoặc gạch nối.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryValidateCashReceived(out decimal? cashReceived)
+    {
+        cashReceived = null;
+        if (!IsCashPayment || string.IsNullOrWhiteSpace(CashReceivedText))
+        {
+            return true;
+        }
+
+        if (!TryParseCashReceived(out var parsedAmount))
+        {
+            Message = "Tiền khách đưa phải là một số hợp lệ.";
+            return false;
+        }
+
+        if (!PosCheckoutRules.HasEnoughCash(parsedAmount, cartStore.TotalAmount))
+        {
+            Message = "Tiền khách đưa chưa đủ để hoàn tất thanh toán tiền mặt.";
+            return false;
+        }
+
+        cashReceived = parsedAmount;
+        return true;
+    }
+
+    private bool TryParseCashReceived(out decimal amount)
+    {
+        return PosCheckoutRules.TryParseCashReceived(CashReceivedText, out amount);
+    }
+
+    private void ResetSaleInputs()
+    {
+        CouponCode = null;
+        CustomerName = null;
+        CustomerPhone = null;
+        CashReceivedText = "";
+        UseWalkInCustomer = true;
+        SelectedPaymentMethod = PaymentMethods[0];
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string FormatApiError(ApiClientException exception, string action)
+    {
+        return exception.StatusCode switch
+        {
+            HttpStatusCode.BadRequest => $"Không thể {action}. {exception.Message}",
+            HttpStatusCode.Unauthorized => "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.",
+            HttpStatusCode.Forbidden => "Bạn không có quyền STAFF/ADMIN để thực hiện thao tác POS.",
+            _ => $"Không thể {action}. {exception.Message}"
         };
     }
 }

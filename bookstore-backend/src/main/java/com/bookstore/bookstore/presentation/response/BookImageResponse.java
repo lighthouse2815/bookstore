@@ -6,6 +6,7 @@ import java.util.UUID;
 public record BookImageResponse(
         UUID id,
         UUID bookId,
+        UUID fileAssetId,
         String imageUrl,
         Boolean primaryImage,
         Integer sortOrder,

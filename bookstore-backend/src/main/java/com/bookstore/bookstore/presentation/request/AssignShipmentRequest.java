@@ -4,9 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record AssignShipmentRequest(
-        @NotNull(message = "orderId khong duoc null")
+        @NotNull(message = "orderId không được null")
         UUID orderId,
-        @NotNull(message = "shipperId khong duoc null")
+        @NotNull(message = "shipperId không được null")
         UUID shipperId
 ) {
 }
+

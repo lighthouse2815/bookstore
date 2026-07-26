@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
+import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -28,9 +31,17 @@ public class OrderItemJpaEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private OrderJpaEntity order;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "item_type", length = 32)
+    private PurchaseItemType itemType;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "book_id", nullable = false)
     private BookJpaEntity book;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "digital_asset_id")
+    private DigitalAssetJpaEntity digitalAsset;
 
     @Column(name = "book_title", nullable = false, length = 255)
     private String bookTitle;

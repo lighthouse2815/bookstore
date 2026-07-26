@@ -17,9 +17,12 @@ import com.bookstore.mobile.feature.book.data.dto.PublisherDto
 import com.bookstore.mobile.feature.cart.data.dto.AddToCartRequest
 import com.bookstore.mobile.feature.cart.data.dto.CartDto
 import com.bookstore.mobile.feature.cart.data.dto.UpdateCartItemRequest
+import com.bookstore.mobile.feature.checkout.data.dto.BestCouponSuggestionDto
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutRequest
 import com.bookstore.mobile.feature.checkout.data.dto.CheckoutResponse
 import com.bookstore.mobile.feature.order.data.dto.OrderDto
+import com.bookstore.mobile.feature.order.data.dto.CancelOrderRequest
+import com.bookstore.mobile.feature.order.data.dto.OrderTimelineEventDto
 import com.bookstore.mobile.feature.profile.data.dto.CreateUserAddressRequest
 import com.bookstore.mobile.feature.profile.data.dto.ProfileDto
 import com.bookstore.mobile.feature.profile.data.dto.UpdateProfileRequest
@@ -29,6 +32,7 @@ import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -92,17 +96,23 @@ interface ApiService {
     @POST("api/cart/items")
     suspend fun addToCart(@Body request: AddToCartRequest): ApiResponse<CartDto>
 
-    @PUT("api/cart/items/{bookId}")
+    @PUT("api/cart/items/{itemId}")
     suspend fun updateCartItem(
-        @Path("bookId") bookId: String,
+        @Path("itemId") itemId: String,
         @Body request: UpdateCartItemRequest,
     ): ApiResponse<CartDto>
 
-    @DELETE("api/cart/items/{bookId}")
-    suspend fun removeCartItem(@Path("bookId") bookId: String): ApiResponse<JsonElement>
+    @DELETE("api/cart/items/{itemId}")
+    suspend fun removeCartItem(@Path("itemId") itemId: String): ApiResponse<JsonElement>
 
     @DELETE("api/cart/items")
     suspend fun clearCart(): ApiResponse<JsonElement>
+
+    @GET("api/cart/best-coupon")
+    suspend fun getBestCoupon(
+        @Query("itemIds") itemIds: List<String>,
+        @Query("shippingMethod") shippingMethod: String,
+    ): ApiResponse<BestCouponSuggestionDto>
 
     @GET("api/user-addresses")
     suspend fun getAddresses(): ApiResponse<List<UserAddressDto>>
@@ -111,11 +121,23 @@ interface ApiService {
     suspend fun createAddress(@Body request: CreateUserAddressRequest): ApiResponse<UserAddressDto>
 
     @POST("api/orders/checkout")
-    suspend fun checkout(@Body request: CheckoutRequest): ApiResponse<CheckoutResponse>
+    suspend fun checkout(
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CheckoutRequest,
+    ): ApiResponse<CheckoutResponse>
 
     @GET("api/orders/my")
     suspend fun getOrders(): ApiResponse<List<OrderDto>>
 
     @GET("api/orders/{id}")
     suspend fun getOrder(@Path("id") id: String): ApiResponse<OrderDto>
+
+    @GET("api/orders/{id}/timeline")
+    suspend fun getOrderTimeline(@Path("id") id: String): ApiResponse<List<OrderTimelineEventDto>>
+
+    @PUT("api/orders/{id}/cancel")
+    suspend fun cancelOrder(
+        @Path("id") id: String,
+        @Body request: CancelOrderRequest,
+    ): ApiResponse<OrderDto>
 }

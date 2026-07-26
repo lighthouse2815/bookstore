@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import { getBookReferences } from '@/services/book-service'
 import {
   createAuthor,
@@ -15,6 +16,9 @@ import {
   deleteAuthor,
   deleteCategory,
   deletePublisher,
+  getAuthorsPage,
+  getCategoriesPage,
+  getPublishersPage,
   updateAuthor,
   updateCategory,
   updatePublisher,
@@ -36,18 +40,42 @@ export type ReferenceFormState = {
   id: string | null
   name: string
   description: string
+  categoryCode: string
+  categoryNameVi: string
+  categoryDescriptionVi: string
+  categoryNameEn: string
+  categoryDescriptionEn: string
+  avatarFileAssetId: string
+  avatarPreviewUrl: string
+  referenceImageFileAssetId: string
+  referenceImagePreviewUrl: string
+  birthYear: string
+  deathYear: string
 }
 
 const initialFormState: ReferenceFormState = {
   id: null,
   name: '',
   description: '',
+  categoryCode: '',
+  categoryNameVi: '',
+  categoryDescriptionVi: '',
+  categoryNameEn: '',
+  categoryDescriptionEn: '',
+  avatarFileAssetId: '',
+  avatarPreviewUrl: '',
+  referenceImageFileAssetId: '',
+  referenceImagePreviewUrl: '',
+  birthYear: '',
+  deathYear: '',
 }
+
+const PAGE_SIZE = 10
 
 export function useAdminReferenceManagementPage(
   sectionKey: ReferenceSectionKey,
 ) {
-  const { t, formatDate, formatNumber } = useLanguage()
+  const { t, language, formatDate, formatNumber } = useLanguage()
   const [items, setItems] = useState<ReferenceItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +85,9 @@ export function useAdminReferenceManagementPage(
   const [selectedItem, setSelectedItem] = useState<ReferenceItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isUploadingReferenceImage, setIsUploadingReferenceImage] = useState(false)
+  const [page, setPage] = useState(0)
+  const [serverTotalCount, setServerTotalCount] = useState(0)
 
   const filteredItems = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase()
@@ -66,12 +97,43 @@ export function useAdminReferenceManagementPage(
     }
 
     return items.filter((item) =>
-      [item.name, getReferenceDescription(sectionKey, item)]
+      [
+        item.name,
+        getReferenceDescription(sectionKey, item),
+        ...(sectionKey === 'categories' && 'translations' in item
+          ? [
+              item.code,
+              item.translations.vi?.name,
+              item.translations.vi?.description,
+              item.translations.en?.name,
+              item.translations.en?.description,
+            ]
+          : []),
+      ]
         .join(' ')
         .toLowerCase()
         .includes(keyword),
     )
   }, [items, searchTerm, sectionKey])
+
+  const paginatedItems = useMemo(
+    () =>
+      searchTerm.trim()
+        ? filteredItems.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+        : filteredItems,
+    [filteredItems, page, searchTerm],
+  )
+
+  const totalCount = searchTerm.trim()
+    ? filteredItems.length
+    : serverTotalCount
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(totalCount / PAGE_SIZE) - 1)
+    if (page > lastPage) {
+      setPage(lastPage)
+    }
+  }, [page, totalCount])
 
   useEffect(() => {
     let isCancelled = false
@@ -80,13 +142,22 @@ export function useAdminReferenceManagementPage(
       setIsLoading(true)
 
       try {
-        const response = await getBookReferences()
-
-        if (isCancelled) {
-          return
+        if (searchTerm.trim()) {
+          const response = await getBookReferences()
+          const sectionItems = getSectionItems(sectionKey, response)
+          if (isCancelled) {
+            return
+          }
+          setItems(sectionItems)
+          setServerTotalCount(sectionItems.length)
+        } else {
+          const response = await getSectionPage(sectionKey, page, PAGE_SIZE)
+          if (isCancelled) {
+            return
+          }
+          setItems(response.items)
+          setServerTotalCount(response.totalCount)
         }
-
-        setItems(getSectionItems(sectionKey, response))
         setError(null)
       } catch (currentError) {
         if (isCancelled) {
@@ -106,7 +177,7 @@ export function useAdminReferenceManagementPage(
     return () => {
       isCancelled = true
     }
-  }, [sectionKey, t])
+  }, [page, searchTerm, sectionKey, t])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -132,6 +203,7 @@ export function useAdminReferenceManagementPage(
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
   }
 
   function handleFormChange(field: keyof ReferenceFormState, value: string) {
@@ -139,6 +211,41 @@ export function useAdminReferenceManagementPage(
       ...currentForm,
       [field]: value,
     }))
+  }
+
+  async function handleReferenceImageFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    setIsUploadingReferenceImage(true)
+
+    try {
+      const purpose = getReferenceImagePurpose(sectionKey)
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose,
+        visibility: 'PUBLIC',
+        authorId: sectionKey === 'authors' ? form.id ?? undefined : undefined,
+      })
+
+      setForm((currentForm) => ({
+        ...currentForm,
+        ...(sectionKey === 'authors'
+          ? {
+              avatarFileAssetId: uploadedFile.id,
+              avatarPreviewUrl: uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            }
+          : {
+              referenceImageFileAssetId: uploadedFile.id,
+              referenceImagePreviewUrl:
+                uploadedFile.publicUrl ?? URL.createObjectURL(file),
+            }),
+      }))
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError, t('checkout.error')))
+    } finally {
+      setIsUploadingReferenceImage(false)
+    }
   }
 
   function resetDialog() {
@@ -172,6 +279,42 @@ export function useAdminReferenceManagementPage(
       id: item.id,
       name: item.name,
       description: getReferenceDescription(sectionKey, item),
+      categoryCode:
+        sectionKey === 'categories' && 'code' in item ? item.code : '',
+      categoryNameVi:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.vi?.name ?? item.name
+          : '',
+      categoryDescriptionVi:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.vi?.description ?? item.description ?? ''
+          : '',
+      categoryNameEn:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.en?.name ?? ''
+          : '',
+      categoryDescriptionEn:
+        sectionKey === 'categories' && 'translations' in item
+          ? item.translations.en?.description ?? ''
+          : '',
+      avatarFileAssetId:
+        sectionKey === 'authors' && 'avatarFileAssetId' in item
+          ? item.avatarFileAssetId ?? ''
+          : '',
+      avatarPreviewUrl:
+        sectionKey === 'authors' && 'avatarUrl' in item
+          ? item.avatarUrl ?? ''
+          : '',
+      referenceImageFileAssetId: getReferenceImageFileAssetId(sectionKey, item),
+      referenceImagePreviewUrl: getReferenceImageUrl(sectionKey, item),
+      birthYear:
+        sectionKey === 'authors' && 'birthYear' in item && item.birthYear
+          ? String(item.birthYear)
+          : '',
+      deathYear:
+        sectionKey === 'authors' && 'deathYear' in item && item.deathYear
+          ? String(item.deathYear)
+          : '',
     })
     setDialogMode('edit')
   }
@@ -193,8 +336,16 @@ export function useAdminReferenceManagementPage(
     setIsLoading(true)
 
     try {
-      const response = await getBookReferences()
-      setItems(getSectionItems(sectionKey, response))
+      if (searchTerm.trim()) {
+        const response = await getBookReferences()
+        const sectionItems = getSectionItems(sectionKey, response)
+        setItems(sectionItems)
+        setServerTotalCount(sectionItems.length)
+      } else {
+        const response = await getSectionPage(sectionKey, page, PAGE_SIZE)
+        setItems(response.items)
+        setServerTotalCount(response.totalCount)
+      }
       setError(null)
     } catch (currentError) {
       setError(getErrorMessage(currentError, t('checkout.error')))
@@ -213,13 +364,15 @@ export function useAdminReferenceManagementPage(
         case 'categories':
           if (form.id) {
             await updateCategory(form.id, {
-              name: form.name.trim(),
-              description: form.description.trim() || null,
+              code: form.categoryCode.trim().toUpperCase(),
+              translations: buildCategoryTranslations(form),
+              imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           } else {
             await createCategory({
-              name: form.name.trim(),
-              description: form.description.trim() || null,
+              code: form.categoryCode.trim().toUpperCase(),
+              translations: buildCategoryTranslations(form),
+              imageFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           }
           break
@@ -228,11 +381,17 @@ export function useAdminReferenceManagementPage(
             await updateAuthor(form.id, {
               name: form.name.trim(),
               biography: form.description.trim() || null,
+              avatarFileAssetId: toNullableString(form.avatarFileAssetId),
+              birthYear: toNullableNumber(form.birthYear),
+              deathYear: toNullableNumber(form.deathYear),
             })
           } else {
             await createAuthor({
               name: form.name.trim(),
               biography: form.description.trim() || null,
+              avatarFileAssetId: toNullableString(form.avatarFileAssetId),
+              birthYear: toNullableNumber(form.birthYear),
+              deathYear: toNullableNumber(form.deathYear),
             })
           }
           break
@@ -241,11 +400,13 @@ export function useAdminReferenceManagementPage(
             await updatePublisher(form.id, {
               name: form.name.trim(),
               description: form.description.trim() || null,
+              logoFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           } else {
             await createPublisher({
               name: form.name.trim(),
               description: form.description.trim() || null,
+              logoFileAssetId: toNullableString(form.referenceImageFileAssetId),
             })
           }
           break
@@ -293,6 +454,7 @@ export function useAdminReferenceManagementPage(
 
   return {
     t,
+    language,
     formatDate,
     formatNumber,
     items,
@@ -305,9 +467,15 @@ export function useAdminReferenceManagementPage(
     isSubmitting,
     isDeleting,
     filteredItems,
+    paginatedItems,
+    totalCount,
+    page,
+    pageSize: PAGE_SIZE,
     isDialogLocked: dialogMode === 'delete' && isDeleting,
+    isUploadingReferenceImage,
     handleSearchTermChange,
     handleFormChange,
+    handleReferenceImageFileChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,
@@ -316,6 +484,76 @@ export function useAdminReferenceManagementPage(
     openDeleteDialog,
     handleSubmit,
     handleDeleteConfirm,
+    handlePageChange: setPage,
+  }
+}
+
+function buildCategoryTranslations(form: ReferenceFormState) {
+  return [
+    {
+      locale: 'vi' as const,
+      name: form.categoryNameVi.trim(),
+      description: form.categoryDescriptionVi.trim() || null,
+    },
+    {
+      locale: 'en' as const,
+      name: form.categoryNameEn.trim(),
+      description: form.categoryDescriptionEn.trim() || null,
+    },
+  ]
+}
+
+function getReferenceImagePurpose(sectionKey: ReferenceSectionKey) {
+  switch (sectionKey) {
+    case 'categories':
+      return 'CATEGORY_IMAGE' as const
+    case 'authors':
+      return 'AUTHOR_AVATAR' as const
+    case 'publishers':
+      return 'PUBLISHER_LOGO' as const
+  }
+}
+
+export function getReferenceImageFileAssetId(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+) {
+  if (sectionKey === 'authors' && 'avatarFileAssetId' in item) {
+    return item.avatarFileAssetId ?? ''
+  }
+  if (sectionKey === 'categories' && 'imageFileAssetId' in item) {
+    return item.imageFileAssetId ?? ''
+  }
+  if (sectionKey === 'publishers' && 'logoFileAssetId' in item) {
+    return item.logoFileAssetId ?? ''
+  }
+  return ''
+}
+
+export function getReferenceImageUrl(
+  sectionKey: ReferenceSectionKey,
+  item: ReferenceItem,
+) {
+  if (sectionKey === 'authors' && 'avatarUrl' in item) {
+    return item.avatarUrl ?? ''
+  }
+  if (sectionKey === 'categories' && 'imageUrl' in item) {
+    return item.imageUrl ?? ''
+  }
+  if (sectionKey === 'publishers' && 'logoUrl' in item) {
+    return item.logoUrl ?? ''
+  }
+  return ''
+}
+
+function getSectionPage(sectionKey: ReferenceSectionKey, page: number, size: number) {
+  switch (sectionKey) {
+    case 'categories':
+      return getCategoriesPage({ page, size })
+    case 'authors':
+      return getAuthorsPage({ page, size })
+    case 'publishers':
+      return getPublishersPage({ page, size })
   }
 }
 
@@ -342,4 +580,19 @@ export function getReferenceDescription(
   }
 
   return ('description' in item ? item.description : null) ?? ''
+}
+
+function toNullableString(value: string) {
+  const trimmedValue = value.trim()
+  return trimmedValue === '' ? null : trimmedValue
+}
+
+function toNullableNumber(value: string) {
+  const trimmedValue = value.trim()
+  if (trimmedValue === '') {
+    return null
+  }
+
+  const parsedValue = Number(trimmedValue)
+  return Number.isFinite(parsedValue) ? parsedValue : null
 }

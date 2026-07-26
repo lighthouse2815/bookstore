@@ -1,14 +1,17 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IAuthorRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Author;
 import com.bookstore.bookstore.infrastructure.persistence.entity.AuthorJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.AuthorPersistenceMapper;
 import com.bookstore.bookstore.infrastructure.persistence.repository.AuthorJpaRepository;
+import com.bookstore.bookstore.infrastructure.persistence.repository.FileAssetJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Repository;
 public class AuthorRepositoryAdapter implements IAuthorRepository {
 
     private final AuthorJpaRepository authorJpaRepository;
+    private final FileAssetJpaRepository fileAssetJpaRepository;
     private final AuthorPersistenceMapper authorPersistenceMapper;
 
     @Override
@@ -23,6 +27,17 @@ public class AuthorRepositoryAdapter implements IAuthorRepository {
         return authorJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(authorPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<Author> findPageActive(int page, int size) {
+        var resultPage = authorJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                resultPage.stream().map(authorPersistenceMapper::toDomain).toList(),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
@@ -64,7 +79,10 @@ public class AuthorRepositoryAdapter implements IAuthorRepository {
     public Author save(Author author) {
         AuthorJpaEntity entity = authorJpaRepository.findById(author.getId())
                 .orElseGet(AuthorJpaEntity::new);
-        authorPersistenceMapper.copyToEntity(entity, author);
+        var avatarFileAsset = author.getAvatarFileAssetId() == null
+                ? null
+                : fileAssetJpaRepository.getReferenceById(author.getAvatarFileAssetId());
+        authorPersistenceMapper.copyToEntity(entity, author, avatarFileAsset);
         return authorPersistenceMapper.toDomain(authorJpaRepository.save(entity));
     }
 

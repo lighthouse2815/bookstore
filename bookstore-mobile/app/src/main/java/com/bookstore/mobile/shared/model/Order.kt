@@ -2,6 +2,7 @@ package com.bookstore.mobile.shared.model
 
 data class Order(
     val id: String,
+    val orderCode: String,
     val items: List<OrderItem>,
     val productTotal: Double,
     val shippingFee: Double,
@@ -34,4 +35,27 @@ data class CheckoutResult(
     val paymentStatus: String,
     val totalAmount: Double,
     val transferContent: String?,
+    val orderStatus: String?,
+)
+
+data class BestCouponSuggestion(
+    val available: Boolean,
+    val couponCode: String?,
+    val couponType: String?,
+    val discountAmount: Double,
+    val finalAmountEstimate: Double,
+    val label: String?,
+    val reason: String?,
+)
+
+data class OrderTimelineEvent(
+    val id: String,
+    val eventType: String,
+    val title: String,
+    val description: String?,
+    val oldStatus: String?,
+    val newStatus: String?,
+    val actorName: String?,
+    val actorRole: String?,
+    val createdAt: String,
 )

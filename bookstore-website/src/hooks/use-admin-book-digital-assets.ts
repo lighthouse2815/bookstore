@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
+import { uploadManagedFile } from '@/services/file-service'
 import {
   createAdminDigitalAsset,
   deleteAdminDigitalAsset,
@@ -17,14 +18,15 @@ import { getErrorMessage } from '@/utils'
 type DigitalAssetFormState = {
   format: DigitalAssetFormat
   title: string
+  fileAssetId: string
   fileName: string
-  storageKey: string
   mimeType: string
   fileSize: string
   checksum: string
-  sampleStorageKey: string
+  sampleFileAssetId: string
   price: string
   downloadAllowed: boolean
+  purchaseAllowed: boolean
   published: boolean
 }
 
@@ -33,19 +35,20 @@ type DigitalAssetActionMode = 'create' | 'edit' | 'delete' | null
 const initialFormState: DigitalAssetFormState = {
   format: 'PDF',
   title: '',
+  fileAssetId: '',
   fileName: '',
-  storageKey: '',
   mimeType: '',
   fileSize: '',
   checksum: '',
-  sampleStorageKey: '',
+  sampleFileAssetId: '',
   price: '',
   downloadAllowed: false,
+  purchaseAllowed: true,
   published: false,
 }
 
 export function useAdminBookDigitalAssets(bookId?: string) {
-  const { language } = useLanguage()
+  const { t } = useLanguage()
   const [assets, setAssets] = useState<DigitalAssetResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,6 +59,8 @@ export function useAdminBookDigitalAssets(bookId?: string) {
   const [form, setForm] = useState<DigitalAssetFormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isUploadingMainFile, setIsUploadingMainFile] = useState(false)
+  const [isUploadingSampleFile, setIsUploadingSampleFile] = useState(false)
 
   useEffect(() => {
     if (!bookId) {
@@ -64,6 +69,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
       setIsLoading(false)
       return
     }
+    const resolvedBookId = bookId
 
     let isCancelled = false
 
@@ -71,7 +77,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
       setIsLoading(true)
 
       try {
-        const response = await getAdminDigitalAssetsByBookId(bookId)
+        const response = await getAdminDigitalAssetsByBookId(resolvedBookId)
 
         if (isCancelled) {
           return
@@ -130,6 +136,60 @@ export function useAdminBookDigitalAssets(bookId?: string) {
     }))
   }
 
+  async function handleMainFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    setIsUploadingMainFile(true)
+
+    try {
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'EBOOK_FILE',
+        visibility: 'PRIVATE',
+        digitalAssetId: actionMode === 'edit' ? selectedAsset?.id : undefined,
+      })
+
+      setForm((currentForm) => ({
+        ...currentForm,
+        fileAssetId: uploadedFile.id,
+        fileName: uploadedFile.originalName ?? file.name,
+        mimeType: uploadedFile.contentType ?? file.type,
+        fileSize: String(uploadedFile.sizeBytes ?? file.size),
+        checksum: uploadedFile.checksumSha256 ?? '',
+      }))
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError))
+    } finally {
+      setIsUploadingMainFile(false)
+    }
+  }
+
+  async function handleSampleFileChange(file: File | null) {
+    if (!file) {
+      return
+    }
+
+    setIsUploadingSampleFile(true)
+
+    try {
+      const uploadedFile = await uploadManagedFile(file, {
+        purpose: 'SAMPLE_FILE',
+        visibility: 'PRIVATE',
+        digitalAssetId: actionMode === 'edit' ? selectedAsset?.id : undefined,
+      })
+
+      setForm((currentForm) => ({
+        ...currentForm,
+        sampleFileAssetId: uploadedFile.id,
+      }))
+    } catch (currentError) {
+      toast.error(getErrorMessage(currentError))
+    } finally {
+      setIsUploadingSampleFile(false)
+    }
+  }
+
   async function reloadAssets() {
     if (!bookId) {
       return
@@ -156,11 +216,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
     const payload = buildRequestPayload(form)
 
     if (!payload) {
-      toast.error(
-        language === 'vi'
-          ? 'Vui lòng kiểm tra lại các trường bắt buộc, giá và dung lượng tệp.'
-          : 'Please check the required fields, price, and file size.',
-      )
+      toast.error(t('admin.digitalAssets.validationError'))
       return
     }
 
@@ -169,18 +225,10 @@ export function useAdminBookDigitalAssets(bookId?: string) {
     try {
       if (actionMode === 'edit' && selectedAsset) {
         await updateAdminDigitalAsset(bookId, selectedAsset.id, payload)
-        toast.success(
-          language === 'vi'
-            ? 'Đã cập nhật digital asset.'
-            : 'Digital asset updated.',
-        )
+        toast.success(t('admin.digitalAssets.updatedSuccess'))
       } else {
         await createAdminDigitalAsset(bookId, payload)
-        toast.success(
-          language === 'vi'
-            ? 'Đã tạo digital asset.'
-            : 'Digital asset created.',
-        )
+        toast.success(t('admin.digitalAssets.createdSuccess'))
       }
 
       await reloadAssets()
@@ -201,9 +249,7 @@ export function useAdminBookDigitalAssets(bookId?: string) {
 
     try {
       await deleteAdminDigitalAsset(bookId, selectedAsset.id)
-      toast.success(
-        language === 'vi' ? 'Đã xóa digital asset.' : 'Digital asset deleted.',
-      )
+      toast.success(t('admin.digitalAssets.deletedSuccess'))
       await reloadAssets()
       closeAction()
     } catch (currentError) {
@@ -222,11 +268,15 @@ export function useAdminBookDigitalAssets(bookId?: string) {
     form,
     isSubmitting,
     isDeleting,
+    isUploadingMainFile,
+    isUploadingSampleFile,
     openCreateForm,
     openEditForm,
     openDeleteDialog,
     closeAction,
     handleFormChange,
+    handleMainFileChange,
+    handleSampleFileChange,
     submitForm,
     confirmDelete,
   }
@@ -236,14 +286,15 @@ function createFormState(asset: DigitalAssetResponse): DigitalAssetFormState {
   return {
     format: asset.format,
     title: asset.title,
+    fileAssetId: asset.fileAssetId,
     fileName: asset.fileName,
-    storageKey: asset.storageKey,
     mimeType: asset.mimeType,
     fileSize: String(asset.fileSize),
     checksum: asset.checksum ?? '',
-    sampleStorageKey: asset.sampleStorageKey ?? '',
+    sampleFileAssetId: asset.sampleFileAssetId ?? '',
     price: String(asset.price),
     downloadAllowed: asset.downloadAllowed,
+    purchaseAllowed: asset.purchaseAllowed,
     published: asset.published,
   }
 }
@@ -251,38 +302,29 @@ function createFormState(asset: DigitalAssetResponse): DigitalAssetFormState {
 function buildRequestPayload(
   form: DigitalAssetFormState,
 ): UpsertDigitalAssetRequest | null {
-  if (
-    form.title.trim() === '' ||
-    form.fileName.trim() === '' ||
-    form.storageKey.trim() === '' ||
-    form.mimeType.trim() === ''
-  ) {
+  if (form.title.trim() === '' || form.fileAssetId.trim() === '') {
     return null
   }
 
-  const fileSize = Number(form.fileSize)
   const price = Number(form.price)
 
-  if (
-    Number.isNaN(fileSize) ||
-    fileSize < 0 ||
-    Number.isNaN(price) ||
-    price < 0
-  ) {
+  if (Number.isNaN(price) || price < 0) {
     return null
   }
 
   return {
     format: form.format,
     title: form.title,
-    fileName: form.fileName,
-    storageKey: form.storageKey,
-    mimeType: form.mimeType,
-    fileSize,
-    checksum: form.checksum,
-    sampleStorageKey: form.sampleStorageKey,
+    fileAssetId: form.fileAssetId,
+    sampleFileAssetId: toNullableString(form.sampleFileAssetId),
     price,
     downloadAllowed: form.downloadAllowed,
+    purchaseAllowed: form.purchaseAllowed,
     published: form.published,
   }
+}
+
+function toNullableString(value: string) {
+  const trimmedValue = value.trim()
+  return trimmedValue === '' ? null : trimmedValue
 }

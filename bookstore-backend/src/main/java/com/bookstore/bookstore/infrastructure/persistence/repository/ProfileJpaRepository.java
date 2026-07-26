@@ -9,24 +9,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProfileJpaRepository extends JpaRepository<ProfileJpaEntity, UUID> {
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     List<ProfileJpaEntity> findAllByDeletedAtIsNull();
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     List<ProfileJpaEntity> findAll();
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     Optional<ProfileJpaEntity> findByIdAndDeletedAtIsNull(UUID profileId);
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     Optional<ProfileJpaEntity> findById(UUID profileId);
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     Optional<ProfileJpaEntity> findByUserIdAndDeletedAtIsNull(UUID userId);
 
     boolean existsById(UUID profileId);
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "avatarFileAsset"})
     Optional<ProfileJpaEntity> findByUserId(UUID userId);
 
     boolean existsByUserId(UUID userId);

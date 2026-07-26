@@ -29,7 +29,8 @@ import {
   YAxis,
 } from 'recharts'
 import { Badge } from '@/components/common/badge'
-import { Button } from '@/components/common/button'
+import { Button, buttonVariants } from '@/components/common/button'
+import { StatePanel } from '@/components/common/page-shell'
 import {
   Select,
   SelectContent,
@@ -95,7 +96,6 @@ export default function AdminDashboard() {
     hasData,
     refresh,
   } = useAdminDashboardPage()
-
   const copy = dashboardCopy[language]
   const summaryCards = getSummaryCards(summary, copy, {
     formatCurrency,
@@ -131,21 +131,19 @@ export default function AdminDashboard() {
   if (!isLoading && error && !hasData) {
     return (
       <AdminLayout>
-        <div className="flex min-h-full items-center justify-center">
-          <div className="w-full max-w-2xl rounded-[28px] border border-destructive/20 bg-card p-8 text-center shadow-sm">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="h-7 w-7" />
-            </div>
-            <h1 className="mt-5 font-heading text-3xl font-bold text-foreground">
-              {t('common.dashboard')}
-            </h1>
-            <p className="mt-3 text-base text-muted-foreground">{error}</p>
-            <Button className="mt-6" onClick={() => void refresh()}>
+        <StatePanel
+          icon={<AlertTriangle className="h-8 w-8 text-destructive" />}
+          title={t('common.dashboard')}
+          description={error}
+          tone="error"
+          minHeightClassName="min-h-[420px]"
+          action={
+            <Button className="rounded-2xl" onClick={() => void refresh()}>
               <RefreshCw className="h-4 w-4" />
               {copy.retry}
             </Button>
-          </div>
-        </div>
+          }
+        />
       </AdminLayout>
     )
   }
@@ -205,6 +203,23 @@ export default function AdminDashboard() {
                 />
               ))}
         </section>
+
+        <DashboardSectionCard
+          title={t('admin.reportsPage.dashboardTitle')}
+          description={t('admin.reportsPage.dashboardDescription')}
+          action={
+            <Link
+              to="/admin/reports"
+              className={cn(buttonVariants(), 'h-11 rounded-2xl px-4')}
+            >
+              {t('admin.reportsPage.openCenter')}
+            </Link>
+          }
+        >
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            {t('admin.reportsPage.dashboardHint')}
+          </p>
+        </DashboardSectionCard>
 
         <DashboardSectionCard
           title={copy.sections.revenue}
@@ -633,9 +648,7 @@ function StatCard({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[220px] items-center justify-center rounded-[24px] border border-dashed border-border/70 bg-background/50 px-6 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
+    <StatePanel description={message} minHeightClassName="min-h-[220px]" />
   )
 }
 
@@ -693,10 +706,16 @@ function getSummaryCards(
   },
 ) {
   const safeSummary: DashboardSummary = summary ?? {
+    totalRevenue: 0,
     todayRevenue: 0,
     monthRevenue: 0,
+    totalOrders: 0,
     todayOrders: 0,
     pendingOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    totalUsers: 0,
+    totalBooks: 0,
     lowStockBooks: 0,
     newCustomers: 0,
     newReviews: 0,
@@ -705,56 +724,56 @@ function getSummaryCards(
 
   return [
     {
-      label: copy.stats.todayRevenue,
-      value: helpers.formatCurrency(safeSummary.todayRevenue),
+      label: copy.stats.totalRevenue,
+      value: helpers.formatCurrency(safeSummary.totalRevenue),
       icon: Wallet,
       accentClassName: 'bg-primary/12 text-primary',
     },
     {
-      label: copy.stats.monthRevenue,
-      value: helpers.formatCurrency(safeSummary.monthRevenue),
-      icon: TrendingUp,
-      accentClassName:
-        'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/18 dark:text-emerald-300',
-    },
-    {
-      label: copy.stats.todayOrders,
-      value: helpers.formatNumber(safeSummary.todayOrders),
+      label: copy.stats.totalOrders,
+      value: helpers.formatNumber(safeSummary.totalOrders),
       icon: ShoppingCart,
       accentClassName:
-        'bg-sky-500/12 text-sky-600 dark:bg-sky-500/18 dark:text-sky-300',
+        'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/18 dark:text-emerald-300',
     },
     {
       label: copy.stats.pendingOrders,
       value: helpers.formatNumber(safeSummary.pendingOrders),
       icon: Clock3,
       accentClassName:
+        'bg-sky-500/12 text-sky-600 dark:bg-sky-500/18 dark:text-sky-300',
+    },
+    {
+      label: copy.stats.deliveredOrders,
+      value: helpers.formatNumber(safeSummary.deliveredOrders),
+      icon: TrendingUp,
+      accentClassName:
         'bg-amber-500/12 text-amber-600 dark:bg-amber-500/18 dark:text-amber-300',
     },
     {
-      label: copy.stats.lowStockBooks,
-      value: helpers.formatNumber(safeSummary.lowStockBooks),
-      icon: Package,
+      label: copy.stats.cancelledOrders,
+      value: helpers.formatNumber(safeSummary.cancelledOrders),
+      icon: AlertTriangle,
       accentClassName:
         'bg-rose-500/12 text-rose-600 dark:bg-rose-500/18 dark:text-rose-300',
     },
     {
-      label: copy.stats.newCustomers,
-      value: helpers.formatNumber(safeSummary.newCustomers),
+      label: copy.stats.totalUsers,
+      value: helpers.formatNumber(safeSummary.totalUsers),
       icon: Users,
       accentClassName:
         'bg-indigo-500/12 text-indigo-600 dark:bg-indigo-500/18 dark:text-indigo-300',
     },
     {
-      label: copy.stats.newReviews,
-      value: helpers.formatNumber(safeSummary.newReviews),
+      label: copy.stats.totalBooks,
+      value: helpers.formatNumber(safeSummary.totalBooks),
       icon: Star,
       accentClassName:
         'bg-fuchsia-500/12 text-fuchsia-600 dark:bg-fuchsia-500/18 dark:text-fuchsia-300',
     },
     {
-      label: copy.stats.activeCoupons,
-      value: helpers.formatNumber(safeSummary.activeCoupons),
+      label: copy.stats.lowStockBooks,
+      value: helpers.formatNumber(safeSummary.lowStockBooks),
       icon: Ticket,
       accentClassName:
         'bg-cyan-500/12 text-cyan-600 dark:bg-cyan-500/18 dark:text-cyan-300',
@@ -819,14 +838,14 @@ type DashboardCopy = {
     recentOrders: string
   }
   stats: {
-    todayRevenue: string
-    monthRevenue: string
-    todayOrders: string
+    totalRevenue: string
+    totalOrders: string
     pendingOrders: string
+    deliveredOrders: string
+    cancelledOrders: string
+    totalUsers: string
+    totalBooks: string
     lowStockBooks: string
-    newCustomers: string
-    newReviews: string
-    activeCoupons: string
   }
   columns: {
     orderId: string
@@ -839,11 +858,11 @@ type DashboardCopy = {
   }
 }
 
-const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
+const dashboardCopy = {
   vi: {
     description:
-      'Theo dõi doanh thu, đơn hàng và tồn kho từ hệ thống backend trong một màn hình tổng hợp.',
-    liveLabel: 'Dữ liệu realtime từ backend',
+      'Theo dõi doanh thu, đơn hàng và tồn kho trong một màn hình tổng hợp.',
+    liveLabel: 'Dữ liệu cập nhật mới nhất',
     refresh: 'Làm mới',
     retry: 'Thử lại',
     revenueDescription:
@@ -855,7 +874,7 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
     lowStockDescription:
       'Các đầu sách sắp chạm ngưỡng tồn kho thấp cần được nhập thêm.',
     recentOrdersDescription:
-      'Danh sách đơn hàng mới nhất phát sinh từ backend admin dashboard.',
+      'Danh sách đơn hàng mới nhất trong hệ thống.',
     emptyRevenue: 'Chưa có dữ liệu doanh thu cho khoảng thời gian này',
     emptyTopBooks: 'Chưa có dữ liệu sách bán chạy',
     emptyOrderStatus: 'Chưa có thống kê trạng thái đơn hàng',
@@ -880,14 +899,14 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
       recentOrders: 'Đơn hàng mới nhất',
     },
     stats: {
-      todayRevenue: 'Doanh thu hôm nay',
-      monthRevenue: 'Doanh thu tháng này',
-      todayOrders: 'Đơn hôm nay',
+      totalRevenue: 'Tổng doanh thu',
+      totalOrders: 'Tổng đơn hàng',
       pendingOrders: 'Đơn chờ xử lý',
+      deliveredOrders: 'Đơn đã giao',
+      cancelledOrders: 'Đơn đã hủy',
+      totalUsers: 'Tổng người dùng',
+      totalBooks: 'Tổng đầu sách',
       lowStockBooks: 'Sách sắp hết hàng',
-      newCustomers: 'Khách hàng mới',
-      newReviews: 'Đánh giá mới',
-      activeCoupons: 'Mã giảm giá hoạt động',
     },
     columns: {
       orderId: 'Mã đơn',
@@ -901,8 +920,8 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
   },
   en: {
     description:
-      'Track revenue, orders, and stock health from the backend in one consolidated view.',
-    liveLabel: 'Live backend data',
+      'Track revenue, orders, and stock health in one consolidated view.',
+    liveLabel: 'Latest available data',
     refresh: 'Refresh',
     retry: 'Retry',
     revenueDescription:
@@ -914,7 +933,7 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
     lowStockDescription:
       'Books approaching the low-stock threshold and likely needing replenishment.',
     recentOrdersDescription:
-      'Most recent orders returned by the admin dashboard backend endpoints.',
+      'The most recent orders in the system.',
     emptyRevenue: 'No revenue data for this period',
     emptyTopBooks: 'No top-selling books available yet',
     emptyOrderStatus: 'No order-status statistics available yet',
@@ -939,14 +958,14 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
       recentOrders: 'Recent orders',
     },
     stats: {
-      todayRevenue: 'Today revenue',
-      monthRevenue: 'This month revenue',
-      todayOrders: 'Orders today',
+      totalRevenue: 'Total revenue',
+      totalOrders: 'Total orders',
       pendingOrders: 'Pending orders',
+      deliveredOrders: 'Delivered orders',
+      cancelledOrders: 'Cancelled orders',
+      totalUsers: 'Total users',
+      totalBooks: 'Total books',
       lowStockBooks: 'Low-stock books',
-      newCustomers: 'New customers',
-      newReviews: 'New reviews',
-      activeCoupons: 'Active coupons',
     },
     columns: {
       orderId: 'Order ID',
@@ -958,4 +977,4 @@ const dashboardCopy: Record<'vi' | 'en', DashboardCopy> = {
       stockQuantity: 'Stock',
     },
   },
-}
+} satisfies Record<'vi' | 'en', DashboardCopy>

@@ -17,7 +17,7 @@ public class AuthorWebMapper {
         return new CreateAuthorCommand(
                 request.name(),
                 request.biography(),
-                request.avatarUrl(),
+                request.avatarFileAssetId(),
                 request.birthYear(),
                 request.deathYear()
         );
@@ -28,7 +28,7 @@ public class AuthorWebMapper {
                 authorId,
                 request.name(),
                 request.biography(),
-                request.avatarUrl(),
+                request.avatarFileAssetId(),
                 request.birthYear(),
                 request.deathYear()
         );
@@ -43,6 +43,7 @@ public class AuthorWebMapper {
                 author.getId(),
                 author.getName(),
                 author.getBiography(),
+                author.getAvatarFileAssetId(),
                 author.getAvatarUrl(),
                 author.getBirthYear(),
                 author.getDeathYear(),

@@ -12,12 +12,21 @@ import {
   Phone,
   Shield,
   User,
+  LibraryBig,
+  PencilLine,
   type LucideIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
 import { Input } from '@/components/common/input'
 import { Label } from '@/components/common/label'
+import {
+  StatePanel,
+  SurfaceCard,
+  destructiveOutlineButtonClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+} from '@/components/common/page-shell'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { useLanguage } from '@/contexts/language-context'
@@ -35,6 +44,7 @@ type ProfileSection =
   | 'address-panel'
   | 'orders-panel'
   | 'password-panel'
+  | 'security-panel'
 
 const STATUS_VARIANTS: Record<
   OrderStatus,
@@ -47,9 +57,16 @@ const STATUS_VARIANTS: Record<
   CANCELLED: 'destructive',
 }
 
+const PROFILE_INPUT_CLASS =
+  'border-primary/10 bg-white/80 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] dark:border-white/10 dark:bg-input/40 dark:text-foreground dark:shadow-none'
+
+const PROFILE_INNER_SURFACE_CLASS =
+  'border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,244,255,0.92)_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(31,27,47,0.96)_0%,rgba(22,19,34,0.94)_100%)]'
+
+const PROFILE_AVATAR_UPLOAD_ID = 'profile-avatar-upload'
+
 export default function ProfilePage() {
-  const { t, formatCurrency, formatDate, language } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatCurrency, formatDate } = useLanguage()
   const {
     user,
     orders,
@@ -66,6 +83,12 @@ export default function ProfilePage() {
     handleLogout,
     handleSaveAccount,
     handleSaveProfile,
+    sessions,
+    isLoadingSessions,
+    sessionError,
+    loadSessions,
+    handleRevokeSession,
+    handleLogoutAllDevices,
     avatarLabel,
   } = useProfilePage()
   const [activeMenu, setActiveMenu] = useState<ProfileSection>('personal-panel')
@@ -114,40 +137,35 @@ export default function ProfilePage() {
     }
   }, [activeMenu, hasLoadedAddresses, t])
 
+  useEffect(() => {
+    if (activeMenu === 'security-panel') {
+      void loadSessions()
+    }
+  }, [activeMenu])
+
   const pageCopy = {
-    personal: isVietnamese ? 'Hồ sơ cá nhân' : 'Personal profile',
-    account: isVietnamese ? 'Thông tin đăng nhập' : 'Login information',
-    address: isVietnamese ? 'Địa chỉ của tôi' : 'My addresses',
-    orders: isVietnamese ? 'Đơn hàng của tôi' : 'My orders',
-    password: isVietnamese ? 'Đổi mật khẩu' : 'Change password',
-    chooseImage: isVietnamese ? 'Chọn ảnh' : 'Choose image',
-    imageHint: isVietnamese ? 'JPG, PNG' : 'JPG, PNG',
+    personal: t('auth.profile.personalTitle'),
+    account: t('auth.profile.loginPanelTitle'),
+    address: t('auth.profile.addressMenuTitle'),
+    orders: t('auth.profile.ordersTitle'),
+    password: t('auth.profile.passwordMenuTitle'),
+    security: t('auth.profile.securityTitle'),
+    chooseImage: t('auth.profile.chooseImage'),
+    imageHint: t('auth.profile.imageHint'),
     orderHistory: t('orders.title'),
-    noOrdersTitle: isVietnamese
-      ? 'Bạn chưa có đơn hàng nào'
-      : 'You do not have any orders yet',
-    noOrdersDescription: isVietnamese
-      ? 'Khám phá sách hay và đặt đơn đầu tiên của bạn.'
-      : 'Explore the catalog and place your first order.',
-    shopNow: isVietnamese ? 'Mua sách ngay' : 'Shop now',
-    addressTitle: isVietnamese ? 'Sổ địa chỉ của bạn' : 'Your address book',
-    addressDescription: isVietnamese
-      ? 'Các địa chỉ giao hàng đã lưu sẽ hiển thị ở đây.'
-      : 'Your saved delivery addresses appear here.',
-    noAddressesTitle: isVietnamese
-      ? 'Bạn chưa có địa chỉ nào'
-      : 'You do not have any addresses yet',
-    noAddressesDescription: isVietnamese
-      ? 'Thêm địa chỉ khi thanh toán để lần sau chọn nhanh hơn.'
-      : 'Add an address during checkout to use it faster next time.',
-    passwordTitle: isVietnamese ? 'Bảo mật tài khoản' : 'Account security',
-    passwordDescription: isVietnamese
-      ? 'Đổi mật khẩu bằng luồng xác thực hiện có của hệ thống.'
-      : 'Reset your password using the current verification flow.',
-    passwordAction: isVietnamese ? 'Đi tới đổi mật khẩu' : 'Go to password reset',
-    defaultAddress: isVietnamese ? 'Mặc định' : 'Default',
-    retry: isVietnamese ? 'Thử lại' : 'Retry',
-    goCheckout: isVietnamese ? 'Đi tới thanh toán' : 'Go to checkout',
+    noOrdersTitle: t('auth.profile.emptyOrders'),
+    noOrdersDescription: t('auth.profile.noOrdersDescription'),
+    shopNow: t('auth.profile.shopNow'),
+    addressTitle: t('auth.profile.addressTitle'),
+    addressDescription: t('auth.profile.addressDescription'),
+    noAddressesTitle: t('auth.profile.noAddressesTitle'),
+    noAddressesDescription: t('auth.profile.noAddressesDescription'),
+    passwordTitle: t('auth.profile.passwordTitle'),
+    passwordDescription: t('auth.profile.passwordDescription'),
+    passwordAction: t('auth.profile.passwordAction'),
+    defaultAddress: t('auth.profile.defaultAddress'),
+    retry: t('auth.profile.retry'),
+    goCheckout: t('auth.profile.goCheckout'),
   }
 
   const displayName = getDisplayName(
@@ -158,6 +176,12 @@ export default function ProfilePage() {
   const avatarSource = profileForm.avatarUrl || profile?.avatarUrl || ''
   const avatarFallback = getAvatarFallback(displayName, user?.avatar)
   const profileGender = profileForm.gender || profile?.gender || 'OTHER'
+  const handleAvatarUploadChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const file = event.currentTarget.files?.[0] ?? null
+
+    event.currentTarget.value = ''
+    void handleProfileAvatarFileChange(file)
+  }
 
   const menuItems: ProfileMenuItem[] = [
     {
@@ -185,26 +209,42 @@ export default function ProfilePage() {
       icon: KeyRound,
       label: pageCopy.password,
     },
+    {
+      id: 'security-panel',
+      icon: Shield,
+      label: pageCopy.security,
+    },
   ]
 
   return (
-    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)]">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,rgba(252,248,255,1)_0%,rgba(246,240,255,0.96)_54%,rgba(255,255,255,1)_100%)] dark:bg-[linear-gradient(180deg,rgba(18,15,29,1)_0%,rgba(24,20,38,1)_54%,rgba(18,15,29,1)_100%)]">
       <Header />
+      <input
+        id={PROFILE_AVATAR_UPLOAD_ID}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarUploadChange}
+      />
 
       <main className="flex-1 pb-16 pt-6 sm:pb-20 sm:pt-8">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
-          <section className="relative overflow-hidden rounded-[34px] border border-primary/12 bg-white/88 p-6 shadow-[0_24px_80px_rgba(137,92,255,0.12)] backdrop-blur xl:p-9">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(186,147,255,0.2),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(150,121,255,0.16),transparent_26%)]" />
-            <div className="pointer-events-none absolute -right-6 bottom-0 hidden h-52 w-72 rounded-full bg-[radial-gradient(circle,rgba(121,92,255,0.08),transparent_68%)] lg:block" />
+          <section className="relative overflow-hidden rounded-[34px] border border-primary/12 bg-white/88 p-6 shadow-[0_24px_80px_rgba(137,92,255,0.12)] backdrop-blur dark:border-white/10 dark:bg-card/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)] xl:p-9">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(186,147,255,0.2),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(150,121,255,0.16),transparent_26%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(155,122,255,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(94,234,212,0.08),transparent_28%)]" />
+            <div className="pointer-events-none absolute -right-6 bottom-0 hidden h-52 w-72 rounded-full bg-[radial-gradient(circle,rgba(121,92,255,0.08),transparent_68%)] dark:bg-[radial-gradient(circle,rgba(155,122,255,0.12),transparent_68%)] lg:block" />
             <BookOpen
-              className="pointer-events-none absolute bottom-5 right-8 hidden h-36 w-36 text-primary/8 lg:block"
+              className="pointer-events-none absolute bottom-5 right-8 hidden h-36 w-36 text-primary/8 dark:text-primary/10 lg:block"
               strokeWidth={1.2}
             />
 
             <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-col gap-6 sm:flex-row sm:items-center">
-                <div className="relative shrink-0">
-                  <div className="flex size-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[linear-gradient(180deg,rgba(245,233,255,1)_0%,rgba(227,212,255,0.86)_100%)] text-[3.4rem] font-semibold text-primary shadow-[0_22px_44px_rgba(169,130,255,0.28)]">
+                <label
+                  htmlFor={PROFILE_AVATAR_UPLOAD_ID}
+                  className="group relative block shrink-0 cursor-pointer"
+                  aria-label={avatarLabel}
+                >
+                  <span className="flex size-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[linear-gradient(180deg,rgba(245,233,255,1)_0%,rgba(227,212,255,0.86)_100%)] text-[3.4rem] font-semibold text-primary shadow-[0_22px_44px_rgba(169,130,255,0.28)] transition group-hover:scale-[1.02] group-hover:border-primary/30 dark:border-white/15 dark:bg-[linear-gradient(180deg,rgba(125,95,255,0.22)_0%,rgba(48,39,75,0.94)_100%)] dark:shadow-[0_22px_44px_rgba(0,0,0,0.3)] dark:group-hover:border-primary/45">
                     {avatarSource ? (
                       <img
                         src={avatarSource}
@@ -214,17 +254,17 @@ export default function ProfilePage() {
                     ) : (
                       avatarFallback
                     )}
-                  </div>
-                  <div className="absolute -bottom-1 right-1 flex size-11 items-center justify-center rounded-full border border-primary/12 bg-white text-primary shadow-[0_12px_26px_rgba(137,92,255,0.18)]">
+                  </span>
+                  <span className="absolute -bottom-1 right-1 flex size-11 items-center justify-center rounded-full border border-primary/12 bg-white text-primary shadow-[0_12px_26px_rgba(137,92,255,0.18)] transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground dark:border-white/10 dark:bg-background dark:shadow-[0_12px_26px_rgba(0,0,0,0.26)]">
                     <Camera className="h-4 w-4" />
-                  </div>
-                </div>
+                  </span>
+                </label>
 
                 <div className="min-w-0">
-                  <h1 className="truncate font-heading text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.35rem]">
+                  <h1 className="truncate font-heading text-3xl font-bold tracking-tight text-slate-950 dark:text-foreground sm:text-[2.35rem]">
                     {displayName}
                   </h1>
-                  <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500">
+                  <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 dark:text-muted-foreground">
                     <p className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-primary/80" />
                       <span className="truncate">{accountForm.email}</span>
@@ -241,10 +281,10 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary">
+                    <span className="rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary dark:bg-primary/18">
                       {user ? getUserRoleLabel(user.role, t) : ''}
                     </span>
-                    <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-600">
+                    <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-600 dark:bg-sky-400/12 dark:text-sky-200">
                       {getGenderLabel(profileGender, t)}
                     </span>
                   </div>
@@ -254,7 +294,7 @@ export default function ProfilePage() {
               <Button
                 onClick={() => void handleLogout()}
                 variant="outline"
-                className="h-11 rounded-2xl border-rose-200 px-5 text-rose-500 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                className={destructiveOutlineButtonClassName}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 {t('auth.profile.logout')}
@@ -264,7 +304,7 @@ export default function ProfilePage() {
 
           <section className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
             <aside className="xl:sticky xl:top-24 xl:self-start">
-              <div className="rounded-[28px] border border-primary/10 bg-white/88 p-4 shadow-[0_18px_50px_rgba(137,92,255,0.08)] backdrop-blur">
+              <div className="rounded-[28px] border border-primary/10 bg-white/88 p-4 shadow-[0_18px_50px_rgba(137,92,255,0.08)] backdrop-blur dark:border-white/10 dark:bg-card/90 dark:shadow-[0_18px_50px_rgba(0,0,0,0.26)]">
                 <nav className="space-y-2" aria-label={t('header.profileMenu')}>
                   {menuItems.map((item) => (
                     <ProfileMenuEntry
@@ -275,6 +315,30 @@ export default function ProfilePage() {
                     />
                   ))}
                 </nav>
+                <Link
+                  to="/shelves"
+                  className="mt-3 flex items-center justify-between rounded-[20px] border border-primary/12 bg-primary/6 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10 dark:border-primary/20 dark:bg-primary/10"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-2xl bg-primary/12 dark:bg-primary/18">
+                      <LibraryBig className="h-4 w-4" />
+                    </span>
+                    <span>{t('shelves.profileShortcut')}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/reading-journal"
+                  className="mt-3 flex items-center justify-between rounded-[20px] border border-amber-500/12 bg-amber-500/6 px-4 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-500/10 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-2xl bg-amber-500/12 dark:bg-amber-300/18">
+                      <PencilLine className="h-4 w-4" />
+                    </span>
+                    <span>{t('readingJournal.profileShortcut')}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </aside>
 
@@ -311,11 +375,15 @@ export default function ProfilePage() {
                       </div>
 
                       <div>
-                        <Label className="text-sm font-medium text-slate-700">
+                        <Label className="text-sm font-medium text-slate-700 dark:text-foreground">
                           {avatarLabel}
                         </Label>
                         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
-                          <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary/15 bg-[linear-gradient(180deg,rgba(245,233,255,1)_0%,rgba(227,212,255,0.82)_100%)] text-3xl font-semibold text-primary shadow-[0_12px_28px_rgba(137,92,255,0.14)]">
+                          <label
+                            htmlFor={PROFILE_AVATAR_UPLOAD_ID}
+                            className="flex size-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-primary/15 bg-[linear-gradient(180deg,rgba(245,233,255,1)_0%,rgba(227,212,255,0.82)_100%)] text-3xl font-semibold text-primary shadow-[0_12px_28px_rgba(137,92,255,0.14)] transition hover:scale-[1.02] hover:border-primary/30 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(125,95,255,0.2)_0%,rgba(48,39,75,0.94)_100%)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.24)]"
+                            aria-label={avatarLabel}
+                          >
                             {avatarSource ? (
                               <img
                                 src={avatarSource}
@@ -325,28 +393,17 @@ export default function ProfilePage() {
                             ) : (
                               avatarFallback
                             )}
-                          </div>
+                          </label>
 
                           <div className="space-y-2">
                             <label
-                              htmlFor="profile-avatar-upload"
-                              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-primary/15 bg-primary/6 px-4 text-sm font-semibold text-primary transition hover:border-primary/25 hover:bg-primary/10"
+                              htmlFor={PROFILE_AVATAR_UPLOAD_ID}
+                              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-primary/15 bg-primary/6 px-4 text-sm font-semibold text-primary transition hover:border-primary/25 hover:bg-primary/10 dark:border-primary/25 dark:bg-primary/10 dark:hover:bg-primary/15"
                             >
                               <Camera className="h-4 w-4" />
                               {pageCopy.chooseImage}
                             </label>
-                            <input
-                              id="profile-avatar-upload"
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(event) =>
-                                void handleProfileAvatarFileChange(
-                                  event.currentTarget.files?.[0] ?? null,
-                                )
-                              }
-                            />
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-muted-foreground">
                               {pageCopy.imageHint}
                             </p>
                           </div>
@@ -357,7 +414,7 @@ export default function ProfilePage() {
                         <div>
                           <Label
                             htmlFor="gender"
-                            className="text-sm font-medium text-slate-700"
+                            className="text-sm font-medium text-slate-700 dark:text-foreground"
                           >
                             {t('auth.profile.gender')}
                           </Label>
@@ -369,7 +426,10 @@ export default function ProfilePage() {
                                 event.currentTarget.value as ProfileResponse['gender'],
                               )
                             }
-                            className="mt-2 h-11 w-full rounded-2xl border border-primary/10 bg-white/80 px-3 text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/10"
+                            className={cn(
+                              'mt-2 h-11 w-full rounded-2xl border px-3 text-sm outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/10 dark:[color-scheme:dark]',
+                              PROFILE_INPUT_CLASS,
+                            )}
                           >
                             {(['MALE', 'FEMALE', 'OTHER'] as const).map((gender) => (
                               <option key={gender} value={gender}>
@@ -396,7 +456,7 @@ export default function ProfilePage() {
 
                     <Button
                       type="submit"
-                      className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95"
+                      className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95`}
                       disabled={isSavingProfile || isLoading}
                     >
                       {isSavingProfile
@@ -420,7 +480,7 @@ export default function ProfilePage() {
                           onChange={(event) =>
                             handleAccountChange('username', event.currentTarget.value)
                           }
-                          className="h-11 rounded-2xl border-primary/10 bg-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                          className={cn('h-11 rounded-2xl', PROFILE_INPUT_CLASS)}
                         />
                       </FieldRow>
                       <FieldRow label={t('common.email')}>
@@ -431,7 +491,7 @@ export default function ProfilePage() {
                           onChange={(event) =>
                             handleAccountChange('email', event.currentTarget.value)
                           }
-                          className="h-11 rounded-2xl border-primary/10 bg-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                          className={cn('h-11 rounded-2xl', PROFILE_INPUT_CLASS)}
                         />
                       </FieldRow>
                       <FieldRow label={t('common.phone')}>
@@ -444,14 +504,14 @@ export default function ProfilePage() {
                               event.currentTarget.value,
                             )
                           }
-                          className="h-11 rounded-2xl border-primary/10 bg-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                          className={cn('h-11 rounded-2xl', PROFILE_INPUT_CLASS)}
                         />
                       </FieldRow>
                     </div>
 
                     <Button
                       type="submit"
-                      className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95"
+                      className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.28)] hover:opacity-95`}
                       disabled={isSavingAccount || isLoading}
                     >
                       {isSavingAccount
@@ -465,51 +525,58 @@ export default function ProfilePage() {
               {activeMenu === 'address-panel' ? (
                 <SurfacePanel id="address-panel">
                   <PanelHeading icon={MapPin} title={pageCopy.addressTitle} />
-                  <p className="mt-3 text-sm text-slate-500">
+                  <p className="mt-3 text-sm text-slate-500 dark:text-muted-foreground">
                     {pageCopy.addressDescription}
                   </p>
 
                   {isLoadingAddresses ? (
-                    <div className="mt-6 rounded-[24px] border border-primary/10 bg-primary/4 p-6 text-sm text-slate-500">
-                      {t('common.loading')}
-                    </div>
+                    <StatePanel
+                      title={t('common.loading')}
+                      description={pageCopy.addressDescription}
+                      minHeightClassName="min-h-[180px]"
+                      className="mt-6"
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && addressError ? (
-                    <div className="mt-6 rounded-[24px] border border-destructive/20 bg-destructive/8 p-6 text-sm text-destructive">
-                      <p>{addressError}</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-4 h-10 rounded-2xl"
-                        onClick={() => {
-                          setHasLoadedAddresses(false)
-                          setAddressError(null)
-                        }}
-                      >
-                        {pageCopy.retry}
-                      </Button>
-                    </div>
+                    <StatePanel
+                      title={pageCopy.addressTitle}
+                      description={addressError}
+                      tone="error"
+                      minHeightClassName="min-h-[220px]"
+                      className="mt-6"
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={secondaryButtonClassName}
+                          onClick={() => {
+                            setHasLoadedAddresses(false)
+                            setAddressError(null)
+                          }}
+                        >
+                          {pageCopy.retry}
+                        </Button>
+                      }
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && !addressError && addresses.length === 0 ? (
-                    <div className="mt-6 rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,244,255,0.92)_100%)] p-6">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-950">
-                            {pageCopy.noAddressesTitle}
-                          </h3>
-                          <p className="mt-2 text-sm leading-6 text-slate-500">
-                            {pageCopy.noAddressesDescription}
-                          </p>
-                        </div>
+                    <StatePanel
+                      title={pageCopy.noAddressesTitle}
+                      description={pageCopy.noAddressesDescription}
+                      className="mt-6"
+                      minHeightClassName="min-h-[220px]"
+                      action={
                         <Link to="/checkout">
-                          <Button className="h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                          <Button
+                            className={`${primaryButtonClassName} bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}
+                          >
                             {pageCopy.goCheckout}
                           </Button>
                         </Link>
-                      </div>
-                    </div>
+                      }
+                    />
                   ) : null}
 
                   {!isLoadingAddresses && !addressError && addresses.length > 0 ? (
@@ -517,12 +584,12 @@ export default function ProfilePage() {
                       {addresses.map((address) => (
                         <article
                           key={address.id}
-                          className="rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,244,255,0.92)_100%)] p-5"
+                          className={cn('rounded-[24px] p-5', PROFILE_INNER_SURFACE_CLASS)}
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-lg font-bold text-slate-950">
+                                <h3 className="text-lg font-bold text-slate-950 dark:text-foreground">
                                   {address.receiverName}
                                 </h3>
                                 {address.defaultAddress ? (
@@ -534,15 +601,15 @@ export default function ProfilePage() {
                                   </Badge>
                                 ) : null}
                               </div>
-                              <p className="mt-2 text-sm text-slate-500">
+                              <p className="mt-2 text-sm text-slate-500 dark:text-muted-foreground">
                                 {address.receiverPhone}
                               </p>
                             </div>
-                            <p className="text-sm text-slate-400">
+                            <p className="text-sm text-slate-400 dark:text-muted-foreground">
                               {formatDate(address.updatedAt)}
                             </p>
                           </div>
-                          <p className="mt-4 text-sm leading-6 text-slate-600">
+                          <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-muted-foreground">
                             {address.receiverAddress}
                           </p>
                         </article>
@@ -559,7 +626,7 @@ export default function ProfilePage() {
                     <Link to="/orders">
                       <Button
                         variant="outline"
-                        className="h-10 rounded-2xl border-primary/10 px-4 text-primary hover:bg-primary/6"
+                        className={`${secondaryButtonClassName} border-primary/10 px-4 text-primary hover:bg-primary/6`}
                       >
                         {pageCopy.orderHistory}
                       </Button>
@@ -567,7 +634,7 @@ export default function ProfilePage() {
                   </div>
 
                   {orders.length === 0 ? (
-                    <div className="mt-6 rounded-[24px] border border-primary/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(248,244,255,0.9)_100%)] p-6">
+                    <div className={cn('mt-6 rounded-[24px] border-primary/8 p-6', PROFILE_INNER_SURFACE_CLASS)}>
                       <div className="flex flex-col items-center gap-5 text-center md:flex-row md:text-left">
                         <div className="relative flex size-28 shrink-0 items-center justify-center">
                           <div className="absolute inset-4 rounded-[26px] bg-[linear-gradient(145deg,rgba(146,111,255,1),rgba(115,86,255,0.9))] shadow-[0_18px_38px_rgba(123,91,255,0.24)]" />
@@ -577,14 +644,14 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="max-w-xl">
-                          <h3 className="text-2xl font-bold text-slate-950">
+                          <h3 className="text-2xl font-bold text-slate-950 dark:text-foreground">
                             {pageCopy.noOrdersTitle}
                           </h3>
-                          <p className="mt-2 text-sm leading-6 text-slate-500">
+                          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-muted-foreground">
                             {pageCopy.noOrdersDescription}
                           </p>
                           <Link to="/books" className="inline-flex">
-                            <Button className="mt-4 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                            <Button className={`${primaryButtonClassName} mt-4 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}>
                               {pageCopy.shopNow}
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
@@ -611,17 +678,128 @@ export default function ProfilePage() {
               {activeMenu === 'password-panel' ? (
                 <SurfacePanel id="password-panel">
                   <PanelHeading icon={KeyRound} title={pageCopy.passwordTitle} />
-                  <div className="mt-6 rounded-[24px] border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,244,255,0.92)_100%)] p-6">
-                    <p className="max-w-2xl text-sm leading-7 text-slate-500">
+                  <div className={cn('mt-6 rounded-[24px] p-6', PROFILE_INNER_SURFACE_CLASS)}>
+                    <p className="max-w-2xl text-sm leading-7 text-slate-500 dark:text-muted-foreground">
                       {pageCopy.passwordDescription}
                     </p>
                     <Link to="/forgot-password" className="inline-flex">
-                      <Button className="mt-6 h-11 rounded-2xl bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] px-5 shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95">
+                      <Button className={`${primaryButtonClassName} mt-6 bg-[linear-gradient(135deg,rgba(124,92,255,1),rgba(101,72,248,0.96))] shadow-[0_18px_34px_rgba(109,76,255,0.24)] hover:opacity-95`}>
                         {pageCopy.passwordAction}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
                   </div>
+                </SurfacePanel>
+              ) : null}
+
+              {activeMenu === 'security-panel' ? (
+                <SurfacePanel id="security-panel">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <PanelHeading
+                        icon={Shield}
+                        title={t('auth.profile.securityTitle')}
+                      />
+                      <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-muted-foreground">
+                        {t('auth.profile.securityDescription')}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={destructiveOutlineButtonClassName}
+                      onClick={() => {
+                        if (window.confirm(t('auth.profile.logoutAllConfirm'))) {
+                          void handleLogoutAllDevices()
+                        }
+                      }}
+                    >
+                      {t('auth.profile.logoutAllDevices')}
+                    </Button>
+                  </div>
+
+                  {isLoadingSessions ? (
+                    <p className="mt-6 text-sm text-slate-500 dark:text-muted-foreground">
+                      {t('auth.profile.sessionsLoading')}
+                    </p>
+                  ) : null}
+
+                  {sessionError ? (
+                    <StatePanel
+                      title={t('auth.profile.sessionsErrorTitle')}
+                      description={sessionError}
+                      className="mt-6"
+                      minHeightClassName="min-h-[180px]"
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={secondaryButtonClassName}
+                          onClick={() => void loadSessions()}
+                        >
+                          {t('common.retry')}
+                        </Button>
+                      }
+                    />
+                  ) : null}
+
+                  {!isLoadingSessions && !sessionError && sessions.length === 0 ? (
+                    <StatePanel
+                      title={t('auth.profile.sessionsEmptyTitle')}
+                      description={t('auth.profile.sessionsEmptyDescription')}
+                      className="mt-6"
+                      minHeightClassName="min-h-[180px]"
+                    />
+                  ) : null}
+
+                  {!isLoadingSessions && !sessionError && sessions.length > 0 ? (
+                    <div className="mt-6 grid gap-3">
+                      {sessions.map((session) => (
+                        <article key={session.sessionId} className={cn('flex flex-col gap-4 rounded-[22px] p-5 sm:flex-row sm:items-center sm:justify-between', PROFILE_INNER_SURFACE_CLASS)}>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="truncate font-semibold text-slate-950 dark:text-foreground">
+                                {session.deviceName ||
+                                  session.userAgent ||
+                                  t('auth.profile.unknownDevice')}
+                              </h3>
+                              {session.currentSession ? (
+                                <Badge className="rounded-full">
+                                  {t('auth.profile.currentDevice')}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-muted-foreground">
+                              {session.ipAddress || t('auth.profile.unknownIp')} ·{' '}
+                              {t('auth.profile.lastUsedAt', {
+                                date: session.lastUsedAt
+                                  ? formatDate(session.lastUsedAt)
+                                  : formatDate(session.createdAt),
+                              })}
+                            </p>
+                          </div>
+                          {!session.currentSession ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={destructiveOutlineButtonClassName}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    t('auth.profile.revokeSessionConfirm'),
+                                  )
+                                ) {
+                                  void handleRevokeSession(session.sessionId)
+                                }
+                              }}
+                            >
+                              {t('auth.profile.revokeSession')}
+                            </Button>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
                 </SurfacePanel>
               ) : null}
             </div>
@@ -655,15 +833,17 @@ function ProfileMenuEntry({
       className={cn(
         'flex w-full items-center gap-3 rounded-[20px] px-3 py-3 text-left text-sm font-semibold transition',
         active
-          ? 'bg-[linear-gradient(135deg,rgba(124,92,255,0.12),rgba(124,92,255,0.06))] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'
-          : 'text-slate-600 hover:bg-primary/6 hover:text-slate-950',
+          ? 'bg-[linear-gradient(135deg,rgba(124,92,255,0.12),rgba(124,92,255,0.06))] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] dark:bg-primary/15 dark:shadow-none'
+          : 'text-slate-600 hover:bg-primary/6 hover:text-slate-950 dark:text-muted-foreground dark:hover:bg-primary/10 dark:hover:text-foreground',
       )}
       onClick={() => onSelect(item.id)}
     >
       <span
         className={cn(
           'flex size-9 items-center justify-center rounded-2xl transition',
-          active ? 'bg-primary/12 text-primary' : 'bg-transparent text-slate-500',
+          active
+            ? 'bg-primary/12 text-primary dark:bg-primary/18'
+            : 'bg-transparent text-slate-500 dark:text-muted-foreground',
         )}
       >
         <item.icon className="h-4 w-4" />
@@ -681,12 +861,12 @@ function SurfacePanel({
   id: string
 }) {
   return (
-    <section
+    <SurfaceCard
       id={id}
-      className="rounded-[30px] border border-primary/10 bg-white/88 p-6 shadow-[0_18px_50px_rgba(137,92,255,0.08)] backdrop-blur"
+      className="p-6"
     >
       {children}
-    </section>
+    </SurfaceCard>
   )
 }
 
@@ -699,10 +879,12 @@ function PanelHeading({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="flex size-10 items-center justify-center rounded-2xl bg-primary/8 text-primary">
+      <span className="flex size-10 items-center justify-center rounded-2xl bg-primary/8 text-primary dark:bg-primary/12">
         <Icon className="h-5 w-5" />
       </span>
-      <h2 className="font-heading text-2xl font-bold text-slate-950">{title}</h2>
+      <h2 className="font-heading text-2xl font-bold text-slate-950 dark:text-foreground">
+        {title}
+      </h2>
     </div>
   )
 }
@@ -716,7 +898,9 @@ function FieldRow({
 }) {
   return (
     <div className="grid gap-2 sm:grid-cols-[108px_minmax(0,1fr)] sm:items-center sm:gap-4">
-      <Label className="text-sm font-medium text-slate-700">{label}</Label>
+      <Label className="text-sm font-medium text-slate-700 dark:text-foreground">
+        {label}
+      </Label>
       {children}
     </div>
   )
@@ -737,7 +921,7 @@ function StackField({
 }) {
   return (
     <div>
-      <Label htmlFor={id} className="text-sm font-medium text-slate-700">
+      <Label htmlFor={id} className="text-sm font-medium text-slate-700 dark:text-foreground">
         {label}
       </Label>
       <Input
@@ -745,7 +929,11 @@ function StackField({
         type={type}
         value={value}
         onChange={onChange}
-        className="mt-2 h-11 rounded-2xl border-primary/10 bg-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+        className={cn(
+          'mt-2 h-11 rounded-2xl',
+          PROFILE_INPUT_CLASS,
+          type === 'date' ? 'dark:[color-scheme:dark]' : null,
+        )}
       />
     </div>
   )
@@ -763,16 +951,18 @@ function OrderCard({
   t: (key: string, params?: Record<string, number | string>) => string
 }) {
   return (
-    <article className="rounded-[24px] border border-primary/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,244,255,0.92)_100%)] p-5">
+    <article className={cn('rounded-[24px] border-primary/8 p-5', PROFILE_INNER_SURFACE_CLASS)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-muted-foreground">
             {t('orders.orderId')}
           </p>
-          <h3 className="mt-2 truncate text-lg font-bold text-slate-950">
+          <h3 className="mt-2 truncate text-lg font-bold text-slate-950 dark:text-foreground">
             {order.orderId}
           </h3>
-          <p className="mt-1 text-sm text-slate-500">{formatDate(order.createdAt)}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-muted-foreground">
+            {formatDate(order.createdAt)}
+          </p>
         </div>
         <Badge
           variant={STATUS_VARIANTS[order.status]}
@@ -782,25 +972,25 @@ function OrderCard({
         </Badge>
       </div>
 
-      <div className="mt-5 space-y-3 border-t border-primary/8 pt-4">
+      <div className="mt-5 space-y-3 border-t border-primary/8 pt-4 dark:border-white/10">
         {order.items.slice(0, 3).map((item) => (
           <div
             key={item.id}
             className="flex items-start justify-between gap-3 text-sm"
           >
-            <span className="line-clamp-2 text-slate-700">
+            <span className="line-clamp-2 text-slate-700 dark:text-muted-foreground">
               {item.bookTitle} x{item.quantity}
             </span>
-            <span className="shrink-0 font-semibold text-slate-900">
+            <span className="shrink-0 font-semibold text-slate-900 dark:text-foreground">
               {formatCurrency(item.lineTotal)}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="mt-5 flex items-center justify-between border-t border-primary/8 pt-4">
+      <div className="mt-5 flex items-center justify-between border-t border-primary/8 pt-4 dark:border-white/10">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-muted-foreground">
             {t('auth.profile.orderTotal')}
           </p>
           <p className="mt-1 text-lg font-bold text-primary">
@@ -810,7 +1000,7 @@ function OrderCard({
         <Link to={`/orders/${order.orderId}`}>
           <Button
             variant="outline"
-            className="h-10 rounded-2xl border-primary/12 px-4 text-primary hover:bg-primary/6"
+            className="h-11 rounded-2xl border-primary/12 px-4 text-primary hover:bg-primary/6"
           >
             {t('orders.viewDetail')}
           </Button>

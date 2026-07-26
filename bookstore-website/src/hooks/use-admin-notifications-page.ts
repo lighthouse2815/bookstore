@@ -48,8 +48,7 @@ const initialFormState: NotificationFormState = {
 
 export function useAdminNotificationsPage() {
   const { user } = useAuth()
-  const { language, t, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatDate, formatNumber } = useLanguage()
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [recipients, setRecipients] = useState<UserLookup[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -68,57 +67,45 @@ export function useAdminNotificationsPage() {
 
   const labels = useMemo(
     () => ({
-      title: isVietnamese ? 'Quan ly thong bao' : 'Notification management',
-      description: isVietnamese
-        ? 'Gui thong bao cho tung tai khoan hoac broadcast den toan bo nguoi dung, van giu REST lam nguon du lieu chinh.'
-        : 'Send notifications to a single account or broadcast them to all users while keeping REST as the source of truth.',
-      total: isVietnamese ? '{count} thong bao' : '{count} notifications',
-      search: isVietnamese
-        ? 'Tim theo tieu de, nguoi nhan, noi dung...'
-        : 'Search by title, recipient, or content...',
-      empty: isVietnamese ? 'Chua co thong bao nao' : 'No notifications found',
-      loadError: isVietnamese
-        ? 'Khong tai duoc danh sach thong bao'
-        : 'Unable to load notifications',
-      createError: isVietnamese
-        ? 'Khong gui duoc thong bao'
-        : 'Unable to send the notification',
-      createSuccess: isVietnamese ? 'Da gui thong bao' : 'Notification sent',
-      broadcastSuccess: isVietnamese
-        ? 'Da broadcast thong bao cho {count} tai khoan'
-        : 'Broadcast notification sent to {count} accounts',
-      deleteError: isVietnamese
-        ? 'Khong xoa duoc thong bao'
-        : 'Unable to delete the notification',
-      deleteSuccess: isVietnamese ? 'Da xoa thong bao' : 'Notification deleted',
-      add: isVietnamese ? 'Gui cho 1 user' : 'Send to one user',
-      broadcast: isVietnamese ? 'Broadcast tat ca' : 'Broadcast all',
-      detailTitle: isVietnamese ? 'Chi tiet thong bao' : 'Notification details',
-      previewTitle: isVietnamese ? 'Xem truoc' : 'Preview',
-      recipient: isVietnamese ? 'Nguoi nhan' : 'Recipient',
-      allRecipients: isVietnamese ? 'Tat ca nguoi dung' : 'All users',
-      subject: isVietnamese ? 'Tieu de' : 'Title',
-      content: isVietnamese ? 'Noi dung' : 'Content',
-      type: isVietnamese ? 'Loai' : 'Type',
-      link: isVietnamese ? 'Lien ket' : 'Link',
-      chooseRecipient: isVietnamese ? 'Chon nguoi nhan' : 'Choose recipient',
-      unread: isVietnamese ? 'Chua doc' : 'Unread',
-      read: isVietnamese ? 'Da doc' : 'Read',
-      readAt: isVietnamese ? 'Doc luc' : 'Read at',
-      createdAt: isVietnamese ? 'Gui luc' : 'Sent at',
-      noReadAt: isVietnamese ? 'Chua doc' : 'Not read yet',
-      noContent: isVietnamese ? 'Khong co noi dung' : 'No content',
-      noType: isVietnamese ? 'Mac dinh' : 'Default',
-      noLink: isVietnamese ? 'Khong co' : 'None',
-      optional: isVietnamese ? 'Tuy chon' : 'Optional',
-      loadMore: isVietnamese ? 'Tai them' : 'Load more',
-      delete: isVietnamese ? 'Xoa' : 'Delete',
-      recipientCount: isVietnamese ? 'Tai khoan co the gui' : 'Available recipients',
-      unknownUser: isVietnamese ? 'Nguoi nhan khong xac dinh' : 'Unknown recipient',
-      status: isVietnamese ? 'Trang thai' : 'Status',
-      actions: isVietnamese ? 'Thao tac' : 'Actions',
+      title: t('admin.notificationsPage.title'),
+      description: t('admin.notificationsPage.description'),
+      total: t('admin.notificationsPage.total'),
+      search: t('admin.notificationsPage.search'),
+      empty: t('admin.notificationsPage.empty'),
+      loadError: t('admin.notificationsPage.loadError'),
+      createError: t('admin.notificationsPage.createError'),
+      createSuccess: t('admin.notificationsPage.createSuccess'),
+      broadcastSuccess: t('admin.notificationsPage.broadcastSuccess'),
+      deleteError: t('admin.notificationsPage.deleteError'),
+      deleteSuccess: t('admin.notificationsPage.deleteSuccess'),
+      add: t('admin.notificationsPage.add'),
+      broadcast: t('admin.notificationsPage.broadcast'),
+      detailTitle: t('admin.notificationsPage.detailTitle'),
+      previewTitle: t('admin.notificationsPage.previewTitle'),
+      recipient: t('admin.notificationsPage.recipient'),
+      allRecipients: t('admin.notificationsPage.allRecipients'),
+      subject: t('admin.notificationsPage.subject'),
+      content: t('admin.notificationsPage.content'),
+      type: t('admin.notificationsPage.type'),
+      link: t('admin.notificationsPage.link'),
+      chooseRecipient: t('admin.notificationsPage.chooseRecipient'),
+      unread: t('admin.notificationsPage.unread'),
+      read: t('admin.notificationsPage.read'),
+      readAt: t('admin.notificationsPage.readAt'),
+      createdAt: t('admin.notificationsPage.createdAt'),
+      noReadAt: t('admin.notificationsPage.noReadAt'),
+      noContent: t('admin.notificationsPage.noContent'),
+      noType: t('admin.notificationsPage.noType'),
+      noLink: t('admin.notificationsPage.noLink'),
+      optional: t('admin.notificationsPage.optional'),
+      loadMore: t('admin.notificationsPage.loadMore'),
+      delete: t('admin.notificationsPage.delete'),
+      recipientCount: t('admin.notificationsPage.recipientCount'),
+      unknownUser: t('admin.notificationsPage.unknownUser'),
+      status: t('admin.notificationsPage.status'),
+      actions: t('admin.notificationsPage.actions'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   const recipientLookup = useMemo(
@@ -351,7 +338,7 @@ export function useAdminNotificationsPage() {
         const response = await broadcastNotification(payload)
         await reloadFirstPage()
         toast.success(
-          interpolateLabel(labels.broadcastSuccess, {
+          t('admin.notificationsPage.broadcastSuccess', {
             count: formatNumber(response.createdCount),
           }),
         )
@@ -466,13 +453,4 @@ function mergeNotificationPages(
 function toNullableString(value: string) {
   const trimmedValue = value.trim()
   return trimmedValue === '' ? null : trimmedValue
-}
-
-function interpolateLabel(
-  template: string,
-  params: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(params[key] ?? `{${key}}`),
-  )
 }

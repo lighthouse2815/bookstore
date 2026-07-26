@@ -12,7 +12,7 @@ public class BookImage {
 
     private UUID id;
     private UUID bookId;
-    private String imageUrl;
+    private FileAsset fileAsset;
     private Boolean primaryImage;
     private Integer sortOrder;
     private String altText;
@@ -21,7 +21,7 @@ public class BookImage {
     public BookImage(
             UUID id,
             UUID bookId,
-            String imageUrl,
+            FileAsset fileAsset,
             Boolean primaryImage,
             Integer sortOrder,
             String altText,
@@ -29,15 +29,27 @@ public class BookImage {
     ) {
         this.id = Guard.notNull(id, DomainErrorCode.INVALID_BOOK_IMAGE_ID, "id");
         this.bookId = Guard.notNull(bookId, DomainErrorCode.INVALID_BOOK_IMAGE_BOOK_ID, "bookId");
-        setImageUrl(imageUrl);
+        setFileAsset(fileAsset);
         setPrimaryImage(primaryImage);
         setSortOrder(sortOrder);
         setAltText(altText);
         setCreatedAt(createdAt);
     }
 
-    private void setImageUrl(String imageUrl) {
-        this.imageUrl = Guard.notBlank(imageUrl, DomainErrorCode.INVALID_BOOK_IMAGE_URL, "imageUrl");
+    public UUID getFileAssetId() {
+        return fileAsset.getId();
+    }
+
+    public String getImageUrl() {
+        return fileAsset.getPublicUrl();
+    }
+
+    private void setFileAsset(FileAsset fileAsset) {
+        this.fileAsset = Guard.notNull(
+                fileAsset,
+                DomainErrorCode.INVALID_BOOK_IMAGE_FILE_ASSET_ID,
+                "fileAssetId"
+        );
     }
 
     private void setPrimaryImage(Boolean primaryImage) {

@@ -1,6 +1,8 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
 import com.bookstore.bookstore.infrastructure.persistence.entity.ChatMessageJpaEntity;
+import com.bookstore.bookstore.domain.enums.MessageSenderRole;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -14,6 +16,12 @@ public interface ChatMessageJpaRepository extends JpaRepository<ChatMessageJpaEn
     Page<ChatMessageJpaEntity> findAllByConversation_IdAndDeletedAtIsNull(UUID conversationId, Pageable pageable);
 
     long countByConversation_IdAndDeletedAtIsNull(UUID conversationId);
+
+    long countBySender_IdAndSenderRoleAndCreatedAtGreaterThanEqualAndDeletedAtIsNull(
+            UUID senderId,
+            MessageSenderRole senderRole,
+            Instant createdAt
+    );
 
     @EntityGraph(attributePaths = {"conversation", "sender"})
     Optional<ChatMessageJpaEntity> findByIdAndDeletedAtIsNull(UUID messageId);

@@ -3,26 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      ;(() => {
-        const storageKey = 'bookstore-theme'
-
-        try {
-          const storedTheme = window.localStorage.getItem(storageKey)
-          const theme = storedTheme === 'dark' ? 'dark' : 'light'
-
-          document.documentElement.classList.toggle('dark', theme === 'dark')
-        } catch {
-          document.documentElement.classList.remove('dark')
-        }
-      })()
-    </script>
+    <script src="/theme-init.js"></script>
     <title>Sách Vui - Nhà sách trực tuyến cho người trẻ</title>
     <meta
       name="description"
       content="Khám phá hàng ngàn đầu sách hay với giá tốt. Tiểu thuyết, kỹ năng sống, khoa học và nhiều hơn nữa tại Sách Vui."
     />
     <meta name="theme-color" content="#e8623a" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      sizes="any"
+      href="/sach-vui-favicon.svg"
+    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

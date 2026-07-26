@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.UUID;
 
 public record CreateImportReceiptRequest(
-        @NotNull(message = "supplierId khong duoc null")
+        @NotNull(message = "supplierId không được null")
         UUID supplierId,
-        @NotEmpty(message = "items khong duoc de trong")
+        @NotEmpty(message = "items không được để trống")
         List<@Valid CreateImportReceiptItemRequest> items,
         String note
 ) {
 }
+

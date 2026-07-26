@@ -1,0 +1,60 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bookstore_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+  sql:
+    init:
+      mode: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+  payment:
+    bank-transfer-expiration-minutes: 20
+    expiry-job-enabled: false
+    expiry-job-delay-ms: 60000
+    expiry-job-batch-size: 100
+  jwt:
+    secret: 01234567890123456789012345678901
+    expiration-minutes: 60
+    refresh-expiration-days: 30
+  auth:
+    otp:
+      expiration-minutes: 10
+      max-attempts: 5
+      resend-cooldown-seconds: 60
+      resend-window-minutes: 15
+      resend-max-requests-per-window: 5
+    login:
+      max-failures-per-account: 5
+      max-failures-per-ip: 20
+      window-minutes: 15
+      lock-minutes: 15
+    reset:
+      max-requests-per-email: 5
+      max-requests-per-ip: 20
+      window-minutes: 15
+      lock-minutes: 15
+    web:
+      cookie-secure: false
+      cookie-same-site: Lax
+      cookie-max-age-seconds: 2592000
+    trusted-proxy:
+      enabled: false
+      cidrs: []

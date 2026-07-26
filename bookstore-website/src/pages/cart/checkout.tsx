@@ -11,7 +11,7 @@ import {
   Store,
   Tag,
   Truck,
-  X, 
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/common/badge'
 import { Button } from '@/components/common/button'
@@ -27,7 +27,7 @@ import type { CartItem } from '@/types/cart'
 import type { CouponResponse, CouponType } from '@/types/coupon'
 import { cn } from '@/utils'
 import { filterCouponsByType } from '@/utils/checkout-coupon'
-import { getBookCoverUrl } from '@/utils/book-cover'
+import { getBookCoverUrl, setBookCoverFallback } from '@/utils/book-cover'
 
 type CheckoutLabels = Record<string, string>
 
@@ -44,10 +44,12 @@ type CheckoutAddressFormData = {
 }
 
 export default function CheckoutPage() {
-  const { language, t, formatCurrency } = useLanguage()
+  const { t, formatCurrency } = useLanguage()
   const {
     items,
     subtotal,
+    hasPhysicalItems,
+    isDigitalOnly,
     shippingMethod,
     paymentMethod,
     shippingFee,
@@ -58,6 +60,8 @@ export default function CheckoutPage() {
     isAddressLoading,
     isCartLoading,
     isCouponLoading,
+    bestCouponSuggestion,
+    isBestCouponLoading,
     savedAddresses,
     activeCoupons,
     selectedBookCoupon,
@@ -70,6 +74,7 @@ export default function CheckoutPage() {
     handleSelectAddressChange,
     handleShippingMethodChange,
     handlePaymentMethodChange,
+    applySuggestedCoupon,
     handleSubmit,
   } = useCheckoutFlow()
 
@@ -80,9 +85,10 @@ export default function CheckoutPage() {
   const [couponDialogCode, setCouponDialogCode] = useState('')
 
   const isUsingNewAddress = selectedAddressId === NEW_ADDRESS_VALUE
-  const isVietnamese = language === 'vi'
 
   const labels: CheckoutLabels = {
+    digitalAccessTitle: t('checkout.digitalAccessTitle'),
+    digitalAccessDescription: t('checkout.digitalAccessDescription'),
     shippingAddressTitle: t('checkout.shippingAddressTitle'),
     changeAddress: t('checkout.changeAddress'),
     addAddress: t('checkout.addAddress'),
@@ -101,21 +107,19 @@ export default function CheckoutPage() {
     homeDelivery: t('checkout.homeDelivery'),
     deliveryDescription: t('checkout.deliveryDescription'),
     storePickup: t('checkout.storePickup'),
-    pickupDescription: isVietnamese
-      ? 'Nhận tại cửa hàng, nhân viên sẽ liên hệ xác nhận sau khi đặt đơn.'
-      : 'Pick up at the store. Staff will contact you to confirm after checkout.',
+    pickupDescription: t('checkout.pickupDescription'),
     noteTitle: t('checkout.noteTitle'),
     noteLabel: t('checkout.noteLabel'),
     notePlaceholder: t('checkout.notePlaceholder'),
     bankTransferQr: t('checkout.bankTransferQr'),
     bankTransferQrDescription: t('checkout.bankTransferQrDescription'),
     cashOnDelivery: t('checkout.cashOnDelivery'),
-    cashOnDeliveryDescription: isVietnamese
-      ? 'Tạm thời chưa hỗ trợ cho đơn online.'
-      : 'Currently unavailable for online orders.',
-    paymentMethodNotice: isVietnamese
-      ? 'Đơn online hiện đang xử lý thanh toán qua SePay QR.'
-      : 'Online checkout currently supports SePay QR payment.',
+    cashOnDeliveryDescription: isDigitalOnly
+      ? t('checkout.cashOnDeliveryDigitalOnlyDescription')
+      : t('checkout.cashOnDeliveryDescription'),
+    paymentMethodNotice: isDigitalOnly
+      ? t('checkout.digitalOnlyPaymentNotice')
+      : t('checkout.standardPaymentNotice'),
     chooseCoupon: t('checkout.chooseCoupon'),
     selectedCouponPrefix: t('checkout.selectedCouponPrefix'),
     productTotal: t('checkout.productTotal'),
@@ -125,6 +129,14 @@ export default function CheckoutPage() {
     chooseCouponTitle: t('checkout.chooseCouponTitle'),
     couponInputPlaceholder: t('checkout.couponInputPlaceholder'),
     applyCoupon: t('checkout.applyCoupon'),
+    bestCouponTitle: t('checkout.bestCouponTitle'),
+    bestCouponDescription: t('checkout.bestCouponDescription'),
+    bestCouponApply: t('checkout.bestCouponApply'),
+    bestCouponApplied: t('checkout.bestCouponApplied'),
+    bestCouponUnavailable: t('checkout.bestCouponUnavailable'),
+    bestCouponRecommended: t('checkout.bestCouponRecommended'),
+    bestCouponDiscount: t('checkout.bestCouponDiscount'),
+    bestCouponEstimate: t('checkout.bestCouponEstimate'),
     useCoupon: t('checkout.useCoupon'),
     shippingCoupons: t('checkout.shippingCoupons'),
     bookCoupons: t('checkout.bookCoupons'),
@@ -137,16 +149,18 @@ export default function CheckoutPage() {
     couponUnavailable: t('checkout.couponUnavailable'),
   }
 
-  labels.cashOnDeliveryDescription = t('checkout.cashOnDeliveryDescription')
-  labels.paymentMethodNotice = isVietnamese
-    ? 'Giao tan noi tinh phi 30.000đ va mien phi tu 200.000đ. Chuyen khoan SePay se co QR sau khi dat don, COD thanh toan luc nhan hang.'
-    : 'Delivery costs 30,000 VND and becomes free from 200,000 VND. SePay transfer shows a QR after checkout, while COD is paid on delivery.'
-
   const hasSavedAddresses = savedAddresses.length > 0
-  const hasCheckoutAddress = Boolean(selectedAddress) || isUsingNewAddress
+  const hasCheckoutAddress = isDigitalOnly || Boolean(selectedAddress) || isUsingNewAddress
+  const isSuggestedCouponApplied =
+    bestCouponSuggestion?.available &&
+    bestCouponSuggestion.couponCode &&
+    ((bestCouponSuggestion.couponType === 'BOOK' &&
+      selectedBookCoupon?.code === bestCouponSuggestion.couponCode) ||
+      (bestCouponSuggestion.couponType === 'SHIPPING' &&
+        selectedShippingCoupon?.code === bestCouponSuggestion.couponCode))
 
   function openAddressDialog() {
-    if (!hasSavedAddresses) {
+    if (isDigitalOnly || !hasSavedAddresses) {
       return
     }
 
@@ -167,6 +181,10 @@ export default function CheckoutPage() {
   }
 
   function handleAddAddress() {
+    if (isDigitalOnly) {
+      return
+    }
+
     handleSelectAddressChange(NEW_ADDRESS_VALUE)
   }
 
@@ -192,7 +210,7 @@ export default function CheckoutPage() {
     closeCouponDialog()
   }
 
-  const addressHeaderAction = hasSavedAddresses ? (
+  const addressHeaderAction = !isDigitalOnly && hasSavedAddresses ? (
     isUsingNewAddress ? (
       <Button type="button" variant="outline" onClick={openAddressDialog}>
         <MapPin className="size-4" />
@@ -252,62 +270,136 @@ export default function CheckoutPage() {
             className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]"
           >
             <div className="space-y-5">
-              <CheckoutSection
-                step="1."
-                title={labels.shippingAddressTitle}
-                icon={<MapPin className="size-5" />}
-                action={addressHeaderAction}
-              >
-                {selectedAddress ? (
-                  <SelectedAddressCard
-                    address={selectedAddress}
-                    labels={labels}
-                    onChange={openAddressDialog}
-                  />
-                ) : isUsingNewAddress ? (
-                  <NewAddressIntro labels={labels} />
-                ) : (
-                  <NoAddressState labels={labels} onAdd={handleAddAddress} />
-                )}
+              {isDigitalOnly ? (
+                <CheckoutSection
+                  step="1."
+                  title={labels.digitalAccessTitle}
+                  icon={<PackageCheck className="size-5" />}
+                >
+                  <DigitalOnlyState labels={labels} />
+                </CheckoutSection>
+              ) : (
+                <CheckoutSection
+                  step="1."
+                  title={labels.shippingAddressTitle}
+                  icon={<MapPin className="size-5" />}
+                  action={addressHeaderAction}
+                >
+                  {selectedAddress ? (
+                    <SelectedAddressCard
+                      address={selectedAddress}
+                      labels={labels}
+                      onChange={openAddressDialog}
+                    />
+                  ) : isUsingNewAddress ? (
+                    <NewAddressIntro labels={labels} />
+                  ) : (
+                    <NoAddressState labels={labels} onAdd={handleAddAddress} />
+                  )}
 
-                {isUsingNewAddress && (
-                  <AddressFormFields
-                    formData={formData}
-                    onChange={handleChange}
-                    t={t}
-                  />
-                )}
-              </CheckoutSection>
+                  {isUsingNewAddress ? (
+                    <AddressFormFields
+                      formData={formData}
+                      onChange={handleChange}
+                      t={t}
+                    />
+                  ) : null}
+                </CheckoutSection>
+              )}
+
+              {hasPhysicalItems ? (
+                <CheckoutSection
+                  step="2."
+                  title={labels.shippingMethodTitle}
+                  icon={<Truck className="size-5" />}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <CheckoutOptionCard
+                      selected={shippingMethod === 'DELIVERY'}
+                      icon={<Truck className="size-5" />}
+                      title={labels.homeDelivery}
+                      description={labels.deliveryDescription}
+                      onClick={() => handleShippingMethodChange('DELIVERY')}
+                    />
+                    <CheckoutOptionCard
+                      selected={shippingMethod === 'PICKUP'}
+                      icon={<Store className="size-5" />}
+                      title={labels.storePickup}
+                      description={labels.pickupDescription}
+                      onClick={() => handleShippingMethodChange('PICKUP')}
+                    />
+                  </div>
+                </CheckoutSection>
+              ) : null}
 
               <CheckoutSection
-                step="2."
-                title={labels.shippingMethodTitle}
-                icon={<Truck className="size-5" />}
-              >
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <CheckoutOptionCard
-                    selected={shippingMethod === 'DELIVERY'}
-                    icon={<Truck className="size-5" />}
-                    title={labels.homeDelivery}
-                    description={labels.deliveryDescription}
-                    onClick={() => handleShippingMethodChange('DELIVERY')}
-                  />
-                  <CheckoutOptionCard
-                    selected={shippingMethod === 'PICKUP'}
-                    icon={<Store className="size-5" />}
-                    title={labels.storePickup}
-                    description={labels.pickupDescription}
-                    onClick={() => handleShippingMethodChange('PICKUP')}
-                  />
-                </div>
-              </CheckoutSection>
-
-              <CheckoutSection
-                step="3."
+                step={isDigitalOnly ? '2.' : '3.'}
                 title={t('checkout.couponCode')}
                 icon={<Tag className="size-5" />}
               >
                 <div className="space-y-4">
+                  <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {labels.bestCouponTitle}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {labels.bestCouponDescription}
+                        </p>
+                      </div>
+                      {isSuggestedCouponApplied ? (
+                        <Badge variant="secondary">{labels.bestCouponApplied}</Badge>
+                      ) : null}
+                    </div>
+
+                    {isBestCouponLoading ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {t('common.loading')}
+                      </p>
+                    ) : bestCouponSuggestion?.available &&
+                      bestCouponSuggestion.couponCode ? (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-primary/20 bg-background px-3 py-1 text-sm font-semibold text-primary">
+                            {bestCouponSuggestion.couponCode}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {bestCouponSuggestion.label || labels.bestCouponRecommended}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p>
+                            {labels.bestCouponDiscount.replace(
+                              '{amount}',
+                              formatCurrency(bestCouponSuggestion.discountAmount),
+                            )}
+                          </p>
+                          <p>
+                            {labels.bestCouponEstimate.replace(
+                              '{amount}',
+                              formatCurrency(bestCouponSuggestion.finalAmountEstimate),
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant={isSuggestedCouponApplied ? 'outline' : 'default'}
+                          disabled={Boolean(isSuggestedCouponApplied)}
+                          className="h-11 rounded-xl"
+                          onClick={applySuggestedCoupon}
+                        >
+                          {isSuggestedCouponApplied
+                            ? labels.bestCouponApplied
+                            : labels.bestCouponApply}
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {bestCouponSuggestion?.reason || labels.bestCouponUnavailable}
+                      </p>
+                    )}
+                  </div>
                   <CouponInputRow
                     title={labels.bookCoupons}
                     inputId="bookCouponCode"
@@ -320,23 +412,25 @@ export default function CheckoutPage() {
                     onChange={handleChange}
                     onOpenDialog={() => openCouponDialog('BOOK')}
                   />
-                  <CouponInputRow
-                    title={labels.shippingCoupons}
-                    inputId="shippingCouponCode"
-                    inputName="shippingCouponCode"
-                    value={formData.shippingCouponCode}
-                    selectedCode={selectedShippingCoupon?.code ?? ''}
-                    selectedLabel={labels.selectedCouponPrefix}
-                    placeholder={t('checkout.couponPlaceholder')}
-                    buttonLabel={labels.chooseCoupon}
-                    onChange={handleChange}
-                    onOpenDialog={() => openCouponDialog('SHIPPING')}
-                  />
+                  {hasPhysicalItems ? (
+                    <CouponInputRow
+                      title={labels.shippingCoupons}
+                      inputId="shippingCouponCode"
+                      inputName="shippingCouponCode"
+                      value={formData.shippingCouponCode}
+                      selectedCode={selectedShippingCoupon?.code ?? ''}
+                      selectedLabel={labels.selectedCouponPrefix}
+                      placeholder={t('checkout.couponPlaceholder')}
+                      buttonLabel={labels.chooseCoupon}
+                      onChange={handleChange}
+                      onOpenDialog={() => openCouponDialog('SHIPPING')}
+                    />
+                  ) : null}
                 </div>
               </CheckoutSection>
 
               <CheckoutSection
-                step="4."
+                step={isDigitalOnly ? '3.' : '4.'}
                 title={labels.noteTitle}
                 icon={<Pencil className="size-5" />}
               >
@@ -354,7 +448,7 @@ export default function CheckoutPage() {
               </CheckoutSection>
 
               <CheckoutSection
-                step="5."
+                step={isDigitalOnly ? '4.' : '5.'}
                 title={t('checkout.paymentMethodTitle')}
                 icon={<CreditCard className="size-5" />}
               >
@@ -368,10 +462,11 @@ export default function CheckoutPage() {
                   />
 
                   <CheckoutOptionCard
-                    selected={paymentMethod === 'COD'}
+                    selected={!isDigitalOnly && paymentMethod === 'COD'}
                     icon={<PackageCheck className="size-5" />}
                     title={labels.cashOnDelivery}
                     description={labels.cashOnDeliveryDescription}
+                    disabled={isDigitalOnly}
                     onClick={() => handlePaymentMethodChange('COD')}
                   />
                 </div>
@@ -430,7 +525,7 @@ export default function CheckoutPage() {
 
               <Button
                 type="submit"
-                disabled={loading || !hasCheckoutAddress}
+                disabled={loading || (hasPhysicalItems && !hasCheckoutAddress)}
                 className="mt-6 h-12 w-full rounded-lg text-base font-bold"
               >
                 <PackageCheck className="size-5" />
@@ -446,7 +541,7 @@ export default function CheckoutPage() {
         </div>
       </main>
 
-      {isAddressDialogOpen && (
+      {!isDigitalOnly && isAddressDialogOpen ? (
         <AddressDialog
           addresses={savedAddresses}
           value={addressDialogValue}
@@ -456,9 +551,9 @@ export default function CheckoutPage() {
           onAddNew={handleAddAddressFromDialog}
           onClose={closeAddressDialog}
         />
-      )}
+      ) : null}
 
-      {isCouponDialogOpen && (
+      {isCouponDialogOpen ? (
         <CouponDialog
           coupons={activeCoupons}
           couponType={couponDialogType}
@@ -476,13 +571,13 @@ export default function CheckoutPage() {
           onApply={handleApplyCouponCode}
           onClose={closeCouponDialog}
         />
-      )}
+      ) : null}
 
+      <Footer />
+    </div>
+  )
+}
 
-        <Footer />
-      </div>
-    )
-  }
 function CheckoutSection({
   step,
   title,
@@ -511,6 +606,17 @@ function CheckoutSection({
   )
 }
 
+function DigitalOnlyState({ labels }: { labels: CheckoutLabels }) {
+  return (
+    <div className="rounded-lg border border-primary/35 bg-primary/5 p-5">
+      <p className="font-semibold text-primary">{labels.digitalAccessTitle}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        {labels.digitalAccessDescription}
+      </p>
+    </div>
+  )
+}
+
 function SelectedAddressCard({
   address,
   labels,
@@ -530,9 +636,9 @@ function SelectedAddressCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-semibold">{address.receiverName}</p>
-              {address.defaultAddress && (
+              {address.defaultAddress ? (
                 <Badge variant="secondary">{labels.defaultAddress}</Badge>
-              )}
+              ) : null}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {address.receiverPhone}
@@ -711,7 +817,7 @@ function CheckoutOptionCard({
           selected ? 'border-primary' : 'border-border',
         )}
       >
-        {selected && <span className="size-2.5 rounded-full bg-primary" />}
+        {selected ? <span className="size-2.5 rounded-full bg-primary" /> : null}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{title}</p>
@@ -746,6 +852,11 @@ function OrderSummaryItem({
   formatCurrency: (value: number) => string
   t: (key: string, values?: Record<string, string | number>) => string
 }) {
+  const typeLabel =
+    item.itemType === 'DIGITAL_ASSET'
+      ? t('checkout.itemTypes.digitalAsset')
+      : t('checkout.itemTypes.physicalBook')
+
   return (
     <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-3 text-sm">
       <Link
@@ -755,6 +866,7 @@ function OrderSummaryItem({
         <img
           src={getBookCoverUrl(item.cover)}
           alt={item.title}
+          onError={(event) => setBookCoverFallback(event.currentTarget)}
           className="size-full object-cover"
         />
         <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -768,6 +880,17 @@ function OrderSummaryItem({
             {item.title}
           </p>
         </Link>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+            {typeLabel}
+          </Badge>
+          {item.assetTitle ? (
+            <span className="text-xs text-muted-foreground">
+              {item.assetTitle}
+              {item.format ? ` • ${item.format}` : ''}
+            </span>
+          ) : null}
+        </div>
         <p className="mt-1 text-muted-foreground">
           {t('checkout.quantityShort', { count: item.qty })}
         </p>
@@ -924,7 +1047,7 @@ function CouponDialog({
             type="button"
             aria-label={labels.close}
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <X className="size-4" />
           </button>
@@ -1051,11 +1174,11 @@ function CouponCard({
             {formatCouponValue(coupon, formatCurrency)}
           </span>
         </div>
-        {coupon.description && (
+        {coupon.description ? (
           <p className="mt-2 text-sm text-muted-foreground">
             {coupon.description}
           </p>
-        )}
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>
             {labels.couponMinOrder.replace(
@@ -1063,14 +1186,14 @@ function CouponCard({
               formatCurrency(coupon.minOrderAmount),
             )}
           </span>
-          {coupon.maxDiscountAmount !== null && (
+          {coupon.maxDiscountAmount !== null ? (
             <span>
               {labels.couponMaxDiscount.replace(
                 '{amount}',
                 formatCurrency(coupon.maxDiscountAmount),
               )}
             </span>
-          )}
+          ) : null}
           <span>
             {coupon.maxUsageCount === null
               ? labels.couponUsageNoLimit.replace(
@@ -1082,11 +1205,11 @@ function CouponCard({
                   .replace('{limit}', String(coupon.maxUsageCount))}
           </span>
         </div>
-        {disabled && (
+        {disabled ? (
           <p className="mt-2 text-xs font-medium text-amber-600">
             {labels.couponUnavailable}
           </p>
-        )}
+        ) : null}
       </div>
 
       <Button
@@ -1159,7 +1282,7 @@ function AddressDialog({
             type="button"
             aria-label={labels.close}
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <X className="size-4" />
           </button>
@@ -1181,17 +1304,15 @@ function AddressDialog({
                 name="checkoutAddress"
                 value={address.id}
                 checked={value === address.id}
-                onChange={(event) =>
-                  onValueChange(event.currentTarget.value)
-                }
+                onChange={(event) => onValueChange(event.currentTarget.value)}
                 className="mt-1 size-4 accent-primary"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-semibold">{address.receiverName}</p>
-                  {address.defaultAddress && (
+                  {address.defaultAddress ? (
                     <Badge variant="secondary">{labels.defaultAddress}</Badge>
-                  )}
+                  ) : null}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {address.receiverPhone}

@@ -7,6 +7,7 @@ public record AuthorResponse(
         UUID id,
         String name,
         String biography,
+        UUID avatarFileAssetId,
         String avatarUrl,
         Integer birthYear,
         Integer deathYear,

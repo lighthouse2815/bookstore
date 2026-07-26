@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/language-context'
 import {
   createAdminImportReceipt,
-  getAdminImportReceipts,
+  getAdminImportReceiptsPage,
   getAdminSuppliers,
 } from '@/services/admin-access-service'
 import { getBookCatalog } from '@/services/book-service'
@@ -35,10 +35,13 @@ const initialFormState: ReceiptFormState = {
   items: [{ bookId: '', quantity: '1', unitCost: '0' }],
 }
 
+const PAGE_SIZE = 10
+
 export function useAdminImportReceiptsPage() {
-  const { language, t, formatCurrency, formatDate, formatNumber } = useLanguage()
-  const isVietnamese = language === 'vi'
+  const { t, formatCurrency, formatDate, formatNumber } = useLanguage()
   const [receipts, setReceipts] = useState<AdminImportReceiptResponse[]>([])
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [suppliers, setSuppliers] = useState<AdminSupplierResponse[]>([])
   const [books, setBooks] = useState<Book[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,40 +55,32 @@ export function useAdminImportReceiptsPage() {
 
   const labels = useMemo(
     () => ({
-      title: isVietnamese ? 'Quản lý nhập kho' : 'Import receipts',
-      description: isVietnamese
-        ? 'Tạo và theo dõi các phiếu nhập sách vào kho.'
-        : 'Create and review book inventory import receipts.',
-      total: isVietnamese ? '{count} phiếu nhập' : '{count} receipts',
-      add: isVietnamese ? 'Tạo phiếu nhập' : 'Create receipt',
-      search: isVietnamese
-        ? 'Tìm theo nhà cung cấp, mã phiếu hoặc tên sách...'
-        : 'Search by supplier, receipt id, or book title...',
-      empty: isVietnamese ? 'Chưa có phiếu nhập nào' : 'No import receipts found',
-      receipt: isVietnamese ? 'Phiếu nhập' : 'Receipt',
-      supplier: isVietnamese ? 'Nhà cung cấp' : 'Supplier',
-      totalAmount: isVietnamese ? 'Tổng tiền' : 'Total',
-      items: isVietnamese ? 'Số dòng' : 'Items',
-      createdAt: isVietnamese ? 'Ngày nhập' : 'Created',
-      detailTitle: isVietnamese ? 'Chi tiết phiếu nhập' : 'Receipt details',
-      note: isVietnamese ? 'Ghi chú' : 'Note',
-      noNote: isVietnamese ? 'Không có ghi chú' : 'No note',
-      loadError: isVietnamese
-        ? 'Không tải được danh sách phiếu nhập'
-        : 'Unable to load import receipts',
-      saveError: isVietnamese
-        ? 'Không tạo được phiếu nhập'
-        : 'Unable to create receipt',
-      saveSuccess: isVietnamese ? 'Đã tạo phiếu nhập' : 'Import receipt created',
-      book: isVietnamese ? 'Sách' : 'Book',
-      quantity: isVietnamese ? 'Số lượng' : 'Quantity',
-      unitCost: isVietnamese ? 'Giá nhập' : 'Unit cost',
-      addLine: isVietnamese ? 'Thêm dòng sách' : 'Add book line',
-      removeLine: isVietnamese ? 'Xóa dòng' : 'Remove line',
-      chooseSupplier: isVietnamese ? 'Chọn nhà cung cấp' : 'Choose supplier',
-      chooseBook: isVietnamese ? 'Chọn sách' : 'Choose book',
+      title: t('admin.importReceiptsPage.title'),
+      description: t('admin.importReceiptsPage.description'),
+      total: t('admin.importReceiptsPage.total'),
+      add: t('admin.importReceiptsPage.add'),
+      search: t('admin.importReceiptsPage.search'),
+      empty: t('admin.importReceiptsPage.empty'),
+      receipt: t('admin.importReceiptsPage.receipt'),
+      supplier: t('admin.importReceiptsPage.supplier'),
+      totalAmount: t('admin.importReceiptsPage.totalAmount'),
+      items: t('admin.importReceiptsPage.items'),
+      createdAt: t('admin.importReceiptsPage.createdAt'),
+      detailTitle: t('admin.importReceiptsPage.detailTitle'),
+      note: t('admin.importReceiptsPage.note'),
+      noNote: t('admin.importReceiptsPage.noNote'),
+      loadError: t('admin.importReceiptsPage.loadError'),
+      saveError: t('admin.importReceiptsPage.saveError'),
+      saveSuccess: t('admin.importReceiptsPage.saveSuccess'),
+      book: t('admin.importReceiptsPage.book'),
+      quantity: t('admin.importReceiptsPage.quantity'),
+      unitCost: t('admin.importReceiptsPage.unitCost'),
+      addLine: t('admin.importReceiptsPage.addLine'),
+      removeLine: t('admin.importReceiptsPage.removeLine'),
+      chooseSupplier: t('admin.importReceiptsPage.chooseSupplier'),
+      chooseBook: t('admin.importReceiptsPage.chooseBook'),
     }),
-    [isVietnamese],
+    [t],
   )
 
   const supplierMap = useMemo(
@@ -120,7 +115,7 @@ export function useAdminImportReceiptsPage() {
 
       try {
         const [receiptResponse, supplierResponse, bookResponse] = await Promise.all([
-          getAdminImportReceipts(),
+          getAdminImportReceiptsPage({ page, size: PAGE_SIZE }),
           getAdminSuppliers(),
           getBookCatalog(),
         ])
@@ -129,7 +124,8 @@ export function useAdminImportReceiptsPage() {
           return
         }
 
-        setReceipts(receiptResponse)
+        setReceipts(receiptResponse.items)
+        setTotalCount(receiptResponse.totalCount)
         setSuppliers(supplierResponse)
         setBooks(bookResponse.books)
         setError(null)
@@ -151,7 +147,7 @@ export function useAdminImportReceiptsPage() {
     return () => {
       isCancelled = true
     }
-  }, [labels.loadError])
+  }, [labels.loadError, page])
 
   useEffect(() => {
     if (!dialogMode) {
@@ -177,6 +173,11 @@ export function useAdminImportReceiptsPage() {
 
   function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
     setSearchTerm(event.currentTarget.value)
+    setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
   }
 
   function closeDialog() {
@@ -251,12 +252,13 @@ export function useAdminImportReceiptsPage() {
 
     try {
       const [receiptResponse, supplierResponse, bookResponse] = await Promise.all([
-        getAdminImportReceipts(),
+        getAdminImportReceiptsPage({ page, size: PAGE_SIZE }),
         getAdminSuppliers(),
         getBookCatalog(),
       ])
 
-      setReceipts(receiptResponse)
+      setReceipts(receiptResponse.items)
+      setTotalCount(receiptResponse.totalCount)
       setSuppliers(supplierResponse)
       setBooks(bookResponse.books)
       setError(null)
@@ -301,6 +303,9 @@ export function useAdminImportReceiptsPage() {
     formatNumber,
     labels,
     receipts,
+    page,
+    pageSize: PAGE_SIZE,
+    totalCount,
     suppliers,
     books,
     searchTerm,
@@ -313,6 +318,7 @@ export function useAdminImportReceiptsPage() {
     supplierMap,
     filteredReceipts,
     handleSearchTermChange,
+    handlePageChange,
     closeDialog,
     openCreateDialog,
     openViewDialog,

@@ -10,7 +10,6 @@ import {
   login as loginRequest,
   loginWithGoogle as loginWithGoogleRequest,
   logout as logoutRequest,
-  refreshAccessToken,
   requestPasswordResetOtp as requestPasswordResetOtpRequest,
   requestRegistrationOtp as requestRegistrationOtpRequest,
   resetPassword as resetPasswordRequest,
@@ -18,11 +17,12 @@ import {
   verifyPasswordResetOtp as verifyPasswordResetOtpRequest,
   verifyRegistrationOtp as verifyRegistrationOtpRequest,
 } from '@/services/auth-service'
+import { clearWebSession, refreshWebAccessToken, setAccessToken } from '@/services/api'
 import { useLanguage } from '@/contexts/language-context'
 import { getCurrentProfile } from '@/services/profile-service'
 import type {
   LoginRequest,
-  LoginResponse,
+  WebLoginResponse,
   PasswordResetTokenResponse,
   RegisterRequest,
   RequestPasswordResetOtpRequest,
@@ -34,10 +34,7 @@ import type {
 } from '@/types/auth'
 import type { ProfileResponse } from '@/types/profile'
 import { getErrorMessage } from '@/utils'
-import {
-  createLoginRestrictionMessage,
-  getLoginRestrictionCopy,
-} from '@/utils/login-restrictions'
+import { createLoginRestrictionMessage } from '@/utils/login-restrictions'
 
 type AuthContextType = {
   user: User | null
@@ -59,8 +56,6 @@ type AuthContextType = {
   refreshUser: () => Promise<User>
 }
 
-const ACCESS_TOKEN_KEY = 'accessToken'
-const REFRESH_TOKEN_KEY = 'refreshToken'
 const AUTH_USER_KEY = 'auth_user'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -93,39 +88,17 @@ function mapUser(
   }
 }
 
-function getStoredUser() {
-  const storedUser = localStorage.getItem(AUTH_USER_KEY)
-
-  if (!storedUser) {
-    return null
-  }
-
-  try {
-    return JSON.parse(storedUser) as User
-  } catch {
-    localStorage.removeItem(AUTH_USER_KEY)
-    return null
-  }
-}
-
-function persistTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
-}
-
 function persistUser(user: User) {
   localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
 }
 
 function clearSession() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
-  localStorage.removeItem(AUTH_USER_KEY)
+  clearWebSession()
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { language, t } = useLanguage()
-  const [user, setUser] = useState<User | null>(() => getStoredUser())
+  const { t } = useLanguage()
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -143,22 +116,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return nextUser
   }
 
-  async function applySession(session: LoginResponse) {
-    persistTokens(session.accessToken, session.refreshToken)
+  async function applySession(session: WebLoginResponse) {
+    setAccessToken(session.accessToken)
     const nextUser = await syncCurrentUser()
 
     if (nextUser.locked) {
-      const copy = getLoginRestrictionCopy('locked', language)
       clearSession()
       setUser(null)
-      throw new Error(createLoginRestrictionMessage('locked', copy.description))
+      throw new Error(
+        createLoginRestrictionMessage(
+          'locked',
+          t('auth.login.restrictions.locked.description'),
+        ),
+      )
     }
 
     if (nextUser.status !== 'ACTIVE') {
-      const copy = getLoginRestrictionCopy('inactive', language)
       clearSession()
       setUser(null)
-      throw new Error(createLoginRestrictionMessage('inactive', copy.description))
+      throw new Error(
+        createLoginRestrictionMessage(
+          'inactive',
+          t('auth.login.restrictions.inactive.description'),
+        ),
+      )
     }
   }
 
@@ -168,36 +149,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function hydrateAuth() {
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY)
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-
-    if (!accessToken && !refreshToken) {
-      clearSession()
-      setUser(null)
-      setIsLoading(false)
-      return
-    }
-
     try {
-      if (!accessToken) {
-        throw new Error('Missing access token')
-      }
-
+      const accessToken = await refreshWebAccessToken()
+      if (!accessToken) throw new Error('No web session')
       await syncCurrentUser()
     } catch {
-      if (refreshToken) {
-        try {
-          const session = await refreshAccessToken({ refreshToken })
-          persistTokens(session.accessToken, session.refreshToken)
-          await syncCurrentUser()
-        } catch {
-          clearSession()
-          setUser(null)
-        }
-      } else {
-        clearSession()
-        setUser(null)
-      }
+      clearSession()
+      setUser(null)
     } finally {
       setIsLoading(false)
     }
@@ -235,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await requestRegistrationOtpRequest(payload)
     } catch (error) {
       throw new Error(
-        getErrorMessage(error, getRegistrationOtpRequestFallback(language)),
+        getErrorMessage(error, t('auth.register.verification.requestOtpErrorFallback')),
       )
     }
   }
@@ -283,19 +241,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-
-    clearSession()
-    setUser(null)
-
-    if (!refreshToken) {
-      return
-    }
-
     try {
-      await logoutRequest({ refreshToken })
+      await logoutRequest()
     } catch {
       // Ignore logout API failures because the local session is already cleared.
+    } finally {
+      clearSession()
+      setUser(null)
     }
   }
 
@@ -332,8 +284,3 @@ export function useAuth() {
   return context
 }
 
-function getRegistrationOtpRequestFallback(language: 'vi' | 'en') {
-  return language === 'vi'
-    ? 'Không thể gửi lại mã OTP kích hoạt'
-    : 'Unable to send a new activation OTP'
-}

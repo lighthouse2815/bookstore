@@ -9,6 +9,29 @@ import type {
   UpsertPublisherRequest,
 } from '@/types/book'
 import { unwrapResponse } from '@/utils'
+import { toPageResult } from '@/services/pagination'
+import type { PageRequest, PageResult } from '@/types/pagination'
+
+async function getReferencePage<T>(
+  endpoint: string,
+  params: PageRequest,
+): Promise<PageResult<T>> {
+  const request = { page: params.page ?? 0, size: params.size ?? 10 }
+  const response = await api.get<ApiResponse<T[]>>(endpoint, { params: request })
+  return toPageResult(unwrapResponse(response), response.headers, request)
+}
+
+export function getCategoriesPage(params: PageRequest = {}) {
+  return getReferencePage<CategoryResponse>('/categories', params)
+}
+
+export function getAuthorsPage(params: PageRequest = {}) {
+  return getReferencePage<AuthorResponse>('/authors', params)
+}
+
+export function getPublishersPage(params: PageRequest = {}) {
+  return getReferencePage<PublisherResponse>('/publishers', params)
+}
 
 export async function createCategory(
   data: UpsertCategoryRequest,

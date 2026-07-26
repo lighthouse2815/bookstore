@@ -110,4 +110,10 @@ public class OrderJpaEntity {
 
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+
+    @Column(name = "idempotency_key", length = 64)
+    private String idempotencyKey;
+
+    @Column(name = "checkout_fingerprint", length = 64)
+    private String checkoutFingerprint;
 }

@@ -1,0 +1,28 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      "[hibernate.format_sql]": false
+
+  devtools:
+    restart:
+      enabled: false
+
+server:
+  port: 0
+
+app:
+  admin:
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
+  seed:
+    enabled: true
+    size: ${APP_SEED_SIZE:50}
+    category-count: ${APP_SEED_CATEGORY_COUNT:12}
+    default-password: ${APP_DEMO_USER_PASSWORD:${APP_SEED_DEFAULT_PASSWORD:}}
+    exit-after-run: true
+
+logging:
+  level:
+    org.hibernate.SQL: warn

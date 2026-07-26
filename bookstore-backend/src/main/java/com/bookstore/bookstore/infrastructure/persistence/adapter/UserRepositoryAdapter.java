@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.Role;
 import com.bookstore.bookstore.domain.model.User;
 import com.bookstore.bookstore.infrastructure.persistence.entity.RoleJpaEntity;
@@ -11,10 +12,15 @@ import com.bookstore.bookstore.infrastructure.persistence.repository.UserJpaRepo
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -30,6 +36,17 @@ public class UserRepositoryAdapter implements IUserRepository {
         return userJpaRepository.findAllByDeletedAtIsNull().stream()
                 .map(userPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PageSliceResult<User> findPageByRoleNameActive(String roleName, int page, int size) {
+        var resultPage = userJpaRepository.findPageIdsByRoleNameActive(roleName, PageRequest.of(page, size));
+        return new PageSliceResult<>(
+                loadUsersInOrder(resultPage.getContent()),
+                resultPage.getTotalElements(),
+                page,
+                size
+        );
     }
 
     @Override
@@ -90,6 +107,17 @@ public class UserRepositoryAdapter implements IUserRepository {
     }
 
     @Override
+    public Optional<User> findByIdIncludingDeletedForUpdate(UUID userId) {
+        return userJpaRepository.findByIdForUpdate(userId)
+                .map(userPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public long countActiveUsers() {
+        return userJpaRepository.countByDeletedAtIsNull();
+    }
+
+    @Override
     public long countNewCustomersBetween(Instant fromInclusive, Instant toExclusive) {
         return userJpaRepository.countNewCustomersBetween(fromInclusive, toExclusive);
     }
@@ -115,5 +143,26 @@ public class UserRepositoryAdapter implements IUserRepository {
             resolved.add(entity);
         }
         return resolved;
+    }
+
+    private List<User> loadUsersInOrder(List<UUID> userIds) {
+        List<UUID> orderedIds = userIds == null
+                ? List.of()
+                : userIds.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, UserJpaEntity> usersById = userJpaRepository.findAllByIdInAndDeletedAtIsNull(orderedIds).stream()
+                .collect(Collectors.toMap(UserJpaEntity::getId, Function.identity()));
+
+        return orderedIds.stream()
+                .map(usersById::get)
+                .filter(Objects::nonNull)
+                .map(userPersistenceMapper::toDomain)
+                .toList();
     }
 }

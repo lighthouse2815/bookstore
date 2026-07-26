@@ -18,14 +18,14 @@ class CartRepository(
             ?: error("Gio hang khong hop le")
     }
 
-    suspend fun updateItem(bookId: String, quantity: Int): ResultState<Cart> = call("Khong cap nhat duoc so luong") {
+    suspend fun updateItem(itemId: String, quantity: Int): ResultState<Cart> = call("Khong cap nhat duoc so luong") {
         require(quantity > 0) { "So luong phai lon hon 0" }
-        apiClient.service().updateCartItem(bookId, UpdateCartItemRequest(quantity)).data?.toModel()
+        apiClient.service().updateCartItem(itemId, UpdateCartItemRequest(quantity)).data?.toModel()
             ?: error("Gio hang khong hop le")
     }
 
-    suspend fun removeItem(bookId: String): ResultState<Unit> = call("Khong xoa duoc san pham") {
-        apiClient.service().removeCartItem(bookId)
+    suspend fun removeItem(itemId: String): ResultState<Unit> = call("Khong xoa duoc san pham") {
+        apiClient.service().removeCartItem(itemId)
         Unit
     }
 

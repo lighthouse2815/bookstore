@@ -2,45 +2,130 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:}
+
   application:
     name: bookstore
 
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bookstore_db}
-    username: ${DB_USER:bookstore_user}
-    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+  flyway:
+    enabled: false
   jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      "[hibernate.format_sql]": true
+    open-in-view: false
 
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
 app:
+  ai:
+    chat:
+      enabled: ${AI_ENABLED:false}
+      base-url: ${CLOUDFLARE_AI_BASE_URL:https://api.cloudflare.com/client/v4}
+      account-id: ${CLOUDFLARE_AI_ACCOUNT_ID:}
+      api-token: ${CLOUDFLARE_AI_API_TOKEN:}
+      model: ${CLOUDFLARE_AI_MODEL:@cf/meta/llama-3.1-8b-instruct-fp8}
+      max-tokens: ${AI_MAX_TOKENS:350}
+      temperature: ${AI_TEMPERATURE:0.3}
+      history-limit: ${AI_HISTORY_LIMIT:12}
+      daily-user-limit: ${AI_DAILY_USER_LIMIT:20}
+  newsletter:
+    rate-limit:
+      max-requests: ${NEWSLETTER_RATE_LIMIT_MAX_REQUESTS:10}
+      window-minutes: ${NEWSLETTER_RATE_LIMIT_WINDOW_MINUTES:15}
+  swagger:
+    enabled: ${APP_SWAGGER_ENABLED:true}
   jwt:
-    secret: ${JWT_SECRET:01234567890123456789012345678901}
+    secret: ${JWT_SECRET:}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:30}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  auth:
+    otp:
+      expiration-minutes: ${OTP_EXPIRATION_MINUTES:10}
+      max-attempts: ${OTP_MAX_ATTEMPTS:5}
+      resend-cooldown-seconds: ${OTP_RESEND_COOLDOWN_SECONDS:60}
+      resend-window-minutes: ${OTP_RESEND_WINDOW_MINUTES:15}
+      resend-max-requests-per-window: ${OTP_RESEND_MAX_REQUESTS:${OTP_RESEND_MAX_REQUESTS_PER_WINDOW:5}}
+    login:
+      max-failures-per-account: ${LOGIN_MAX_FAILURES_PER_ACCOUNT:5}
+      max-failures-per-ip: ${LOGIN_MAX_FAILURES_PER_IP:20}
+      window-minutes: ${LOGIN_FAILURE_WINDOW_MINUTES:15}
+      lock-minutes: ${LOGIN_LOCK_MINUTES:15}
+    reset:
+      max-requests-per-email: ${PASSWORD_RESET_MAX_REQUESTS_PER_EMAIL:5}
+      max-requests-per-ip: ${PASSWORD_RESET_MAX_REQUESTS_PER_IP:20}
+      window-minutes: ${PASSWORD_RESET_WINDOW_MINUTES:15}
+      lock-minutes: ${PASSWORD_RESET_LOCK_MINUTES:15}
+    web:
+      cookie-secure: ${AUTH_WEB_COOKIE_SECURE:false}
+      cookie-same-site: ${AUTH_WEB_COOKIE_SAME_SITE:Lax}
+      cookie-max-age-seconds: ${AUTH_WEB_COOKIE_MAX_AGE_SECONDS:2592000}
+    trusted-proxy:
+      enabled: ${AUTH_TRUSTED_PROXY_ENABLED:false}
+      cidrs: ${AUTH_TRUSTED_PROXY_CIDRS:}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
-  otp:
-    expiration-minutes: ${OTP_EXPIRATION_MINUTES:10}
-    resend-cooldown-seconds: ${OTP_RESEND_COOLDOWN_SECONDS:60}
-    resend-max-requests-per-window: ${OTP_RESEND_MAX_REQUESTS_PER_WINDOW:5}
-    resend-window-minutes: ${OTP_RESEND_WINDOW_MINUTES:15}
   resend:
     base-url: ${RESEND_BASE_URL:https://api.resend.com}
     api-key: ${RESEND_API_KEY:}
     from-email: ${RESEND_FROM_EMAIL:}
     from-name: ${RESEND_FROM_NAME:Bookstore}
+  admin:
+    seed-enabled: ${APP_ADMIN_SEED_ENABLED:${ADMIN_SEED_ENABLED:false}}
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+    phone: ${ADMIN_PHONE:}
+    email: ${ADMIN_EMAIL:}
+    last-name: ${ADMIN_LAST_NAME:}
+    first-name: ${ADMIN_FIRST_NAME:}
   sepay:
     merchant-id: ${SEPAY_MERCHANT_ID:}
     secret-key: ${SEPAY_SECRET_KEY:}
     webhook-api-key: ${SEPAY_WEBHOOK_API_KEY:}
+  payment:
+    bank-transfer-expiration-minutes: ${BANK_TRANSFER_EXPIRATION_MINUTES:20}
+    expiry-job-enabled: ${PAYMENT_EXPIRY_JOB_ENABLED:true}
+    expiry-job-delay-ms: ${PAYMENT_EXPIRY_JOB_DELAY_MS:60000}
+    expiry-job-batch-size: ${PAYMENT_EXPIRY_JOB_BATCH_SIZE:100}
+  outbox:
+    enabled: ${OUTBOX_ENABLED:true}
+    delay-ms: ${OUTBOX_DELAY_MS:5000}
+    batch-size: ${OUTBOX_BATCH_SIZE:100}
+    max-attempts: ${OUTBOX_MAX_ATTEMPTS:8}
+    processing-timeout-seconds: ${OUTBOX_PROCESSING_TIMEOUT_SECONDS:300}
+    backlog-warning-threshold: ${OUTBOX_BACKLOG_WARNING_THRESHOLD:1000}
+  storage:
+    provider: ${STORAGE_PROVIDER:r2}
+    bucket: ${STORAGE_BUCKET:}
+    region: ${STORAGE_REGION:auto}
+    endpoint: ${STORAGE_ENDPOINT:}
+    access-key: ${STORAGE_ACCESS_KEY:}
+    secret-key: ${STORAGE_SECRET_KEY:}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
+    presign-upload-expire-minutes: ${STORAGE_PRESIGN_UPLOAD_EXPIRE_MINUTES:10}
+    presign-download-expire-minutes: ${STORAGE_PRESIGN_DOWNLOAD_EXPIRE_MINUTES:5}
+    max-image-size-mb: ${STORAGE_MAX_IMAGE_SIZE_MB:5}
+    max-digital-file-size-mb: ${STORAGE_MAX_DIGITAL_FILE_SIZE_MB:200}
+    safety-max-total-bytes: ${STORAGE_SAFETY_MAX_TOTAL_BYTES:8589934592}
+    safety-max-monthly-uploads: ${STORAGE_SAFETY_MAX_MONTHLY_UPLOADS:500000}
+
+springdoc:
+  api-docs:
+    enabled: ${app.swagger.enabled}
+  swagger-ui:
+    enabled: ${app.swagger.enabled}

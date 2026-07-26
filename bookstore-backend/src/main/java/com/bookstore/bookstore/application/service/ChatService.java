@@ -29,7 +29,6 @@ import com.bookstore.bookstore.shared.util.StringUtils;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -184,6 +183,59 @@ public class ChatService implements IChatService {
         );
         ChatMessageResult messageResult = chatAssembler.toMessageResult(savedMessage);
         publishMessageAfterCommit(messageResult, savedConversation, mergeParticipants(participants, savedParticipants));
+        return messageResult;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ChatMessageResult sendSystemMessage(UUID userId, UUID conversationId, String content) {
+        User customer = requireCustomerUser(userId);
+        Conversation conversation = requireOwnedConversation(customer.getId(), conversationId);
+        Instant now = Instant.now();
+        ChatMessage message = new ChatMessage(
+                UUID.randomUUID(),
+                conversation.getId(),
+                customer.getId(),
+                MessageSenderRole.SYSTEM,
+                MessageType.TEXT,
+                StringUtils.trimToNull(content),
+                null,
+                null,
+                null,
+                now,
+                now,
+                null
+        );
+        ChatMessage savedMessage = chatMessageRepository.save(message);
+        conversation.applyMessage(
+                savedMessage.getId(),
+                buildMessagePreview(savedMessage.getContent()),
+                savedMessage.getCreatedAt()
+        );
+        Conversation savedConversation = conversationRepository.save(conversation);
+
+        ConversationParticipant customerParticipant = getOrCreateParticipant(
+                savedConversation.getId(),
+                customer.getId(),
+                MessageSenderRole.USER,
+                savedConversation.getCreatedAt()
+        );
+        customerParticipant.incrementUnread();
+
+        List<ConversationParticipant> participants = new ArrayList<>(
+                conversationParticipantRepository.findAllByConversationIdActive(savedConversation.getId())
+        );
+        if (participants.stream().noneMatch(participant -> participant.getUserId().equals(customer.getId()))) {
+            participants.add(customerParticipant);
+        }
+
+        ConversationParticipant savedCustomerParticipant = conversationParticipantRepository.save(customerParticipant);
+        ChatMessageResult messageResult = chatAssembler.toMessageResult(savedMessage);
+        publishMessageAfterCommit(
+                messageResult,
+                savedConversation,
+                mergeParticipants(participants, List.of(savedCustomerParticipant))
+        );
         return messageResult;
     }
 

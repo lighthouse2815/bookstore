@@ -1,17 +1,30 @@
 package com.bookstore.bookstore.infrastructure.persistence.repository;
 
-import com.bookstore.bookstore.infrastructure.persistence.entity.PaymentJpaEntity;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.infrastructure.persistence.entity.PaymentJpaEntity;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
+import java.time.Instant;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
 
     Optional<PaymentJpaEntity> findByOrderId(UUID orderId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PaymentJpaEntity p where p.id = :paymentId")
+    Optional<PaymentJpaEntity> findByIdForUpdate(@Param("paymentId") UUID paymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PaymentJpaEntity p where p.orderId = :orderId")
+    Optional<PaymentJpaEntity> findByOrderIdForUpdate(@Param("orderId") UUID orderId);
 
     Optional<PaymentJpaEntity> findByReferenceCode(String referenceCode);
 
@@ -20,24 +33,98 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UU
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
             order by p.createdAt asc
             """)
     Optional<PaymentJpaEntity> findPendingSepayByOrderCode(
-      @Param("orderCode") String orderCode,
-      @Param("provider") PaymentProvider provider,
-      @Param("status") PaymentStatus status
+            @Param("orderCode") String orderCode,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from PaymentJpaEntity p
+            where p.provider = :provider
+              and p.status = :status
+              and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
+            order by p.createdAt asc
+            """)
+    Optional<PaymentJpaEntity> findPendingSepayByOrderCodeForUpdate(
+            @Param("orderCode") String orderCode,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
     );
 
     @Query("""
             select p
             from PaymentJpaEntity p
-            where p.provider = PaymentProvider.SEPAY
-              and p.status = PaymentStatus.PENDING
+            where p.provider = :provider
+              and p.status = :status
               and lower(:content) like concat('%', lower(p.transferContent), '%')
             order by p.createdAt asc
             """)
-    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContent(@Param("content") String content);
+    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContent(
+            @Param("content") String content,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from PaymentJpaEntity p
+            where p.provider = :provider
+              and p.status = :status
+              and lower(:content) like concat('%', lower(p.transferContent), '%')
+            order by p.createdAt asc
+            """)
+    Optional<PaymentJpaEntity> findPendingSepayByTransferContentInContentForUpdate(
+            @Param("content") String content,
+            @Param("provider") PaymentProvider provider,
+            @Param("status") PaymentStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from PaymentJpaEntity p
+            where p.provider = :provider
+              and (p.transferContent = :orderCode or p.referenceCode = :orderCode)
+            order by p.createdAt asc
+            """)
+    Optional<PaymentJpaEntity> findSepayByOrderCodeForUpdate(
+            @Param("orderCode") String orderCode,
+            @Param("provider") PaymentProvider provider
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from PaymentJpaEntity p
+            where p.provider = :provider
+              and lower(:content) like concat('%', lower(p.transferContent), '%')
+            order by p.createdAt asc
+            """)
+    Optional<PaymentJpaEntity> findSepayByTransferContentInContentForUpdateAnyStatus(
+            @Param("content") String content,
+            @Param("provider") PaymentProvider provider
+    );
+
+    @Query("""
+            select p.id
+            from PaymentJpaEntity p
+            where p.status = :status
+              and p.expiresAt is not null
+              and p.expiresAt <= :now
+            order by p.expiresAt asc, p.id asc
+            """)
+    List<UUID> findPendingExpiredIds(
+            @Param("status") PaymentStatus status,
+            @Param("now") Instant now,
+            Pageable pageable
+    );
 }

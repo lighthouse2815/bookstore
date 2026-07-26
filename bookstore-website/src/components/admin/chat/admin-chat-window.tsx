@@ -42,14 +42,14 @@ export function AdminChatWindow({
 }: AdminChatWindowProps) {
   if (!conversation) {
     return (
-      <section className="flex min-h-[44rem] items-center justify-center rounded-[30px] border border-dashed border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
+      <section className="flex h-[clamp(32rem,78dvh,42rem)] min-h-0 items-center justify-center rounded-[30px] border border-dashed border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
         <p>{labels.noConversationSelected}</p>
       </section>
     )
   }
 
   return (
-    <section className="flex min-h-[44rem] flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
+    <section className="flex h-[clamp(32rem,78dvh,42rem)] min-h-0 flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
       <div className="border-b border-border/60 px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -86,7 +86,7 @@ export function AdminChatWindow({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 py-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-5 py-5">
         <ChatMessageList
           messages={messages}
           currentUserId={currentUserId}
@@ -101,19 +101,21 @@ export function AdminChatWindow({
         />
 
         {conversation.status === 'CLOSED' ? (
-          <div className="rounded-[24px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+          <div className="shrink-0 rounded-[24px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
             {labels.closedNotice}
           </div>
         ) : (
-          <ChatInput
-            value={draft}
-            onChange={onDraftChange}
-            onSubmit={onSend}
-            placeholder={labels.replyPlaceholder}
-            submitLabel={labels.send}
-            disabled={isSending}
-            isSubmitting={isSending}
-          />
+          <div className="shrink-0">
+            <ChatInput
+              value={draft}
+              onChange={onDraftChange}
+              onSubmit={onSend}
+              placeholder={labels.replyPlaceholder}
+              submitLabel={labels.send}
+              disabled={isSending}
+              isSubmitting={isSending}
+            />
+          </div>
         )}
       </div>
     </section>

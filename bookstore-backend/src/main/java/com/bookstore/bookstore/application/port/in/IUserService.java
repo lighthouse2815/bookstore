@@ -5,6 +5,7 @@ import com.bookstore.bookstore.application.command.CreateUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
 import com.bookstore.bookstore.application.command.UpdateStaffUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
+import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.User;
 import java.util.List;
 import java.util.UUID;
@@ -15,11 +16,19 @@ public interface IUserService {
 
     List<User> getCustomers();
 
+    PageSliceResult<User> getCustomers(int page, int size);
+
     List<User> getStaffs();
+
+    PageSliceResult<User> getStaffs(int page, int size);
 
     List<User> getAdmins();
 
+    PageSliceResult<User> getAdmins(int page, int size);
+
     List<User> getShippers();
+
+    PageSliceResult<User> getShippers(int page, int size);
 
     List<User> getAllIncludingDeleted();
 

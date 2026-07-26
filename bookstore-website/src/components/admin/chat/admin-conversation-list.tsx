@@ -42,7 +42,7 @@ export function AdminConversationList({
   })
 
   return (
-    <section className="flex min-h-[44rem] flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
+    <section className="flex h-[clamp(32rem,78dvh,42rem)] min-h-0 flex-col overflow-hidden rounded-[30px] border border-border/60 bg-card/90 shadow-[0_24px_80px_rgba(2,6,23,0.18)]">
       <div className="border-b border-border/60 px-5 py-5">
         <h2 className="text-lg font-semibold text-foreground">{labels.listTitle}</h2>
 
@@ -72,7 +72,7 @@ export function AdminConversationList({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-3 [scrollbar-gutter:stable]">
         {isLoading ? (
           <div className="flex min-h-56 items-center justify-center text-sm text-muted-foreground">
             {labels.loadingList}

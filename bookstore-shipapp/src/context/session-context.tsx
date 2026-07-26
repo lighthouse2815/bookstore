@@ -1,4 +1,5 @@
 import { apiFetch, unwrapApiResult } from '@/src/services/api';
+import { createSingleFlight, retryOnceAfterUnauthorized } from '@/src/lib/session-policy';
 import {
   bootstrapSession,
   refreshCurrentSession,
@@ -32,6 +33,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [hydrated, setHydrated] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const sessionRef = useRef<Session | null>(null);
+  const signOutInFlightRef = useRef<Promise<void> | null>(null);
+  const refreshSession = useRef(
+    createSingleFlight(async (currentSession: Session) => {
+      const refreshedSession = await refreshCurrentSession(currentSession.refreshToken);
+      sessionRef.current = refreshedSession;
+      setSession(refreshedSession);
+      return refreshedSession;
+    }),
+  ).current;
 
   useEffect(() => {
     sessionRef.current = session;
@@ -64,38 +74,64 @@ export function SessionProvider({ children }: PropsWithChildren) {
   async function handleSignIn(payload: LoginPayload) {
     const nextSession = await authSignIn(payload);
 
-    if (!nextSession.roles.includes('SHIPPER')) {
-      await authSignOut(nextSession.refreshToken);
-      throw new Error('Tai khoan nay khong co quyen SHIPPER');
-    }
-
     sessionRef.current = nextSession;
     setSession(nextSession);
     return nextSession;
   }
 
   async function handleSignOut() {
+    if (signOutInFlightRef.current) {
+      return signOutInFlightRef.current;
+    }
+
     const refreshToken = sessionRef.current?.refreshToken;
 
     sessionRef.current = null;
     setSession(null);
-    await authSignOut(refreshToken);
-    router.replace('/login');
+    const signOutPromise = authSignOut(refreshToken).then(() => {
+      router.replace('/login');
+    });
+    signOutInFlightRef.current = signOutPromise;
+
+    try {
+      await signOutPromise;
+    } finally {
+      signOutInFlightRef.current = null;
+    }
   }
 
-  async function request<T>(path: string, options: RequestOptions = {}, allowRetry = true): Promise<T> {
+  async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const activeSession = sessionRef.current;
-    const result = await apiFetch<T>(path, options, activeSession?.accessToken);
+    const send = (accessToken: string) => apiFetch<T>(path, options, accessToken);
+    let result = await apiFetch<T>(path, options, activeSession?.accessToken);
 
-    if (result.status === 401 && allowRetry && activeSession?.refreshToken) {
+    if (result.status === 401) {
+      if (!activeSession?.refreshToken) {
+        await handleSignOut();
+        throw new Error('Phien dang nhap da het han. Vui long dang nhap lai.');
+      }
+
       try {
-        const refreshedSession = await refreshCurrentSession(activeSession.refreshToken);
-        sessionRef.current = refreshedSession;
-        setSession(refreshedSession);
-        return request<T>(path, options, false);
+        result = await retryOnceAfterUnauthorized(
+          result,
+          activeSession,
+          send,
+          async (session) => {
+            const currentSession = sessionRef.current;
+            if (currentSession && currentSession.accessToken !== session.accessToken) {
+              return currentSession;
+            }
+            return refreshSession(session);
+          },
+        );
       } catch {
         await handleSignOut();
         throw new Error('Phien dang nhap da het han');
+      }
+
+      if (result.status === 401) {
+        await handleSignOut();
+        throw new Error('Phien dang nhap da het han. Vui long dang nhap lai.');
       }
     }
 

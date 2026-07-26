@@ -25,7 +25,9 @@ public class PaymentPersistenceMapper {
                 entity.getGateway(),
                 entity.getPaidAt(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getExpiresAt(),
+                entity.getExpiredAt()
         );
     }
 
@@ -43,5 +45,7 @@ public class PaymentPersistenceMapper {
         entity.setPaidAt(payment.getPaidAt());
         entity.setCreatedAt(payment.getCreatedAt());
         entity.setUpdatedAt(payment.getUpdatedAt());
+        entity.setExpiresAt(payment.getExpiresAt());
+        entity.setExpiredAt(payment.getExpiredAt());
     }
 }

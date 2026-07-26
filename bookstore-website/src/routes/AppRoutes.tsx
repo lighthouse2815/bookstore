@@ -12,7 +12,18 @@ import { ProtectedRoute } from './protected-route'
 
 const HomePage = lazy(() => import('@/pages/home/home'))
 const BooksPage = lazy(() => import('@/pages/book/books'))
+const BookMatchPage = lazy(() => import('@/pages/book/book-match'))
+const GiftFinderPage = lazy(() => import('@/pages/book/gift-finder'))
+const ShelvesPage = lazy(() => import('@/pages/book/shelves'))
+const ShelfDetailPage = lazy(() => import('@/pages/book/shelf-detail'))
+const ReadingJournalPage = lazy(() => import('@/pages/book/reading-journal'))
+const CouponGamePage = lazy(() => import('@/pages/home/coupon-game'))
+const ReadingChallengePage = lazy(
+  () => import('@/pages/home/reading-challenge'),
+)
+const EbooksPage = lazy(() => import('@/pages/book/ebooks'))
 const BookDetailPage = lazy(() => import('@/pages/book/book-detail'))
+const BookEbookPage = lazy(() => import('@/pages/book/book-ebook'))
 const CartPage = lazy(() => import('@/pages/cart/cart'))
 const CheckoutPage = lazy(() => import('@/pages/cart/checkout'))
 const NotFoundPage = lazy(() => import('@/pages/home/not-found'))
@@ -20,15 +31,23 @@ const ShippingPolicyPage = lazy(() => import('@/pages/support/shipping-policy'))
 const ReturnsRefundsPage = lazy(() => import('@/pages/support/returns-refunds'))
 const FaqPage = lazy(() => import('@/pages/support/faq'))
 const ContactPage = lazy(() => import('@/pages/support/contact'))
+const NewsletterUnsubscribePage = lazy(
+  () => import('@/pages/support/newsletter-unsubscribe'),
+)
 const OrderConfirmationPage = lazy(
   () => import('@/pages/order/order-confirmation'),
 )
 const MyOrdersPage = lazy(() => import('@/pages/order/my-orders'))
 const OrderDetailPage = lazy(() => import('@/pages/order/order-detail'))
+const ReturnRequestsPage = lazy(() => import('@/pages/order/return-requests'))
+const WishlistPage = lazy(() => import('@/pages/book/wishlist'))
 const NotificationsPage = lazy(() => import('@/pages/notifications/notifications'))
 const DigitalLibraryPage = lazy(() => import('@/pages/library/digital-library'))
 const DigitalLibraryDetailPage = lazy(
   () => import('@/pages/library/digital-library-detail'),
+)
+const DigitalLibraryReaderPage = lazy(
+  () => import('@/pages/library/digital-library-reader'),
 )
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
@@ -36,8 +55,20 @@ const RegisterPage = lazy(() => import('@/pages/auth/register'))
 const ProfilePage = lazy(() => import('@/pages/auth/profile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'))
+const AdminAuditLogsPage = lazy(() => import('@/pages/admin/audit-logs'))
+const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
 const AdminBooksPage = lazy(() => import('@/pages/admin/books'))
+const AdminDigitalAssetsPage = lazy(() => import('@/pages/admin/digital-assets'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders'))
+const AdminPaymentReconciliationPage = lazy(
+  () => import('@/pages/admin/payment-reconciliation'),
+)
+const AdminRefundsPage = lazy(() => import('@/pages/admin/refunds'))
+const AdminOutboxPage = lazy(() => import('@/pages/admin/outbox'))
+const AdminReturnRequestsPage = lazy(
+  () => import('@/pages/admin/return-requests'),
+)
+const AdminShipmentsPage = lazy(() => import('@/pages/admin/shipments'))
 const AdminCategoriesPage = lazy(() => import('@/pages/admin/categories'))
 const AdminAuthorsPage = lazy(() => import('@/pages/admin/authors'))
 const AdminPublishersPage = lazy(() => import('@/pages/admin/publishers'))
@@ -129,10 +160,58 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/book-match"
+          element={
+            <LazyPage>
+              <BookMatchPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/gift-finder"
+          element={
+            <LazyPage>
+              <GiftFinderPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/coupon-game"
+          element={
+            <LazyPage>
+              <CouponGamePage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/reading-challenge"
+          element={
+            <LazyPage>
+              <ReadingChallengePage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/ebooks"
+          element={
+            <LazyPage>
+              <EbooksPage />
+            </LazyPage>
+          }
+        />
+        <Route
           path="/books/:id"
           element={
             <LazyPage>
               <BookDetailPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/books/:id/ebook"
+          element={
+            <LazyPage>
+              <BookEbookPage />
             </LazyPage>
           }
         />
@@ -210,6 +289,64 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/return-requests"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ReturnRequestsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <WishlistPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/newsletter/unsubscribe"
+          element={
+            <LazyPage>
+              <NewsletterUnsubscribePage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/shelves"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ShelvesPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shelves/:shelfId"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ShelfDetailPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reading-journal"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <ReadingJournalPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/order-confirmation"
           element={
             <ProtectedRoute>
@@ -260,11 +397,49 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/library/:digitalAssetId/read"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <DigitalLibraryReaderPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <LazyPage>
                 <AdminDashboard />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <Navigate to="/admin" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/audit-logs"
+          element={
+            <ProtectedRoute requiredRoles={['ADMIN', 'STAFF']}>
+              <LazyPage>
+                <AdminAuditLogsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminReportsPage />
               </LazyPage>
             </ProtectedRoute>
           }
@@ -280,11 +455,71 @@ function AppRouteContent() {
           }
         />
         <Route
+          path="/admin/digital-assets"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminDigitalAssetsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/orders"
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <LazyPage>
                 <AdminOrdersPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/payment-reconciliation"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminPaymentReconciliationPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/refunds"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminRefundsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/outbox"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminOutboxPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/return-requests"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminReturnRequestsPage />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/shipments"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <LazyPage>
+                <AdminShipmentsPage />
               </LazyPage>
             </ProtectedRoute>
           }

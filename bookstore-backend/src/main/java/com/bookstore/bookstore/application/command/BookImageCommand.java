@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record BookImageCommand(
         UUID id,
-        String imageUrl,
+        UUID fileAssetId,
         Boolean primaryImage,
         Integer sortOrder,
         String altText

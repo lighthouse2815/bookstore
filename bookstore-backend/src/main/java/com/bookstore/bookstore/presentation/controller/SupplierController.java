@@ -6,6 +6,7 @@ import com.bookstore.bookstore.presentation.request.CreateSupplierRequest;
 import com.bookstore.bookstore.presentation.request.UpdateSupplierRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.SupplierResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/admin/suppliers")
@@ -32,10 +34,20 @@ public class SupplierController {
     private final SupplierWebMapper supplierWebMapper;
 
     @GetMapping
-    public ApiResponse<List<SupplierResponse>> getAll() {
-        return ApiResponse.success(supplierService.getAll().stream()
+    public ResponseEntity<ApiResponse<List<SupplierResponse>>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = supplierService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+                    .map(supplierWebMapper::toResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+        return ResponseEntity.ok(ApiResponse.success(supplierService.getAll().stream()
                 .map(supplierWebMapper::toResponse)
-                .toList());
+                .toList()));
     }
 
     @GetMapping("/{id}")

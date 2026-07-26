@@ -9,8 +9,11 @@ import com.bookstore.bookstore.presentation.request.CreateUserRequest;
 import com.bookstore.bookstore.presentation.request.UpdateStaffUserRequest;
 import com.bookstore.bookstore.presentation.request.UpdateUserRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
+import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
 import com.bookstore.bookstore.presentation.response.UserMeResponse;
 import com.bookstore.bookstore.presentation.response.UserResponse;
+import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,89 +38,205 @@ public class UserController {
 
     private final IUserService userService;
     private final UserWebMapper userWebMapper;
+    private final AdminAuditSupport adminAuditSupport;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/users")
     public ResponseEntity<ApiResponse<UserResponse>> create(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @Valid @RequestBody CreateUserRequest request
     ) {
         var result = userService.createByAdmin(userWebMapper.toCreateCommand(request));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordCreate(
+                jwt,
+                httpServletRequest,
+                "USER_CREATED",
+                "USER",
+                response.userId(),
+                "Tạo tài khoản " + response.username(),
+                response
+        );
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(userWebMapper.toUserResponse(result)));
+                .body(ApiResponse.success(response));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/users/customers")
-    public ApiResponse<List<UserResponse>> getCustomers() {
-        return ApiResponse.success(userService.getCustomers().stream()
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getCustomers(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = userService.getCustomers(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(userWebMapper::toUserResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(userService.getCustomers().stream()
                 .map(userWebMapper::toUserResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/users/staff")
-    public ApiResponse<List<UserResponse>> getStaffs() {
-        return ApiResponse.success(userService.getStaffs().stream()
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getStaffs(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = userService.getStaffs(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(userWebMapper::toUserResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(userService.getStaffs().stream()
                 .map(userWebMapper::toUserResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/staff/{id}")
     public ApiResponse<UserResponse> updateStaff(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateStaffUserRequest request
     ) {
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateStaffByAdmin(userWebMapper.toUpdateStaffCommand(id, request));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordUpdate(
+                jwt,
+                httpServletRequest,
+                "USER_UPDATED",
+                "USER",
+                response.userId(),
+                "Cập nhật tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/{id}/lock")
     public ApiResponse<UserResponse> lockUser(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, true));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                "USER_LOCKED",
+                "USER",
+                response.userId(),
+                "Khóa tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/users/{id}/unlock")
     public ApiResponse<UserResponse> unlockUser(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, false));
-        return ApiResponse.success(userWebMapper.toUserResponse(result));
+        UserResponse response = userWebMapper.toUserResponse(result);
+        adminAuditSupport.recordStatusChange(
+                jwt,
+                httpServletRequest,
+                "USER_UNLOCKED",
+                "USER",
+                response.userId(),
+                "Mở khóa tài khoản " + response.username(),
+                before,
+                response
+        );
+        return ApiResponse.success(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/users/admins")
-    public ApiResponse<List<UserResponse>> getAdmins() {
-        return ApiResponse.success(userService.getAdmins().stream()
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAdmins(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = userService.getAdmins(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(userWebMapper::toUserResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(userService.getAdmins().stream()
                 .map(userWebMapper::toUserResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/admin/users/shippers")
-    public ApiResponse<List<UserResponse>> getShippers() {
-        return ApiResponse.success(userService.getShippers().stream()
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getShippers(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        if (page != null || size != null) {
+            var result = userService.getShippers(
+                    page == null ? 0 : page,
+                    size == null ? 20 : size
+            ).map(userWebMapper::toUserResponse);
+            return ResponseEntity.ok()
+                    .headers(PaginationHeaderUtils.build(result))
+                    .body(ApiResponse.success(result.items()));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(userService.getShippers().stream()
                 .map(userWebMapper::toUserResponse)
-                .toList());
+                .toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/users/{id}")
     public ApiResponse<Void> deleteByAdmin(
             @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpServletRequest,
             @PathVariable UUID id
     ) {
         UUID adminId = UUID.fromString(jwt.getSubject());
+        UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         userService.deleteByAdmin(new DeleteUserCommand(id, adminId));
+        adminAuditSupport.recordDelete(
+                jwt,
+                httpServletRequest,
+                "USER_DELETED",
+                "USER",
+                id,
+                "Xóa tài khoản " + before.username(),
+                before
+        );
         return ApiResponse.success("Deleted", null);
     }
 
