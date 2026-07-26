@@ -1,5 +1,6 @@
 using System.Windows;
-using System.Windows.Media;
+using System.Windows.Controls;
+using Bookstore.Desktop.Helpers;
 using Bookstore.Desktop.ViewModels;
 
 namespace Bookstore.Desktop.Views;
@@ -13,6 +14,7 @@ public partial class ForgotPasswordWindow : Window
     {
         this.loginViewModel = loginViewModel;
         InitializeComponent();
+        SourceInitialized += (_, _) => WindowThemeChrome.Apply(this, loginViewModel.IsDarkMode);
     }
 
     private async void SendOtpButton_OnClick(object sender, RoutedEventArgs e)
@@ -111,16 +113,19 @@ public partial class ForgotPasswordWindow : Window
     private void ShowStatus(string message, bool isError)
     {
         StatusBorder.Visibility = Visibility.Visible;
-        StatusBorder.Background = CreateBrush(isError ? "#FEF2F2" : "#EFF6FF");
-        StatusBorder.BorderBrush = CreateBrush(isError ? "#FECACA" : "#BFDBFE");
+        StatusBorder.SetResourceReference(
+            Border.BackgroundProperty,
+            isError ? "DangerSurfaceBrush" : "AccentSoftBrush");
+        StatusBorder.SetResourceReference(
+            Border.BorderBrushProperty,
+            isError ? "DangerBrush" : "BorderBrushLight");
         StatusIcon.Text = isError ? "\uE783" : "\uE946";
-        StatusIcon.Foreground = CreateBrush(isError ? "#DC2626" : "#2563EB");
+        StatusIcon.SetResourceReference(
+            TextBlock.ForegroundProperty,
+            isError ? "DangerBrush" : "InfoBrush");
         StatusTextBlock.Text = message;
-        StatusTextBlock.Foreground = CreateBrush(isError ? "#991B1B" : "#1D4ED8");
-    }
-
-    private static Brush CreateBrush(string color)
-    {
-        return (Brush)new BrushConverter().ConvertFromString(color)!;
+        StatusTextBlock.SetResourceReference(
+            TextBlock.ForegroundProperty,
+            isError ? "DangerBrush" : "AccentSoftTextBrush");
     }
 }

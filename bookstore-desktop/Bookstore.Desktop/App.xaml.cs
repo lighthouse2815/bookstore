@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using Bookstore.Desktop.Helpers;
 using Bookstore.Desktop.Services;
 using Bookstore.Desktop.Stores;
 using Bookstore.Desktop.ViewModels;
@@ -20,6 +21,7 @@ public partial class App : Application
 
         try
         {
+            ThemeResourceAdapter.Initialize();
             var settingsStore = new AppSettingsStore();
             var authStore = new AuthStore();
             var cartStore = new PosCartStore();
@@ -30,11 +32,14 @@ public partial class App : Application
             var bookService = new BookService(apiClient);
             var posService = new PosService(apiClient);
             var orderService = new OrderService(apiClient);
+            var reportService = new ReportService(apiClient);
             var inventoryService = new InventoryService(bookService);
             var printerService = new ReceiptPrinterService();
             var receiptFactory = new ReceiptFactory();
 
             var receiptViewModel = new ReceiptPreviewViewModel(printerService);
+            var customerDisplayViewModel = new CustomerDisplayViewModel(cartStore);
+            var customerDisplayWindowService = new CustomerDisplayWindowService(customerDisplayViewModel);
             var orderLookupViewModel = new OrderLookupViewModel(
                 orderService,
                 receiptFactory,
@@ -48,8 +53,10 @@ public partial class App : Application
                 receiptViewModel,
                 orderLookupViewModel,
                 receiptFactory,
-                authStore);
+                authStore,
+                customerDisplayViewModel);
             var inventoryViewModel = new InventoryViewModel(inventoryService);
+            var reportsViewModel = new ReportsViewModel(reportService);
             var settingsViewModel = new SettingsViewModel(settingsStore);
 
             var mainViewModel = new MainViewModel(
@@ -62,7 +69,9 @@ public partial class App : Application
                 posViewModel,
                 orderLookupViewModel,
                 inventoryViewModel,
-                settingsViewModel);
+                reportsViewModel,
+                settingsViewModel,
+                customerDisplayWindowService);
 
             MainWindow = new MainWindow
             {

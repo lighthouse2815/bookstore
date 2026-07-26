@@ -4,10 +4,66 @@
              FontFamily="Segoe UI"
              UseLayoutRounding="True"
              SnapsToDevicePixels="True">
+    <UserControl.Resources>
+        <Style x:Key="ThemeAwareButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.78" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.48" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid ClipToBounds="True">
         <Image Source="/Bookstore.Desktop;component/Assets/login-background.png"
                Stretch="UniformToFill" />
-        <Rectangle Fill="#2FFFFFFF" />
+        <Rectangle Fill="{DynamicResource AppBackgroundBrush}">
+            <Rectangle.Style>
+                <Style TargetType="Rectangle">
+                    <Setter Property="Opacity" Value="0.2" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkMode}" Value="True">
+                            <Setter Property="Opacity" Value="0.84" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Rectangle.Style>
+        </Rectangle>
+
+        <Button Content="{Binding ThemeButtonText}"
+                Command="{Binding ToggleThemeCommand}"
+                Style="{StaticResource ThemeAwareButtonStyle}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,22,24,0"
+                Padding="15,8"
+                Background="{DynamicResource SurfaceBrush}"
+                Foreground="{DynamicResource PrimaryTextBrush}"
+                BorderBrush="{DynamicResource BorderBrushLight}"
+                BorderThickness="1"
+                FontWeight="SemiBold"
+                Panel.ZIndex="2" />
 
         <Viewbox Stretch="Uniform"
                  StretchDirection="DownOnly"
@@ -16,8 +72,8 @@
                  Margin="24">
             <Border Width="830"
                     Height="718"
-                    Background="#FCFDFE"
-                    BorderBrush="#CDD7E4"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrushLight}"
                     BorderThickness="1"
                     CornerRadius="18">
                 <Border.Effect>
@@ -40,8 +96,8 @@
                         </Grid.ColumnDefinitions>
 
                         <Border Grid.Column="0"
-                                Background="#F2F7FE"
-                                BorderBrush="#E5EDF8"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource BorderBrushLight}"
                                 BorderThickness="0,0,1,0"
                                 CornerRadius="18,0,0,0">
                             <Grid ClipToBounds="True">
@@ -52,25 +108,40 @@
                                        HorizontalAlignment="Left"
                                        VerticalAlignment="Top"
                                        Stretch="UniformToFill" />
+                                <Rectangle Fill="{DynamicResource SurfaceAltBrush}"
+                                           IsHitTestVisible="False"
+                                           Panel.ZIndex="1">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Opacity" Value="0" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkMode}" Value="True">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
                                 <StackPanel Margin="56,514,34,0"
-                                            VerticalAlignment="Top">
+                                            VerticalAlignment="Top"
+                                            Panel.ZIndex="2">
                                     <TextBlock Text="“"
                                                FontSize="54"
                                                FontWeight="Bold"
-                                               Foreground="#1F5FCA"
+                                               Foreground="{DynamicResource InfoBrush}"
                                                Margin="0,0,0,-8" />
                                     <TextBlock Text="Tri thức là chìa khóa"
                                                FontSize="17"
                                                FontWeight="SemiBold"
-                                               Foreground="#152A4D" />
+                                               Foreground="{DynamicResource PrimaryTextBrush}" />
                                     <TextBlock Text="mở cánh cửa tương lai."
                                                FontSize="17"
                                                FontWeight="SemiBold"
-                                               Foreground="#152A4D"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"
                                                Margin="0,4,0,18" />
                                     <TextBlock Text="- Khuyết danh -"
                                                FontSize="13"
-                                               Foreground="#5A79B7" />
+                                               Foreground="{DynamicResource SecondaryTextBrush}" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -92,10 +163,10 @@
                                         <TextBlock Text="Bookstore POS"
                                                    FontSize="38"
                                                    FontWeight="Bold"
-                                                   Foreground="#16325F" />
+                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
                                         <TextBlock Text="Đăng nhập nhân viên"
                                                    FontSize="17"
-                                                   Foreground="#6B7C95"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
                                                    Margin="2,6,0,0" />
                                     </StackPanel>
                                 </StackPanel>
@@ -106,23 +177,27 @@
                                 <TextBlock Text="Email hoặc username"
                                            FontSize="14"
                                            FontWeight="SemiBold"
-                                           Foreground="#111827" />
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
                                 <TextBox Height="52"
                                          Margin="0,12,0,26"
                                          Padding="14,0"
-                                         BorderBrush="#D5DDE8"
+                                         Background="{DynamicResource TextBoxBackgroundBrush}"
+                                         Foreground="{DynamicResource TextBoxForegroundBrush}"
+                                         BorderBrush="{DynamicResource TextBoxBorderBrush}"
                                          VerticalContentAlignment="Center"
                                          Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
 
                                 <TextBlock Text="Mật khẩu"
                                            FontSize="14"
                                            FontWeight="SemiBold"
-                                           Foreground="#111827" />
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
                                 <PasswordBox x:Name="PasswordInput"
                                              Height="52"
                                              Margin="0,12,0,10"
                                              Padding="14,0"
-                                             BorderBrush="#D5DDE8"
+                                             Background="{DynamicResource TextBoxBackgroundBrush}"
+                                             Foreground="{DynamicResource TextBoxForegroundBrush}"
+                                             BorderBrush="{DynamicResource TextBoxBorderBrush}"
                                              VerticalContentAlignment="Center"
                                              PasswordChanged="PasswordInput_OnPasswordChanged" />
 
@@ -133,18 +208,39 @@
                                         Padding="0"
                                         Background="Transparent"
                                         BorderThickness="0"
-                                        Foreground="#2E70E8"
+                                        Foreground="{DynamicResource InfoBrush}"
                                         FontSize="13"
                                         Cursor="Hand" />
 
                                 <Button Command="{Binding LoginCommand}"
                                         Height="52"
-                                        Background="#2668E8"
+                                        Background="{DynamicResource PrimaryBrush}"
                                         BorderThickness="0"
                                         Foreground="White"
                                         FontSize="16"
                                         FontWeight="SemiBold"
                                         Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="LoginButtonChrome"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="8">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="LoginButtonChrome" Property="Opacity" Value="0.92" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="LoginButtonChrome" Property="Opacity" Value="0.82" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="LoginButtonChrome" Property="Opacity" Value="0.48" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
                                     <StackPanel Orientation="Horizontal"
                                                 HorizontalAlignment="Center">
                                         <TextBlock Text="&#xE8FB;"
@@ -164,25 +260,26 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <Border Height="1"
-                                            Background="#E0E6EF"
+                                            Background="{DynamicResource BorderBrushLight}"
                                             VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1"
                                                Text="hoặc"
                                                FontSize="13"
-                                               Foreground="#7C8798"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
                                                Margin="18,0" />
                                     <Border Grid.Column="2"
                                             Height="1"
-                                            Background="#E0E6EF"
+                                            Background="{DynamicResource BorderBrushLight}"
                                             VerticalAlignment="Center" />
                                 </Grid>
 
                                 <Button Command="{Binding GoogleLoginCommand}"
+                                        Style="{StaticResource ThemeAwareButtonStyle}"
                                         Height="52"
-                                        Background="#FFFFFF"
-                                        BorderBrush="#D9E1EC"
-                                        BorderThickness="1"
-                                        Cursor="Hand">
+                                        Background="{DynamicResource CardBrush}"
+                                        Foreground="{DynamicResource PrimaryTextBrush}"
+                                        BorderBrush="{DynamicResource BorderBrushLight}"
+                                        BorderThickness="1">
                                     <StackPanel Orientation="Horizontal"
                                                 HorizontalAlignment="Center">
                                         <TextBlock Text="G"
@@ -194,7 +291,7 @@
                                         <TextBlock Text="Đăng nhập với Google"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
-                                                   Foreground="#37465C"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
@@ -206,7 +303,7 @@
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="Đang xử lý..."
-                                           Foreground="#2563EB"
+                                           Foreground="{DynamicResource InfoBrush}"
                                            FontSize="13"
                                            Margin="0,8,0,0">
                                     <TextBlock.Style>
@@ -225,19 +322,19 @@
                     </Grid>
 
                     <Border Grid.Row="1"
-                            Background="#FAFBFD"
-                            BorderBrush="#E4EAF1"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrushLight}"
                             BorderThickness="0,1,0,0"
                             CornerRadius="0,0,18,18">
                         <DockPanel Margin="22,0">
                             <TextBlock Text="An toàn &amp; bảo mật"
                                        FontSize="13"
-                                       Foreground="#677792"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        VerticalAlignment="Center" />
                             <TextBlock Text="Phiên bản 1.0.0"
                                        DockPanel.Dock="Right"
                                        FontSize="13"
-                                       Foreground="#677792"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        VerticalAlignment="Center" />
                         </DockPanel>
                     </Border>

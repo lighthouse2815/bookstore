@@ -23,6 +23,7 @@ public partial class PosViewModel : ObservableObject
     private readonly OrderLookupViewModel orderLookupViewModel;
     private readonly ReceiptFactory receiptFactory;
     private readonly AuthStore authStore;
+    private readonly CustomerDisplayViewModel customerDisplayViewModel;
 
     public PosViewModel(
         BookService bookService,
@@ -32,7 +33,8 @@ public partial class PosViewModel : ObservableObject
         ReceiptPreviewViewModel receiptPreviewViewModel,
         OrderLookupViewModel orderLookupViewModel,
         ReceiptFactory receiptFactory,
-        AuthStore authStore)
+        AuthStore authStore,
+        CustomerDisplayViewModel customerDisplayViewModel)
     {
         this.bookService = bookService;
         this.posService = posService;
@@ -42,6 +44,7 @@ public partial class PosViewModel : ObservableObject
         this.orderLookupViewModel = orderLookupViewModel;
         this.receiptFactory = receiptFactory;
         this.authStore = authStore;
+        this.customerDisplayViewModel = customerDisplayViewModel;
         PaymentMethods = new[]
         {
             new PaymentMethodOption("CASH", "Tiền mặt"),
@@ -55,6 +58,7 @@ public partial class PosViewModel : ObservableObject
 
     public ObservableCollection<BookModel> SearchResults { get; } = new();
     public ObservableCollection<PosCartItemModel> CartItems => cartStore.Items;
+    public ObservableCollection<CouponOptionModel> AvailableCoupons { get; } = new();
     public IReadOnlyList<PaymentMethodOption> PaymentMethods { get; }
 
     [ObservableProperty]
@@ -65,6 +69,12 @@ public partial class PosViewModel : ObservableObject
 
     [ObservableProperty]
     private string? couponCode;
+
+    [ObservableProperty]
+    private string couponHelpText = "Chọn mã đang hoạt động hoặc nhập mã thủ công.";
+
+    [ObservableProperty]
+    private bool isLoadingCoupons;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCustomerDetailsEnabled))]
@@ -103,6 +113,9 @@ public partial class PosViewModel : ObservableObject
     public bool IsCustomerDetailsEnabled => !UseWalkInCustomer;
     public bool IsCashPayment => string.Equals(SelectedPaymentMethod?.Code, "CASH", StringComparison.OrdinalIgnoreCase);
     public bool HasCashReceived => TryParseCashReceived(out _);
+    public string CashReceivedInWordsText => TryParseCashReceived(out var amount)
+        ? $"({VietnameseCurrencyTextHelper.ToWords(amount)})"
+        : "";
     public string CashChangeText => TryParseCashReceived(out var amount)
         ? CurrencyHelper.Format(PosCheckoutRules.CalculateChange(amount, cartStore.TotalAmount))
         : "--";
@@ -147,6 +160,35 @@ public partial class PosViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    public async Task LoadCouponsAsync()
+    {
+        if (IsLoadingCoupons)
+        {
+            return;
+        }
+
+        try
+        {
+            IsLoadingCoupons = true;
+            var coupons = await posService.GetActiveBookCouponsAsync();
+            AvailableCoupons.Clear();
+            foreach (var coupon in coupons)
+            {
+                AvailableCoupons.Add(coupon);
+            }
+
+            UpdateCouponHelpText();
+        }
+        catch
+        {
+            CouponHelpText = "Không tải được danh sách mã; bạn vẫn có thể nhập mã thủ công.";
+        }
+        finally
+        {
+            IsLoadingCoupons = false;
         }
     }
 
@@ -269,6 +311,7 @@ public partial class PosViewModel : ObservableObject
                 customerPhone,
                 cashReceived);
 
+            customerDisplayViewModel.ShowPaidReceipt(receipt);
             LastReceipt = receipt;
             receiptPreviewViewModel.SetReceipt(receipt);
             cartStore.Clear();
@@ -330,7 +373,28 @@ public partial class PosViewModel : ObservableObject
     partial void OnCashReceivedTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasCashReceived));
+        OnPropertyChanged(nameof(CashReceivedInWordsText));
         OnPropertyChanged(nameof(CashChangeText));
+    }
+
+    partial void OnCouponCodeChanged(string? value)
+    {
+        UpdateCouponHelpText();
+    }
+
+    private void UpdateCouponHelpText()
+    {
+        var selectedCoupon = AvailableCoupons.FirstOrDefault(coupon =>
+            string.Equals(coupon.Code, CouponCode?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (selectedCoupon != null)
+        {
+            CouponHelpText = selectedCoupon.DetailText;
+            return;
+        }
+
+        CouponHelpText = AvailableCoupons.Count == 0
+            ? "Chưa có mã giảm giá sách đang hoạt động; vẫn có thể nhập mã thủ công."
+            : $"Có {AvailableCoupons.Count} mã đang hoạt động; chọn trong danh sách hoặc nhập mã khác.";
     }
 
     private void RefreshCartTotals()

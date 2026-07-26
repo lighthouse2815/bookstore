@@ -59,12 +59,15 @@ yarn-error.log*
 **/bin/
 **/obj/
 **/out/
+**/artifacts/
 !bookstore-backend/src/main/java/com/bookstore/bookstore/application/port/out/
 !bookstore-backend/src/main/java/com/bookstore/bookstore/application/port/out/*.java
 **/publish/
 **/TestResults/
 **/*.nupkg
 **/*.snupkg
+**/*.pfx
+**/*.p12
 
 # Expo / React Native
 **/.expo/

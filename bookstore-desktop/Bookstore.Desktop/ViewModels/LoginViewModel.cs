@@ -1,3 +1,4 @@
+using Bookstore.Desktop.Config;
 using Bookstore.Desktop.Services;
 using Bookstore.Desktop.Stores;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,9 +17,21 @@ public partial class LoginViewModel : ObservableObject
         this.authService = authService;
         this.googleOAuthService = googleOAuthService;
         this.settingsStore = settingsStore;
+        email = AppConfig.DevelopmentUsername;
+        password = AppConfig.DevelopmentPassword;
+        settingsStore.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AppSettingsStore.IsDarkMode))
+            {
+                OnPropertyChanged(nameof(IsDarkMode));
+                OnPropertyChanged(nameof(ThemeButtonText));
+            }
+        };
     }
 
     public event EventHandler? LoginSucceeded;
+    public bool IsDarkMode => settingsStore.IsDarkMode;
+    public string ThemeButtonText => IsDarkMode ? "☀  Chế độ sáng" : "☾  Chế độ tối";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -42,6 +55,12 @@ public partial class LoginViewModel : ObservableObject
 
     private bool CanGoogleLogin => !IsLoading;
 
+    [RelayCommand]
+    private void ToggleTheme()
+    {
+        settingsStore.UpdateTheme(!settingsStore.IsDarkMode);
+    }
+
     [RelayCommand(CanExecute = nameof(CanLogin))]
     private async Task LoginAsync()
     {
@@ -50,7 +69,7 @@ public partial class LoginViewModel : ObservableObject
             IsLoading = true;
             Message = "";
             await authService.LoginAsync(Email, Password);
-            Password = "";
+            Password = AppConfig.DevelopmentPassword;
             LoginSucceeded?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception exception)

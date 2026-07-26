@@ -7,8 +7,9 @@
         Title="Bookstore POS"
         Width="1200"
         Height="760"
-        MinWidth="980"
-        MinHeight="640"
+        MinWidth="900"
+        MinHeight="600"
+        SizeChanged="MainWindow_OnSizeChanged"
         Background="{DynamicResource AppBackgroundBrush}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -26,6 +27,9 @@
         <DataTemplate DataType="{x:Type vm:InventoryViewModel}">
             <views:InventoryView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+            <views:ReportsView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ReceiptPreviewViewModel}">
             <views:ReceiptPreviewView />
         </DataTemplate>
@@ -41,6 +45,53 @@
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="FontSize" Value="15" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SidebarDividerBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.76" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="7">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.78" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -58,24 +109,47 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrushLight}"
                     BorderThickness="0,0,0,1">
-                <DockPanel Margin="20,0">
+                <DockPanel x:Name="HeaderPanel" Margin="20,0">
                     <TextBlock Text="Bookstore POS"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource PrimaryTextBrush}"
                                VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding CurrentUserText}"
-                               DockPanel.Dock="Right"
-                               FontSize="15"
-                               Foreground="{DynamicResource SecondaryTextBrush}"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Right" />
+                    <StackPanel DockPanel.Dock="Right"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button Content="Màn hình khách"
+                                Command="{Binding OpenCustomerDisplayCommand}"
+                                Style="{StaticResource HeaderButtonStyle}"
+                                Padding="12,7"
+                                Margin="0,0,10,0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Foreground="{DynamicResource PrimaryTextBrush}"
+                                BorderBrush="{DynamicResource BorderBrushLight}"
+                                BorderThickness="1" />
+                        <Button Content="{Binding ThemeButtonText}"
+                                Command="{Binding ToggleThemeCommand}"
+                                Style="{StaticResource HeaderButtonStyle}"
+                                Padding="12,7"
+                                Margin="0,0,14,0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Foreground="{DynamicResource PrimaryTextBrush}"
+                                BorderBrush="{DynamicResource BorderBrushLight}"
+                                BorderThickness="1" />
+                        <TextBlock x:Name="CurrentUserTextBlock"
+                                   Text="{Binding CurrentUserText}"
+                                   FontSize="15"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Right"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                 </DockPanel>
             </Border>
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="210" />
+                    <ColumnDefinition x:Name="SidebarColumn" Width="210" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
@@ -84,13 +158,18 @@
                         <Button Content="POS bán hàng" Command="{Binding NavigatePosCommand}" Style="{StaticResource SidebarButton}" />
                         <Button Content="Tra cứu đơn" Command="{Binding NavigateOrderLookupCommand}" Style="{StaticResource SidebarButton}" />
                         <Button Content="Tồn kho" Command="{Binding NavigateInventoryCommand}" Style="{StaticResource SidebarButton}" />
+                        <Button Content="Báo cáo"
+                                Command="{Binding NavigateReportsCommand}"
+                                Style="{StaticResource SidebarButton}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}" />
                         <Button Content="Cài đặt" Command="{Binding NavigateSettingsCommand}" Style="{StaticResource SidebarButton}" />
                         <Separator Margin="16,12" Background="{DynamicResource SidebarDividerBrush}" />
                         <Button Content="Đăng xuất" Command="{Binding LogoutCommand}" Style="{StaticResource SidebarButton}" />
                     </StackPanel>
                 </Border>
 
-                <ContentControl Grid.Column="1"
+                <ContentControl x:Name="MainContentHost"
+                                Grid.Column="1"
                                 Content="{Binding ActiveViewModel}"
                                 Margin="18" />
             </Grid>

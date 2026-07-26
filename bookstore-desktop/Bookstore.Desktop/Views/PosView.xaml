@@ -3,26 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="Segoe UI">
     <UserControl.Resources>
-        <SolidColorBrush x:Key="PosBlueBrush" Color="#2D6BFF" />
-        <SolidColorBrush x:Key="PosBlueDarkBrush" Color="#163D8C" />
-        <SolidColorBrush x:Key="PosBorderBrush" Color="#E6ECF7" />
-        <SolidColorBrush x:Key="PosHeaderBrush" Color="#F4F7FD" />
-        <SolidColorBrush x:Key="PosCardBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="PosTextBrush" Color="#17356E" />
-        <SolidColorBrush x:Key="PosMutedBrush" Color="#6E7FA5" />
         <SolidColorBrush x:Key="PosGreenBrush" Color="#19B35A" />
         <SolidColorBrush x:Key="PosGreenDarkBrush" Color="#119747" />
-        <SolidColorBrush x:Key="PosDeleteBrush" Color="#FF6B6B" />
 
         <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource PosCardBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PosBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="14" />
         </Style>
 
         <Style x:Key="SectionTitleTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
@@ -31,9 +23,9 @@
             <Setter Property="Padding" Value="16,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FontSize" Value="16" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#CBD7EE" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBoxForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBoxBorderBrush}" />
             <Setter Property="BorderThickness" Value="1.2" />
         </Style>
 
@@ -42,28 +34,134 @@
             <Setter Property="Padding" Value="14,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FontSize" Value="15" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D9E3F2" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBoxForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBoxBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <Style x:Key="InputComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="50" />
-            <Setter Property="Padding" Value="12,0" />
             <Setter Property="FontSize" Value="15" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D9E3F2" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBoxForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBoxBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="Chrome"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8">
+                                <Grid>
+                                    <ContentPresenter x:Name="SelectedContent"
+                                                      Margin="14,0,42,0"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                                    <TextBox x:Name="PART_EditableTextBox"
+                                             Margin="14,0,42,0"
+                                             Padding="0"
+                                             Visibility="Collapsed"
+                                             Focusable="True"
+                                             IsReadOnly="{TemplateBinding IsReadOnly}"
+                                             VerticalContentAlignment="Center"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             Foreground="{TemplateBinding Foreground}"
+                                             FontSize="{TemplateBinding FontSize}" />
+                                    <TextBlock Text="&#xE70D;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,16,0" />
+                                </Grid>
+                            </Border>
+
+                            <ToggleButton x:Name="DropDownToggle"
+                                          Focusable="False"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent" />
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Margin="0,4,0,0"
+                                        Padding="4"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrushLight}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <ScrollViewer MaxHeight="260"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="DropDownToggle" Property="Width" Value="42" />
+                                <Setter TargetName="DropDownToggle" Property="HorizontalAlignment" Value="Right" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.52" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SelectionTextBrush}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="BlueActionButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="48" />
             <Setter Property="Padding" Value="18,0" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="{StaticResource PosBlueBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PosBlueBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -96,10 +194,10 @@
         <Style x:Key="AddButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="42" />
             <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Background" Value="#F9FBFF" />
-            <Setter Property="BorderBrush" Value="#7AA2FF" />
+            <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="1.4" />
-            <Setter Property="Foreground" Value="{StaticResource PosBlueBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentSoftTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -115,7 +213,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#EEF4FF" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SelectionBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Chrome" Property="Opacity" Value="0.84" />
@@ -130,10 +228,10 @@
             <Setter Property="Width" Value="36" />
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Background" Value="#F5F7FB" />
-            <Setter Property="BorderBrush" Value="#DCE5F4" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="#5F6D86" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -150,7 +248,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#EEF3FD" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HoverBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -160,9 +258,9 @@
 
         <Style x:Key="DeleteMiniButtonStyle" TargetType="Button" BasedOn="{StaticResource MiniButtonStyle}">
             <Setter Property="Margin" Value="0" />
-            <Setter Property="Background" Value="#FFF7F7" />
-            <Setter Property="BorderBrush" Value="#FFB7B7" />
-            <Setter Property="Foreground" Value="{StaticResource PosDeleteBrush}" />
+            <Setter Property="Background" Value="{DynamicResource DangerSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="16" />
         </Style>
@@ -200,10 +298,10 @@
 
         <Style x:Key="SecondaryActionButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="54" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D6DFEE" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1.2" />
-            <Setter Property="Foreground" Value="#1F2B44" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -220,7 +318,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#F8FAFE" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HoverBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -233,53 +331,57 @@
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PosBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="RowHeaderWidth" Value="0" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#EEF2FA" />
-            <Setter Property="VerticalGridLinesBrush" Value="#EEF2FA" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
             <Setter Property="SelectionMode" Value="Single" />
         </Style>
 
         <Style x:Key="CartGridStyle" TargetType="DataGrid" BasedOn="{StaticResource SearchResultsGridStyle}">
-            <Setter Property="HorizontalGridLinesBrush" Value="#EEF1F6" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource PosHeaderBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="14,10" />
-            <Setter Property="BorderBrush" Value="#E9EEF8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
         </Style>
 
         <Style TargetType="DataGridCell">
             <Setter Property="Padding" Value="14,12" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
         <Style TargetType="DataGridRow">
             <Setter Property="MinHeight" Value="62" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="Foreground" Value="{StaticResource PosTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FBFCFF" />
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#EEF4FF" />
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SelectionTextBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="0,4,0,0">
+    <Grid x:Name="PageRoot"
+          Margin="0,4,0,0"
+          SizeChanged="PosView_OnSizeChanged">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -321,13 +423,25 @@
             </Grid>
         </StackPanel>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.95*" />
-                <ColumnDefinition Width="1.55*" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer x:Name="WorkspaceScrollViewer"
+                      Grid.Row="1"
+                      VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Disabled"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Stretch">
+            <Grid x:Name="WorkspaceGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="ResultsRow" Height="*" />
+                    <RowDefinition x:Name="CartRow" Height="0" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="ResultsColumn" Width="1.95*" />
+                    <ColumnDefinition x:Name="CartColumn" Width="1.55*" />
+                </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0"
+            <Border x:Name="ResultsCard"
+                    Grid.Row="0"
+                    Grid.Column="0"
                     Style="{StaticResource CardBorderStyle}"
                     Padding="12"
                     Margin="0,0,18,0">
@@ -363,7 +477,9 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1"
+            <Border x:Name="CartCard"
+                    Grid.Row="0"
+                    Grid.Column="1"
                     Style="{StaticResource CardBorderStyle}"
                     Padding="18">
                 <Grid>
@@ -377,7 +493,7 @@
                         <TextBlock Text="&#xE719;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="28"
-                                   Foreground="#0F172A"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center" />
                         <TextBlock Text="Giỏ hàng"
@@ -393,7 +509,8 @@
                         <DataGrid ItemsSource="{Binding CartItems}"
                                   Style="{StaticResource CartGridStyle}"
                                   HeadersVisibility="Column"
-                                  MinHeight="128">
+                                  MinHeight="148"
+                                  MaxHeight="260">
                             <DataGrid.Columns>
                                  <DataGridTextColumn Header="Sách" Binding="{Binding Title}" Width="1.6*" />
                                  <DataGridTextColumn Header="SL" Binding="{Binding Quantity}" Width="0.8*" />
@@ -427,57 +544,85 @@
                         </DataGrid>
                     </Border>
 
-                    <StackPanel Grid.Row="2">
+                    <ScrollViewer x:Name="CartFormScrollViewer"
+                                  Grid.Row="2"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,6,0">
                         <Border Height="1"
-                                Background="#E8EDF6"
+                                Background="{DynamicResource BorderBrushLight}"
                                 Margin="0,0,0,20" />
 
                         <DockPanel Margin="0,0,0,18">
                             <TextBlock Text="Số lượng"
-                                       Foreground="#1E2C47"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        FontSize="15" />
                             <TextBlock Text="{Binding TotalQuantityText}"
                                        DockPanel.Dock="Right"
-                                       Foreground="#1E2C47"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
                                        FontSize="16"
                                        FontWeight="SemiBold" />
                         </DockPanel>
 
                         <DockPanel Margin="0,0,0,22">
                             <TextBlock Text="Tổng tiền"
-                                       Foreground="{StaticResource PosTextBrush}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
                                        FontSize="18"
                                        FontWeight="Bold" />
                             <TextBlock Text="{Binding TotalAmountText}"
                                        DockPanel.Dock="Right"
-                                       Foreground="{StaticResource PosBlueBrush}"
+                                       Foreground="{DynamicResource PrimaryBrush}"
                                        FontSize="20"
                                        FontWeight="Bold" />
                         </DockPanel>
 
                         <TextBlock Text="Mã giảm giá"
-                                   Foreground="#23375F"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
                                    FontSize="15"
                                    Margin="0,0,0,8" />
-                        <TextBox Style="{StaticResource InputTextBoxStyle}"
-                                 Margin="0,0,0,20"
-                                 Text="{Binding CouponCode, UpdateSourceTrigger=PropertyChanged}" />
+                        <ComboBox Style="{StaticResource InputComboBoxStyle}"
+                                  Margin="0,0,0,6"
+                                  ItemsSource="{Binding AvailableCoupons}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="True"
+                                  StaysOpenOnEdit="True"
+                                  TextSearch.TextPath="Code"
+                                  Text="{Binding CouponCode, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Code}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding DetailText}"
+                                                   Margin="0,3,0,0"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding CouponHelpText}"
+                                   Margin="2,0,0,20"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
 
                         <CheckBox Content="Khách lẻ (không nhập thông tin)"
                                   IsChecked="{Binding UseWalkInCustomer}"
-                                  Foreground="#23375F"
+                                  Foreground="{DynamicResource SecondaryTextBrush}"
                                   FontSize="15"
                                   Margin="0,0,0,12" />
                         <StackPanel IsEnabled="{Binding IsCustomerDetailsEnabled}">
                             <TextBlock Text="Tên khách (không bắt buộc)"
-                                       Foreground="#23375F"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        FontSize="15"
                                        Margin="0,0,0,8" />
                             <TextBox Style="{StaticResource InputTextBoxStyle}"
                                      Margin="0,0,0,12"
                                      Text="{Binding CustomerName, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Text="Số điện thoại (không bắt buộc)"
-                                       Foreground="#23375F"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        FontSize="15"
                                        Margin="0,0,0,8" />
                             <TextBox Style="{StaticResource InputTextBoxStyle}"
@@ -486,7 +631,7 @@
                         </StackPanel>
 
                         <TextBlock Text="Phương thức thanh toán"
-                                   Foreground="#23375F"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
                                    FontSize="15"
                                    Margin="0,0,0,8" />
                         <ComboBox Style="{StaticResource InputComboBoxStyle}"
@@ -507,19 +652,26 @@
                                 </Style>
                             </StackPanel.Style>
                             <TextBlock Text="Tiền khách đưa (tùy chọn)"
-                                       Foreground="#23375F"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
                                        FontSize="15"
                                        Margin="0,0,0,8" />
                             <TextBox Style="{StaticResource InputTextBoxStyle}"
                                      Margin="0,0,0,8"
                                      ToolTip="Để trống nếu không cần tính tiền thừa"
+                                     TextChanged="CashReceivedTextBox_OnTextChanged"
                                      Text="{Binding CashReceivedText, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="{Binding CashReceivedInWordsText}"
+                                       Margin="2,0,0,8"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       FontSize="12"
+                                       FontStyle="Italic"
+                                       TextWrapping="Wrap" />
                             <DockPanel>
                                 <TextBlock Text="Tiền thừa"
-                                           Foreground="#50627E" />
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
                                 <TextBlock Text="{Binding CashChangeText}"
                                            DockPanel.Dock="Right"
-                                           Foreground="{StaticResource PosBlueBrush}"
+                                           Foreground="{DynamicResource PrimaryBrush}"
                                            FontWeight="SemiBold" />
                             </DockPanel>
                         </StackPanel>
@@ -565,7 +717,7 @@
                                 </Style>
                             </StackPanel.Style>
                             <TextBlock Text="{Binding LastOrderSummary}"
-                                       Foreground="{StaticResource PosGreenDarkBrush}"
+                                       Foreground="{DynamicResource SuccessBrush}"
                                        FontWeight="SemiBold"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8" />
@@ -581,10 +733,12 @@
                                 <TextBlock Text="Mở chi tiết đơn vừa tạo" />
                             </Button>
                         </StackPanel>
-                    </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
 
         <StackPanel Grid.Row="2"
                     Orientation="Horizontal"
@@ -592,11 +746,11 @@
             <TextBlock Text="&#xE946;"
                        FontFamily="Segoe MDL2 Assets"
                        FontSize="16"
-                       Foreground="#4777FF"
+                       Foreground="{DynamicResource InfoBrush}"
                        Margin="0,0,8,0"
                        VerticalAlignment="Center" />
             <TextBlock Text="{Binding Message}"
-                       Foreground="#4777FF"
+                       Foreground="{DynamicResource InfoBrush}"
                        FontSize="14"
                        TextWrapping="Wrap"
                        VerticalAlignment="Center" />

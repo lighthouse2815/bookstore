@@ -3,15 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="Segoe UI">
     <UserControl.Resources>
-        <SolidColorBrush x:Key="ScreenBlueBrush" Color="#2D6BFF" />
-        <SolidColorBrush x:Key="ScreenTextBrush" Color="#17356E" />
-        <SolidColorBrush x:Key="ScreenBorderBrush" Color="#E6ECF7" />
-        <SolidColorBrush x:Key="ScreenHeaderBrush" Color="#F4F7FD" />
-        <SolidColorBrush x:Key="ScreenMutedBrush" Color="#7A8CAA" />
-
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="{StaticResource ScreenBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="14" />
         </Style>
@@ -21,17 +15,17 @@
             <Setter Property="Padding" Value="52,0,14,0" />
             <Setter Property="FontSize" Value="16" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="{StaticResource ScreenTextBrush}" />
-            <Setter Property="BorderBrush" Value="#CBD7EE" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBoxForegroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBoxBorderBrush}" />
             <Setter Property="BorderThickness" Value="1.2" />
-            <Setter Property="Background" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}" />
         </Style>
 
         <Style x:Key="BlueButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="48" />
             <Setter Property="Padding" Value="18,0" />
-            <Setter Property="Background" Value="{StaticResource ScreenBlueBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ScreenBlueBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="FontSize" Value="16" />
@@ -61,10 +55,10 @@
         <Style x:Key="WhiteButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="48" />
             <Setter Property="Padding" Value="18,0" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D6DFEE" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1.2" />
-            <Setter Property="Foreground" Value="#37465F" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -80,7 +74,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#F8FAFE" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HoverBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -93,46 +87,52 @@
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="{StaticResource ScreenBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#EEF2FA" />
-            <Setter Property="VerticalGridLinesBrush" Value="#EEF2FA" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
             <Setter Property="RowHeaderWidth" Value="0" />
-            <Setter Property="Foreground" Value="{StaticResource ScreenTextBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource ScreenHeaderBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ScreenTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="14,10" />
-            <Setter Property="BorderBrush" Value="#E9EEF8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
         </Style>
 
         <Style TargetType="DataGridCell">
             <Setter Property="Padding" Value="14,12" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="#2C3E63" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
         <Style TargetType="DataGridRow">
             <Setter Property="MinHeight" Value="56" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8FAFE" />
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#EEF4FF" />
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SelectionTextBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="0,4,0,0">
+    <Grid x:Name="PageRoot"
+          Margin="0,4,0,0"
+          SizeChanged="OrderLookupView_OnSizeChanged">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -143,15 +143,19 @@
             <TextBlock Text="Tra cứu đơn hàng"
                        FontSize="28"
                        FontWeight="Bold"
-                       Foreground="#1E2B45" />
-            <Grid Margin="0,18,0,0">
+                       Foreground="{DynamicResource PrimaryTextBrush}" />
+            <Grid x:Name="SearchActionsGrid" Margin="0,18,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="SearchPrimaryRow" Height="Auto" />
+                    <RowDefinition x:Name="SearchSecondaryRow" Height="0" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="150" />
-                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition x:Name="SearchInputColumn" Width="*" />
+                    <ColumnDefinition x:Name="SearchButtonColumn" Width="150" />
+                    <ColumnDefinition x:Name="RecentButtonColumn" Width="200" />
                 </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="0">
+                <Grid x:Name="SearchInputHost" Grid.Column="0">
                     <TextBox x:Name="SearchBox"
                               Style="{StaticResource LargeSearchBoxStyle}"
                               Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}">
@@ -162,13 +166,13 @@
                     <TextBlock Text="&#xE721;"
                                FontFamily="Segoe MDL2 Assets"
                                FontSize="20"
-                               Foreground="#A6B4CF"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
                                Margin="16,0,0,0"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Left"
                                IsHitTestVisible="False" />
                     <TextBlock Text="Nhập order id hoặc order code"
-                               Foreground="#A6B4CF"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
                                FontSize="16"
                                Margin="54,0,0,0"
                                VerticalAlignment="Center"
@@ -187,7 +191,8 @@
                     </TextBlock>
                 </Grid>
 
-                <Button Grid.Column="1"
+                <Button x:Name="SearchButton"
+                        Grid.Column="1"
                         Margin="16,0,0,0"
                         Style="{StaticResource BlueButtonStyle}"
                         Command="{Binding SearchCommand}">
@@ -202,7 +207,8 @@
                     </StackPanel>
                 </Button>
 
-                <Button Grid.Column="2"
+                <Button x:Name="RecentButton"
+                        Grid.Column="2"
                         Margin="18,0,0,0"
                         Style="{StaticResource WhiteButtonStyle}"
                         Command="{Binding RefreshRecentCommand}">
@@ -219,13 +225,25 @@
             </Grid>
         </StackPanel>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.95*" />
-                <ColumnDefinition Width="1.55*" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer x:Name="WorkspaceScrollViewer"
+                      Grid.Row="1"
+                      VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Disabled"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Stretch">
+            <Grid x:Name="WorkspaceGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="ListRow" Height="*" />
+                    <RowDefinition x:Name="DetailRow" Height="0" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="ListColumn" Width="0.95*" />
+                    <ColumnDefinition x:Name="DetailColumn" Width="1.55*" />
+                </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0"
+            <Border x:Name="OrdersListCard"
+                    Grid.Row="0"
+                    Grid.Column="0"
                     Style="{StaticResource CardStyle}"
                     Padding="16"
                     Margin="0,0,18,0">
@@ -240,13 +258,13 @@
                         <TextBlock Text="&#xE8A5;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="20"
-                                   Foreground="{StaticResource ScreenBlueBrush}"
+                                   Foreground="{DynamicResource PrimaryBrush}"
                                    Margin="0,0,10,0"
                                    VerticalAlignment="Center" />
                         <TextBlock Text="Danh sách đơn hàng"
                                    FontSize="16"
                                    FontWeight="SemiBold"
-                                   Foreground="#243753"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
 
@@ -262,7 +280,7 @@
                                             <TextBlock Text="&#xE8A5;"
                                                        FontFamily="Segoe MDL2 Assets"
                                                        FontSize="16"
-                                                       Foreground="#5B7DBE"
+                               Foreground="{DynamicResource AccentSoftTextBrush}"
                                                        Margin="0,0,12,0"
                                                        VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding CodeOrId}"
@@ -278,25 +296,27 @@
 
                     <DockPanel Grid.Row="2" Margin="4,16,4,0">
                         <TextBlock Text="{Binding RecentOrders.Count, StringFormat=Tổng cộng: {0} đơn hàng}"
-                                   Foreground="#52657F"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
                                    FontSize="14"
                                    VerticalAlignment="Center" />
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Border Width="36" Height="36" CornerRadius="8" BorderBrush="#DDE6F4" BorderThickness="1" Background="#FAFBFE" Margin="0,0,8,0">
-                                <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" Foreground="#9BAACC" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource ScreenBlueBrush}" Margin="0,0,8,0">
-                                <TextBlock Text="1" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <Border Width="36" Height="36" CornerRadius="8" BorderBrush="#DDE6F4" BorderThickness="1" Background="#FAFBFE">
-                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" Foreground="#9BAACC" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border Width="36" Height="36" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" Background="{DynamicResource SurfaceAltBrush}" Margin="0,0,8,0">
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SecondaryTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource PrimaryBrush}" Margin="0,0,8,0">
+                            <TextBlock Text="1" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border Width="36" Height="36" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" Background="{DynamicResource SurfaceAltBrush}">
+                            <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SecondaryTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </StackPanel>
                     </DockPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1"
+            <Border x:Name="OrderDetailCard"
+                    Grid.Row="0"
+                    Grid.Column="1"
                     Style="{StaticResource CardStyle}"
                     Padding="18">
                 <Grid>
@@ -319,13 +339,13 @@
                             <TextBlock Text="&#xE8A5;"
                                        FontFamily="Segoe MDL2 Assets"
                                        FontSize="20"
-                                       Foreground="{StaticResource ScreenBlueBrush}"
+                                       Foreground="{DynamicResource PrimaryBrush}"
                                        Margin="0,0,10,0"
                                        VerticalAlignment="Center" />
                             <TextBlock Text="Thông tin đơn hàng"
                                        FontSize="16"
                                        FontWeight="SemiBold"
-                                       Foreground="#243753"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </DockPanel>
@@ -344,31 +364,31 @@
                                 <DockPanel Margin="0,0,0,14">
                                     <TextBlock Text="Mã đơn:"
                                                Width="110"
-                                               Foreground="#5E6F8E"
+                                              Foreground="{DynamicResource SecondaryTextBrush}"
                                                FontSize="15" />
                                     <TextBlock Text="{Binding SelectedOrder.CodeOrId, TargetNullValue=--}"
-                                               Foreground="{StaticResource ScreenBlueBrush}"
+                                              Foreground="{DynamicResource PrimaryBrush}"
                                                FontSize="15"
                                                FontWeight="Bold" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,14">
                                     <TextBlock Text="Trạng thái:"
                                                Width="110"
-                                               Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                                FontSize="15" />
                                     <TextBlock Text="{Binding SelectedOrder.Status, TargetNullValue=--}"
                                                FontSize="15"
-                                               Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
                                 </DockPanel>
                                 <DockPanel>
                                     <TextBlock Text="Tổng tiền:"
                                                Width="110"
-                                               Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                                FontSize="15" />
                                     <TextBlock Text="{Binding SelectedOrder.TotalText, TargetNullValue=--}"
                                                FontSize="15"
                                                FontWeight="SemiBold"
-                                               Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
                                 </DockPanel>
                             </StackPanel>
 
@@ -388,32 +408,32 @@
                                 <TextBlock Grid.Row="0"
                                            Text="Ngày tạo:"
                                            Width="110"
-                                           Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                            FontSize="15" />
                                 <TextBlock Grid.Row="0"
                                            Grid.Column="1"
                                            Text="{Binding SelectedOrder.CreatedAtText, TargetNullValue=--}"
                                            FontSize="15"
-                                           Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
 
                                 <TextBlock Grid.Row="1"
                                            Margin="0,14,0,0"
                                            Text="Phương thức:"
                                            Width="110"
-                                           Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                            FontSize="15" />
                                 <TextBlock Grid.Row="1"
                                            Grid.Column="1"
                                            Margin="0,14,0,0"
                                            Text="{Binding SelectedOrder.PaymentMethod, TargetNullValue=--}"
                                            FontSize="15"
-                                           Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
 
                                 <TextBlock Grid.Row="2"
                                            Margin="0,14,0,0"
                                            Text="Thanh toán:"
                                            Width="110"
-                                           Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                            FontSize="15" />
                                  <Border Grid.Row="2"
                                         Grid.Column="1"
@@ -423,16 +443,16 @@
                                         HorizontalAlignment="Left">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#F1F3F7" />
+                                                <Setter Property="Background" Value="{DynamicResource NeutralStatusSurfaceBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="success">
-                                                    <Setter Property="Background" Value="#E3F8EA" />
+                                                        <Setter Property="Background" Value="{DynamicResource SuccessSurfaceBrush}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="warning">
-                                                    <Setter Property="Background" Value="#FFF4DB" />
+                                                        <Setter Property="Background" Value="{DynamicResource WarningSurfaceBrush}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="danger">
-                                                    <Setter Property="Background" Value="#FEE8E8" />
+                                                        <Setter Property="Background" Value="{DynamicResource DangerSurfaceBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -442,16 +462,16 @@
                                                FontWeight="SemiBold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#6B7280" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource NeutralStatusBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="success">
-                                                        <Setter Property="Foreground" Value="#18A957" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="warning">
-                                                        <Setter Property="Foreground" Value="#D69B1B" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding SelectedOrder.PaymentStatusVariant}" Value="danger">
-                                                        <Setter Property="Foreground" Value="#E14D4D" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -463,27 +483,27 @@
                                             Margin="0,14,0,0"
                                             Text="Khách hàng:"
                                             Width="110"
-                                            Foreground="#5E6F8E"
+                                            Foreground="{DynamicResource SecondaryTextBrush}"
                                             FontSize="15" />
                                  <TextBlock Grid.Row="3"
                                             Grid.Column="1"
                                             Margin="0,14,0,0"
                                             Text="{Binding SelectedOrder.CustomerName, TargetNullValue=--}"
                                             FontSize="15"
-                                            Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
 
                                  <TextBlock Grid.Row="4"
                                             Margin="0,14,0,0"
                                             Text="Số điện thoại:"
                                             Width="110"
-                                            Foreground="#5E6F8E"
+                                             Foreground="{DynamicResource SecondaryTextBrush}"
                                             FontSize="15" />
                                  <TextBlock Grid.Row="4"
                                             Grid.Column="1"
                                             Margin="0,14,0,0"
                                             Text="{Binding SelectedOrder.CustomerPhone, TargetNullValue=--}"
                                             FontSize="15"
-                                            Foreground="#334968" />
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
                              </Grid>
                         </Grid>
                     </Border>
@@ -501,7 +521,7 @@
                             <TextBlock Text="Chi tiết sản phẩm"
                                        FontSize="16"
                                        FontWeight="SemiBold"
-                                       Foreground="#243753"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="20,16,20,12" />
 
                             <DataGrid Grid.Row="1"
@@ -513,11 +533,11 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Border Width="34" Height="46" CornerRadius="6" Background="#EEF4FF" Margin="0,0,12,0">
+                                                    <Border Width="34" Height="46" CornerRadius="6" Background="{DynamicResource AccentSoftBrush}" Margin="0,0,12,0">
                                                         <TextBlock Text="&#xE82D;"
                                                                    FontFamily="Segoe MDL2 Assets"
                                                                    FontSize="18"
-                                                                   Foreground="#4B74D9"
+                                                                   Foreground="{DynamicResource AccentSoftTextBrush}"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center" />
                                                     </Border>
@@ -538,13 +558,13 @@
                             <DockPanel Grid.Row="2" Margin="18,12,18,16">
                                 <TextBlock Text="Tổng cộng:"
                                            DockPanel.Dock="Right"
-                                           Foreground="#50627E"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
                                            FontSize="15"
                                            FontWeight="SemiBold"
                                            Margin="0,0,14,0" />
                                 <TextBlock Text="{Binding SelectedOrder.TotalText, TargetNullValue=--}"
                                            DockPanel.Dock="Right"
-                                           Foreground="{StaticResource ScreenBlueBrush}"
+                                           Foreground="{DynamicResource PrimaryBrush}"
                                            FontSize="18"
                                            FontWeight="Bold" />
                             </DockPanel>
@@ -552,17 +572,18 @@
                     </Border>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0">
             <TextBlock Text="&#xE946;"
                        FontFamily="Segoe MDL2 Assets"
                        FontSize="16"
-                       Foreground="#4777FF"
+                       Foreground="{DynamicResource InfoBrush}"
                        Margin="0,0,8,0"
                        VerticalAlignment="Center" />
             <TextBlock Text="{Binding Message}"
-                       Foreground="#4777FF"
+                       Foreground="{DynamicResource InfoBrush}"
                        FontSize="14"
                        TextWrapping="Wrap"
                        VerticalAlignment="Center" />

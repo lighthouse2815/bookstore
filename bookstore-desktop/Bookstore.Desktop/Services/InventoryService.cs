@@ -15,4 +15,12 @@ public class InventoryService
     {
         return bookService.SearchAsync(keyword);
     }
+
+    public Task<PagedResult<BookModel>> SearchPageAsync(
+        string? keyword,
+        int page,
+        int size)
+    {
+        return bookService.SearchPageAsync(keyword, page, size);
+    }
 }

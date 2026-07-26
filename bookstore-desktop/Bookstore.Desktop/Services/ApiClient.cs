@@ -31,6 +31,12 @@ public class ApiClient
         return SendAsync(HttpMethod.Get, path, null);
     }
 
+    public async Task<ApiGetResponse> GetWithHeadersAsync(string path)
+    {
+        var response = await SendForResponseAsync(HttpMethod.Get, path, null);
+        return new ApiGetResponse(ParseBody(response.Body), response.Headers);
+    }
+
     public Task<JsonElement> PostAsync<T>(string path, T payload)
     {
         var json = JsonSerializer.Serialize(payload, JsonHelper.Options);
@@ -38,6 +44,12 @@ public class ApiClient
     }
 
     private async Task<JsonElement> SendAsync(HttpMethod method, string path, string? json)
+    {
+        var response = await SendForResponseAsync(method, path, json);
+        return ParseBody(response.Body);
+    }
+
+    private async Task<ApiHttpResponse> SendForResponseAsync(HttpMethod method, string path, string? json)
     {
         var accessTokenUsed = authStore.AccessToken;
         var response = await SendOnceAsync(method, path, json, includeAccessToken: true);
@@ -54,12 +66,17 @@ public class ApiClient
             throw new ApiClientException(CreateErrorMessage(response.StatusCode, response.Body), response.StatusCode);
         }
 
-        if (string.IsNullOrWhiteSpace(response.Body))
+        return response;
+    }
+
+    private static JsonElement ParseBody(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
         {
             return default;
         }
 
-        using var document = JsonDocument.Parse(response.Body);
+        using var document = JsonDocument.Parse(body);
         return Unwrap(document.RootElement.Clone());
     }
 
@@ -82,7 +99,17 @@ public class ApiClient
 
         using var response = await httpClient.SendAsync(request);
         var body = await response.Content.ReadAsStringAsync();
-        return new ApiHttpResponse(response.IsSuccessStatusCode, response.StatusCode, body);
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var header in response.Headers)
+        {
+            headers[header.Key] = string.Join(",", header.Value);
+        }
+        foreach (var header in response.Content.Headers)
+        {
+            headers[header.Key] = string.Join(",", header.Value);
+        }
+
+        return new ApiHttpResponse(response.IsSuccessStatusCode, response.StatusCode, body, headers);
     }
 
     private async Task<bool> RefreshAccessTokenAsync(string? accessTokenUsed)
@@ -199,8 +226,16 @@ public class ApiClient
         }
     }
 
-    private sealed record ApiHttpResponse(bool IsSuccessStatusCode, HttpStatusCode StatusCode, string Body);
+    private sealed record ApiHttpResponse(
+        bool IsSuccessStatusCode,
+        HttpStatusCode StatusCode,
+        string Body,
+        IReadOnlyDictionary<string, string> Headers);
 }
+
+public sealed record ApiGetResponse(
+    JsonElement Data,
+    IReadOnlyDictionary<string, string> Headers);
 
 public class ApiClientException : Exception
 {

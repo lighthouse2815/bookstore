@@ -21,6 +21,9 @@ TestResults/
 *.log
 *.tmp
 *.cache
+.env
+.env.*
+!.env.example
 
 # Local receipt exports if generated inside the project
 Receipts/

@@ -71,7 +71,7 @@ The checkout idempotency baseline remains intact: `POST /api/orders/checkout` re
 | `bookstore-mobile\.\gradlew.bat assembleRelease` | PASS (2026-07-11) |
 | `bookstore-shipapp\npm test; npm run typecheck; npx expo export --platform android` | PASS — 6 tests (2026-07-11) |
 | `bookstore-desktop\Bookstore.Desktop\dotnet build --configuration Release --no-restore` | PASS (2026-07-11) |
-| `dotnet test --configuration Release` | BLOCKED locally: .NET 8 runtime missing; only .NET 10 runtime is installed. |
+| `dotnet test --configuration Release` | BLOCKED locally (2026-07-26): Windows Application Control blocked the .NET 10 test assembly with `0x800711C7`, so no tests were discovered or executed. |
 
 | Command | Result |
 | --- | --- |
@@ -107,7 +107,7 @@ The dedicated `*MySqlConcurrencyIT` suite runs through Failsafe (`integration-te
 | `bookstore-website\pnpm lint; pnpm test; pnpm build` | PASS — 46 website tests, lint and production build (2026-07-11). |
 | `bookstore-mobile\.\gradlew.bat testDebugUnitTest; assembleDebug; assembleRelease` | PASS (2026-07-11). |
 | `bookstore-shipapp\npm test; npm run typecheck; npx expo export --platform android` | PASS — 6 tests, typecheck and Android export (2026-07-11). |
-| `bookstore-desktop\dotnet build / dotnet test` | PASS — Release build and 9 desktop tests after installing the user-local .NET 8 runtime (2026-07-11). |
+| `bookstore-desktop\dotnet build / dotnet test` | .NET 10 build PASS with 0 warnings/errors (2026-07-26); test execution is BLOCKED locally because Windows Application Control rejects the test DLL with `0x800711C7`. |
 
 ## Remaining risks
 
