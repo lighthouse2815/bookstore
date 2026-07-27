@@ -21,7 +21,6 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -32,18 +31,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditLogService implements IAuditLogService {
 
     private static final String REDACTED_VALUE = "***REDACTED***";
-    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
-    private static final Set<String> SENSITIVE_FIELD_MARKERS = Set.of(
+    private static final Set<String> SENSITIVE_FIELD_NAMES = Set.of(
             "password",
-            "passcode",
+            "newpassword",
+            "passwordhash",
             "token",
+            "accesstoken",
+            "refreshtoken",
+            "resettoken",
+            "idtoken",
+            "tokenhash",
+            "unsubscribetoken",
+            "apitoken",
+            "otpcode",
+            "otphash",
             "secret",
-            "authorization",
+            "secretkey",
+            "authorizationheader",
             "apikey",
+            "webhookapikey",
             "accesskey",
-            "privatekey",
-            "credential",
-            "cookie"
+            "secretkeyheader"
     );
 
     private final IAuditLogRepository auditLogRepository;
@@ -202,17 +210,8 @@ public class AuditLogService implements IAuditLogService {
     }
 
     private boolean isSensitiveField(String fieldName) {
-        String normalized = normalizeFieldName(fieldName);
-        return SENSITIVE_FIELD_MARKERS.stream().anyMatch(normalized::contains);
-    }
-
-    private String normalizeFieldName(String fieldName) {
-        if (fieldName == null) {
-            return "";
-        }
-        return NON_ALPHANUMERIC.matcher(fieldName)
-                .replaceAll("")
-                .toLowerCase(Locale.ROOT);
+        return fieldName != null
+                && SENSITIVE_FIELD_NAMES.contains(fieldName.toLowerCase(Locale.ROOT));
     }
 
 }
