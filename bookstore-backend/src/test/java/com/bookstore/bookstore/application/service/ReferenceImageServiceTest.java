@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.command.CategoryTranslationCommand;
 import com.bookstore.bookstore.application.command.CreatePublisherCommand;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.enums.FileProvider;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileStatus;
@@ -53,8 +54,8 @@ class ReferenceImageServiceTest {
         var category = categoryService.create(new CreateCategoryCommand(
                 "LITERATURE",
                 java.util.List.of(
-                        new CategoryTranslationCommand("vi", "Văn học", "Sách văn học"),
-                        new CategoryTranslationCommand("en", "Literature", "Literary books")
+                        new CategoryTranslationCommand(CategoryLocale.VI, "Văn học", "Sách văn học"),
+                        new CategoryTranslationCommand(CategoryLocale.EN, "Literature", "Literary books")
                 ),
                 null,
                 fileAssetId
@@ -63,7 +64,7 @@ class ReferenceImageServiceTest {
         assertEquals(fileAssetId, category.getImageFileAssetId());
         assertEquals(imageAsset.getPublicUrl(), category.getImageUrl());
         assertEquals("LITERATURE", category.getCode());
-        assertEquals("Literature", category.getTranslations().get("en").name());
+        assertEquals("Literature", category.getTranslations().get(CategoryLocale.EN).name());
         verify(fileAssetPolicyService).requireActiveAsset(
                 fileAssetId, FilePurpose.CATEGORY_IMAGE, FileVisibility.PUBLIC
         );

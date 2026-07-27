@@ -19,7 +19,6 @@ import com.bookstore.bookstore.presentation.response.BookDetailResponse;
 import com.bookstore.bookstore.presentation.response.BookImageResponse;
 import com.bookstore.bookstore.presentation.response.BookPageDetailResponse;
 import com.bookstore.bookstore.presentation.response.BookResponse;
-import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;

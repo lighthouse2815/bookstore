@@ -26,6 +26,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.bookstore.bookstore.application.command.CategoryTranslationCommand;
 
 @Service
 @RequiredArgsConstructor
@@ -198,7 +199,7 @@ public class CategoryService implements ICategoryService {
     }
 
     private Map<CategoryLocale, CategoryTranslation> normalizeTranslations(
-            List<com.bookstore.bookstore.application.command.CategoryTranslationCommand> commands
+            List<CategoryTranslationCommand> commands
     ) {
         if (commands == null || commands.isEmpty()) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations");
