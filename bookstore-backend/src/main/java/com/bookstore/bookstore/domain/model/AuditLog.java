@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
@@ -14,7 +15,7 @@ public class AuditLog {
     private final String actorUsername;
     private final String actorRole;
     private final String action;
-    private final String targetType;
+    private final AuditTargetType targetType;
     private final String targetId;
     private final String description;
     private final String beforeValue;
@@ -29,7 +30,7 @@ public class AuditLog {
             String actorUsername,
             String actorRole,
             String action,
-            String targetType,
+            AuditTargetType targetType,
             String targetId,
             String description,
             String beforeValue,
@@ -51,7 +52,7 @@ public class AuditLog {
                 "actorRole"
         );
         this.action = Guard.notBlank(action, DomainErrorCode.INVALID_AUDIT_LOG_ACTION, "action");
-        this.targetType = Guard.notBlank(
+        this.targetType = Guard.notNull(
                 targetType,
                 DomainErrorCode.INVALID_AUDIT_LOG_TARGET_TYPE,
                 "targetType"

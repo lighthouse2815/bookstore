@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.result;
 
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,7 +10,7 @@ public record AuditLogResult(
         String actorUsername,
         String actorRole,
         String action,
-        String targetType,
+        AuditTargetType targetType,
         String targetId,
         String description,
         String beforeValue,

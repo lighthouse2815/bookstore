@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.application.port.in.IReviewService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ReviewWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateReviewRequest;
@@ -143,7 +144,7 @@ public class ReviewController {
                 jwt,
                 httpServletRequest,
                 "REVIEW_HIDDEN",
-                "REVIEW",
+                AuditTargetType.REVIEW,
                 id,
                 "An danh gia " + id,
                 null,
@@ -167,7 +168,7 @@ public class ReviewController {
                 jwt,
                 httpServletRequest,
                 "REVIEW_APPROVED",
-                "REVIEW",
+                AuditTargetType.REVIEW,
                 id,
                 "Phe duyet danh gia " + id,
                 null,
@@ -188,7 +189,7 @@ public class ReviewController {
                 jwt,
                 httpServletRequest,
                 "REVIEW_DELETED",
-                "REVIEW",
+                AuditTargetType.REVIEW,
                 id,
                 "Xoa mem danh gia " + id,
                 deletedReview

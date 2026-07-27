@@ -11,6 +11,7 @@ import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
 import java.time.Instant;
@@ -51,7 +52,7 @@ class AuditLogControllerTest {
         given(auditLogService.getAll(
                 new PageQuery(0, 10),
                 "BOOK_UPDATED",
-                "BOOK",
+                AuditTargetType.BOOK,
                 actorId,
                 Instant.parse("2026-07-01T00:00:00Z"),
                 Instant.parse("2026-07-08T23:59:59.999999999Z")
@@ -62,7 +63,7 @@ class AuditLogControllerTest {
                         "admin",
                         "ADMIN",
                         "BOOK_UPDATED",
-                        "BOOK",
+                        AuditTargetType.BOOK,
                         "book-1",
                         "Cập nhật sách demo",
                         "{\"title\":\"old\"}",
@@ -89,6 +90,15 @@ class AuditLogControllerTest {
                 .andExpect(header().string("X-Total-Count", "1"))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].id").value(logId.toString()))
-                .andExpect(jsonPath("$.data[0].action").value("BOOK_UPDATED"));
+                .andExpect(jsonPath("$.data[0].action").value("BOOK_UPDATED"))
+                .andExpect(jsonPath("$.data[0].targetType").value("BOOK"));
+    }
+
+    @Test
+    void getAll_whenTargetTypeIsUnknown_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/admin/audit-logs")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_STAFF")))
+                        .param("targetType", "BOOKS"))
+                .andExpect(status().isBadRequest());
     }
 }

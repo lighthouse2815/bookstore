@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IBookService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.port.in.IBookQueryService;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
@@ -123,7 +124,7 @@ public class BookController {
                 jwt,
                 httpServletRequest,
                 "BOOK_CREATED",
-                "BOOK",
+                AuditTargetType.BOOK,
                 response.id(),
                 "Tạo sách " + response.title(),
                 response
@@ -147,7 +148,7 @@ public class BookController {
                 jwt,
                 httpServletRequest,
                 "BOOK_UPDATED",
-                "BOOK",
+                AuditTargetType.BOOK,
                 response.id(),
                 "Cập nhật sách " + response.title(),
                 before,
@@ -169,7 +170,7 @@ public class BookController {
                 jwt,
                 httpServletRequest,
                 "BOOK_DELETED",
-                "BOOK",
+                AuditTargetType.BOOK,
                 id,
                 "Xóa sách " + before.title(),
                 before

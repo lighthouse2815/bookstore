@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.bookstore.bookstore.infrastructure.persistence.entity.AuditLogJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.mapper.AuditLogPersistenceMapper;
@@ -38,7 +39,7 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
             int page,
             int size,
             String action,
-            String targetType,
+            AuditTargetType targetType,
             UUID actorId,
             Instant from,
             Instant to
@@ -63,7 +64,7 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
 
     private Specification<AuditLogJpaEntity> buildSpecification(
             String action,
-            String targetType,
+            AuditTargetType targetType,
             UUID actorId,
             Instant from,
             Instant to
@@ -73,8 +74,8 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
             if (action != null && !action.isBlank()) {
                 predicates.add(criteriaBuilder.equal(root.get("action"), action.trim()));
             }
-            if (targetType != null && !targetType.isBlank()) {
-                predicates.add(criteriaBuilder.equal(root.get("targetType"), targetType.trim()));
+            if (targetType != null) {
+                predicates.add(criteriaBuilder.equal(root.get("targetType"), targetType));
             }
             if (actorId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("actorId"), actorId));

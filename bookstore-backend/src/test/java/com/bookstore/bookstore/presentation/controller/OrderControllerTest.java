@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.result.OrderTimelineEventResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.result.OrderResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
@@ -84,7 +85,7 @@ class OrderControllerTest {
                 any(),
                 any(),
                 eq("ORDER_STATUS_UPDATED"),
-                eq("ORDER"),
+                eq(AuditTargetType.ORDER),
                 eq(ORDER_ID),
                 any(),
                 any(),

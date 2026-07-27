@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.port.out.IOtpSettings;
 import com.bookstore.bookstore.application.port.out.IUserOtpRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.enums.OtpPurpose;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.User;
@@ -312,7 +313,7 @@ public class OtpService implements IOtpService {
             return;
         }
         auditLogService.record(new AuditLogCommand(
-                user.getId(), user.getUsername(), null, action, "USER_OTP", null, action,
+                user.getId(), user.getUsername(), null, action, AuditTargetType.USER_OTP, null, action,
                 null, null, null, null, Instant.now()
         ));
     }

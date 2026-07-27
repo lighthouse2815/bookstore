@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IShipmentService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ShipmentWebMapper;
 import com.bookstore.bookstore.presentation.request.AssignShipmentRequest;
@@ -49,7 +50,7 @@ public class ShipmentController {
                 jwt,
                 httpServletRequest,
                 "SHIPMENT_ASSIGNED",
-                "SHIPMENT",
+                AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Phân công shipment cho đơn hàng " + response.orderCode(),
                 response
@@ -99,7 +100,7 @@ public class ShipmentController {
                 jwt,
                 httpServletRequest,
                 "SHIPMENT_STATUS_UPDATED",
-                "SHIPMENT",
+                AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Xác nhận shipment " + response.shipmentId() + " đã giao thành công",
                 before,

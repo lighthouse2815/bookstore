@@ -31,6 +31,7 @@ import com.bookstore.bookstore.application.result.LoginResult;
 import com.bookstore.bookstore.application.result.PasswordResetTokenResult;
 import com.bookstore.bookstore.application.result.RegisterResult;
 import com.bookstore.bookstore.application.result.SessionResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.AuthProvider;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.PasswordResetToken;
@@ -107,7 +108,7 @@ public class AuthService implements IAuthService {
                     restoredUser.getId(), now, RefreshTokenRevokeReason.SESSION_REVOKED
             );
             otpService.sendRegistrationOtp(restoredUser);
-            audit(restoredUser, "ACCOUNT_RESTORED_FOR_REGISTRATION", "USER", restoredUser.getId().toString(),
+            audit(restoredUser, "ACCOUNT_RESTORED_FOR_REGISTRATION", AuditTargetType.USER, restoredUser.getId().toString(),
                     AuthRequestMetadata.empty(), null);
             return new RegisterResult(restoredUser.getUsername(), restoredUser.getCreatedAt());
         }
@@ -211,7 +212,7 @@ public class AuthService implements IAuthService {
             try {
                 authThrottleService.assertLoginAllowed(username, metadata.ipAddress());
             } catch (AuthRateLimitException exception) {
-                audit(null, "LOGIN_THROTTLED", "LOGIN", null, metadata, null);
+                audit(null, "LOGIN_THROTTLED", AuditTargetType.LOGIN, null, metadata, null);
                 throw exception;
             } catch (RuntimeException exception) {
                 log.warn("Login rate limiter unavailable during pre-check", exception);
@@ -245,7 +246,7 @@ public class AuthService implements IAuthService {
                 log.warn("Login rate limiter unavailable while clearing failures", exception);
             }
         }
-        audit(user, "LOGIN_SUCCEEDED", "USER", user.getId().toString(), metadata, null);
+        audit(user, "LOGIN_SUCCEEDED", AuditTargetType.USER, user.getId().toString(), metadata, null);
         return issueTokens(user, metadata, null, null);
     }
 
@@ -272,7 +273,7 @@ public class AuthService implements IAuthService {
                 refreshTokenRepository.revokeFamily(
                         currentRefreshToken.getFamilyId(), now, RefreshTokenRevokeReason.FAMILY_COMPROMISED
                 );
-                audit(user, "REFRESH_TOKEN_REUSE_DETECTED", "REFRESH_TOKEN_FAMILY",
+                audit(user, "REFRESH_TOKEN_REUSE_DETECTED", AuditTargetType.REFRESH_TOKEN_FAMILY,
                         currentRefreshToken.getFamilyId().toString(), command.metadata(), null);
                 throw new ApplicationException(ApplicationErrorCode.AUTH_REFRESH_REUSE_DETECTED);
             }
@@ -293,7 +294,7 @@ public class AuthService implements IAuthService {
         currentRefreshToken.markUsed(now);
         refreshTokenRepository.save(currentRefreshToken);
         refreshTokenRepository.save(nextRefreshToken);
-        audit(user, "REFRESH_TOKEN_ROTATED", "REFRESH_TOKEN", nextRefreshToken.getId().toString(), command.metadata(), null);
+        audit(user, "REFRESH_TOKEN_ROTATED", AuditTargetType.REFRESH_TOKEN, nextRefreshToken.getId().toString(), command.metadata(), null);
         return toLoginResult(user, nextRefreshToken, nextRawRefreshToken);
     }
 
@@ -317,7 +318,7 @@ public class AuthService implements IAuthService {
         if (refreshToken != null && !refreshToken.isRevoked()) {
             refreshToken.revoke(Instant.now(), RefreshTokenRevokeReason.LOGOUT);
             refreshTokenRepository.save(refreshToken);
-            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN", refreshToken.getId().toString(), command.metadata(), null);
+            audit(user, "SESSION_REVOKED", AuditTargetType.REFRESH_TOKEN, refreshToken.getId().toString(), command.metadata(), null);
         }
     }
 
@@ -343,7 +344,7 @@ public class AuthService implements IAuthService {
                 // Không throw ra FE để tránh lộ tài khoản bị khóa/ban/xóa
             }
         });
-        audit(null, "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET", null, metadata, java.util.Map.of("email", "redacted"));
+        audit(null, "PASSWORD_RESET_REQUESTED", AuditTargetType.PASSWORD_RESET, null, metadata, java.util.Map.of("email", "redacted"));
     }
 
     @Override
@@ -384,7 +385,7 @@ public class AuthService implements IAuthService {
         user.updatePasswordHash(passwordEncoder.encode(command.newPassword()));
         userRepository.save(user);
         refreshTokenRepository.revokeAllByUserId(user.getId(), now, RefreshTokenRevokeReason.PASSWORD_RESET);
-        audit(user, "PASSWORD_RESET_COMPLETED", "USER", user.getId().toString(), AuthRequestMetadata.empty(), null);
+        audit(user, "PASSWORD_RESET_COMPLETED", AuditTargetType.USER, user.getId().toString(), AuthRequestMetadata.empty(), null);
     }
 
     @Override
@@ -393,7 +394,7 @@ public class AuthService implements IAuthService {
         User user = loadUserForRefreshWithLock(userId);
         Instant now = Instant.now();
         refreshTokenRepository.revokeAllByUserId(user.getId(), now, RefreshTokenRevokeReason.LOGOUT_ALL);
-        audit(user, "ALL_SESSIONS_REVOKED", "USER", user.getId().toString(), AuthRequestMetadata.empty(), null);
+        audit(user, "ALL_SESSIONS_REVOKED", AuditTargetType.USER, user.getId().toString(), AuthRequestMetadata.empty(), null);
     }
 
     @Override
@@ -425,13 +426,13 @@ public class AuthService implements IAuthService {
         }
         if (token.getRevokeReason() == RefreshTokenRevokeReason.ROTATED) {
             refreshTokenRepository.revokeFamily(token.getFamilyId(), Instant.now(), RefreshTokenRevokeReason.SESSION_REVOKED);
-            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN_FAMILY", token.getFamilyId().toString(), AuthRequestMetadata.empty(), null);
+            audit(user, "SESSION_REVOKED", AuditTargetType.REFRESH_TOKEN_FAMILY, token.getFamilyId().toString(), AuthRequestMetadata.empty(), null);
             return;
         }
         if (!token.isRevoked()) {
             token.revoke(Instant.now(), RefreshTokenRevokeReason.SESSION_REVOKED);
             refreshTokenRepository.save(token);
-            audit(user, "SESSION_REVOKED", "REFRESH_TOKEN", token.getId().toString(), AuthRequestMetadata.empty(),
+            audit(user, "SESSION_REVOKED", AuditTargetType.REFRESH_TOKEN, token.getId().toString(), AuthRequestMetadata.empty(),
                     java.util.Map.of("currentSession", token.getId().equals(currentSessionId)));
         }
     }
@@ -673,13 +674,13 @@ public class AuthService implements IAuthService {
                 log.warn("Login rate limiter unavailable while recording a failed login", exception);
             }
         }
-        audit(null, "LOGIN_FAILED", "LOGIN", null, metadata, java.util.Map.of("identifier", "redacted"));
+        audit(null, "LOGIN_FAILED", AuditTargetType.LOGIN, null, metadata, java.util.Map.of("identifier", "redacted"));
     }
 
     private void audit(
             User user,
             String action,
-            String targetType,
+            AuditTargetType targetType,
             String targetId,
             AuthRequestMetadata metadata,
             Object details

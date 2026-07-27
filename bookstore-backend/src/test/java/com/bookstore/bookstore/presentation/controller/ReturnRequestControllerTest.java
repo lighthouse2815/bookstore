@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookstore.bookstore.application.port.in.IReturnRequestService;
 import com.bookstore.bookstore.application.result.ReturnRequestResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
@@ -102,7 +103,7 @@ class ReturnRequestControllerTest {
                 any(),
                 any(),
                 eq("RETURN_APPROVED"),
-                eq("RETURN_REQUEST"),
+                eq(AuditTargetType.RETURN_REQUEST),
                 eq(REQUEST_ID),
                 any(),
                 any(),
@@ -133,7 +134,7 @@ class ReturnRequestControllerTest {
                 any(),
                 any(),
                 eq("RETURN_REJECTED"),
-                eq("RETURN_REQUEST"),
+                eq(AuditTargetType.RETURN_REQUEST),
                 eq(REQUEST_ID),
                 any(),
                 any(),

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IImportReceiptService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ImportReceiptWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateImportReceiptRequest;
@@ -74,7 +75,7 @@ public class ImportReceiptController {
                 jwt,
                 httpServletRequest,
                 "STOCK_UPDATED",
-                "STOCK",
+                AuditTargetType.STOCK,
                 response.id(),
                 "Nhập kho qua phiếu nhập " + response.id(),
                 response

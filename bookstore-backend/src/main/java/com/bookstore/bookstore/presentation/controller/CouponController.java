@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.ICouponService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.CouponWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateCouponRequest;
@@ -76,7 +77,7 @@ public class CouponController {
                 jwt,
                 httpServletRequest,
                 "COUPON_CREATED",
-                "COUPON",
+                AuditTargetType.COUPON,
                 response.id(),
                 "Tạo coupon " + response.code(),
                 response
@@ -99,7 +100,7 @@ public class CouponController {
                 jwt,
                 httpServletRequest,
                 "COUPON_UPDATED",
-                "COUPON",
+                AuditTargetType.COUPON,
                 response.id(),
                 "Cập nhật coupon " + response.code(),
                 before,
@@ -120,7 +121,7 @@ public class CouponController {
                 jwt,
                 httpServletRequest,
                 "COUPON_DELETED",
-                "COUPON",
+                AuditTargetType.COUPON,
                 id,
                 "Xóa coupon " + before.code(),
                 before

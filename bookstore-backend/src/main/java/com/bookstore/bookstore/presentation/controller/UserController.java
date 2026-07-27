@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.DeleteUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.UserWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateUserRequest;
@@ -54,7 +55,7 @@ public class UserController {
                 jwt,
                 httpServletRequest,
                 "USER_CREATED",
-                "USER",
+                AuditTargetType.USER,
                 response.userId(),
                 "Tạo tài khoản " + response.username(),
                 response
@@ -124,7 +125,7 @@ public class UserController {
                 jwt,
                 httpServletRequest,
                 "USER_UPDATED",
-                "USER",
+                AuditTargetType.USER,
                 response.userId(),
                 "Cập nhật tài khoản " + response.username(),
                 before,
@@ -148,7 +149,7 @@ public class UserController {
                 jwt,
                 httpServletRequest,
                 "USER_LOCKED",
-                "USER",
+                AuditTargetType.USER,
                 response.userId(),
                 "Khóa tài khoản " + response.username(),
                 before,
@@ -172,7 +173,7 @@ public class UserController {
                 jwt,
                 httpServletRequest,
                 "USER_UNLOCKED",
-                "USER",
+                AuditTargetType.USER,
                 response.userId(),
                 "Mở khóa tài khoản " + response.username(),
                 before,
@@ -241,7 +242,7 @@ public class UserController {
                 jwt,
                 httpServletRequest,
                 "USER_DELETED",
-                "USER",
+                AuditTargetType.USER,
                 id,
                 "Xóa tài khoản " + before.username(),
                 before

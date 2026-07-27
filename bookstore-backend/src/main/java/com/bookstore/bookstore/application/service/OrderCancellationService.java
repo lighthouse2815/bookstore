@@ -15,6 +15,7 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.PurchaseItemType;
 import com.bookstore.bookstore.domain.enums.StockMovementType;
@@ -138,7 +139,7 @@ public class OrderCancellationService {
                 null,
                 actorId == null ? "SYSTEM" : "USER",
                 auditAction,
-                "ORDER",
+                AuditTargetType.ORDER,
                 savedOrder.getId().toString(),
                 "Đơn hàng " + savedOrder.getOrderCode() + " đã được hủy: " + reason,
                 Map.of("orderStatus", OrderStatus.PENDING.name(), "paymentStatus", PaymentStatus.PENDING.name()),

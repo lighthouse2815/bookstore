@@ -9,6 +9,7 @@ import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -85,7 +86,7 @@ public class AuditLogService implements IAuditLogService {
     public PageSliceResult<AuditLogResult> getAll(
             PageQuery pageQuery,
             String action,
-            String targetType,
+            AuditTargetType targetType,
             UUID actorId,
             Instant from,
             Instant to
@@ -126,7 +127,7 @@ public class AuditLogService implements IAuditLogService {
                 truncate(command.actorUsername(), 100),
                 truncate(command.actorRole(), 50),
                 requireValue(command.action(), "action", 100),
-                requireValue(command.targetType(), "targetType", 100),
+                requireValue(command.targetType(), "targetType"),
                 truncate(command.targetId(), 100),
                 truncate(command.description(), 500),
                 toSanitizedJson(command.beforeValue()),
@@ -145,6 +146,13 @@ public class AuditLogService implements IAuditLogService {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
         }
         return normalized;
+    }
+
+    private <T> T requireValue(T value, String argumentName) {
+        if (value == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
+        }
+        return value;
     }
 
     private String truncate(String value, int maxLength) {

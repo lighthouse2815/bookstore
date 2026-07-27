@@ -3,6 +3,7 @@ package com.bookstore.bookstore.presentation.controller;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.AuditLogResponse;
 import com.bookstore.bookstore.presentation.response.PaginationHeaderUtils;
@@ -34,7 +35,7 @@ public class AuditLogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String action,
-            @RequestParam(required = false) String targetType,
+            @RequestParam(required = false) AuditTargetType targetType,
             @RequestParam(required = false) UUID actorId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
@@ -67,7 +68,7 @@ public class AuditLogController {
                 result.actorUsername(),
                 result.actorRole(),
                 result.action(),
-                result.targetType(),
+                result.targetType().name(),
                 result.targetId(),
                 result.description(),
                 result.beforeValue(),

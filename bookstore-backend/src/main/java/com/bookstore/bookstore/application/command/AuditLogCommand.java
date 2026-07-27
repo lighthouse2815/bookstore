@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.command;
 
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -8,7 +9,7 @@ public record AuditLogCommand(
         String actorUsername,
         String actorRole,
         String action,
-        String targetType,
+        AuditTargetType targetType,
         String targetId,
         String description,
         Object beforeValue,

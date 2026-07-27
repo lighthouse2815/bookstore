@@ -16,6 +16,7 @@ import com.bookstore.bookstore.application.port.in.IReviewService;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
@@ -150,7 +151,7 @@ class ReviewControllerTest {
                 any(),
                 any(),
                 eq("REVIEW_HIDDEN"),
-                eq("REVIEW"),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
                 any(),
@@ -178,7 +179,7 @@ class ReviewControllerTest {
                 any(),
                 any(),
                 eq("REVIEW_APPROVED"),
-                eq("REVIEW"),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
                 any(),
@@ -201,7 +202,7 @@ class ReviewControllerTest {
                 any(),
                 any(),
                 eq("REVIEW_DELETED"),
-                eq("REVIEW"),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
                 any()

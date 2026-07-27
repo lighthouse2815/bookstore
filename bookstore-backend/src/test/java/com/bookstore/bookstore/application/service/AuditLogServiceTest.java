@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.assembler.AuditLogAssembler;
 import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -50,7 +51,7 @@ class AuditLogServiceTest {
                 "admin",
                 "ADMIN",
                 "USER_CREATED",
-                "USER",
+                AuditTargetType.USER,
                 UUID.randomUUID().toString(),
                 "Tạo tài khoản",
                 Map.of("password", "secret123", "email", "before@example.com"),

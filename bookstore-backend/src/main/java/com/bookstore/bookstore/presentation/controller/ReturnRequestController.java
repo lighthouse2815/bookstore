@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IReturnRequestService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
 import com.bookstore.bookstore.presentation.mapper.ReturnRequestWebMapper;
@@ -152,7 +153,7 @@ public class ReturnRequestController {
                 jwt,
                 httpServletRequest,
                 "RETURN_APPROVED",
-                "RETURN_REQUEST",
+                AuditTargetType.RETURN_REQUEST,
                 response.id(),
                 "Duyệt yêu cầu trả hàng cho đơn " + response.orderCode(),
                 before,
@@ -178,7 +179,7 @@ public class ReturnRequestController {
                 jwt,
                 httpServletRequest,
                 "RETURN_REJECTED",
-                "RETURN_REQUEST",
+                AuditTargetType.RETURN_REQUEST,
                 response.id(),
                 "Từ chối yêu cầu trả hàng cho đơn " + response.orderCode(),
                 before,

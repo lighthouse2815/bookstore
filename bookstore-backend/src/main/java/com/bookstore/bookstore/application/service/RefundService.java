@@ -23,6 +23,7 @@ import com.bookstore.bookstore.application.result.RefundResult;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.RefundMethod;
 import com.bookstore.bookstore.domain.enums.RefundStatus;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -237,7 +238,7 @@ public class RefundService implements IRefundService {
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("status", refund.getStatus().name());
         after.put("amount", refund.getAmount());
-        auditLogService.recordStatusChange(new AuditLogCommand(actorId, null, "ADMIN", "REFUND_" + refund.getStatus(), "REFUND",
+        auditLogService.recordStatusChange(new AuditLogCommand(actorId, null, "ADMIN", "REFUND_" + refund.getStatus(), AuditTargetType.REFUND,
                 refund.getId().toString(), "Cập nhật hoàn tiền cho đơn " + order.getOrderCode(),
                 before, after, null, null, Instant.now()));
         transactionalOutboxService.enqueue(new EnqueueOutboxEventCommand("REFUND", refund.getId(), "REFUND_" + refund.getStatus(),

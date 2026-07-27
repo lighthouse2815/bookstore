@@ -3,6 +3,7 @@ package com.bookstore.bookstore.presentation.controller;
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.query.PageQuery;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.presentation.mapper.OrderTimelineWebMapper;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
@@ -167,7 +168,7 @@ public class OrderController {
                 jwt,
                 httpServletRequest,
                 action,
-                "ORDER",
+                AuditTargetType.ORDER,
                 response.orderId(),
                 "Cập nhật trạng thái đơn hàng " + response.orderCode() + " sang " + response.status(),
                 before,
