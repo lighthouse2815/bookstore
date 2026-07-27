@@ -1,5 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
@@ -36,27 +38,58 @@ public class AuditLog {
             String userAgent,
             Instant createdAt
     ) {
-        this.id = id;
+        this.id = Guard.notNull(id, DomainErrorCode.INVALID_AUDIT_LOG_ID, "id");
         this.actorId = actorId;
-        this.actorUsername = normalize(actorUsername);
-        this.actorRole = normalize(actorRole);
-        this.action = normalize(action);
-        this.targetType = normalize(targetType);
-        this.targetId = normalize(targetId);
-        this.description = normalize(description);
-        this.beforeValue = normalize(beforeValue);
-        this.afterValue = normalize(afterValue);
-        this.ipAddress = normalize(ipAddress);
-        this.userAgent = normalize(userAgent);
-        this.createdAt = createdAt;
-    }
-
-    private String normalize(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        String normalized = value.trim();
-        return normalized.isEmpty() ? null : normalized;
+        this.actorUsername = Guard.notBlankOrNull(
+                actorUsername,
+                DomainErrorCode.INVALID_AUDIT_LOG_ACTOR_USERNAME,
+                "actorUsername"
+        );
+        this.actorRole = Guard.notBlankOrNull(
+                actorRole,
+                DomainErrorCode.INVALID_AUDIT_LOG_ACTOR_ROLE,
+                "actorRole"
+        );
+        this.action = Guard.notBlank(action, DomainErrorCode.INVALID_AUDIT_LOG_ACTION, "action");
+        this.targetType = Guard.notBlank(
+                targetType,
+                DomainErrorCode.INVALID_AUDIT_LOG_TARGET_TYPE,
+                "targetType"
+        );
+        this.targetId = Guard.notBlankOrNull(
+                targetId,
+                DomainErrorCode.INVALID_AUDIT_LOG_TARGET_ID,
+                "targetId"
+        );
+        this.description = Guard.notBlankOrNull(
+                description,
+                DomainErrorCode.INVALID_AUDIT_LOG_DESCRIPTION,
+                "description"
+        );
+        this.beforeValue = Guard.notBlankOrNull(
+                beforeValue,
+                DomainErrorCode.INVALID_AUDIT_LOG_BEFORE_VALUE,
+                "beforeValue"
+        );
+        this.afterValue = Guard.notBlankOrNull(
+                afterValue,
+                DomainErrorCode.INVALID_AUDIT_LOG_AFTER_VALUE,
+                "afterValue"
+        );
+        this.ipAddress = Guard.notBlankOrNull(
+                ipAddress,
+                DomainErrorCode.INVALID_AUDIT_LOG_IP_ADDRESS,
+                "ipAddress"
+        );
+        this.userAgent = Guard.notBlankOrNull(
+                userAgent,
+                DomainErrorCode.INVALID_AUDIT_LOG_USER_AGENT,
+                "userAgent"
+        );
+        this.createdAt = Guard.notInFuture(
+                createdAt,
+                DomainErrorCode.INVALID_AUDIT_LOG_CREATED_AT,
+                "createdAt"
+        );
     }
 }

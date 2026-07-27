@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.PasswordResetTokenRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -60,7 +61,13 @@ public class PasswordResetToken {
     }
 
     public void markUsed(Instant usedAt) {
-        setUsedAt(usedAt);
+        Instant validUsedAt = Guard.notNull(
+                usedAt,
+                DomainErrorCode.INVALID_PASSWORD_RESET_TOKEN_USED_AT,
+                "usedAt"
+        );
+        PasswordResetTokenRule.requireCanUse(this.usedAt, expiresAt, validUsedAt);
+        setUsedAt(validUsedAt);
     }
 
     private void setUserId(UUID userId) {

@@ -5,7 +5,7 @@ import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileStatus;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.FileAssetRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -84,9 +84,7 @@ public class FileAsset {
     }
 
     public void activate(String checksumSha256) {
-        if (status == FileStatus.DELETED) {
-            throw new DomainException(DomainErrorCode.FILE_ASSET_ALREADY_DELETED);
-        }
+        FileAssetRule.requireNotDeleted(status, deletedAt);
         this.checksumSha256 = Guard.notBlankOrNull(
                 checksumSha256,
                 DomainErrorCode.INVALID_FILE_ASSET_CHECKSUM_SHA256,
@@ -97,9 +95,7 @@ public class FileAsset {
     }
 
     public void softDelete() {
-        if (status == FileStatus.DELETED || deletedAt != null) {
-            throw new DomainException(DomainErrorCode.FILE_ASSET_ALREADY_DELETED);
-        }
+        FileAssetRule.requireNotDeleted(status, deletedAt);
 
         Instant now = Instant.now();
         status = FileStatus.DELETED;
@@ -116,9 +112,7 @@ public class FileAsset {
     }
 
     private void setSizeBytes(Long sizeBytes) {
-        if (sizeBytes != null && sizeBytes < 0) {
-            throw new DomainException(DomainErrorCode.INVALID_FILE_ASSET_SIZE_BYTES, "sizeBytes");
-        }
+        FileAssetRule.requireNonNegativeSize(sizeBytes);
         this.sizeBytes = sizeBytes;
     }
 

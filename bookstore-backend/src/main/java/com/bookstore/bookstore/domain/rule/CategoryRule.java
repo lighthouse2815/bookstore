@@ -1,11 +1,12 @@
 package com.bookstore.bookstore.domain.rule;
 
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.model.CategoryTranslation;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import com.bookstore.bookstore.domain.model.CategoryTranslation;
 
 public final class CategoryRule {
 
@@ -17,13 +18,13 @@ public final class CategoryRule {
             String currentCode,
             String currentName,
             String currentDescription,
-            Map<String, CategoryTranslation> currentTranslations,
+            Map<CategoryLocale, CategoryTranslation> currentTranslations,
             java.util.UUID currentParentId,
             java.util.UUID currentImageFileAssetId,
             String newCode,
             String newName,
             String newDescription,
-            Map<String, CategoryTranslation> newTranslations,
+            Map<CategoryLocale, CategoryTranslation> newTranslations,
             java.util.UUID newParentId,
             java.util.UUID newImageFileAssetId
     ) {

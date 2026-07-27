@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.OutboxStatus;
+import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.OutboxEventRule;
+import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -32,86 +35,106 @@ public class OutboxEvent {
             Instant lockedAt, String lockedBy, String lastError, Instant createdAt, Instant processedAt,
             Instant updatedAt, long version
     ) {
-        this.id = require(id, "id");
-        this.aggregateType = requireText(aggregateType, "aggregateType");
-        this.aggregateId = require(aggregateId, "aggregateId");
-        this.eventType = requireText(eventType, "eventType");
-        this.payload = requireText(payload, "payload");
-        this.deduplicationKey = requireText(deduplicationKey, "deduplicationKey");
-        this.status = require(status, "status");
+        this.id = Guard.notNull(id, DomainErrorCode.INVALID_OUTBOX_EVENT_ID, "id");
+        this.aggregateType = Guard.notBlank(
+                aggregateType,
+                DomainErrorCode.INVALID_OUTBOX_AGGREGATE_TYPE,
+                "aggregateType"
+        );
+        this.aggregateId = Guard.notNull(
+                aggregateId,
+                DomainErrorCode.INVALID_OUTBOX_AGGREGATE_ID,
+                "aggregateId"
+        );
+        this.eventType = Guard.notBlank(eventType, DomainErrorCode.INVALID_OUTBOX_EVENT_TYPE, "eventType");
+        this.payload = Guard.notBlank(payload, DomainErrorCode.INVALID_OUTBOX_PAYLOAD, "payload");
+        this.deduplicationKey = Guard.notBlank(
+                deduplicationKey,
+                DomainErrorCode.INVALID_OUTBOX_DEDUPLICATION_KEY,
+                "deduplicationKey"
+        );
+        this.status = Guard.notNull(status, DomainErrorCode.INVALID_OUTBOX_STATUS, "status");
+        OutboxEventRule.requireNonNegativeAttemptCount(attemptCount);
         this.attemptCount = attemptCount;
-        this.nextAttemptAt = require(nextAttemptAt, "nextAttemptAt");
+        this.nextAttemptAt = Guard.notNull(
+                nextAttemptAt,
+                DomainErrorCode.INVALID_OUTBOX_NEXT_ATTEMPT_AT,
+                "nextAttemptAt"
+        );
         this.lockedAt = lockedAt;
         this.lockedBy = trim(lockedBy);
         this.lastError = trim(lastError);
-        this.createdAt = require(createdAt, "createdAt");
+        this.createdAt = Guard.notNull(createdAt, DomainErrorCode.INVALID_OUTBOX_CREATED_AT, "createdAt");
         this.processedAt = processedAt;
-        this.updatedAt = require(updatedAt, "updatedAt");
+        this.updatedAt = Guard.notNull(updatedAt, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "updatedAt");
         this.version = version;
     }
 
     public void claim(String workerId, Instant now) {
-        if ((status != OutboxStatus.PENDING && status != OutboxStatus.FAILED) || nextAttemptAt.isAfter(now)) {
-            throw new IllegalStateException("outbox event is not claimable");
-        }
+        String normalizedWorkerId = Guard.notBlank(
+                workerId,
+                DomainErrorCode.INVALID_OUTBOX_WORKER_ID,
+                "workerId"
+        );
+        Instant claimedAt = Guard.notNull(now, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "now");
+        OutboxEventRule.requireClaimable(status, nextAttemptAt, claimedAt);
         status = OutboxStatus.PROCESSING;
-        lockedAt = now;
-        lockedBy = requireText(workerId, "workerId");
-        updatedAt = now;
+        lockedAt = claimedAt;
+        lockedBy = normalizedWorkerId;
+        updatedAt = claimedAt;
     }
 
     public void reclaim(Instant now) {
         if (status != OutboxStatus.PROCESSING) {
             return;
         }
+        Instant reclaimedAt = Guard.notNull(now, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "now");
         status = OutboxStatus.PENDING;
         lockedAt = null;
         lockedBy = null;
-        nextAttemptAt = now;
-        updatedAt = now;
+        nextAttemptAt = reclaimedAt;
+        updatedAt = reclaimedAt;
     }
 
     public void succeed(Instant now) {
-        if (status != OutboxStatus.PROCESSING) {
-            throw new IllegalStateException("outbox event is not processing");
-        }
+        OutboxEventRule.requireProcessing(status);
+        Instant succeededAt = Guard.notNull(now, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "now");
         status = OutboxStatus.SUCCEEDED;
-        processedAt = now;
+        processedAt = succeededAt;
         lockedAt = null;
         lockedBy = null;
         lastError = null;
-        updatedAt = now;
+        updatedAt = succeededAt;
     }
 
     public void fail(String error, int maxAttempts, Instant now) {
-        if (status != OutboxStatus.PROCESSING) {
-            throw new IllegalStateException("outbox event is not processing");
-        }
+        OutboxEventRule.requireProcessing(status);
+        OutboxEventRule.requirePositiveMaxAttempts(maxAttempts);
+        Instant failedAt = Guard.notNull(now, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "now");
         attemptCount++;
         lastError = trim(error);
         lockedAt = null;
         lockedBy = null;
         if (attemptCount >= maxAttempts) {
             status = OutboxStatus.DEAD;
-            processedAt = now;
-            nextAttemptAt = now;
+            processedAt = failedAt;
+            nextAttemptAt = failedAt;
         } else {
             status = OutboxStatus.FAILED;
-            nextAttemptAt = now.plus(backoff(attemptCount));
+            nextAttemptAt = failedAt.plus(backoff(attemptCount));
         }
-        updatedAt = now;
+        updatedAt = failedAt;
     }
 
     public void retry(Instant now) {
-        if (status != OutboxStatus.DEAD && status != OutboxStatus.FAILED) {
-            throw new IllegalStateException("outbox event cannot be retried");
-        }
+        OutboxEventRule.requireRetryable(status);
+        Instant retriedAt = Guard.notNull(now, DomainErrorCode.INVALID_OUTBOX_UPDATED_AT, "now");
         status = OutboxStatus.PENDING;
-        nextAttemptAt = now;
+        nextAttemptAt = retriedAt;
         lockedAt = null;
         lockedBy = null;
         processedAt = null;
-        updatedAt = now;
+        updatedAt = retriedAt;
     }
 
     private static Duration backoff(int attempt) {
@@ -119,15 +142,6 @@ public class OutboxEvent {
         return Duration.ofSeconds(seconds);
     }
 
-    private static <T> T require(T value, String field) {
-        if (value == null) throw new IllegalArgumentException(field + " is required");
-        return value;
-    }
-    private static String requireText(String value, String field) {
-        String normalized = trim(value);
-        if (normalized == null) throw new IllegalArgumentException(field + " is required");
-        return normalized;
-    }
     private static String trim(String value) {
         if (value == null) return null;
         String normalized = value.trim();

@@ -2,7 +2,7 @@ package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.DigitalAssetFormat;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.DigitalAssetRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -57,9 +57,7 @@ public class DigitalAsset {
     }
 
     public void softDelete() {
-        if (deletedAt != null) {
-            throw new DomainException(DomainErrorCode.DIGITAL_ASSET_ALREADY_DELETED);
-        }
+        DigitalAssetRule.requireActive(deletedAt);
 
         Instant now = Instant.now();
         setPublished(false);
@@ -77,6 +75,7 @@ public class DigitalAsset {
             boolean purchaseAllowed,
             boolean published
     ) {
+        DigitalAssetRule.requireActive(deletedAt);
         setFormat(format);
         setTitle(title);
         setFileAsset(fileAsset);
@@ -163,9 +162,7 @@ public class DigitalAsset {
 
     private void setPrice(BigDecimal price) {
         BigDecimal validPrice = Guard.notNull(price, DomainErrorCode.INVALID_DIGITAL_ASSET_PRICE, "price");
-        if (validPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DomainException(DomainErrorCode.INVALID_DIGITAL_ASSET_PRICE, "price");
-        }
+        DigitalAssetRule.requireNonNegativePrice(validPrice);
         this.price = validPrice;
     }
 

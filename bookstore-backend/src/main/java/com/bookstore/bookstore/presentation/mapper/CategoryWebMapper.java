@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.CreateCategoryCommand;
 import com.bookstore.bookstore.application.command.CategoryTranslationCommand;
 import com.bookstore.bookstore.application.command.DeleteCategoryCommand;
 import com.bookstore.bookstore.application.command.UpdateCategoryCommand;
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.presentation.request.CreateCategoryRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCategoryRequest;
@@ -21,7 +22,11 @@ public class CategoryWebMapper {
         return new CreateCategoryCommand(
                 request.code(),
                 request.translations().stream()
-                        .map(item -> new CategoryTranslationCommand(item.locale(), item.name(), item.description()))
+                        .map(item -> new CategoryTranslationCommand(
+                                CategoryLocale.fromCode(item.locale()),
+                                item.name(),
+                                item.description()
+                        ))
                         .toList(),
                 request.parentId(),
                 request.imageFileAssetId()
@@ -33,7 +38,11 @@ public class CategoryWebMapper {
                 categoryId,
                 request.code(),
                 request.translations().stream()
-                        .map(item -> new CategoryTranslationCommand(item.locale(), item.name(), item.description()))
+                        .map(item -> new CategoryTranslationCommand(
+                                CategoryLocale.fromCode(item.locale()),
+                                item.name(),
+                                item.description()
+                        ))
                         .toList(),
                 request.parentId(),
                 request.imageFileAssetId()
@@ -62,8 +71,12 @@ public class CategoryWebMapper {
     public Map<String, CategoryTranslationResponse> toTranslationResponses(Category category) {
         Map<String, CategoryTranslationResponse> result = new LinkedHashMap<>();
         category.getTranslations().forEach((locale, translation) -> result.put(
-                locale,
-                new CategoryTranslationResponse(locale, translation.name(), translation.description())
+                locale.getCode(),
+                new CategoryTranslationResponse(
+                        translation.locale().getCode(),
+                        translation.name(),
+                        translation.description()
+                )
         ));
         return result;
     }

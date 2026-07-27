@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.persistence;
 
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryTranslationJpaEntity;
 import com.bookstore.bookstore.infrastructure.persistence.repository.CategoryJpaRepository;
@@ -38,14 +39,19 @@ public class CategoryLocalizationInitializer implements ApplicationRunner {
             Map<String, CategoryTranslationJpaEntity> translations = new LinkedHashMap<>();
             category.getTranslations().forEach(translation -> translations.put(translation.getLocale(), translation));
 
-            if (!translations.containsKey("vi")) {
-                addTranslation(category, "vi", category.getName(), category.getDescription());
-                changed = true;
-            }
-            if (!translations.containsKey("en")) {
+            if (!translations.containsKey(CategoryLocale.VI.getCode())) {
                 addTranslation(
                         category,
-                        "en",
+                        CategoryLocale.VI,
+                        category.getName(),
+                        category.getDescription()
+                );
+                changed = true;
+            }
+            if (!translations.containsKey(CategoryLocale.EN.getCode())) {
+                addTranslation(
+                        category,
+                        CategoryLocale.EN,
                         definition == null ? category.getName() : definition.englishName(),
                         definition == null ? category.getDescription() : definition.englishDescription()
                 );
@@ -60,14 +66,14 @@ public class CategoryLocalizationInitializer implements ApplicationRunner {
 
     private void addTranslation(
             CategoryJpaEntity category,
-            String locale,
+            CategoryLocale locale,
             String name,
             String description
     ) {
         CategoryTranslationJpaEntity translation = new CategoryTranslationJpaEntity();
         translation.setId(UUID.randomUUID());
         translation.setCategory(category);
-        translation.setLocale(locale);
+        translation.setLocale(locale.getCode());
         translation.setName(name);
         translation.setDescription(description);
         category.getTranslations().add(translation);

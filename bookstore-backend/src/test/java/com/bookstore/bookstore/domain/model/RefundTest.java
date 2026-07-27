@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.bookstore.bookstore.domain.enums.RefundMethod;
 import com.bookstore.bookstore.domain.enums.RefundStatus;
+import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -16,7 +18,11 @@ class RefundTest {
         Refund refund = refund();
         refund.approve(UUID.randomUUID(), Instant.now());
         refund.startProcessing(UUID.randomUUID(), Instant.now());
-        assertThrows(IllegalArgumentException.class, () -> refund.succeed(UUID.randomUUID(), "REF-1", null, null, Instant.now()));
+        DomainException exception = assertThrows(
+                DomainException.class,
+                () -> refund.succeed(UUID.randomUUID(), "REF-1", null, null, Instant.now())
+        );
+        assertEquals(DomainErrorCode.REFUND_EVIDENCE_REQUIRED, exception.getErrorCode());
         refund.succeed(UUID.randomUUID(), "REF-1", "https://evidence.example/ref-1", null, Instant.now());
         assertEquals(RefundStatus.SUCCEEDED, refund.getStatus());
     }
@@ -30,13 +36,21 @@ class RefundTest {
         refund.startProcessing(UUID.randomUUID(), Instant.now());
         assertEquals(RefundStatus.PROCESSING, refund.getStatus());
         refund.succeed(UUID.randomUUID(), "REF-2", null, "bank slip", Instant.now());
-        assertThrows(IllegalStateException.class, () -> refund.cancel(UUID.randomUUID(), null, Instant.now()));
+        DomainException exception = assertThrows(
+                DomainException.class,
+                () -> refund.cancel(UUID.randomUUID(), null, Instant.now())
+        );
+        assertEquals(DomainErrorCode.INVALID_REFUND_STATUS_TRANSITION, exception.getErrorCode());
     }
 
     @Test
     void requestedRefund_cannotSkipApproval() {
         Refund refund = refund();
-        assertThrows(IllegalStateException.class, () -> refund.startProcessing(UUID.randomUUID(), Instant.now()));
+        DomainException exception = assertThrows(
+                DomainException.class,
+                () -> refund.startProcessing(UUID.randomUUID(), Instant.now())
+        );
+        assertEquals(DomainErrorCode.INVALID_REFUND_STATUS_TRANSITION, exception.getErrorCode());
     }
 
     private static Refund refund() {

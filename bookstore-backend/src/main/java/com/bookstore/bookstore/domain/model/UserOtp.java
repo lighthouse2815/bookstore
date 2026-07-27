@@ -2,6 +2,7 @@ package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.OtpPurpose;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
+import com.bookstore.bookstore.domain.rule.UserOtpRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -75,16 +76,25 @@ public class UserOtp {
     }
 
     public void markVerified(Instant verifiedAt) {
+        Instant validVerifiedAt = Guard.notNull(
+                verifiedAt,
+                DomainErrorCode.INVALID_USER_OTP_VERIFIED_AT,
+                "verifiedAt"
+        );
+        UserOtpRule.requireCanVerify(this.verifiedAt, invalidatedAt, expiresAt, validVerifiedAt);
         setVerifiedAt(verifiedAt);
         setUpdatedAt(verifiedAt);
     }
 
     public void invalidate(Instant invalidatedAt) {
+        UserOtpRule.requirePending(verifiedAt, this.invalidatedAt);
         setInvalidatedAt(invalidatedAt);
         setUpdatedAt(invalidatedAt);
     }
 
     public void recordFailedAttempt(Instant attemptedAt) {
+        UserOtpRule.requirePending(verifiedAt, invalidatedAt);
+        UserOtpRule.requireAttemptAvailable(attemptCount, maxAttempts);
         Instant validAttemptedAt = Guard.notInFuture(attemptedAt, DomainErrorCode.INVALID_USER_OTP_UPDATED_AT, "attemptedAt");
         this.attemptCount++;
         this.lastAttemptAt = validAttemptedAt;
