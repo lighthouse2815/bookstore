@@ -11,6 +11,7 @@ import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
@@ -51,7 +52,7 @@ class AuditLogControllerTest {
         UUID actorId = UUID.fromString("00000000-0000-0000-0000-000000000222");
         given(auditLogService.getAll(
                 new PageQuery(0, 10),
-                "BOOK_UPDATED",
+                AuditAction.BOOK_UPDATED,
                 AuditTargetType.BOOK,
                 actorId,
                 Instant.parse("2026-07-01T00:00:00Z"),
@@ -62,7 +63,7 @@ class AuditLogControllerTest {
                         actorId,
                         "admin",
                         "ADMIN",
-                        "BOOK_UPDATED",
+                        AuditAction.BOOK_UPDATED,
                         AuditTargetType.BOOK,
                         "book-1",
                         "Cập nhật sách demo",
@@ -99,6 +100,14 @@ class AuditLogControllerTest {
         mockMvc.perform(get("/api/admin/audit-logs")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_STAFF")))
                         .param("targetType", "BOOKS"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getAll_whenActionIsUnknown_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/admin/audit-logs")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_STAFF")))
+                        .param("action", "BOOK_CHANGED"))
                 .andExpect(status().isBadRequest());
     }
 }

@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
 import com.bookstore.bookstore.application.query.PageQuery;
@@ -161,9 +162,9 @@ public class OrderController {
         OrderResponse before = orderWebMapper.toResponse(orderService.getById(id));
         var result = orderService.updateStatus(orderWebMapper.toUpdateStatusCommand(id, request));
         OrderResponse response = orderWebMapper.toResponse(result);
-        String action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
-                ? "ORDER_CANCELLED"
-                : "ORDER_STATUS_UPDATED";
+        AuditAction action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
+                ? AuditAction.ORDER_CANCELLED
+                : AuditAction.ORDER_STATUS_UPDATED;
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,

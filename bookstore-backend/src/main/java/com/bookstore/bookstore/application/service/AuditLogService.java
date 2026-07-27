@@ -9,6 +9,7 @@ import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.bookstore.bookstore.shared.util.StringUtils;
@@ -89,7 +90,7 @@ public class AuditLogService implements IAuditLogService {
     @Transactional(readOnly = true)
     public PageSliceResult<AuditLogResult> getAll(
             PageQuery pageQuery,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             UUID actorId,
             Instant from,
@@ -130,7 +131,7 @@ public class AuditLogService implements IAuditLogService {
                 command.actorId(),
                 truncate(command.actorUsername(), 100),
                 truncate(command.actorRole(), 50),
-                requireValue(command.action(), "action", 100),
+                requireValue(command.action(), "action"),
                 requireValue(command.targetType(), "targetType"),
                 truncate(command.targetId(), 100),
                 truncate(command.description(), 500),

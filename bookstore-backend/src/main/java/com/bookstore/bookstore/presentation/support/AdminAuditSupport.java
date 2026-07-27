@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.support;
 
 import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Comparator;
@@ -24,7 +25,7 @@ public class AdminAuditSupport {
     public void recordCreate(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             Object targetId,
             String description,
@@ -36,7 +37,7 @@ public class AdminAuditSupport {
     public void recordUpdate(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             Object targetId,
             String description,
@@ -49,7 +50,7 @@ public class AdminAuditSupport {
     public void recordDelete(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             Object targetId,
             String description,
@@ -61,7 +62,7 @@ public class AdminAuditSupport {
     private void recordQuietly(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             Object targetId,
             String description,

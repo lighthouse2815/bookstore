@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IBookService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.port.in.IBookQueryService;
@@ -123,7 +124,7 @@ public class BookController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "BOOK_CREATED",
+                AuditAction.BOOK_CREATED,
                 AuditTargetType.BOOK,
                 response.id(),
                 "Tạo sách " + response.title(),
@@ -147,7 +148,7 @@ public class BookController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "BOOK_UPDATED",
+                AuditAction.BOOK_UPDATED,
                 AuditTargetType.BOOK,
                 response.id(),
                 "Cập nhật sách " + response.title(),
@@ -169,7 +170,7 @@ public class BookController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "BOOK_DELETED",
+                AuditAction.BOOK_DELETED,
                 AuditTargetType.BOOK,
                 id,
                 "Xóa sách " + before.title(),

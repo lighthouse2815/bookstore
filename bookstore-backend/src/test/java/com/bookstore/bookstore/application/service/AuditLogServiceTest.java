@@ -13,6 +13,7 @@ import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +59,7 @@ class AuditLogServiceTest {
                 UUID.randomUUID(),
                 "admin",
                 "ADMIN",
-                "USER_CREATED",
+                AuditAction.USER_UPDATED,
                 AuditTargetType.USER,
                 UUID.randomUUID().toString(),
                 "Tạo tài khoản",
@@ -74,7 +75,7 @@ class AuditLogServiceTest {
         AuditLog savedLog = auditLogCaptor.getValue();
 
         assertNotNull(result.id());
-        assertEquals("USER_CREATED", savedLog.getAction());
+        assertEquals(AuditAction.USER_UPDATED, savedLog.getAction());
         assertEquals(
                 "***REDACTED***",
                 objectMapper.readTree(savedLog.getBeforeValue()).get("password").asText()
@@ -129,7 +130,7 @@ class AuditLogServiceTest {
                 UUID.randomUUID(),
                 "admin",
                 "ADMIN",
-                "INTEGRATION_UPDATED",
+                AuditAction.USER_CREATED,
                 AuditTargetType.USER,
                 UUID.randomUUID().toString(),
                 "Cập nhật cấu hình tích hợp",
@@ -202,7 +203,7 @@ class AuditLogServiceTest {
                 UUID.randomUUID(),
                 "admin",
                 "ADMIN",
-                "AUDIT_TEST",
+                AuditAction.BOOK_UPDATED,
                 AuditTargetType.USER,
                 UUID.randomUUID().toString(),
                 "Kiểm tra audit log",

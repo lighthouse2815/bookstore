@@ -3,6 +3,7 @@ package com.bookstore.bookstore.domain.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.exception.DomainException;
@@ -16,14 +17,14 @@ class AuditLogTest {
     void constructor_normalizesTextFields() {
         AuditLog auditLog = auditLog(
                 UUID.randomUUID(),
-                "  USER_CREATED  ",
+                AuditAction.USER_CREATED,
                 AuditTargetType.USER,
                 Instant.EPOCH
         );
 
         assertEquals("admin", auditLog.getActorUsername());
         assertEquals("ADMIN", auditLog.getActorRole());
-        assertEquals("USER_CREATED", auditLog.getAction());
+        assertEquals(AuditAction.USER_CREATED, auditLog.getAction());
         assertEquals(AuditTargetType.USER, auditLog.getTargetType());
         assertEquals("Mô tả", auditLog.getDescription());
     }
@@ -32,17 +33,17 @@ class AuditLogTest {
     void constructor_whenIdIsNull_rejects() {
         DomainException exception = assertThrows(
                 DomainException.class,
-                () -> auditLog(null, "USER_CREATED", AuditTargetType.USER, Instant.EPOCH)
+                () -> auditLog(null, AuditAction.USER_CREATED, AuditTargetType.USER, Instant.EPOCH)
         );
 
         assertEquals(DomainErrorCode.INVALID_AUDIT_LOG_ID, exception.getErrorCode());
     }
 
     @Test
-    void constructor_whenActionIsBlank_rejects() {
+    void constructor_whenActionIsNull_rejects() {
         DomainException exception = assertThrows(
                 DomainException.class,
-                () -> auditLog(UUID.randomUUID(), "   ", AuditTargetType.USER, Instant.EPOCH)
+                () -> auditLog(UUID.randomUUID(), null, AuditTargetType.USER, Instant.EPOCH)
         );
 
         assertEquals(DomainErrorCode.INVALID_AUDIT_LOG_ACTION, exception.getErrorCode());
@@ -52,7 +53,7 @@ class AuditLogTest {
     void constructor_whenTargetTypeIsNull_rejects() {
         DomainException exception = assertThrows(
                 DomainException.class,
-                () -> auditLog(UUID.randomUUID(), "USER_CREATED", null, Instant.EPOCH)
+                () -> auditLog(UUID.randomUUID(), AuditAction.USER_CREATED, null, Instant.EPOCH)
         );
 
         assertEquals(DomainErrorCode.INVALID_AUDIT_LOG_TARGET_TYPE, exception.getErrorCode());
@@ -64,7 +65,7 @@ class AuditLogTest {
                 DomainException.class,
                 () -> auditLog(
                         UUID.randomUUID(),
-                        "USER_CREATED",
+                        AuditAction.USER_CREATED,
                         AuditTargetType.USER,
                         Instant.now().plusSeconds(60)
                 )
@@ -75,7 +76,7 @@ class AuditLogTest {
 
     private static AuditLog auditLog(
             UUID id,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             Instant createdAt
     ) {

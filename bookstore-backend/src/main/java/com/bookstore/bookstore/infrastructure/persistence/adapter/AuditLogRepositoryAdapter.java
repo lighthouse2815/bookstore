@@ -2,6 +2,7 @@ package com.bookstore.bookstore.infrastructure.persistence.adapter;
 
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.bookstore.bookstore.infrastructure.persistence.entity.AuditLogJpaEntity;
@@ -38,7 +39,7 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
     public PageSliceResult<AuditLog> findPage(
             int page,
             int size,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             UUID actorId,
             Instant from,
@@ -63,7 +64,7 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
     }
 
     private Specification<AuditLogJpaEntity> buildSpecification(
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             UUID actorId,
             Instant from,
@@ -71,8 +72,8 @@ public class AuditLogRepositoryAdapter implements IAuditLogRepository {
     ) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (action != null && !action.isBlank()) {
-                predicates.add(criteriaBuilder.equal(root.get("action"), action.trim()));
+            if (action != null) {
+                predicates.add(criteriaBuilder.equal(root.get("action"), action));
             }
             if (targetType != null) {
                 predicates.add(criteriaBuilder.equal(root.get("targetType"), targetType));

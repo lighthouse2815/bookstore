@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IPaymentReconciliationService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
@@ -62,7 +63,7 @@ public class PaymentReconciliationController {
                 id, UUID.fromString(jwt.getSubject()), body.resolutionNote()
         ));
         adminAuditSupport.recordUpdate(
-                jwt, request, "PAYMENT_RECONCILIATION_RESOLVED", AuditTargetType.PAYMENT_RECONCILIATION, id,
+                jwt, request, AuditAction.PAYMENT_RECONCILIATION_RESOLVED, AuditTargetType.PAYMENT_RECONCILIATION, id,
                 "Đã xử lý vấn đề đối soát thanh toán " + id, before, after
         );
         return ApiResponse.success(after);

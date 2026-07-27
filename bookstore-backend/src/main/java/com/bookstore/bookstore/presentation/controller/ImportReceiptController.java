@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IImportReceiptService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
@@ -74,7 +75,7 @@ public class ImportReceiptController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "STOCK_UPDATED",
+                AuditAction.STOCK_UPDATED,
                 AuditTargetType.STOCK,
                 response.id(),
                 "Nhập kho qua phiếu nhập " + response.id(),

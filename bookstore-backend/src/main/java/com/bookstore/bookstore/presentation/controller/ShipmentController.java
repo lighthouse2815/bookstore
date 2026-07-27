@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IShipmentService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
@@ -49,7 +50,7 @@ public class ShipmentController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "SHIPMENT_ASSIGNED",
+                AuditAction.SHIPMENT_ASSIGNED,
                 AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Phân công shipment cho đơn hàng " + response.orderCode(),
@@ -99,7 +100,7 @@ public class ShipmentController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "SHIPMENT_STATUS_UPDATED",
+                AuditAction.SHIPMENT_STATUS_UPDATED,
                 AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Xác nhận shipment " + response.shipmentId() + " đã giao thành công",

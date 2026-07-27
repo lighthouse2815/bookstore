@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.application.port.in.IReviewService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
@@ -144,7 +145,7 @@ public class ReviewController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "REVIEW_HIDDEN",
+                AuditAction.REVIEW_HIDDEN,
                 AuditTargetType.REVIEW,
                 id,
                 "An danh gia " + id,
@@ -169,7 +170,7 @@ public class ReviewController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "REVIEW_APPROVED",
+                AuditAction.REVIEW_APPROVED,
                 AuditTargetType.REVIEW,
                 id,
                 "Phe duyet danh gia " + id,
@@ -190,7 +191,7 @@ public class ReviewController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "REVIEW_DELETED",
+                AuditAction.REVIEW_DELETED,
                 AuditTargetType.REVIEW,
                 id,
                 "Xoa mem danh gia " + id,

@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.persistence.entity;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,8 +44,9 @@ public class AuditLogJpaEntity {
     @Column(name = "actor_role", length = 50)
     private String actorRole;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 100)
-    private String action;
+    private AuditAction action;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false, length = 100)

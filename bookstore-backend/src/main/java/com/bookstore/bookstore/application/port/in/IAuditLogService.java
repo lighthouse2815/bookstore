@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import java.time.Instant;
 import java.util.UUID;
@@ -20,7 +21,7 @@ public interface IAuditLogService {
 
     PageSliceResult<AuditLogResult> getAll(
             PageQuery pageQuery,
-            String action,
+            AuditAction action,
             AuditTargetType targetType,
             UUID actorId,
             Instant from,

@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.command.DeleteUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
@@ -54,7 +55,7 @@ public class UserController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "USER_CREATED",
+                AuditAction.USER_CREATED,
                 AuditTargetType.USER,
                 response.userId(),
                 "Tạo tài khoản " + response.username(),
@@ -124,7 +125,7 @@ public class UserController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_UPDATED",
+                AuditAction.USER_UPDATED,
                 AuditTargetType.USER,
                 response.userId(),
                 "Cập nhật tài khoản " + response.username(),
@@ -148,7 +149,7 @@ public class UserController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_LOCKED",
+                AuditAction.USER_LOCKED,
                 AuditTargetType.USER,
                 response.userId(),
                 "Khóa tài khoản " + response.username(),
@@ -172,7 +173,7 @@ public class UserController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_UNLOCKED",
+                AuditAction.USER_UNLOCKED,
                 AuditTargetType.USER,
                 response.userId(),
                 "Mở khóa tài khoản " + response.username(),
@@ -241,7 +242,7 @@ public class UserController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "USER_DELETED",
+                AuditAction.USER_DELETED,
                 AuditTargetType.USER,
                 id,
                 "Xóa tài khoản " + before.username(),

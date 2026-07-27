@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.ICouponService;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.query.PageQuery;
@@ -76,7 +77,7 @@ public class CouponController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "COUPON_CREATED",
+                AuditAction.COUPON_CREATED,
                 AuditTargetType.COUPON,
                 response.id(),
                 "Tạo coupon " + response.code(),
@@ -99,7 +100,7 @@ public class CouponController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "COUPON_UPDATED",
+                AuditAction.COUPON_UPDATED,
                 AuditTargetType.COUPON,
                 response.id(),
                 "Cập nhật coupon " + response.code(),
@@ -120,7 +121,7 @@ public class CouponController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "COUPON_DELETED",
+                AuditAction.COUPON_DELETED,
                 AuditTargetType.COUPON,
                 id,
                 "Xóa coupon " + before.code(),
