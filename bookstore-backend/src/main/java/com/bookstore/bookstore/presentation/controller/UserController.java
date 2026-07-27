@@ -145,7 +145,7 @@ public class UserController {
         UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, true));
         UserResponse response = userWebMapper.toUserResponse(result);
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "USER_LOCKED",
@@ -169,7 +169,7 @@ public class UserController {
         UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, false));
         UserResponse response = userWebMapper.toUserResponse(result);
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "USER_UNLOCKED",

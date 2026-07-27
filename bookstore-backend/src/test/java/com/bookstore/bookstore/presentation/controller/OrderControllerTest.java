@@ -81,7 +81,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
 
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
                 eq("ORDER_STATUS_UPDATED"),

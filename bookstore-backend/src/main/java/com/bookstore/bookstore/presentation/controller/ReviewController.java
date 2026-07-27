@@ -137,17 +137,18 @@ public class ReviewController {
             @Valid @RequestBody(required = false) ReviewModerationRequest request
     ) {
         UUID adminUserId = UUID.fromString(jwt.getSubject());
+        ReviewResponse before = reviewWebMapper.toResponse(reviewService.getById(id));
         ReviewResponse response = reviewWebMapper.toResponse(
                 reviewService.hide(reviewWebMapper.toHideCommand(id, adminUserId, request))
         );
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "REVIEW_HIDDEN",
                 AuditTargetType.REVIEW,
                 id,
                 "An danh gia " + id,
-                null,
+                before,
                 response
         );
         return ApiResponse.success(response);
@@ -161,17 +162,18 @@ public class ReviewController {
             @PathVariable UUID id
     ) {
         UUID adminUserId = UUID.fromString(jwt.getSubject());
+        ReviewResponse before = reviewWebMapper.toResponse(reviewService.getById(id));
         ReviewResponse response = reviewWebMapper.toResponse(
                 reviewService.approve(reviewWebMapper.toApproveCommand(id, adminUserId))
         );
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "REVIEW_APPROVED",
                 AuditTargetType.REVIEW,
                 id,
                 "Phe duyet danh gia " + id,
-                null,
+                before,
                 response
         );
         return ApiResponse.success(response);

@@ -3,6 +3,7 @@ package com.bookstore.bookstore.presentation.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -125,6 +126,9 @@ class ReviewControllerTest {
 
     @Test
     void hide_whenAdminAuthenticated_recordsAuditLog() throws Exception {
+        given(reviewService.getById(REVIEW_ID)).willReturn(
+                reviewResult(ReviewStatus.APPROVED, null, null, null)
+        );
         given(reviewService.hide(any())).willReturn(
                 reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))
         );
@@ -147,20 +151,23 @@ class ReviewControllerTest {
                         && command.adminUserId().equals(ADMIN_ID)
                         && "Spam".equals(command.reason())
         ));
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
                 eq("REVIEW_HIDDEN"),
                 eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
-                any(),
-                any()
+                notNull(),
+                notNull()
         );
     }
 
     @Test
     void approve_whenAdminAuthenticated_recordsAuditLog() throws Exception {
+        given(reviewService.getById(REVIEW_ID)).willReturn(
+                reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))
+        );
         given(reviewService.approve(any())).willReturn(
                 reviewResult(ReviewStatus.APPROVED, null, ADMIN_ID, Instant.parse("2026-07-08T11:00:00Z"))
         );
@@ -175,15 +182,15 @@ class ReviewControllerTest {
                 command.reviewId().equals(REVIEW_ID)
                         && command.adminUserId().equals(ADMIN_ID)
         ));
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
                 eq("REVIEW_APPROVED"),
                 eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
-                any(),
-                any()
+                notNull(),
+                notNull()
         );
     }
 

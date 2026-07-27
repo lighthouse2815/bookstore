@@ -2,12 +2,16 @@ package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.assembler.AuditLogAssembler;
 import com.bookstore.bookstore.application.command.AuditLogCommand;
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
 import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
@@ -46,11 +50,11 @@ class AuditLogServiceTest {
     }
 
     @Test
-    void recordCreate_sanitizesSensitiveFieldsBeforeSaving() throws Exception {
+    void recordUpdate_sanitizesSensitiveFieldsBeforeSaving() throws Exception {
         when(auditLogRepository.save(any(AuditLog.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = auditLogService.recordCreate(new AuditLogCommand(
+        var result = auditLogService.recordUpdate(new AuditLogCommand(
                 UUID.randomUUID(),
                 "admin",
                 "ADMIN",
@@ -129,11 +133,11 @@ class AuditLogServiceTest {
                 AuditTargetType.USER,
                 UUID.randomUUID().toString(),
                 "Cập nhật cấu hình tích hợp",
+                null,
                 Map.of(
                         "security", List.of(nestedPayload),
                         "displayName", "Bookstore"
                 ),
-                null,
                 "127.0.0.1",
                 "JUnit",
                 Instant.parse("2026-07-08T12:00:00Z")
@@ -142,15 +146,72 @@ class AuditLogServiceTest {
         ArgumentCaptor<AuditLog> auditLogCaptor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogRepository).save(auditLogCaptor.capture());
         AuditLog savedLog = auditLogCaptor.getValue();
-        var beforeValue = objectMapper.readTree(savedLog.getBeforeValue());
-        var nestedValue = beforeValue.get("security").get(0);
+        var afterValue = objectMapper.readTree(savedLog.getAfterValue());
+        var nestedValue = afterValue.get("security").get(0);
 
         sensitiveFieldNames.forEach(fieldName ->
                 assertEquals(REDACTED_VALUE, nestedValue.get(fieldName).asText(), fieldName)
         );
         assertEquals("ACTIVE", nestedValue.get("status").asText());
         assertEquals(3, nestedValue.get("tokenCount").asInt());
-        assertEquals("Bookstore", beforeValue.get("displayName").asText());
+        assertEquals("Bookstore", afterValue.get("displayName").asText());
+    }
+
+    @Test
+    void recordCreate_whenAfterValueIsMissing_rejectsCommand() {
+        assertMissingPayloadRejected(
+                () -> auditLogService.recordCreate(command(null, null)),
+                "afterValue"
+        );
+    }
+
+    @Test
+    void recordUpdate_whenBeforeValueIsMissing_rejectsCommand() {
+        assertMissingPayloadRejected(
+                () -> auditLogService.recordUpdate(command(null, Map.of("status", "ACTIVE"))),
+                "beforeValue"
+        );
+    }
+
+    @Test
+    void recordUpdate_whenAfterValueIsMissing_rejectsCommand() {
+        assertMissingPayloadRejected(
+                () -> auditLogService.recordUpdate(command(Map.of("status", "INACTIVE"), null)),
+                "afterValue"
+        );
+    }
+
+    @Test
+    void recordDelete_whenBeforeValueIsMissing_rejectsCommand() {
+        assertMissingPayloadRejected(
+                () -> auditLogService.recordDelete(command(null, null)),
+                "beforeValue"
+        );
+    }
+
+    private void assertMissingPayloadRejected(Runnable invocation, String argumentName) {
+        ApplicationException exception = assertThrows(ApplicationException.class, invocation::run);
+
+        assertEquals(ApplicationErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+        assertEquals(argumentName + " không được null", exception.getMessage());
+        verifyNoInteractions(auditLogRepository);
+    }
+
+    private AuditLogCommand command(Object beforeValue, Object afterValue) {
+        return new AuditLogCommand(
+                UUID.randomUUID(),
+                "admin",
+                "ADMIN",
+                "AUDIT_TEST",
+                AuditTargetType.USER,
+                UUID.randomUUID().toString(),
+                "Kiểm tra audit log",
+                beforeValue,
+                afterValue,
+                "127.0.0.1",
+                "JUnit",
+                Instant.parse("2026-07-08T12:00:00Z")
+        );
     }
 
 }

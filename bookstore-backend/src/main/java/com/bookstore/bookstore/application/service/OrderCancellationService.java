@@ -134,7 +134,7 @@ public class OrderCancellationService {
         orderTimelineService.recordOrderCancelled(savedOrder, reason);
         orderTimelineService.recordStockRolledBack(savedOrder);
         recordCouponRollbacks(savedOrder);
-        auditLogService.recordStatusChange(new AuditLogCommand(
+        auditLogService.recordUpdate(new AuditLogCommand(
                 actorId,
                 null,
                 actorId == null ? "SYSTEM" : "USER",

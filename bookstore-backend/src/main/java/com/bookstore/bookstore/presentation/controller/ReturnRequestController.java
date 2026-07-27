@@ -149,7 +149,7 @@ public class ReturnRequestController {
         ReturnRequestResponse response = returnRequestWebMapper.toResponse(returnRequestService.approve(
                 returnRequestWebMapper.toApproveCommand(id, adminUserId, request)
         ));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "RETURN_APPROVED",
@@ -175,7 +175,7 @@ public class ReturnRequestController {
         ReturnRequestResponse response = returnRequestWebMapper.toResponse(returnRequestService.reject(
                 returnRequestWebMapper.toRejectCommand(id, adminUserId, request)
         ));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "RETURN_REJECTED",

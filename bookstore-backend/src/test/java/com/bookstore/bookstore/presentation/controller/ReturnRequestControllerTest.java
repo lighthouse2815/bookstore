@@ -99,7 +99,7 @@ class ReturnRequestControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("APPROVED"));
 
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
                 eq("RETURN_APPROVED"),
@@ -130,7 +130,7 @@ class ReturnRequestControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("REJECTED"));
 
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
                 eq("RETURN_REJECTED"),

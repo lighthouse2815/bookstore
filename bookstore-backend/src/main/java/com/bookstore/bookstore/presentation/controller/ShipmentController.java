@@ -96,7 +96,7 @@ public class ShipmentController {
     ) {
         ShipmentResponse before = shipmentWebMapper.toResponse(shipmentService.getById(id));
         ShipmentResponse response = shipmentWebMapper.toResponse(shipmentService.confirmDeliveredByAdmin(id));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 "SHIPMENT_STATUS_UPDATED",

@@ -172,6 +172,18 @@ public class ReviewService implements IReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ReviewResult getById(UUID reviewId) {
+        if (reviewId == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "reviewId");
+        }
+
+        return reviewRepository.findByIdActive(reviewId)
+                .map(reviewAssembler::toResult)
+                .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.REVIEW_NOT_FOUND));
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ReviewResult hide(HideReviewCommand command) {
         if (command == null) {

@@ -67,24 +67,21 @@ public class AuditLogService implements IAuditLogService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordCreate(AuditLogCommand command) {
+        requirePayload(command, false, true);
         return persist(command);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordUpdate(AuditLogCommand command) {
+        requirePayload(command, true, true);
         return persist(command);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordDelete(AuditLogCommand command) {
-        return persist(command);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public AuditLogResult recordStatusChange(AuditLogCommand command) {
+        requirePayload(command, true, false);
         return persist(command);
     }
 
@@ -145,6 +142,18 @@ public class AuditLogService implements IAuditLogService {
         );
 
         return auditLogAssembler.toResult(auditLogRepository.save(auditLog));
+    }
+
+    private void requirePayload(AuditLogCommand command, boolean requireBeforeValue, boolean requireAfterValue) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+        if (requireBeforeValue && command.beforeValue() == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "beforeValue");
+        }
+        if (requireAfterValue && command.afterValue() == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "afterValue");
+        }
     }
 
     private String requireValue(String value, String argumentName, int maxLength) {

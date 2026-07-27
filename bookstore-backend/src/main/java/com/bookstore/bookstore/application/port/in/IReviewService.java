@@ -36,6 +36,8 @@ public interface IReviewService {
             Integer rating
     );
 
+    ReviewResult getById(UUID reviewId);
+
     ReviewResult hide(HideReviewCommand command);
 
     ReviewResult approve(ApproveReviewCommand command);

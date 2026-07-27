@@ -61,7 +61,7 @@ public class PaymentReconciliationController {
         PaymentReconciliationIssueResponse after = toResponse(reconciliationService.resolve(
                 id, UUID.fromString(jwt.getSubject()), body.resolutionNote()
         ));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt, request, "PAYMENT_RECONCILIATION_RESOLVED", AuditTargetType.PAYMENT_RECONCILIATION, id,
                 "Đã xử lý vấn đề đối soát thanh toán " + id, before, after
         );

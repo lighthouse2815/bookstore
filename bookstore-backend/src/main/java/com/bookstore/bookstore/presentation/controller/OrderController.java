@@ -164,7 +164,7 @@ public class OrderController {
         String action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
                 ? "ORDER_CANCELLED"
                 : "ORDER_STATUS_UPDATED";
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 action,

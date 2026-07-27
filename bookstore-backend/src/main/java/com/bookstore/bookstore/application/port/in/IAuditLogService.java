@@ -18,8 +18,6 @@ public interface IAuditLogService {
 
     AuditLogResult recordDelete(AuditLogCommand command);
 
-    AuditLogResult recordStatusChange(AuditLogCommand command);
-
     PageSliceResult<AuditLogResult> getAll(
             PageQuery pageQuery,
             String action,
