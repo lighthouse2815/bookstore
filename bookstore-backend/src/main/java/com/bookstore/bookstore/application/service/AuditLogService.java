@@ -6,6 +6,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.model.AuditLog;
@@ -82,16 +83,22 @@ public class AuditLogService implements IAuditLogService {
     @Override
     @Transactional(readOnly = true)
     public PageSliceResult<AuditLogResult> getAll(
-            int page,
-            int size,
+            PageQuery pageQuery,
             String action,
             String targetType,
             UUID actorId,
             Instant from,
             Instant to
     ) {
-        validatePageRequest(page, size);
-        return auditLogRepository.findPage(page, size, action, targetType, actorId, from, to)
+        return auditLogRepository.findPage(
+                        pageQuery.page(),
+                        pageQuery.size(),
+                        action,
+                        targetType,
+                        actorId,
+                        from,
+                        to
+                )
                 .map(auditLogAssembler::toResult);
     }
 
@@ -194,12 +201,4 @@ public class AuditLogService implements IAuditLogService {
                 .anyMatch(normalized::contains);
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.AuditLogResponse;
@@ -40,7 +41,14 @@ public class AuditLogController {
     ) {
         Instant fromInstant = from == null ? null : from.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant toInstant = to == null ? null : to.plusDays(1).atStartOfDay().minusNanos(1).toInstant(ZoneOffset.UTC);
-        var result = auditLogService.getAll(page, size, action, targetType, actorId, fromInstant, toInstant)
+        var result = auditLogService.getAll(
+                        new PageQuery(page, size),
+                        action,
+                        targetType,
+                        actorId,
+                        fromInstant,
+                        toInstant
+                )
                 .map(this::toResponse);
         return ResponseEntity.ok()
                 .headers(PaginationHeaderUtils.build(result))

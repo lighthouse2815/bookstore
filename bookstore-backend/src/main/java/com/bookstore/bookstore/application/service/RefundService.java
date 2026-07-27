@@ -17,6 +17,7 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IRefundRepository;
 import com.bookstore.bookstore.application.port.out.IReturnRequestRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.RefundResult;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
@@ -83,11 +84,12 @@ public class RefundService implements IRefundService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<RefundResult> getPage(int page, int size, RefundStatus status, RefundMethod method, Instant from, Instant to) {
-        if (page < 0 || size < 1 || size > 200 || (from != null && to != null && !from.isBefore(to))) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page/size/date");
+    public PageSliceResult<RefundResult> getPage(PageQuery pageQuery, RefundStatus status, RefundMethod method, Instant from, Instant to) {
+        if (from != null && to != null && !from.isBefore(to)) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "date");
         }
-        return refundRepository.findPage(page, size, status, method, from, to).map(this::toResult);
+        return refundRepository.findPage(pageQuery.page(), pageQuery.size(), status, method, from, to)
+                .map(this::toResult);
     }
 
     @Override

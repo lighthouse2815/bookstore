@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IReadingJournalService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IReadingJournalRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReadingJournalEntryResult;
 import com.bookstore.bookstore.domain.model.ReadingJournalEntry;
@@ -37,16 +38,21 @@ public class ReadingJournalService implements IReadingJournalService {
             UUID bookId,
             LocalDate from,
             LocalDate to,
-            int page,
-            int size
+            PageQuery pageQuery
     ) {
         validateId(userId, "userId");
         validateOptionalBookId(bookId);
-        validatePageRequest(page, size);
         validateDateRange(from, to);
 
         return readingJournalAssembler.toPageResult(
-                readingJournalRepository.findPageByUserId(userId, bookId, from, to, page, size)
+                readingJournalRepository.findPageByUserId(
+                        userId,
+                        bookId,
+                        from,
+                        to,
+                        pageQuery.page(),
+                        pageQuery.size()
+                )
         );
     }
 
@@ -188,15 +194,6 @@ public class ReadingJournalService implements IReadingJournalService {
     private void validateDateRange(LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "from");
-        }
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
         }
     }
 

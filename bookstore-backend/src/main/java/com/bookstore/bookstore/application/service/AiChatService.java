@@ -5,6 +5,7 @@ import com.bookstore.bookstore.application.port.in.IChatService;
 import com.bookstore.bookstore.application.port.out.IAiChatClient;
 import com.bookstore.bookstore.application.port.out.IAiChatSettings;
 import com.bookstore.bookstore.application.port.out.IChatMessageRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AiChatReplyResult;
 import com.bookstore.bookstore.application.result.AiChatReplyStatus;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
@@ -66,7 +67,7 @@ public class AiChatService implements IAiChatService {
 
     private AiChatReplyResult requestReplyLocked(UUID userId, UUID conversationId) {
         int dailyLimit = Math.max(1, aiChatSettings.dailyUserLimit());
-        int historyLimit = Math.max(2, aiChatSettings.historyLimit());
+        int historyLimit = Math.min(PageQuery.MAX_SIZE, Math.max(2, aiChatSettings.historyLimit()));
         Instant startOfUtcDay = LocalDate.now(ZoneOffset.UTC)
                 .atStartOfDay(ZoneOffset.UTC)
                 .toInstant();
@@ -86,7 +87,7 @@ public class AiChatService implements IAiChatService {
         }
 
         List<ChatMessageResult> history = chatService
-                .getMessages(userId, conversationId, 0, historyLimit)
+                .getMessages(userId, conversationId, new PageQuery(PageQuery.DEFAULT_PAGE, historyLimit))
                 .items();
         if (history.isEmpty()) {
             return new AiChatReplyResult(AiChatReplyStatus.NO_PENDING_MESSAGE, null, remainingRequests);

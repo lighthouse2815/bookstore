@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.INotificationService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.NotificationResult;
 import com.bookstore.bookstore.application.result.NotificationSliceResult;
 import com.bookstore.bookstore.presentation.mapper.NotificationWebMapper;
@@ -53,8 +54,10 @@ public class NotificationController {
         if (page != null || size != null) {
             NotificationSliceResult result = notificationService.getMyNotifications(
                     userId,
-                    page == null ? 0 : page,
-                    size == null ? 10 : size,
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? 10 : size
+                    ),
                     read
             );
             return ResponseEntity.ok()
@@ -120,8 +123,10 @@ public class NotificationController {
     ) {
         if (page != null || size != null) {
             NotificationSliceResult result = notificationService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             );
             return ResponseEntity.ok()
                     .headers(buildPaginationHeaders(result))

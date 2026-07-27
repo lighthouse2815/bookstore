@@ -1,11 +1,15 @@
 package com.bookstore.bookstore.application.service;
 
+import com.bookstore.bookstore.application.enums.RevenueGroupBy;
+import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
+import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAdminDashboardService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.RevenueChartQuery;
 import com.bookstore.bookstore.application.result.DashboardSummaryResult;
 import com.bookstore.bookstore.application.result.LowStockBookResult;
 import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
@@ -74,20 +78,23 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RevenueChartResult> getRevenue(LocalDate from, LocalDate to, String groupBy) {
-        DateRange range = resolveDateRange(from, to);
-        RevenueGroupBy resolvedGroupBy = resolveGroupBy(groupBy);
+    public List<RevenueChartResult> getRevenue(RevenueChartQuery query) {
+        if (query == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "query");
+        }
+
+        DateRange range = resolveDateRange(query);
         Instant fromInclusive = toStartOfDay(range.from());
         Instant toExclusive = toStartOfDay(range.to().plusDays(1));
 
-        List<RevenueChartResult> rawStats = resolvedGroupBy == RevenueGroupBy.MONTH
+        List<RevenueChartResult> rawStats = query.groupBy() == RevenueGroupBy.MONTH
                 ? orderRepository.findRevenueStatsGroupByMonth(fromInclusive, toExclusive)
                 : orderRepository.findRevenueStatsGroupByDay(fromInclusive, toExclusive);
 
         Map<String, RevenueChartResult> statsByKey = rawStats.stream()
                 .collect(Collectors.toMap(RevenueChartResult::label, Function.identity()));
 
-        return resolvedGroupBy == RevenueGroupBy.MONTH
+        return query.groupBy() == RevenueGroupBy.MONTH
                 ? buildMonthlyRevenueChart(range, statsByKey)
                 : buildDailyRevenueChart(range, statsByKey);
     }
@@ -155,25 +162,13 @@ public class AdminDashboardService implements IAdminDashboardService {
         return results;
     }
 
-    private DateRange resolveDateRange(LocalDate from, LocalDate to) {
-        if (from == null || to == null) {
-            LocalDate today = LocalDate.now();
-            return new DateRange(today.minusDays(DEFAULT_REVENUE_DAYS - 1L), today);
+    private DateRange resolveDateRange(RevenueChartQuery query) {
+        if (query.from() != null) {
+            return new DateRange(query.from(), query.to());
         }
 
-        if (from.isAfter(to)) {
-            throw new IllegalArgumentException("from must be before or equal to to");
-        }
-
-        return new DateRange(from, to);
-    }
-
-    private RevenueGroupBy resolveGroupBy(String groupBy) {
-        if (groupBy == null || groupBy.isBlank()) {
-            return RevenueGroupBy.DAY;
-        }
-
-        return RevenueGroupBy.valueOf(groupBy.trim().toUpperCase());
+        LocalDate today = LocalDate.now();
+        return new DateRange(today.minusDays(DEFAULT_REVENUE_DAYS - 1L), today);
     }
 
     private int validateLimit(int limit) {
@@ -194,11 +189,6 @@ public class AdminDashboardService implements IAdminDashboardService {
 
     private Instant toStartOfDay(LocalDate date) {
         return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
-    }
-
-    private enum RevenueGroupBy {
-        DAY,
-        MONTH
     }
 
     private record DateRange(LocalDate from, LocalDate to) {

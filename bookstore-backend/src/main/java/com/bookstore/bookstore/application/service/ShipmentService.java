@@ -14,6 +14,7 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IShipmentRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ShipmentResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -100,9 +101,8 @@ public class ShipmentService implements IShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<ShipmentResult> getAll(int page, int size) {
-        validatePageRequest(page, size);
-        return shipmentRepository.findPageAll(page, size).map(this::toResult);
+    public PageSliceResult<ShipmentResult> getAll(PageQuery pageQuery) {
+        return shipmentRepository.findPageAll(pageQuery.page(), pageQuery.size()).map(this::toResult);
     }
 
     @Override
@@ -131,13 +131,13 @@ public class ShipmentService implements IShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<ShipmentResult> getMyShipments(UUID shipperId, int page, int size) {
+    public PageSliceResult<ShipmentResult> getMyShipments(UUID shipperId, PageQuery pageQuery) {
         if (shipperId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "shipperId");
         }
 
-        validatePageRequest(page, size);
-        return shipmentRepository.findPageByShipperId(shipperId, page, size).map(this::toResult);
+        return shipmentRepository.findPageByShipperId(shipperId, pageQuery.page(), pageQuery.size())
+                .map(this::toResult);
     }
 
     @Override
@@ -245,16 +245,6 @@ public class ShipmentService implements IShipmentService {
 
         if (hasActiveAssignment) {
             throw new ApplicationException(ApplicationErrorCode.SHIPMENT_ORDER_ALREADY_HAS_ACTIVE_ASSIGNMENT);
-        }
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
         }
     }
 

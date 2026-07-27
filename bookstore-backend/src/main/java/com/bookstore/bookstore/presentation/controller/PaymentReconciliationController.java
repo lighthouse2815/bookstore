@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IPaymentReconciliationService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PaymentReconciliationIssueResult;
 import com.bookstore.bookstore.domain.enums.PaymentReconciliationIssueType;
 import com.bookstore.bookstore.domain.enums.PaymentReconciliationStatus;
@@ -40,7 +41,8 @@ public class PaymentReconciliationController {
             @RequestParam(required = false) PaymentReconciliationIssueType issueType,
             @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to
     ) {
-        var result = reconciliationService.getPage(page, size, status, issueType, from, to).map(this::toResponse);
+        var result = reconciliationService.getPage(new PageQuery(page, size), status, issueType, from, to)
+                .map(this::toResponse);
         return ResponseEntity.ok().headers(PaginationHeaderUtils.build(result)).body(ApiResponse.success(result.items()));
     }
 

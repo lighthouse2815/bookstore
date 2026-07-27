@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IStockMovementService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.StockMovementWebMapper;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
 import com.bookstore.bookstore.presentation.response.StockMovementResponse;
@@ -29,7 +30,10 @@ public class StockMovementController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = stockMovementService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = stockMovementService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(stockMovementWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

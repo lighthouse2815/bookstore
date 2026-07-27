@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.application.port.in.IReviewService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ReviewWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateReviewRequest;
 import com.bookstore.bookstore.presentation.request.ReviewModerationRequest;
@@ -47,8 +48,10 @@ public class ReviewController {
         if (page != null || size != null) {
             var result = reviewService.getByBookId(
                     bookId,
-                    page == null ? 0 : page,
-                    size == null ? 10 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? 10 : size
+                    )
             ).map(reviewWebMapper::toPublicResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -105,8 +108,10 @@ public class ReviewController {
     ) {
         if (page != null || size != null || status != null || bookId != null || userId != null || rating != null) {
             var result = reviewService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 10 : size,
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? 10 : size
+                    ),
                     status,
                     bookId,
                     userId,

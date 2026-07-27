@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookstore.bookstore.application.port.in.IReviewService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
@@ -98,7 +99,7 @@ class ReviewControllerTest {
 
     @Test
     void getAll_whenAdminFiltersReviews_returnsPagedResponse() throws Exception {
-        given(reviewService.getAll(0, 10, ReviewStatus.HIDDEN, BOOK_ID, USER_ID, 4)).willReturn(
+        given(reviewService.getAll(new PageQuery(0, 10), ReviewStatus.HIDDEN, BOOK_ID, USER_ID, 4)).willReturn(
                 new PageSliceResult<>(
                         List.of(reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))),
                         1,

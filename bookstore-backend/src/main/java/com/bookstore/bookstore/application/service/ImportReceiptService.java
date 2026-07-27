@@ -9,6 +9,7 @@ import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IImportReceiptRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.ISupplierRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.ImportReceiptResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.StockMovementType;
@@ -48,8 +49,9 @@ public class ImportReceiptService implements IImportReceiptService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<ImportReceiptResult> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<ImportReceiptResult> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return importReceiptRepository.findPage(page, size).map(importReceiptAssembler::toResult);
     }
 
@@ -159,9 +161,4 @@ public class ImportReceiptService implements IImportReceiptService {
         }
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-    }
 }

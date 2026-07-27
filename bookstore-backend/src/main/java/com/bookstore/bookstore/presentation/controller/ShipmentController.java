@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IShipmentService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ShipmentWebMapper;
 import com.bookstore.bookstore.presentation.request.AssignShipmentRequest;
 import com.bookstore.bookstore.presentation.request.UpdateShipmentStatusRequest;
@@ -64,8 +65,10 @@ public class ShipmentController {
     ) {
         if (page != null || size != null) {
             var result = shipmentService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(shipmentWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -116,8 +119,10 @@ public class ShipmentController {
         if (page != null || size != null) {
             var result = shipmentService.getMyShipments(
                     shipperId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(shipmentWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

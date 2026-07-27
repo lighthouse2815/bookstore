@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.OrderTimelineWebMapper;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
@@ -64,8 +65,10 @@ public class OrderController {
         if (page != null || size != null) {
             var result = orderService.getMyOrders(
                     userId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(orderWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -117,8 +120,10 @@ public class OrderController {
     ) {
         if (page != null || size != null) {
             var result = orderService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(orderWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

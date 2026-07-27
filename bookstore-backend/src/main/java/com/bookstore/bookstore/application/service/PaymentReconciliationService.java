@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IPaymentReconciliationService;
 import com.bookstore.bookstore.application.port.out.IPaymentReconciliationIssueRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.PaymentReconciliationIssueResult;
 import com.bookstore.bookstore.domain.enums.PaymentReconciliationIssueType;
@@ -41,9 +42,9 @@ public class PaymentReconciliationService implements IPaymentReconciliationServi
     }
 
     @Override @Transactional(readOnly = true)
-    public PageSliceResult<PaymentReconciliationIssueResult> getPage(int page, int size, PaymentReconciliationStatus status, PaymentReconciliationIssueType type, Instant from, Instant to) {
-        if (page < 0 || size <= 0) throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page/size");
-        return issueRepository.findPage(page, size, status, type, from, to).map(this::toResult);
+    public PageSliceResult<PaymentReconciliationIssueResult> getPage(PageQuery pageQuery, PaymentReconciliationStatus status, PaymentReconciliationIssueType type, Instant from, Instant to) {
+        return issueRepository.findPage(pageQuery.page(), pageQuery.size(), status, type, from, to)
+                .map(this::toResult);
     }
     @Override @Transactional(readOnly = true)
     public PaymentReconciliationIssueResult getById(UUID id) { return toResult(find(id)); }

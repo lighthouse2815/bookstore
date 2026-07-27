@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookstore.bookstore.application.command.CreateReadingJournalEntryCommand;
 import com.bookstore.bookstore.application.port.in.IReadingJournalService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReadingJournalEntryResult;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
@@ -81,7 +82,7 @@ class ReadingJournalControllerTest {
                 null
         );
 
-        given(readingJournalService.getMyEntries(USER_ID, null, null, null, 0, 12))
+        given(readingJournalService.getMyEntries(USER_ID, null, null, null, new PageQuery(0, 12)))
                 .willReturn(new PageSliceResult<>(List.of(result), 1L, 0, 12));
         given(readingJournalWebMapper.toResponse(result)).willReturn(response);
 

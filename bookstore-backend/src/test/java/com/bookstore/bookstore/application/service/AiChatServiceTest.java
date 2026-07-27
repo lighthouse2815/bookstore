@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.port.in.IChatService;
 import com.bookstore.bookstore.application.port.out.IAiChatClient;
 import com.bookstore.bookstore.application.port.out.IAiChatSettings;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.port.out.IChatMessageRepository;
 import com.bookstore.bookstore.application.result.AiChatReplyResult;
 import com.bookstore.bookstore.application.result.AiChatReplyStatus;
@@ -108,7 +109,7 @@ class AiChatServiceTest {
         when(aiChatSettings.enabled()).thenReturn(true);
         when(aiChatClient.isConfigured()).thenReturn(true);
         when(chatMessageRepository.countBySenderIdAndRoleSince(any(), any(), any())).thenReturn(0L);
-        when(chatService.getMessages(userId, conversationId, 0, 12))
+        when(chatService.getMessages(userId, conversationId, new PageQuery(0, 12)))
                 .thenReturn(new ChatMessageSliceResult(List.of(userMessage), 1, 0, 12));
         when(aiChatClient.generateReply(anyList())).thenReturn(aiMessage.content());
         when(chatService.sendSystemMessage(userId, conversationId, aiMessage.content())).thenReturn(aiMessage);

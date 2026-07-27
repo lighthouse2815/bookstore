@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.port.in;
 
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.BookPageDetailResult;
 import com.bookstore.bookstore.application.result.BookQueryResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
@@ -10,13 +11,13 @@ public interface IBookQueryService {
 
     List<BookQueryResult> getAll();
 
-    PageSliceResult<BookQueryResult> getAll(int page, int size);
+    PageSliceResult<BookQueryResult> getAll(PageQuery pageQuery);
 
     List<BookQueryResult> search(String keyword);
 
-    PageSliceResult<BookQueryResult> search(String keyword, int page, int size);
+    PageSliceResult<BookQueryResult> search(String keyword, PageQuery pageQuery);
 
-    PageSliceResult<BookQueryResult> search(String keyword, UUID categoryId, int page, int size);
+    PageSliceResult<BookQueryResult> search(String keyword, UUID categoryId, PageQuery pageQuery);
 
     BookQueryResult getById(UUID bookId);
 

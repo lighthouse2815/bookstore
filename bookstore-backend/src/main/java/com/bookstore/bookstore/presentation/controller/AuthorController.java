@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IAuthorService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.AuthorWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateAuthorRequest;
 import com.bookstore.bookstore.presentation.request.UpdateAuthorRequest;
@@ -36,7 +37,10 @@ public class AuthorController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = authorService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = authorService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(authorWebMapper::toAuthorResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

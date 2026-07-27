@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICategoryService;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
@@ -42,8 +43,9 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<Category> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<Category> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return categoryRepository.findPageActive(page, size);
     }
 
@@ -232,9 +234,4 @@ public class CategoryService implements ICategoryService {
         return Map.copyOf(translations);
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-    }
 }

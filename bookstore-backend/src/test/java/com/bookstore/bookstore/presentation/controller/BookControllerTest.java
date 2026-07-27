@@ -101,11 +101,11 @@ class BookControllerTest {
     void getBooks_whenPageSizeExceedsMaximum_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/books")
                         .param("page", "0")
-                        .param("size", "101"))
+                        .param("size", "21"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message")
-                        .value("page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 100"));
+                        .value("page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 20"));
 
         verifyNoInteractions(bookService, bookQueryService, bookWebMapper);
     }

@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.out.IFileStorage;
 import com.bookstore.bookstore.application.port.out.IFileStorageSettings;
 import com.bookstore.bookstore.application.port.out.IReadingProgressRepository;
 import com.bookstore.bookstore.application.port.out.IUserDigitalAccessRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.DigitalLibraryAssetResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.SignedUrlResult;
@@ -62,17 +63,16 @@ public class DigitalLibraryService implements IDigitalLibraryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<DigitalLibraryAssetResult> getMyLibrary(UUID userId, int page, int size) {
+    public PageSliceResult<DigitalLibraryAssetResult> getMyLibrary(UUID userId, PageQuery pageQuery) {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
         }
 
-        validatePageRequest(page, size);
         PageSliceResult<UserDigitalAccess> accessPage = userDigitalAccessRepository.findAccessiblePageByUserId(
                 userId,
                 Instant.now(),
-                page,
-                size
+                pageQuery.page(),
+                pageQuery.size()
         );
         return new PageSliceResult<>(
                 toLibraryResults(userId, accessPage.items()),
@@ -388,13 +388,4 @@ public class DigitalLibraryService implements IDigitalLibraryService {
         return fileStorageSettings.bucket();
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

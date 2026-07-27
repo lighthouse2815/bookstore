@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.CreateReadingJournalEntryComm
 import com.bookstore.bookstore.application.command.DeleteReadingJournalEntryCommand;
 import com.bookstore.bookstore.application.command.UpdateReadingJournalEntryCommand;
 import com.bookstore.bookstore.application.command.UpsertReadingJournalEntryCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReadingJournalEntryResult;
 import java.time.LocalDate;
@@ -16,8 +17,7 @@ public interface IReadingJournalService {
             UUID bookId,
             LocalDate from,
             LocalDate to,
-            int page,
-            int size
+            PageQuery pageQuery
     );
 
     ReadingJournalEntryResult create(CreateReadingJournalEntryCommand command);

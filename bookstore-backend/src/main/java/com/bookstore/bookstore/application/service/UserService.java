@@ -13,6 +13,7 @@ import com.bookstore.bookstore.application.port.out.IPasswordEncoder;
 import com.bookstore.bookstore.application.port.out.IProfileRepository;
 import com.bookstore.bookstore.application.port.out.IRoleRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
@@ -62,8 +63,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public PageSliceResult<User> getCustomers(int page, int size) {
-        return getActiveUsersByRole(USER_ROLE, page, size);
+    public PageSliceResult<User> getCustomers(PageQuery pageQuery) {
+        return getActiveUsersByRole(USER_ROLE, pageQuery);
     }
 
     @Override
@@ -72,8 +73,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public PageSliceResult<User> getStaffs(int page, int size) {
-        return getActiveUsersByRole(STAFF_ROLE, page, size);
+    public PageSliceResult<User> getStaffs(PageQuery pageQuery) {
+        return getActiveUsersByRole(STAFF_ROLE, pageQuery);
     }
 
     @Override
@@ -82,8 +83,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public PageSliceResult<User> getAdmins(int page, int size) {
-        return getActiveUsersByRole(ADMIN_ROLE, page, size);
+    public PageSliceResult<User> getAdmins(PageQuery pageQuery) {
+        return getActiveUsersByRole(ADMIN_ROLE, pageQuery);
     }
 
     @Override
@@ -92,8 +93,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public PageSliceResult<User> getShippers(int page, int size) {
-        return getActiveUsersByRole(SHIPPER_ROLE, page, size);
+    public PageSliceResult<User> getShippers(PageQuery pageQuery) {
+        return getActiveUsersByRole(SHIPPER_ROLE, pageQuery);
     }
 
     @Override
@@ -332,9 +333,8 @@ public class UserService implements IUserService {
                 .toList();
     }
 
-    private PageSliceResult<User> getActiveUsersByRole(String roleName, int page, int size) {
-        validatePageRequest(page, size);
-        return userRepository.findPageByRoleNameActive(roleName, page, size);
+    private PageSliceResult<User> getActiveUsersByRole(String roleName, PageQuery pageQuery) {
+        return userRepository.findPageByRoleNameActive(roleName, pageQuery.page(), pageQuery.size());
     }
 
     private String normalizeManagedRole(String roleName) {
@@ -381,13 +381,4 @@ public class UserService implements IUserService {
         );
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

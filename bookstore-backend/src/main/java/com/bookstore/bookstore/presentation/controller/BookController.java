@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IBookService;
 import com.bookstore.bookstore.application.port.in.IBookQueryService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateBookRequest;
 import com.bookstore.bookstore.presentation.request.UpdateBookRequest;
@@ -45,8 +46,10 @@ public class BookController {
     ) {
         if (page != null || size != null) {
             var result = bookQueryService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(bookWebMapper::toBookResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -69,8 +72,10 @@ public class BookController {
             var result = bookQueryService.search(
                     keyword,
                     categoryId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(bookWebMapper::toBookResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

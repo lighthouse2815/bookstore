@@ -3,6 +3,7 @@ package com.bookstore.bookstore.application.port.in;
 import com.bookstore.bookstore.application.command.CreateSupplierCommand;
 import com.bookstore.bookstore.application.command.DeleteSupplierCommand;
 import com.bookstore.bookstore.application.command.UpdateSupplierCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.model.Supplier;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
@@ -12,7 +13,7 @@ public interface ISupplierService {
 
     List<Supplier> getAll();
 
-    PageSliceResult<Supplier> getAll(int page, int size);
+    PageSliceResult<Supplier> getAll(PageQuery pageQuery);
 
     Supplier getById(UUID supplierId);
 

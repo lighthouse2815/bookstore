@@ -3,6 +3,7 @@ package com.bookstore.bookstore.application.port.in;
 import com.bookstore.bookstore.application.command.AssignConversationCommand;
 import com.bookstore.bookstore.application.command.CreateConversationCommand;
 import com.bookstore.bookstore.application.command.SendChatMessageCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
 import com.bookstore.bookstore.application.result.ChatMessageSliceResult;
 import com.bookstore.bookstore.application.result.ConversationResult;
@@ -19,7 +20,7 @@ public interface IChatService {
 
     ConversationResult getConversationDetail(UUID userId, UUID conversationId);
 
-    ChatMessageSliceResult getMessages(UUID userId, UUID conversationId, int page, int size);
+    ChatMessageSliceResult getMessages(UUID userId, UUID conversationId, PageQuery pageQuery);
 
     ChatMessageResult sendUserMessage(SendChatMessageCommand command);
 
@@ -29,11 +30,16 @@ public interface IChatService {
 
     ConversationResult closeMyConversation(UUID userId, UUID conversationId);
 
-    ConversationSliceResult getAdminConversations(UUID adminUserId, ConversationStatus status, String keyword, int page, int size);
+    ConversationSliceResult getAdminConversations(
+            UUID adminUserId,
+            ConversationStatus status,
+            String keyword,
+            PageQuery pageQuery
+    );
 
     ConversationResult getAdminConversationDetail(UUID adminUserId, UUID conversationId);
 
-    ChatMessageSliceResult getAdminMessages(UUID adminUserId, UUID conversationId, int page, int size);
+    ChatMessageSliceResult getAdminMessages(UUID adminUserId, UUID conversationId, PageQuery pageQuery);
 
     ChatMessageResult sendAdminMessage(SendChatMessageCommand command);
 

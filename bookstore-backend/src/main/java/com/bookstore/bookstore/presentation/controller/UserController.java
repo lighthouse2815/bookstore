@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.DeleteUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.UserWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateUserRequest;
 import com.bookstore.bookstore.presentation.request.UpdateStaffUserRequest;
@@ -70,8 +71,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getCustomers(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -91,8 +94,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getStaffs(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -184,8 +189,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getAdmins(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -205,8 +212,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getShippers(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

@@ -7,6 +7,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAuthorService;
 import com.bookstore.bookstore.application.port.out.IAuthorRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
@@ -34,8 +35,9 @@ public class AuthorService implements IAuthorService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<Author> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<Author> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return authorRepository.findPageActive(page, size);
     }
 
@@ -150,9 +152,4 @@ public class AuthorService implements IAuthorService {
         );
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-    }
 }

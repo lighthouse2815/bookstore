@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
@@ -48,8 +49,7 @@ class AuditLogControllerTest {
         UUID logId = UUID.fromString("00000000-0000-0000-0000-000000000111");
         UUID actorId = UUID.fromString("00000000-0000-0000-0000-000000000222");
         given(auditLogService.getAll(
-                0,
-                10,
+                new PageQuery(0, 10),
                 "BOOK_UPDATED",
                 "BOOK",
                 actorId,

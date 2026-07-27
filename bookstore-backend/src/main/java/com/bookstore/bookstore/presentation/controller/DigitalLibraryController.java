@@ -2,6 +2,7 @@ package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IDigitalAssetService;
 import com.bookstore.bookstore.application.port.in.IDigitalLibraryService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.DigitalLibraryWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateDigitalAssetRequest;
 import com.bookstore.bookstore.presentation.request.UpdateDigitalAssetRequest;
@@ -58,8 +59,10 @@ public class DigitalLibraryController {
         var result = digitalAssetService.getPublishedCatalog(
                 keyword,
                 categoryId,
-                page == null ? 0 : page,
-                size == null ? 12 : size
+                new PageQuery(
+                        page == null ? PageQuery.DEFAULT_PAGE : page,
+                        size == null ? 12 : size
+                )
         ).map(digitalLibraryWebMapper::toPublicDigitalAssetCatalogItemResponse);
 
         return ResponseEntity.ok()
@@ -131,8 +134,10 @@ public class DigitalLibraryController {
         if (page != null || size != null) {
             var result = digitalLibraryService.getMyLibrary(
                     userId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(digitalLibraryWebMapper::toDigitalLibraryItemResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

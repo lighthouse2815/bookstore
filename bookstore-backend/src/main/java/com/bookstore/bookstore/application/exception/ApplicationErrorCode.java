@@ -11,7 +11,7 @@ public enum ApplicationErrorCode {
     OTP_LOCKED("AUTH_OTP_LOCKED", "Ma xac thuc khong hop le"),
 
     INVALID_ARGUMENT("APPLICATION_001", "%s không được null"),
-    PAGINATION_INVALID("APPLICATION_PAGINATION_001", "page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 100"),
+    PAGINATION_INVALID("APPLICATION_PAGINATION_001", "page phải lớn hơn hoặc bằng 0 và size phải từ 1 đến 20"),
 
     INVALID_AUTH_PASSWORD("APPLICATION_AUTH_001", "password không được null"),
     AUTH_USER_NOT_FOUND("APPLICATION_AUTH_003", "không tìm thấy user"),

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.in;
 
 import com.bookstore.bookstore.application.command.AuditLogCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.time.Instant;
@@ -19,8 +20,7 @@ public interface IAuditLogService {
     AuditLogResult recordStatusChange(AuditLogCommand command);
 
     PageSliceResult<AuditLogResult> getAll(
-            int page,
-            int size,
+            PageQuery pageQuery,
             String action,
             String targetType,
             UUID actorId,

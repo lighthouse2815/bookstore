@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.ApproveReturnRequestCommand;
 import com.bookstore.bookstore.application.command.CancelReturnRequestCommand;
 import com.bookstore.bookstore.application.command.CreateReturnRequestCommand;
 import com.bookstore.bookstore.application.command.RejectReturnRequestCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReturnRequestResult;
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
@@ -18,8 +19,7 @@ public interface IReturnRequestService {
 
     PageSliceResult<ReturnRequestResult> getMyRequests(
             UUID userId,
-            int page,
-            int size,
+            PageQuery pageQuery,
             ReturnRequestStatus status,
             UUID orderId
     );
@@ -31,8 +31,7 @@ public interface IReturnRequestService {
     List<ReturnRequestResult> getAll(ReturnRequestStatus status, UUID userId, UUID orderId);
 
     PageSliceResult<ReturnRequestResult> getAll(
-            int page,
-            int size,
+            PageQuery pageQuery,
             ReturnRequestStatus status,
             UUID userId,
             UUID orderId
