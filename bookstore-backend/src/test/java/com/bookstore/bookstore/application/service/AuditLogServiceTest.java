@@ -13,6 +13,7 @@ import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AuditLogServiceTest {
+
+    private static final String REDACTED_VALUE = "***REDACTED***";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -84,4 +87,57 @@ class AuditLogServiceTest {
                 objectMapper.readTree(savedLog.getAfterValue()).get("username").asText()
         );
     }
+
+    @Test
+    void recordCreate_sanitizesNamingVariantsAndNestedPayloads() throws Exception {
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        auditLogService.recordCreate(new AuditLogCommand(
+                UUID.randomUUID(),
+                "admin",
+                "ADMIN",
+                "INTEGRATION_UPDATED",
+                AuditTargetType.USER,
+                UUID.randomUUID().toString(),
+                "Cập nhật cấu hình tích hợp",
+                Map.of(
+                        "api_key", "underscore-secret",
+                        "api-key", "hyphen-secret",
+                        "api.key", "dot-secret",
+                        "apiKey", "camel-secret",
+                        "API KEY", "space-secret",
+                        "profile", Map.of("displayName", "Bookstore")
+                ),
+                Map.of(
+                        "sessions", List.of(
+                                Map.of("private_key", "private-secret"),
+                                Map.of("credential.value", "credential-secret"),
+                                Map.of("cookie", "session-secret")
+                        ),
+                        "status", "ACTIVE"
+                ),
+                "127.0.0.1",
+                "JUnit",
+                Instant.parse("2026-07-08T12:00:00Z")
+        ));
+
+        ArgumentCaptor<AuditLog> auditLogCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).save(auditLogCaptor.capture());
+        AuditLog savedLog = auditLogCaptor.getValue();
+        var beforeValue = objectMapper.readTree(savedLog.getBeforeValue());
+        var afterValue = objectMapper.readTree(savedLog.getAfterValue());
+
+        assertEquals(REDACTED_VALUE, beforeValue.get("api_key").asText());
+        assertEquals(REDACTED_VALUE, beforeValue.get("api-key").asText());
+        assertEquals(REDACTED_VALUE, beforeValue.get("api.key").asText());
+        assertEquals(REDACTED_VALUE, beforeValue.get("apiKey").asText());
+        assertEquals(REDACTED_VALUE, beforeValue.get("API KEY").asText());
+        assertEquals("Bookstore", beforeValue.get("profile").get("displayName").asText());
+        assertEquals(REDACTED_VALUE, afterValue.get("sessions").get(0).get("private_key").asText());
+        assertEquals(REDACTED_VALUE, afterValue.get("sessions").get(1).get("credential.value").asText());
+        assertEquals(REDACTED_VALUE, afterValue.get("sessions").get(2).get("cookie").asText());
+        assertEquals("ACTIVE", afterValue.get("status").asText());
+    }
+
 }

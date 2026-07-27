@@ -18,9 +18,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,20 +32,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditLogService implements IAuditLogService {
 
     private static final String REDACTED_VALUE = "***REDACTED***";
-    private static final List<String> SENSITIVE_FIELD_MARKERS = List.of(
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
+    private static final Set<String> SENSITIVE_FIELD_MARKERS = Set.of(
             "password",
+            "passcode",
             "token",
             "secret",
             "authorization",
-            "api_key",
             "apikey",
             "accesskey",
-            "access_key",
-            "refreshkey",
-            "refresh_token",
-            "accesstoken",
-            "refresh_token",
-            "refreshToken".toLowerCase(Locale.ROOT)
+            "privatekey",
+            "credential",
+            "cookie"
     );
 
     private final IAuditLogRepository auditLogRepository;
@@ -203,10 +202,17 @@ public class AuditLogService implements IAuditLogService {
     }
 
     private boolean isSensitiveField(String fieldName) {
-        String normalized = fieldName == null ? "" : fieldName.replace("-", "").replace(" ", "").toLowerCase(Locale.ROOT);
-        return SENSITIVE_FIELD_MARKERS.stream()
-                .map(marker -> marker.replace("-", "").replace(" ", "").toLowerCase(Locale.ROOT))
-                .anyMatch(normalized::contains);
+        String normalized = normalizeFieldName(fieldName);
+        return SENSITIVE_FIELD_MARKERS.stream().anyMatch(normalized::contains);
+    }
+
+    private String normalizeFieldName(String fieldName) {
+        if (fieldName == null) {
+            return "";
+        }
+        return NON_ALPHANUMERIC.matcher(fieldName)
+                .replaceAll("")
+                .toLowerCase(Locale.ROOT);
     }
 
 }
