@@ -15,10 +15,19 @@ import type {
   LowStockBook,
   OrderStatusStats,
   RecentOrder,
+  RevenueChartGroupBy,
   RevenueChartPoint,
+  RevenueChartQuery,
   TopBookStats,
 } from '@/types/admin-dashboard'
 import { getErrorMessage } from '@/utils'
+
+type RevenueFilterDraft = {
+  preset: AdminDashboardRevenueFilter
+  from: string
+  to: string
+  groupBy: RevenueChartGroupBy
+}
 
 export function useAdminDashboardPage() {
   const { language, locale, t, formatCurrency, formatDate, formatNumber } =
@@ -29,8 +38,11 @@ export function useAdminDashboardPage() {
   const [orderStatusStats, setOrderStatusStats] = useState<OrderStatusStats[]>([])
   const [lowStockBooks, setLowStockBooks] = useState<LowStockBook[]>([])
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
-  const [revenueFilter, setRevenueFilter] =
-    useState<AdminDashboardRevenueFilter>('LAST_7_DAYS')
+  const [revenueFilterDraft, setRevenueFilterDraft] =
+    useState<RevenueFilterDraft>(createInitialRevenueFilterDraft)
+  const [revenueQuery, setRevenueQuery] = useState<RevenueChartQuery>(
+    createInitialRevenueQuery,
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +60,7 @@ export function useAdminDashboardPage() {
       }
 
       try {
-        const dashboardData = await requestDashboardData(revenueFilter)
+        const dashboardData = await requestDashboardData(revenueQuery)
 
         if (isCancelled) {
           return
@@ -82,7 +94,7 @@ export function useAdminDashboardPage() {
     return () => {
       isCancelled = true
     }
-  }, [revenueFilter, t])
+  }, [revenueQuery, t])
 
   const hasData = useMemo(
     () =>
@@ -106,7 +118,7 @@ export function useAdminDashboardPage() {
     setIsRefreshing(true)
 
     try {
-      const dashboardData = await requestDashboardData(revenueFilter)
+      const dashboardData = await requestDashboardData(revenueQuery)
       applyDashboardData(dashboardData, {
         setSummary,
         setRevenueChart,
@@ -125,6 +137,64 @@ export function useAdminDashboardPage() {
     }
   }
 
+  function setRevenueFilter(filter: AdminDashboardRevenueFilter) {
+    setRevenueFilterDraft((currentDraft) => {
+      if (filter === 'CUSTOM') {
+        return {
+          ...currentDraft,
+          preset: filter,
+        }
+      }
+
+      return {
+        ...currentDraft,
+        preset: filter,
+        ...getRevenuePresetDateRange(filter),
+      }
+    })
+  }
+
+  function setRevenueFrom(from: string) {
+    setRevenueFilterDraft((currentDraft) => ({
+      ...currentDraft,
+      preset: 'CUSTOM',
+      from,
+    }))
+  }
+
+  function setRevenueTo(to: string) {
+    setRevenueFilterDraft((currentDraft) => ({
+      ...currentDraft,
+      preset: 'CUSTOM',
+      to,
+    }))
+  }
+
+  function setRevenueGroupBy(groupBy: RevenueChartGroupBy) {
+    setRevenueFilterDraft((currentDraft) => ({
+      ...currentDraft,
+      groupBy,
+    }))
+  }
+
+  function applyRevenueFilter() {
+    if (!isValidRevenueDateRange(revenueFilterDraft)) {
+      return
+    }
+
+    setRevenueQuery({
+      from: revenueFilterDraft.from,
+      to: revenueFilterDraft.to,
+      groupBy: revenueFilterDraft.groupBy,
+    })
+  }
+
+  const isRevenueDateRangeValid = isValidRevenueDateRange(revenueFilterDraft)
+  const isRevenueFilterDirty =
+    revenueFilterDraft.from !== revenueQuery.from ||
+    revenueFilterDraft.to !== revenueQuery.to ||
+    revenueFilterDraft.groupBy !== revenueQuery.groupBy
+
   return {
     language,
     locale,
@@ -138,8 +208,17 @@ export function useAdminDashboardPage() {
     orderStatusStats,
     lowStockBooks,
     recentOrders,
-    revenueFilter,
+    revenueFilter: revenueFilterDraft.preset,
     setRevenueFilter,
+    revenueFrom: revenueFilterDraft.from,
+    setRevenueFrom,
+    revenueTo: revenueFilterDraft.to,
+    setRevenueTo,
+    revenueGroupBy: revenueFilterDraft.groupBy,
+    setRevenueGroupBy,
+    applyRevenueFilter,
+    isRevenueDateRangeValid,
+    isRevenueFilterDirty,
     isLoading,
     isRefreshing,
     error,
@@ -148,9 +227,7 @@ export function useAdminDashboardPage() {
   }
 }
 
-async function requestDashboardData(filter: AdminDashboardRevenueFilter) {
-  const revenueParams = getRevenueFilterParams(filter)
-
+async function requestDashboardData(revenueParams: RevenueChartQuery) {
   const [
     summary,
     revenueChart,
@@ -196,7 +273,27 @@ function applyDashboardData(
   setters.setRecentOrders(data.recentOrders)
 }
 
-function getRevenueFilterParams(filter: AdminDashboardRevenueFilter) {
+function createInitialRevenueFilterDraft(): RevenueFilterDraft {
+  return {
+    preset: 'LAST_7_DAYS',
+    ...getRevenuePresetDateRange('LAST_7_DAYS'),
+    groupBy: 'DAY',
+  }
+}
+
+function createInitialRevenueQuery(): RevenueChartQuery {
+  const initialFilter = createInitialRevenueFilterDraft()
+
+  return {
+    from: initialFilter.from,
+    to: initialFilter.to,
+    groupBy: initialFilter.groupBy,
+  }
+}
+
+function getRevenuePresetDateRange(
+  filter: Exclude<AdminDashboardRevenueFilter, 'CUSTOM'>,
+) {
   const today = new Date()
 
   switch (filter) {
@@ -204,21 +301,22 @@ function getRevenueFilterParams(filter: AdminDashboardRevenueFilter) {
       return {
         from: formatDateParam(addDays(today, -6)),
         to: formatDateParam(today),
-        groupBy: 'DAY' as const,
       }
     case 'LAST_30_DAYS':
       return {
         from: formatDateParam(addDays(today, -29)),
         to: formatDateParam(today),
-        groupBy: 'DAY' as const,
       }
     case 'THIS_MONTH':
       return {
         from: formatDateParam(new Date(today.getFullYear(), today.getMonth(), 1)),
         to: formatDateParam(today),
-        groupBy: 'DAY' as const,
       }
   }
+}
+
+function isValidRevenueDateRange(filter: RevenueFilterDraft) {
+  return Boolean(filter.from && filter.to && filter.from <= filter.to)
 }
 
 function addDays(date: Date, dayOffset: number) {

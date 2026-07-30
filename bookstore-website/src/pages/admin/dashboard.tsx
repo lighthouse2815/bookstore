@@ -30,6 +30,8 @@ import {
 } from 'recharts'
 import { Badge } from '@/components/common/badge'
 import { Button, buttonVariants } from '@/components/common/button'
+import { Input } from '@/components/common/input'
+import { Label } from '@/components/common/label'
 import { StatePanel } from '@/components/common/page-shell'
 import {
   Select,
@@ -43,6 +45,7 @@ import { AdminLayout } from '@/components/layout/admin-layout'
 import type {
   AdminDashboardRevenueFilter,
   DashboardSummary,
+  RevenueChartGroupBy,
 } from '@/types/admin-dashboard'
 import type { OrderStatus } from '@/types/order'
 import { cn } from '@/utils'
@@ -90,6 +93,15 @@ export default function AdminDashboard() {
     recentOrders,
     revenueFilter,
     setRevenueFilter,
+    revenueFrom,
+    setRevenueFrom,
+    revenueTo,
+    setRevenueTo,
+    revenueGroupBy,
+    setRevenueGroupBy,
+    applyRevenueFilter,
+    isRevenueDateRangeValid,
+    isRevenueFilterDirty,
     isLoading,
     isRefreshing,
     error,
@@ -126,7 +138,30 @@ export default function AdminDashboard() {
       value: 'THIS_MONTH',
       label: copy.filters.thisMonth,
     },
+    {
+      value: 'CUSTOM',
+      label: copy.filters.custom,
+    },
   ]
+  const revenueGroupByOptions: Array<{
+    value: RevenueChartGroupBy
+    label: string
+  }> = [
+    {
+      value: 'DAY',
+      label: copy.filters.byDay,
+    },
+    {
+      value: 'MONTH',
+      label: copy.filters.byMonth,
+    },
+  ]
+  const selectedRevenueFilterLabel =
+    revenueFilterOptions.find((option) => option.value === revenueFilter)?.label ??
+    revenueFilter
+  const selectedRevenueGroupByLabel =
+    revenueGroupByOptions.find((option) => option.value === revenueGroupBy)
+      ?.label ?? revenueGroupBy
 
   if (!isLoading && error && !hasData) {
     return (
@@ -224,28 +259,125 @@ export default function AdminDashboard() {
         <DashboardSectionCard
           title={copy.sections.revenue}
           description={copy.revenueDescription}
-          action={
-            <Select
-              value={revenueFilter}
-              onValueChange={(nextValue) => {
-                if (nextValue) {
-                  setRevenueFilter(nextValue as AdminDashboardRevenueFilter)
-                }
-              }}
-            >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/70 sm:w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {revenueFilterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          }
         >
+          <div className="mb-6 rounded-[24px] border border-border/70 bg-muted/25 p-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr_1fr_auto] xl:items-end">
+              <RevenueFilterField
+                id="revenue-preset"
+                label={copy.filters.quickRange}
+              >
+                <Select
+                  value={revenueFilter}
+                  onValueChange={(nextValue) => {
+                    if (nextValue) {
+                      setRevenueFilter(
+                        nextValue as AdminDashboardRevenueFilter,
+                      )
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id="revenue-preset"
+                    className="h-11 w-full rounded-2xl bg-background/80 px-4"
+                  >
+                    <SelectValue>{selectedRevenueFilterLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {revenueFilterOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </RevenueFilterField>
+
+              <RevenueFilterField
+                id="revenue-from"
+                label={copy.filters.from}
+              >
+                <Input
+                  id="revenue-from"
+                  type="date"
+                  value={revenueFrom}
+                  max={revenueTo || undefined}
+                  aria-invalid={!isRevenueDateRangeValid}
+                  onChange={(event) => setRevenueFrom(event.currentTarget.value)}
+                  className="h-11 rounded-2xl bg-background/80 px-4"
+                />
+              </RevenueFilterField>
+
+              <RevenueFilterField id="revenue-to" label={copy.filters.to}>
+                <Input
+                  id="revenue-to"
+                  type="date"
+                  value={revenueTo}
+                  min={revenueFrom || undefined}
+                  aria-invalid={!isRevenueDateRangeValid}
+                  onChange={(event) => setRevenueTo(event.currentTarget.value)}
+                  className="h-11 rounded-2xl bg-background/80 px-4"
+                />
+              </RevenueFilterField>
+
+              <RevenueFilterField
+                id="revenue-group-by"
+                label={copy.filters.groupBy}
+              >
+                <Select
+                  value={revenueGroupBy}
+                  onValueChange={(nextValue) => {
+                    if (nextValue) {
+                      setRevenueGroupBy(nextValue as RevenueChartGroupBy)
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id="revenue-group-by"
+                    className="h-11 w-full rounded-2xl bg-background/80 px-4"
+                  >
+                    <SelectValue>{selectedRevenueGroupByLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {revenueGroupByOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </RevenueFilterField>
+
+              <Button
+                className="h-11 rounded-2xl px-5 md:col-span-2 xl:col-span-1"
+                onClick={applyRevenueFilter}
+                disabled={
+                  !isRevenueDateRangeValid ||
+                  !isRevenueFilterDirty ||
+                  isRefreshing
+                }
+              >
+                <RefreshCw
+                  className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+                />
+                {isRefreshing ? copy.filters.applying : copy.filters.apply}
+              </Button>
+            </div>
+
+            <p
+              className={cn(
+                'mt-3 text-xs leading-5',
+                isRevenueDateRangeValid
+                  ? 'text-muted-foreground'
+                  : 'text-destructive',
+              )}
+              role={isRevenueDateRangeValid ? undefined : 'alert'}
+            >
+              {isRevenueDateRangeValid
+                ? copy.filters.helper
+                : copy.filters.invalidDateRange}
+            </p>
+          </div>
+
           {isLoading ? (
             <ChartSkeleton />
           ) : revenueChart.length === 0 ? (
@@ -613,6 +745,25 @@ function DashboardSectionCard({
   )
 }
 
+function RevenueFilterField({
+  id,
+  label,
+  children,
+}: {
+  id: string
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div className="min-w-0 space-y-2">
+      <Label htmlFor={id} className="text-xs text-muted-foreground">
+        {label}
+      </Label>
+      {children}
+    </div>
+  )
+}
+
 function StatCard({
   label,
   value,
@@ -821,9 +972,20 @@ type DashboardCopy = {
   emptyOrders: string
   unknownStatus: string
   filters: {
+    quickRange: string
     last7Days: string
     last30Days: string
     thisMonth: string
+    custom: string
+    from: string
+    to: string
+    groupBy: string
+    byDay: string
+    byMonth: string
+    apply: string
+    applying: string
+    helper: string
+    invalidDateRange: string
   }
   metrics: {
     revenue: string
@@ -882,9 +1044,22 @@ const dashboardCopy = {
     emptyOrders: 'Chưa có đơn hàng nào để hiển thị',
     unknownStatus: 'Không xác định',
     filters: {
+      quickRange: 'Khoảng thời gian nhanh',
       last7Days: '7 ngày',
       last30Days: '30 ngày',
       thisMonth: 'Tháng này',
+      custom: 'Tùy chọn',
+      from: 'Từ ngày',
+      to: 'Đến ngày',
+      groupBy: 'Gom dữ liệu',
+      byDay: 'Theo ngày',
+      byMonth: 'Theo tháng',
+      apply: 'Áp dụng',
+      applying: 'Đang áp dụng',
+      helper:
+        'Chọn khoảng ngày bất kỳ và cách gom dữ liệu phù hợp với biểu đồ.',
+      invalidDateRange:
+        'Vui lòng nhập đủ khoảng ngày và bảo đảm ngày bắt đầu không sau ngày kết thúc.',
     },
     metrics: {
       revenue: 'Doanh thu',
@@ -941,9 +1116,21 @@ const dashboardCopy = {
     emptyOrders: 'No recent orders to display yet',
     unknownStatus: 'Unknown',
     filters: {
+      quickRange: 'Quick range',
       last7Days: '7 days',
       last30Days: '30 days',
       thisMonth: 'This month',
+      custom: 'Custom',
+      from: 'From',
+      to: 'To',
+      groupBy: 'Group data',
+      byDay: 'By day',
+      byMonth: 'By month',
+      apply: 'Apply',
+      applying: 'Applying',
+      helper: 'Choose any date range and how the chart should group its data.',
+      invalidDateRange:
+        'Enter a complete date range and make sure the start date is not after the end date.',
     },
     metrics: {
       revenue: 'Revenue',
