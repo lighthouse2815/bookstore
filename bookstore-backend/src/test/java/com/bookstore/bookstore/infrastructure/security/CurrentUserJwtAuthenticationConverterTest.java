@@ -52,6 +52,27 @@ class CurrentUserJwtAuthenticationConverterTest {
     }
 
     @Test
+    void convert_softDeletedRoleDoesNotGrantAuthority() {
+        User user = user(
+                UserStatus.ACTIVE,
+                false,
+                null,
+                Set.of(role("USER", null), role("ADMIN", Instant.now()))
+        );
+        Jwt jwt = jwt(user.getId().toString());
+        when(userRepository.findByIdIncludingDeleted(user.getId())).thenReturn(Optional.of(user));
+
+        Authentication authentication = converter.convert(jwt);
+
+        assertEquals(
+                Set.of("ROLE_USER"),
+                authentication.getAuthorities().stream()
+                        .map(authority -> authority.getAuthority())
+                        .collect(java.util.stream.Collectors.toSet())
+        );
+    }
+
+    @Test
     void convert_lockedUserRejectsToken() {
         User user = user(UserStatus.ACTIVE, true, null, "USER");
         Jwt jwt = jwt(user.getId().toString());
@@ -89,6 +110,22 @@ class CurrentUserJwtAuthenticationConverterTest {
             Instant deletedAt,
             String... roleNames
     ) {
+        return user(
+                status,
+                locked,
+                deletedAt,
+                java.util.Arrays.stream(roleNames)
+                        .map(roleName -> role(roleName, null))
+                        .collect(java.util.stream.Collectors.toSet())
+        );
+    }
+
+    private static User user(
+            UserStatus status,
+            boolean locked,
+            Instant deletedAt,
+            Set<Role> roles
+    ) {
         Instant now = Instant.now();
         return new User(
                 UUID.randomUUID(),
@@ -98,17 +135,20 @@ class CurrentUserJwtAuthenticationConverterTest {
                 "test@gmail.com",
                 status,
                 locked,
-                java.util.Arrays.stream(roleNames)
-                        .map(roleName -> new Role(
-                                UUID.randomUUID(),
-                                roleName,
-                                roleName + " role",
-                                Set.of(),
-                                now,
-                                now,
-                                null
-                        ))
-                        .collect(java.util.stream.Collectors.toSet()),
+                roles,
+                now,
+                now,
+                deletedAt
+        );
+    }
+
+    private static Role role(String name, Instant deletedAt) {
+        Instant now = Instant.now();
+        return new Role(
+                UUID.randomUUID(),
+                name,
+                name + " role",
+                Set.of(),
                 now,
                 now,
                 deletedAt

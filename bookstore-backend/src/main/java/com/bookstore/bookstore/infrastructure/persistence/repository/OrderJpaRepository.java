@@ -40,7 +40,10 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
     Optional<OrderJpaEntity> findByIdAndUser_DeletedAtIsNullForUpdate(@Param("id") UUID id);
 
     @EntityGraph(attributePaths = "items")
-    Optional<OrderJpaEntity> findByUser_IdAndIdempotencyKey(UUID userId, String idempotencyKey);
+    Optional<OrderJpaEntity> findByUser_IdAndUser_DeletedAtIsNullAndIdempotencyKey(
+            UUID userId,
+            String idempotencyKey
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @EntityGraph(attributePaths = "items")
@@ -114,25 +117,12 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
             @Param("toExclusive") Instant toExclusive
     );
 
-    @Query("""
-            select count(o)
-            from OrderJpaEntity o
-            where o.user.deletedAt is null
-              and o.createdAt >= :fromInclusive
-              and o.createdAt < :toExclusive
-            """)
-    long countCreatedBetween(
-            @Param("fromInclusive") Instant fromInclusive,
-            @Param("toExclusive") Instant toExclusive
+    long countByUser_DeletedAtIsNullAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            Instant fromInclusive,
+            Instant toExclusive
     );
 
-    @Query("""
-            select count(o)
-            from OrderJpaEntity o
-            where o.user.deletedAt is null
-              and o.status = :status
-            """)
-    long countByStatus(@Param("status") OrderStatus status);
+    long countByUser_DeletedAtIsNullAndStatus(OrderStatus status);
 
     @Query(
             value = """

@@ -116,6 +116,31 @@ class OrderRepositoryAdapterTest {
         verify(orderJpaRepository).findByIdAndUser_DeletedAtIsNull(orderId);
     }
 
+    @Test
+    void findByUserIdAndIdempotencyKey_usesActiveUserLookup() {
+        UUID userId = UUID.randomUUID();
+        String idempotencyKey = "checkout-key";
+        OrderJpaEntity orderEntity = orderEntity(UUID.randomUUID());
+        Order mappedOrder = org.mockito.Mockito.mock(Order.class);
+
+        when(orderJpaRepository.findByUser_IdAndUser_DeletedAtIsNullAndIdempotencyKey(
+                userId,
+                idempotencyKey
+        )).thenReturn(Optional.of(orderEntity));
+        when(orderPersistenceMapper.toDomain(orderEntity)).thenReturn(mappedOrder);
+
+        var result = orderRepositoryAdapter.findByUserIdAndIdempotencyKey(
+                userId,
+                idempotencyKey
+        );
+
+        assertEquals(Optional.of(mappedOrder), result);
+        verify(orderJpaRepository).findByUser_IdAndUser_DeletedAtIsNullAndIdempotencyKey(
+                userId,
+                idempotencyKey
+        );
+    }
+
     private static OrderJpaEntity orderEntity(UUID orderId) {
         OrderJpaEntity entity = new OrderJpaEntity();
         entity.setId(orderId);

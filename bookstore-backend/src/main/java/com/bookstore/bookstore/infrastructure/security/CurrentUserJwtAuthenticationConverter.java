@@ -45,6 +45,7 @@ public class CurrentUserJwtAuthenticationConverter implements Converter<Jwt, Abs
         requireActiveSession(jwt, user.getId());
 
         Collection<GrantedAuthority> authorities = user.getRoles().stream()
+                .filter(role -> role.getDeletedAt() == null)
                 .map(Role::getName)
                 .filter(Objects::nonNull)
                 .map(roleName -> new SimpleGrantedAuthority("ROLE_" + roleName))

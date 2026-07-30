@@ -225,7 +225,9 @@ public class BookRepositoryAdapter implements IBookRepository {
             return List.of();
         }
 
-        Map<UUID, BookJpaEntity> booksById = bookJpaRepository.findAllByDeletedAtIsNullAndIdIn(orderedIds).stream()
+        Map<UUID, BookJpaEntity> booksById = bookJpaRepository
+                .findDistinctByDeletedAtIsNullAndIdIn(orderedIds)
+                .stream()
                 .collect(Collectors.toMap(BookJpaEntity::getId, Function.identity()));
 
         return orderedIds.stream()
