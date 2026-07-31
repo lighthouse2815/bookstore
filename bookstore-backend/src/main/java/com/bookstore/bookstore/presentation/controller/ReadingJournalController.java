@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IReadingJournalService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ReadingJournalWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateReadingJournalEntryRequest;
 import com.bookstore.bookstore.presentation.request.UpdateReadingJournalEntryRequest;
@@ -50,8 +51,10 @@ public class ReadingJournalController {
                 bookId,
                 from,
                 to,
-                page == null ? 0 : page,
-                size == null ? 12 : size
+                new PageQuery(
+                        page == null ? PageQuery.DEFAULT_PAGE : page,
+                        size == null ? 12 : size
+                )
         ).map(readingJournalWebMapper::toResponse);
 
         return ResponseEntity.ok()

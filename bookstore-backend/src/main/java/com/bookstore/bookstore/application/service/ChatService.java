@@ -12,6 +12,7 @@ import com.bookstore.bookstore.application.port.out.IChatRealtimePublisher;
 import com.bookstore.bookstore.application.port.out.IConversationParticipantRepository;
 import com.bookstore.bookstore.application.port.out.IConversationRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
 import com.bookstore.bookstore.application.result.ChatMessageSliceResult;
 import com.bookstore.bookstore.application.result.ConversationResult;
@@ -119,11 +120,10 @@ public class ChatService implements IChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public ChatMessageSliceResult getMessages(UUID userId, UUID conversationId, int page, int size) {
+    public ChatMessageSliceResult getMessages(UUID userId, UUID conversationId, PageQuery pageQuery) {
         requireCustomerUser(userId);
-        validatePageRequest(page, size);
         requireOwnedConversation(userId, conversationId);
-        return toMessageSliceResult(conversationId, page, size);
+        return toMessageSliceResult(conversationId, pageQuery.page(), pageQuery.size());
     }
 
     @Override
@@ -274,19 +274,22 @@ public class ChatService implements IChatService {
             UUID adminUserId,
             ConversationStatus status,
             String keyword,
-            int page,
-            int size
+            PageQuery pageQuery
     ) {
         requireAdminOrStaffUser(adminUserId);
-        validatePageRequest(page, size);
-        List<ConversationResult> items = conversationRepository.findPageActive(status, normalizeKeyword(keyword), page, size).stream()
+        List<ConversationResult> items = conversationRepository.findPageActive(
+                        status,
+                        normalizeKeyword(keyword),
+                        pageQuery.page(),
+                        pageQuery.size()
+                ).stream()
                 .map(conversation -> toConversationResult(conversation, adminUserId))
                 .toList();
         return new ConversationSliceResult(
                 items,
                 conversationRepository.countActive(status, normalizeKeyword(keyword)),
-                page,
-                size
+                pageQuery.page(),
+                pageQuery.size()
         );
     }
 
@@ -299,11 +302,10 @@ public class ChatService implements IChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public ChatMessageSliceResult getAdminMessages(UUID adminUserId, UUID conversationId, int page, int size) {
+    public ChatMessageSliceResult getAdminMessages(UUID adminUserId, UUID conversationId, PageQuery pageQuery) {
         requireAdminOrStaffUser(adminUserId);
-        validatePageRequest(page, size);
         requireConversation(conversationId);
-        return toMessageSliceResult(conversationId, page, size);
+        return toMessageSliceResult(conversationId, pageQuery.page(), pageQuery.size());
     }
 
     @Override
@@ -604,15 +606,6 @@ public class ChatService implements IChatService {
             return MessageSenderRole.STAFF;
         }
         return MessageSenderRole.USER;
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
     }
 
     private void publishConversationAfterCommit(Conversation conversation, List<ConversationParticipant> participants) {

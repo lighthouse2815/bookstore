@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.application.port.in;
 
 import com.bookstore.bookstore.application.command.CreateImportReceiptCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.ImportReceiptResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
@@ -10,7 +11,7 @@ public interface IImportReceiptService {
 
     List<ImportReceiptResult> getAll();
 
-    PageSliceResult<ImportReceiptResult> getAll(int page, int size);
+    PageSliceResult<ImportReceiptResult> getAll(PageQuery pageQuery);
 
     ImportReceiptResult getById(UUID receiptId);
 

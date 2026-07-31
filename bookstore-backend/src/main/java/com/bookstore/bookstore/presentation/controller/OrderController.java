@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IOrderService;
 import com.bookstore.bookstore.application.port.in.IOrderTimelineService;
+import com.bookstore.bookstore.application.query.PageQuery;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.presentation.mapper.OrderTimelineWebMapper;
 import com.bookstore.bookstore.presentation.mapper.OrderWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateOrderRequest;
@@ -64,8 +67,10 @@ public class OrderController {
         if (page != null || size != null) {
             var result = orderService.getMyOrders(
                     userId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(orderWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -117,8 +122,10 @@ public class OrderController {
     ) {
         if (page != null || size != null) {
             var result = orderService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(orderWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -155,14 +162,14 @@ public class OrderController {
         OrderResponse before = orderWebMapper.toResponse(orderService.getById(id));
         var result = orderService.updateStatus(orderWebMapper.toUpdateStatusCommand(id, request));
         OrderResponse response = orderWebMapper.toResponse(result);
-        String action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
-                ? "ORDER_CANCELLED"
-                : "ORDER_STATUS_UPDATED";
-        adminAuditSupport.recordStatusChange(
+        AuditAction action = request.status() == com.bookstore.bookstore.domain.enums.OrderStatus.CANCELLED
+                ? AuditAction.ORDER_CANCELLED
+                : AuditAction.ORDER_STATUS_UPDATED;
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
                 action,
-                "ORDER",
+                AuditTargetType.ORDER,
                 response.orderId(),
                 "Cập nhật trạng thái đơn hàng " + response.orderCode() + " sang " + response.status(),
                 before,

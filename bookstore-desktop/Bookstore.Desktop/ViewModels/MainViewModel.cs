@@ -11,6 +11,8 @@ public partial class MainViewModel : ObservableObject
     private readonly PosCartStore cartStore;
     private readonly NavigationService navigationService;
     private readonly AuthService authService;
+    private readonly AppSettingsStore settingsStore;
+    private readonly CustomerDisplayWindowService customerDisplayWindowService;
 
     public MainViewModel(
         AuthStore authStore,
@@ -22,18 +24,27 @@ public partial class MainViewModel : ObservableObject
         PosViewModel posViewModel,
         OrderLookupViewModel orderLookupViewModel,
         InventoryViewModel inventoryViewModel,
-        SettingsViewModel settingsViewModel)
+        ReportsViewModel reportsViewModel,
+        SettingsViewModel settingsViewModel,
+        CustomerDisplayWindowService customerDisplayWindowService)
     {
         this.authStore = authStore;
         this.cartStore = cartStore;
         this.navigationService = navigationService;
         this.authService = authService;
+        this.settingsStore = settingsStore;
+        this.customerDisplayWindowService = customerDisplayWindowService;
         PosViewModel = posViewModel;
         OrderLookupViewModel = orderLookupViewModel;
         InventoryViewModel = inventoryViewModel;
+        ReportsViewModel = reportsViewModel;
         SettingsViewModel = settingsViewModel;
         LoginViewModel = new LoginViewModel(authService, googleOAuthService, settingsStore);
-        LoginViewModel.LoginSucceeded += (_, _) => NavigatePos();
+        LoginViewModel.LoginSucceeded += (_, _) =>
+        {
+            NavigatePos();
+            customerDisplayWindowService.Show();
+        };
 
         navigationService.PropertyChanged += (_, args) =>
         {
@@ -45,7 +56,20 @@ public partial class MainViewModel : ObservableObject
         authStore.PropertyChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(IsAuthenticated));
+            OnPropertyChanged(nameof(IsAdmin));
             OnPropertyChanged(nameof(CurrentUserText));
+            if (!authStore.IsAuthenticated)
+            {
+                customerDisplayWindowService.CloseAndReset();
+            }
+        };
+        settingsStore.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AppSettingsStore.IsDarkMode))
+            {
+                OnPropertyChanged(nameof(IsDarkMode));
+                OnPropertyChanged(nameof(ThemeButtonText));
+            }
         };
         navigationService.NavigateTo(PosViewModel);
     }
@@ -54,10 +78,14 @@ public partial class MainViewModel : ObservableObject
     public PosViewModel PosViewModel { get; }
     public OrderLookupViewModel OrderLookupViewModel { get; }
     public InventoryViewModel InventoryViewModel { get; }
+    public ReportsViewModel ReportsViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
 
     public object? ActiveViewModel => navigationService.CurrentViewModel;
     public bool IsAuthenticated => authStore.IsAuthenticated;
+    public bool IsAdmin => authStore.CurrentUser?.IsAdmin == true;
+    public bool IsDarkMode => settingsStore.IsDarkMode;
+    public string ThemeButtonText => IsDarkMode ? "☀  Sáng" : "☾  Tối";
     public string CurrentUserText => authStore.CurrentUser == null ? "" : $"Nhân viên: {authStore.CurrentUser.DisplayName}";
 
     [RelayCommand]
@@ -73,9 +101,22 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void NavigateInventory()
+    private async Task NavigateInventoryAsync()
     {
         navigationService.NavigateTo(InventoryViewModel);
+        await InventoryViewModel.LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task NavigateReportsAsync()
+    {
+        if (!IsAdmin)
+        {
+            return;
+        }
+
+        navigationService.NavigateTo(ReportsViewModel);
+        await ReportsViewModel.LoadAsync();
     }
 
     [RelayCommand]
@@ -85,8 +126,21 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenCustomerDisplay()
+    {
+        customerDisplayWindowService.Show(activate: true);
+    }
+
+    [RelayCommand]
+    private void ToggleTheme()
+    {
+        settingsStore.UpdateTheme(!settingsStore.IsDarkMode);
+    }
+
+    [RelayCommand]
     private async Task LogoutAsync()
     {
+        customerDisplayWindowService.CloseAndReset();
         await authService.LogoutAsync();
         cartStore.Clear();
     }

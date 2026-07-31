@@ -17,7 +17,7 @@ Tai lieu nay la entrypoint de chay cac module trong `D:\bookstore` theo trang th
 - Node.js 22.13+
 - npm
 - Android Studio + Android SDK
-- .NET 8 SDK on Windows
+- .NET 10 SDK on Windows
 
 ## 1. Backend
 
@@ -248,7 +248,7 @@ cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
 
 Notes:
 
-- The desktop app now targets `.NET 8` only
+- The desktop app targets `.NET 10` only
 - Desktop default backend base URL is `http://localhost:8080`
 
 ## Production database note

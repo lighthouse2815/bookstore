@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IRefundService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.enums.RefundMethod;
 import com.bookstore.bookstore.domain.enums.RefundStatus;
 import com.bookstore.bookstore.presentation.mapper.RefundWebMapper;
@@ -51,7 +52,8 @@ public class RefundController {
             @RequestParam(defaultValue = "20") int size, @RequestParam(required = false) RefundStatus status,
             @RequestParam(required = false) RefundMethod method, @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to) {
-        var result = refundService.getPage(page, size, status, method, from, to).map(mapper::toResponse);
+        var result = refundService.getPage(new PageQuery(page, size), status, method, from, to)
+                .map(mapper::toResponse);
         return ResponseEntity.ok().headers(PaginationHeaderUtils.build(result)).body(ApiResponse.success(result.items()));
     }
 

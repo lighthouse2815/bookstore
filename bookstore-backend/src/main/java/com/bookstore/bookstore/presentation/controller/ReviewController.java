@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.application.port.in.IReviewService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ReviewWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateReviewRequest;
 import com.bookstore.bookstore.presentation.request.ReviewModerationRequest;
@@ -47,8 +50,10 @@ public class ReviewController {
         if (page != null || size != null) {
             var result = reviewService.getByBookId(
                     bookId,
-                    page == null ? 0 : page,
-                    size == null ? 10 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? 10 : size
+                    )
             ).map(reviewWebMapper::toPublicResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -105,8 +110,10 @@ public class ReviewController {
     ) {
         if (page != null || size != null || status != null || bookId != null || userId != null || rating != null) {
             var result = reviewService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 10 : size,
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? 10 : size
+                    ),
                     status,
                     bookId,
                     userId,
@@ -131,17 +138,18 @@ public class ReviewController {
             @Valid @RequestBody(required = false) ReviewModerationRequest request
     ) {
         UUID adminUserId = UUID.fromString(jwt.getSubject());
+        ReviewResponse before = reviewWebMapper.toResponse(reviewService.getById(id));
         ReviewResponse response = reviewWebMapper.toResponse(
                 reviewService.hide(reviewWebMapper.toHideCommand(id, adminUserId, request))
         );
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "REVIEW_HIDDEN",
-                "REVIEW",
+                AuditAction.REVIEW_HIDDEN,
+                AuditTargetType.REVIEW,
                 id,
                 "An danh gia " + id,
-                null,
+                before,
                 response
         );
         return ApiResponse.success(response);
@@ -155,17 +163,18 @@ public class ReviewController {
             @PathVariable UUID id
     ) {
         UUID adminUserId = UUID.fromString(jwt.getSubject());
+        ReviewResponse before = reviewWebMapper.toResponse(reviewService.getById(id));
         ReviewResponse response = reviewWebMapper.toResponse(
                 reviewService.approve(reviewWebMapper.toApproveCommand(id, adminUserId))
         );
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "REVIEW_APPROVED",
-                "REVIEW",
+                AuditAction.REVIEW_APPROVED,
+                AuditTargetType.REVIEW,
                 id,
                 "Phe duyet danh gia " + id,
-                null,
+                before,
                 response
         );
         return ApiResponse.success(response);
@@ -182,8 +191,8 @@ public class ReviewController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "REVIEW_DELETED",
-                "REVIEW",
+                AuditAction.REVIEW_DELETED,
+                AuditTargetType.REVIEW,
                 id,
                 "Xoa mem danh gia " + id,
                 deletedReview

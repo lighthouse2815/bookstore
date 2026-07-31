@@ -35,8 +35,6 @@ import com.bookstore.bookstore.application.result.RegisterResult;
 import com.bookstore.bookstore.domain.enums.AuthProvider;
 import com.bookstore.bookstore.domain.enums.RefreshTokenRevokeReason;
 import com.bookstore.bookstore.domain.enums.UserStatus;
-import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.Profile;
 import com.bookstore.bookstore.domain.model.RefreshToken;
 import com.bookstore.bookstore.domain.model.Role;

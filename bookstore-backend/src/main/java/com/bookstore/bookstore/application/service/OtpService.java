@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.application.service;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.command.RequestRegistrationOtpCommand;
 import com.bookstore.bookstore.application.exception.OtpRateLimitException;
 import com.bookstore.bookstore.application.command.VerifyOtpCommand;
@@ -14,6 +15,7 @@ import com.bookstore.bookstore.application.port.out.IOtpSettings;
 import com.bookstore.bookstore.application.port.out.IUserOtpRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.enums.OtpPurpose;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.UserStatus;
 import com.bookstore.bookstore.domain.exception.DomainException;
 import com.bookstore.bookstore.domain.model.User;
@@ -163,16 +165,16 @@ public class OtpService implements IOtpService {
             userOtp.recordFailedAttempt(now);
             userOtpRepository.save(userOtp);
             if (userOtp.isAttemptLimitReached()) {
-                audit(user, "OTP_LOCKED");
+                audit(user, AuditAction.OTP_LOCKED);
                 throw new ApplicationException(ApplicationErrorCode.OTP_LOCKED);
             }
-            audit(user, "OTP_FAILED");
+            audit(user, AuditAction.OTP_FAILED);
             throw new ApplicationException(ApplicationErrorCode.OTP_INVALID);
         }
 
         userOtp.markVerified(now);
         userOtpRepository.save(userOtp);
-        audit(user, "OTP_VERIFIED");
+        audit(user, AuditAction.OTP_VERIFIED);
     }
 
     private void sendOtp(User user, OtpPurpose purpose) {
@@ -307,12 +309,12 @@ public class OtpService implements IOtpService {
         return builder.toString();
     }
 
-    private void audit(User user, String action) {
+    private void audit(User user, AuditAction action) {
         if (auditLogService == null) {
             return;
         }
         auditLogService.record(new AuditLogCommand(
-                user.getId(), user.getUsername(), null, action, "USER_OTP", null, action,
+                user.getId(), user.getUsername(), null, action, AuditTargetType.USER_OTP, null, action.name(),
                 null, null, null, null, Instant.now()
         ));
     }

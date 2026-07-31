@@ -1,7 +1,9 @@
 using Bookstore.Desktop.Dtos;
+using Bookstore.Desktop.Helpers;
 using Bookstore.Desktop.Models;
 using Bookstore.Desktop.Services;
 using Bookstore.Desktop.Stores;
+using Bookstore.Desktop.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
 using System.Net.Http;
@@ -60,6 +62,65 @@ public class PosCheckoutTests
         Assert.IsTrue(PosCheckoutRules.TryParseCashReceived("300000", out var cashReceived));
         Assert.IsTrue(PosCheckoutRules.HasEnoughCash(cashReceived, 275_000m));
         Assert.AreEqual(25_000m, PosCheckoutRules.CalculateChange(cashReceived, 275_000m));
+    }
+
+    [TestMethod]
+    public void Cash_received_input_is_formatted_and_parsed_as_vietnamese_currency()
+    {
+        var formatted = PosCheckoutRules.FormatCashReceivedInput("3000000");
+
+        Assert.AreEqual("3.000.000 \u0111", formatted);
+        Assert.IsTrue(PosCheckoutRules.TryParseCashReceived(formatted, out var cashReceived));
+        Assert.AreEqual(3_000_000m, cashReceived);
+    }
+
+    [TestMethod]
+    public void Cash_received_is_written_out_in_vietnamese()
+    {
+        Assert.AreEqual(
+            "một trăm hai mươi ba ngàn đồng",
+            VietnameseCurrencyTextHelper.ToWords(123_000m));
+    }
+
+    [TestMethod]
+    public void Customer_display_keeps_paid_receipt_until_the_next_cart_starts()
+    {
+        var cart = new PosCartStore();
+        var display = new CustomerDisplayViewModel(cart);
+        cart.Add(Book("book-1", 123_000m, stockQuantity: 5));
+
+        Assert.IsTrue(display.IsDraft);
+        Assert.AreEqual(123_000m, display.FinalAmount);
+
+        display.ShowPaidReceipt(new ReceiptModel
+        {
+            OrderCode = "POS-001",
+            PaymentMethod = "CASH",
+            Items = new[]
+            {
+                new OrderItemModel
+                {
+                    BookTitle = "Sách 1",
+                    Quantity = 1,
+                    UnitPrice = 123_000m,
+                    LineTotal = 123_000m
+                }
+            },
+            TotalAmount = 123_000m,
+            FinalAmount = 123_000m,
+            CashReceived = 150_000m,
+            ChangeAmount = 27_000m
+        });
+        cart.Clear();
+
+        Assert.IsTrue(display.IsPaid);
+        Assert.AreEqual("POS-001", display.OrderCode);
+        Assert.AreEqual(1, display.Items.Count);
+
+        cart.Add(Book("book-2", 80_000m, stockQuantity: 5));
+
+        Assert.IsTrue(display.IsDraft);
+        Assert.AreEqual(80_000m, display.FinalAmount);
     }
 
     [TestMethod]
@@ -133,8 +194,7 @@ public class PosCheckoutTests
     public async Task Api_client_retries_only_once_after_an_unauthorized_response()
     {
         var handler = new RetryOnceHandler();
-        var settings = new AppSettingsStore();
-        settings.UpdateBaseUrl("http://example.test");
+        var settings = new AppSettingsStore("http://example.test");
         var auth = new AuthStore();
         auth.SetSession("old-access", "refresh-token", new StaffUserModel { Id = "staff-1", Username = "cashier" });
         var client = new ApiClient(settings, auth, handler);

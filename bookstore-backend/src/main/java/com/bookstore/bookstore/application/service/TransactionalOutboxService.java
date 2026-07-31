@@ -5,6 +5,7 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ITransactionalOutboxService;
 import com.bookstore.bookstore.application.port.out.IOutboxEventRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.OutboxEventResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.domain.enums.OutboxStatus;
@@ -51,9 +52,8 @@ public class TransactionalOutboxService implements ITransactionalOutboxService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<OutboxEventResult> getPage(int page, int size, OutboxStatus status) {
-        if (page < 0 || size < 1 || size > 200) throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page/size");
-        return outboxEventRepository.findPage(page, size, status).map(this::toResult);
+    public PageSliceResult<OutboxEventResult> getPage(PageQuery pageQuery, OutboxStatus status) {
+        return outboxEventRepository.findPage(pageQuery.page(), pageQuery.size(), status).map(this::toResult);
     }
 
     @Override

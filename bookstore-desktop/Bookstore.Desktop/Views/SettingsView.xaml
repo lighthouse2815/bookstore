@@ -44,18 +44,6 @@
                     </DockPanel>
                 </Border>
 
-                <TextBlock Text="Backend Base URL"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource PrimaryTextBrush}" />
-                <TextBox Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
-                         Height="36"
-                         Padding="10,0"
-                         Background="{DynamicResource TextBoxBackgroundBrush}"
-                         Foreground="{DynamicResource TextBoxForegroundBrush}"
-                         BorderBrush="{DynamicResource TextBoxBorderBrush}"
-                         VerticalContentAlignment="Center"
-                         Margin="0,6,0,14" />
-
                 <TextBlock Text="Google OAuth Client ID"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource PrimaryTextBrush}" />
@@ -67,14 +55,14 @@
                          BorderBrush="{DynamicResource TextBoxBorderBrush}"
                          VerticalContentAlignment="Center"
                          Margin="0,6,0,6" />
-                <TextBlock Text="Dùng OAuth Client ID cùng audience với backend GOOGLE_CLIENT_ID. Nếu token bị từ chối, kiểm tra lại cấu hình Google OAuth."
+                <TextBlock Text="Tự đọc GOOGLE_CLIENT_ID hoặc VITE_GOOGLE_CLIENT_ID từ .env và dùng cùng audience với backend."
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource SecondaryTextBrush}"
                            FontSize="12"
                            Margin="0,0,0,16" />
 
-                <Button Content="Lưu"
-                        Width="120"
+                <Button Content="Áp dụng"
+                        Width="128"
                         Height="36"
                         Background="{DynamicResource PrimaryBrush}"
                         Foreground="White"

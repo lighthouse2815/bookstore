@@ -3,7 +3,7 @@ package com.bookstore.bookstore.domain.model;
 import com.bookstore.bookstore.domain.enums.PaymentProvider;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.PaymentRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -104,6 +104,7 @@ public class Payment {
             String gateway,
             Instant paidAt
     ) {
+        PaymentRule.requireCanTransition(status, PaymentStatus.PAID);
         if (merchantId != null) {
             setMerchantId(merchantId);
         }
@@ -122,11 +123,13 @@ public class Payment {
     }
 
     public void markCancelled(Instant cancelledAt) {
+        PaymentRule.requireCanTransition(status, PaymentStatus.CANCELLED);
         setStatus(PaymentStatus.CANCELLED);
         setUpdatedAt(cancelledAt);
     }
 
     public void markExpired(Instant expiredAt) {
+        PaymentRule.requireCanTransition(status, PaymentStatus.EXPIRED);
         setStatus(PaymentStatus.EXPIRED);
         setExpiredAt(expiredAt);
         setUpdatedAt(expiredAt);
@@ -172,9 +175,7 @@ public class Payment {
 
     private void setAmount(BigDecimal amount) {
         BigDecimal validAmount = Guard.notNull(amount, DomainErrorCode.INVALID_PAYMENT_AMOUNT, "amount");
-        if (validAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DomainException(DomainErrorCode.INVALID_PAYMENT_AMOUNT, "amount");
-        }
+        PaymentRule.requireNonNegativeAmount(validAmount);
         this.amount = validAmount;
     }
 

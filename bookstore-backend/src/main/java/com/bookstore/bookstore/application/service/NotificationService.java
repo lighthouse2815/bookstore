@@ -11,6 +11,7 @@ import com.bookstore.bookstore.application.port.in.INotificationService;
 import com.bookstore.bookstore.application.port.out.INotificationRepository;
 import com.bookstore.bookstore.application.port.out.INotificationRealtimePublisher;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.NotificationBroadcastResult;
 import com.bookstore.bookstore.application.result.NotificationResult;
 import com.bookstore.bookstore.application.result.NotificationSliceResult;
@@ -57,17 +58,21 @@ public class NotificationService implements INotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public NotificationSliceResult getMyNotifications(UUID userId, int page, int size, Boolean read) {
+    public NotificationSliceResult getMyNotifications(UUID userId, PageQuery pageQuery, Boolean read) {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
         }
 
-        validatePageRequest(page, size);
         return new NotificationSliceResult(
-                toResults(notificationRepository.findPageByUserIdActive(userId, read, page, size)),
+                toResults(notificationRepository.findPageByUserIdActive(
+                        userId,
+                        read,
+                        pageQuery.page(),
+                        pageQuery.size()
+                )),
                 notificationRepository.countByUserIdActive(userId, read),
-                page,
-                size
+                pageQuery.page(),
+                pageQuery.size()
         );
     }
 
@@ -155,13 +160,12 @@ public class NotificationService implements INotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public NotificationSliceResult getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public NotificationSliceResult getAll(PageQuery pageQuery) {
         return new NotificationSliceResult(
-                toResults(notificationRepository.findPageActive(page, size)),
+                toResults(notificationRepository.findPageActive(pageQuery.page(), pageQuery.size())),
                 notificationRepository.countActive(),
-                page,
-                size
+                pageQuery.page(),
+                pageQuery.size()
         );
     }
 
@@ -263,16 +267,6 @@ public class NotificationService implements INotificationService {
 
         if (user.getDeletedAt() != null) {
             throw new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND);
-        }
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
         }
     }
 

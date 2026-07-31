@@ -14,6 +14,8 @@ import com.bookstore.bookstore.application.port.out.ICouponUsageRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.PurchaseItemType;
@@ -56,12 +58,26 @@ public class OrderCancellationService {
         if (!userId.equals(locked.order().getUserId())) {
             throw new ApplicationException(ApplicationErrorCode.ORDER_NOT_FOUND);
         }
-        return cancelLocked(locked.order(), locked.payment(), PaymentStatus.CANCELLED, reason, userId, "ORDER_CANCELLED_BY_USER");
+        return cancelLocked(
+                locked.order(),
+                locked.payment(),
+                PaymentStatus.CANCELLED,
+                reason,
+                userId,
+                AuditAction.ORDER_CANCELLED_BY_USER
+        );
     }
 
     public Order cancelPendingByAdmin(UUID orderId, String reason) {
         LockedOrderPayment locked = lockPaymentThenOrder(orderId);
-        return cancelLocked(locked.order(), locked.payment(), PaymentStatus.CANCELLED, reason, null, "ORDER_CANCELLED_BY_ADMIN");
+        return cancelLocked(
+                locked.order(),
+                locked.payment(),
+                PaymentStatus.CANCELLED,
+                reason,
+                null,
+                AuditAction.ORDER_CANCELLED_BY_ADMIN
+        );
     }
 
     public boolean expirePendingPayment(UUID paymentId, Instant now) {
@@ -81,7 +97,7 @@ public class OrderCancellationService {
                 PaymentStatus.EXPIRED,
                 "Đơn hàng đã hết hạn thanh toán QR",
                 null,
-                "ORDER_PAYMENT_EXPIRED"
+                AuditAction.ORDER_PAYMENT_EXPIRED
         );
         return true;
     }
@@ -100,7 +116,7 @@ public class OrderCancellationService {
             PaymentStatus targetPaymentStatus,
             String reason,
             UUID actorId,
-            String auditAction
+            AuditAction auditAction
     ) {
         if (order.getPaymentStatus() == PaymentStatus.PAID || payment.getStatus() == PaymentStatus.PAID) {
             throw new ApplicationException(ApplicationErrorCode.ORDER_PAID_REFUND_REQUIRED);
@@ -133,12 +149,12 @@ public class OrderCancellationService {
         orderTimelineService.recordOrderCancelled(savedOrder, reason);
         orderTimelineService.recordStockRolledBack(savedOrder);
         recordCouponRollbacks(savedOrder);
-        auditLogService.recordStatusChange(new AuditLogCommand(
+        auditLogService.recordUpdate(new AuditLogCommand(
                 actorId,
                 null,
                 actorId == null ? "SYSTEM" : "USER",
                 auditAction,
-                "ORDER",
+                AuditTargetType.ORDER,
                 savedOrder.getId().toString(),
                 "Đơn hàng " + savedOrder.getOrderCode() + " đã được hủy: " + reason,
                 Map.of("orderStatus", OrderStatus.PENDING.name(), "paymentStatus", PaymentStatus.PENDING.name()),

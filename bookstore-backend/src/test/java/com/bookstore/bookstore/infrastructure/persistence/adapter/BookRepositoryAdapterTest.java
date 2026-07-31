@@ -57,7 +57,7 @@ class BookRepositoryAdapterTest {
 
         when(bookJpaRepository.findPageIdsByDeletedAtIsNull(PageRequest.of(0, 2)))
                 .thenReturn(new PageImpl<>(List.of(newestBookId, olderBookId), PageRequest.of(0, 2), 5));
-        when(bookJpaRepository.findAllByDeletedAtIsNullAndIdIn(List.of(newestBookId, olderBookId)))
+        when(bookJpaRepository.findDistinctByDeletedAtIsNullAndIdIn(List.of(newestBookId, olderBookId)))
                 .thenReturn(List.of(olderBookEntity, newestBookEntity));
         when(bookPersistenceMapper.toDomain(newestBookEntity)).thenReturn(newestBook);
         when(bookPersistenceMapper.toDomain(olderBookEntity)).thenReturn(olderBook);
@@ -67,7 +67,7 @@ class BookRepositoryAdapterTest {
         assertEquals(List.of(newestBook, olderBook), result.items());
         assertEquals(5, result.totalCount());
         verify(bookJpaRepository).findPageIdsByDeletedAtIsNull(PageRequest.of(0, 2));
-        verify(bookJpaRepository).findAllByDeletedAtIsNullAndIdIn(List.of(newestBookId, olderBookId));
+        verify(bookJpaRepository).findDistinctByDeletedAtIsNullAndIdIn(List.of(newestBookId, olderBookId));
     }
 
     @Test
@@ -83,7 +83,7 @@ class BookRepositoryAdapterTest {
 
         when(bookJpaRepository.findRelatedActiveIdsByCategoryId(categoryId, excludedBookId, PageRequest.of(0, 2)))
                 .thenReturn(List.of(firstRelatedBookId, secondRelatedBookId));
-        when(bookJpaRepository.findAllByDeletedAtIsNullAndIdIn(List.of(firstRelatedBookId, secondRelatedBookId)))
+        when(bookJpaRepository.findDistinctByDeletedAtIsNullAndIdIn(List.of(firstRelatedBookId, secondRelatedBookId)))
                 .thenReturn(List.of(secondRelatedBookEntity, firstRelatedBookEntity));
         when(bookPersistenceMapper.toDomain(firstRelatedBookEntity)).thenReturn(firstRelatedBook);
         when(bookPersistenceMapper.toDomain(secondRelatedBookEntity)).thenReturn(secondRelatedBook);
@@ -92,7 +92,7 @@ class BookRepositoryAdapterTest {
 
         assertEquals(List.of(firstRelatedBook, secondRelatedBook), result);
         verify(bookJpaRepository).findRelatedActiveIdsByCategoryId(categoryId, excludedBookId, PageRequest.of(0, 2));
-        verify(bookJpaRepository).findAllByDeletedAtIsNullAndIdIn(List.of(firstRelatedBookId, secondRelatedBookId));
+        verify(bookJpaRepository).findDistinctByDeletedAtIsNullAndIdIn(List.of(firstRelatedBookId, secondRelatedBookId));
     }
 
     @Test

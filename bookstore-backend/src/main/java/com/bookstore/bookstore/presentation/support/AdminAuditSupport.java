@@ -2,6 +2,8 @@ package com.bookstore.bookstore.presentation.support;
 
 import com.bookstore.bookstore.application.command.AuditLogCommand;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Comparator;
 import java.util.List;
@@ -23,8 +25,8 @@ public class AdminAuditSupport {
     public void recordCreate(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
-            String targetType,
+            AuditAction action,
+            AuditTargetType targetType,
             Object targetId,
             String description,
             Object afterValue
@@ -35,8 +37,8 @@ public class AdminAuditSupport {
     public void recordUpdate(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
-            String targetType,
+            AuditAction action,
+            AuditTargetType targetType,
             Object targetId,
             String description,
             Object beforeValue,
@@ -48,8 +50,8 @@ public class AdminAuditSupport {
     public void recordDelete(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
-            String targetType,
+            AuditAction action,
+            AuditTargetType targetType,
             Object targetId,
             String description,
             Object beforeValue
@@ -57,24 +59,11 @@ public class AdminAuditSupport {
         recordQuietly(jwt, request, action, targetType, targetId, description, beforeValue, null, AuditMode.DELETE);
     }
 
-    public void recordStatusChange(
-            Jwt jwt,
-            HttpServletRequest request,
-            String action,
-            String targetType,
-            Object targetId,
-            String description,
-            Object beforeValue,
-            Object afterValue
-    ) {
-        recordQuietly(jwt, request, action, targetType, targetId, description, beforeValue, afterValue, AuditMode.STATUS_CHANGE);
-    }
-
     private void recordQuietly(
             Jwt jwt,
             HttpServletRequest request,
-            String action,
-            String targetType,
+            AuditAction action,
+            AuditTargetType targetType,
             Object targetId,
             String description,
             Object beforeValue,
@@ -101,7 +90,6 @@ public class AdminAuditSupport {
                 case CREATE -> auditLogService.recordCreate(command);
                 case UPDATE -> auditLogService.recordUpdate(command);
                 case DELETE -> auditLogService.recordDelete(command);
-                case STATUS_CHANGE -> auditLogService.recordStatusChange(command);
             }
         } catch (RuntimeException exception) {
             log.warn("Failed to record audit log action={} targetType={} targetId={}", action, targetType, targetId, exception);
@@ -157,7 +145,6 @@ public class AdminAuditSupport {
     private enum AuditMode {
         CREATE,
         UPDATE,
-        DELETE,
-        STATUS_CHANGE
+        DELETE
     }
 }

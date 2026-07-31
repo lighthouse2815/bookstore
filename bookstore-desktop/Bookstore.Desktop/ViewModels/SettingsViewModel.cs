@@ -11,13 +11,17 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(AppSettingsStore settingsStore)
     {
         this.settingsStore = settingsStore;
-        apiBaseUrl = settingsStore.ApiBaseUrl;
         googleClientId = settingsStore.GoogleClientId;
         isDarkMode = settingsStore.IsDarkMode;
+        settingsStore.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AppSettingsStore.IsDarkMode)
+                && IsDarkMode != settingsStore.IsDarkMode)
+            {
+                IsDarkMode = settingsStore.IsDarkMode;
+            }
+        };
     }
-
-    [ObservableProperty]
-    private string apiBaseUrl;
 
     [ObservableProperty]
     private string googleClientId;
@@ -26,7 +30,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool isDarkMode;
 
     [ObservableProperty]
-    private string message = "";
+    private string message = "Đã tự động nạp cấu hình từ .env.";
 
     partial void OnIsDarkModeChanged(bool value)
     {
@@ -36,11 +40,9 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
-        settingsStore.UpdateBaseUrl(ApiBaseUrl);
         settingsStore.UpdateGoogleClientId(GoogleClientId);
         settingsStore.UpdateTheme(IsDarkMode);
-        ApiBaseUrl = settingsStore.ApiBaseUrl;
         GoogleClientId = settingsStore.GoogleClientId;
-        Message = "Da luu cau hinh.";
+        Message = "Đã áp dụng. URL backend được nạp từ file .env khi khởi động.";
     }
 }

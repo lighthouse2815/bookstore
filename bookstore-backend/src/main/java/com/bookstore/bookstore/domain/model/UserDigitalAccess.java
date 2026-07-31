@@ -3,7 +3,7 @@ package com.bookstore.bookstore.domain.model;
 import com.bookstore.bookstore.domain.enums.DigitalAccessStatus;
 import com.bookstore.bookstore.domain.enums.DigitalAccessType;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.UserDigitalAccessRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.time.Instant;
 import java.util.UUID;
@@ -48,9 +48,7 @@ public class UserDigitalAccess {
     }
 
     public void softDelete() {
-        if (deletedAt != null) {
-            throw new DomainException(DomainErrorCode.USER_DIGITAL_ACCESS_ALREADY_DELETED);
-        }
+        UserDigitalAccessRule.requireCanSoftDelete(deletedAt);
 
         Instant now = Instant.now();
         setUpdatedAt(now);
@@ -66,6 +64,7 @@ public class UserDigitalAccess {
     }
 
     public void revoke(Instant revokedAt) {
+        UserDigitalAccessRule.requireCanRevoke(status);
         setStatus(DigitalAccessStatus.REVOKED);
         setUpdatedAt(revokedAt);
     }

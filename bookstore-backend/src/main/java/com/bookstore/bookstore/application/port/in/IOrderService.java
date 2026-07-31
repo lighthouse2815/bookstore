@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.CreateOrderCommand;
 import com.bookstore.bookstore.application.command.CancelOrderCommand;
 import com.bookstore.bookstore.application.command.CreatePosOrderCommand;
 import com.bookstore.bookstore.application.command.UpdateOrderStatusCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
@@ -19,13 +20,13 @@ public interface IOrderService {
 
     List<OrderResult> getMyOrders(UUID userId);
 
-    PageSliceResult<OrderResult> getMyOrders(UUID userId, int page, int size);
+    PageSliceResult<OrderResult> getMyOrders(UUID userId, PageQuery pageQuery);
 
     OrderResult getMyOrder(UUID userId, UUID orderId);
 
     List<OrderResult> getAll();
 
-    PageSliceResult<OrderResult> getAll(int page, int size);
+    PageSliceResult<OrderResult> getAll(PageQuery pageQuery);
 
     OrderResult getById(UUID orderId);
 

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.ICategoryService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.CategoryWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateCategoryRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCategoryRequest;
@@ -36,7 +37,10 @@ public class CategoryController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = categoryService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = categoryService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(categoryWebMapper::toCategoryResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

@@ -1,7 +1,7 @@
 package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.ReadingJournalEntryRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -55,9 +55,7 @@ public class ReadingJournalEntry {
     }
 
     public void update(String note, Integer currentPage, BigDecimal progressPercent) {
-        if (isDeleted()) {
-            throw new DomainException(DomainErrorCode.READING_JOURNAL_ENTRY_ALREADY_DELETED);
-        }
+        ReadingJournalEntryRule.requireActive(isDeleted());
 
         setNote(note);
         setCurrentPage(currentPage);
@@ -66,9 +64,7 @@ public class ReadingJournalEntry {
     }
 
     public void softDelete() {
-        if (isDeleted()) {
-            throw new DomainException(DomainErrorCode.READING_JOURNAL_ENTRY_ALREADY_DELETED);
-        }
+        ReadingJournalEntryRule.requireActive(isDeleted());
 
         Instant now = Instant.now();
         setUpdatedAt(now);
@@ -76,9 +72,7 @@ public class ReadingJournalEntry {
     }
 
     public void restore(String note, Integer currentPage, BigDecimal progressPercent) {
-        if (!isDeleted()) {
-            throw new DomainException(DomainErrorCode.READING_JOURNAL_ENTRY_ALREADY_ACTIVE);
-        }
+        ReadingJournalEntryRule.requireDeleted(isDeleted());
 
         Instant now = Instant.now();
         setDeletedAt(null);
@@ -94,9 +88,7 @@ public class ReadingJournalEntry {
                 DomainErrorCode.INVALID_READING_JOURNAL_ENTRY_DATE,
                 "entryDate"
         );
-        if (normalized.isAfter(LocalDate.now(ENTRY_ZONE))) {
-            throw new DomainException(DomainErrorCode.INVALID_READING_JOURNAL_ENTRY_DATE, "entryDate");
-        }
+        ReadingJournalEntryRule.requireNotFutureDate(normalized, LocalDate.now(ENTRY_ZONE));
         this.entryDate = normalized;
     }
 
@@ -105,21 +97,12 @@ public class ReadingJournalEntry {
     }
 
     private void setCurrentPage(Integer currentPage) {
-        if (currentPage != null && currentPage < 0) {
-            throw new DomainException(DomainErrorCode.INVALID_READING_JOURNAL_ENTRY_CURRENT_PAGE, "currentPage");
-        }
+        ReadingJournalEntryRule.requireNonNegativeCurrentPage(currentPage);
         this.currentPage = currentPage;
     }
 
     private void setProgressPercent(BigDecimal progressPercent) {
-        if (progressPercent != null
-                && (progressPercent.compareTo(BigDecimal.ZERO) < 0
-                || progressPercent.compareTo(BigDecimal.valueOf(100)) > 0)) {
-            throw new DomainException(
-                    DomainErrorCode.INVALID_READING_JOURNAL_ENTRY_PROGRESS_PERCENT,
-                    "progressPercent"
-            );
-        }
+        ReadingJournalEntryRule.requireValidProgressPercent(progressPercent);
         this.progressPercent = progressPercent;
     }
 

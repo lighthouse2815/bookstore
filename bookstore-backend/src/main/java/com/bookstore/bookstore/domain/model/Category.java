@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.domain.model;
 
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
 import com.bookstore.bookstore.domain.rule.CategoryRule;
 import com.bookstore.bookstore.domain.validation.Guard;
@@ -16,7 +17,7 @@ public class Category {
     private String code;
     private String name;
     private String description;
-    private Map<String, CategoryTranslation> translations;
+    private Map<CategoryLocale, CategoryTranslation> translations;
     private UUID parentId;
     private FileAsset imageFileAsset;
     private Instant createdAt;
@@ -28,7 +29,7 @@ public class Category {
             String code,
             String name,
             String description,
-            Map<String, CategoryTranslation> translations,
+            Map<CategoryLocale, CategoryTranslation> translations,
             UUID parentId,
             FileAsset imageFileAsset,
             Instant createdAt,
@@ -62,7 +63,10 @@ public class Category {
                 "LEGACY_" + id.toString().replace("-", "").toUpperCase(),
                 name,
                 description,
-                Map.of("vi", new CategoryTranslation("vi", name, description)),
+                Map.of(
+                        CategoryLocale.VI,
+                        new CategoryTranslation(CategoryLocale.VI, name, description)
+                ),
                 parentId,
                 imageFileAsset,
                 createdAt,
@@ -75,7 +79,7 @@ public class Category {
             String code,
             String name,
             String description,
-            Map<String, CategoryTranslation> translations,
+            Map<CategoryLocale, CategoryTranslation> translations,
             UUID parentId,
             FileAsset imageFileAsset
     ) {
@@ -122,8 +126,14 @@ public class Category {
         this.description = description;
     }
 
-    private void setTranslations(Map<String, CategoryTranslation> translations) {
-        if (translations == null || translations.isEmpty() || translations.values().stream().anyMatch(java.util.Objects::isNull)) {
+    private void setTranslations(Map<CategoryLocale, CategoryTranslation> translations) {
+        if (translations == null
+                || translations.isEmpty()
+                || translations.entrySet().stream().anyMatch(entry ->
+                        entry.getKey() == null
+                                || entry.getValue() == null
+                                || entry.getKey() != entry.getValue().locale()
+                )) {
             throw new com.bookstore.bookstore.domain.exception.DomainException(
                     DomainErrorCode.INVALID_CATEGORY_TRANSLATION,
                     "translations"

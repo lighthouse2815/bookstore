@@ -1,5 +1,6 @@
 package com.bookstore.bookstore.infrastructure.persistence.mapper;
 
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.model.Category;
 import com.bookstore.bookstore.domain.model.CategoryTranslation;
 import com.bookstore.bookstore.infrastructure.persistence.entity.CategoryJpaEntity;
@@ -59,23 +60,34 @@ public class CategoryPersistenceMapper {
         copyToEntity(entity, category, null);
     }
 
-    private Map<String, CategoryTranslation> toDomainTranslations(CategoryJpaEntity entity) {
-        Map<String, CategoryTranslation> result = new LinkedHashMap<>();
-        entity.getTranslations().forEach(translation -> result.put(
-                translation.getLocale(),
-                new CategoryTranslation(
-                        translation.getLocale(),
-                        translation.getName(),
-                        translation.getDescription()
-                )
-        ));
+    private Map<CategoryLocale, CategoryTranslation> toDomainTranslations(CategoryJpaEntity entity) {
+        Map<CategoryLocale, CategoryTranslation> result = new LinkedHashMap<>();
+        entity.getTranslations().forEach(translation -> {
+            CategoryLocale locale = CategoryLocale.fromCode(translation.getLocale());
+            result.put(
+                    locale,
+                    new CategoryTranslation(
+                            locale,
+                            translation.getName(),
+                            translation.getDescription()
+                    )
+            );
+        });
         return result;
     }
 
-    private void copyTranslations(CategoryJpaEntity entity, Map<String, CategoryTranslation> translations) {
-        Map<String, CategoryTranslationJpaEntity> currentByLocale = new LinkedHashMap<>();
-        entity.getTranslations().forEach(translation -> currentByLocale.put(translation.getLocale(), translation));
-        entity.getTranslations().removeIf(translation -> !translations.containsKey(translation.getLocale()));
+    private void copyTranslations(
+            CategoryJpaEntity entity,
+            Map<CategoryLocale, CategoryTranslation> translations
+    ) {
+        Map<CategoryLocale, CategoryTranslationJpaEntity> currentByLocale = new LinkedHashMap<>();
+        entity.getTranslations().forEach(translation -> currentByLocale.put(
+                CategoryLocale.fromCode(translation.getLocale()),
+                translation
+        ));
+        entity.getTranslations().removeIf(translation ->
+                !translations.containsKey(CategoryLocale.fromCode(translation.getLocale()))
+        );
 
         translations.forEach((locale, translation) -> {
             CategoryTranslationJpaEntity target = currentByLocale.get(locale);
@@ -83,7 +95,7 @@ public class CategoryPersistenceMapper {
                 target = new CategoryTranslationJpaEntity();
                 target.setId(UUID.randomUUID());
                 target.setCategory(entity);
-                target.setLocale(locale);
+                target.setLocale(locale.getCode());
                 entity.getTranslations().add(target);
             }
             target.setName(translation.name());

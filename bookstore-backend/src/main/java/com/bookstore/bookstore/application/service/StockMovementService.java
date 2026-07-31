@@ -6,6 +6,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IStockMovementService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.StockMovementResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
@@ -32,8 +33,9 @@ public class StockMovementService implements IStockMovementService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<StockMovementResult> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<StockMovementResult> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return stockMovementRepository.findPage(page, size).map(stockMovementAssembler::toResult);
     }
 
@@ -57,9 +59,4 @@ public class StockMovementService implements IStockMovementService {
         }
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-    }
 }

@@ -67,7 +67,10 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     @Override
     public Optional<Order> findByUserIdAndIdempotencyKey(UUID userId, String idempotencyKey) {
-        return orderJpaRepository.findByUser_IdAndIdempotencyKey(userId, idempotencyKey)
+        return orderJpaRepository.findByUser_IdAndUser_DeletedAtIsNullAndIdempotencyKey(
+                        userId,
+                        idempotencyKey
+                )
                 .map(orderPersistenceMapper::toDomain);
     }
 
@@ -118,12 +121,16 @@ public class OrderRepositoryAdapter implements IOrderRepository {
 
     @Override
     public long countCreatedBetween(Instant fromInclusive, Instant toExclusive) {
-        return orderJpaRepository.countCreatedBetween(fromInclusive, toExclusive);
+        return orderJpaRepository
+                .countByUser_DeletedAtIsNullAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        fromInclusive,
+                        toExclusive
+                );
     }
 
     @Override
     public long countByStatus(OrderStatus status) {
-        return orderJpaRepository.countByStatus(status);
+        return orderJpaRepository.countByUser_DeletedAtIsNullAndStatus(status);
     }
 
     @Override

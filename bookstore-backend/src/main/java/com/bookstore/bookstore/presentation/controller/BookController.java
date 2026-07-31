@@ -1,7 +1,10 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IBookService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.port.in.IBookQueryService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.BookWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateBookRequest;
 import com.bookstore.bookstore.presentation.request.UpdateBookRequest;
@@ -45,8 +48,10 @@ public class BookController {
     ) {
         if (page != null || size != null) {
             var result = bookQueryService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(bookWebMapper::toBookResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -69,8 +74,10 @@ public class BookController {
             var result = bookQueryService.search(
                     keyword,
                     categoryId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(bookWebMapper::toBookResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -117,8 +124,8 @@ public class BookController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "BOOK_CREATED",
-                "BOOK",
+                AuditAction.BOOK_CREATED,
+                AuditTargetType.BOOK,
                 response.id(),
                 "Tạo sách " + response.title(),
                 response
@@ -141,8 +148,8 @@ public class BookController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "BOOK_UPDATED",
-                "BOOK",
+                AuditAction.BOOK_UPDATED,
+                AuditTargetType.BOOK,
                 response.id(),
                 "Cập nhật sách " + response.title(),
                 before,
@@ -163,8 +170,8 @@ public class BookController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "BOOK_DELETED",
-                "BOOK",
+                AuditAction.BOOK_DELETED,
+                AuditTargetType.BOOK,
                 id,
                 "Xóa sách " + before.title(),
                 before

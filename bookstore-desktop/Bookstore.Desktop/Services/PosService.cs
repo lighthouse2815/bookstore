@@ -39,6 +39,23 @@ public class PosService
             ?? throw new InvalidOperationException("Backend không trả thông tin đơn POS.");
     }
 
+    public async Task<IReadOnlyList<CouponOptionModel>> GetActiveBookCouponsAsync()
+    {
+        var element = await apiClient.GetAsync("/api/coupons/active");
+        if (element.ValueKind != JsonValueKind.Array)
+        {
+            return Array.Empty<CouponOptionModel>();
+        }
+
+        return element.Deserialize<CouponOptionModel[]>(JsonHelper.Options)?
+            .Where(coupon =>
+                !string.IsNullOrWhiteSpace(coupon.Code)
+                && string.Equals(coupon.CouponType, "BOOK", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(coupon => coupon.Code, StringComparer.OrdinalIgnoreCase)
+            .ToArray()
+            ?? Array.Empty<CouponOptionModel>();
+    }
+
     private static string? NormalizeOptional(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();

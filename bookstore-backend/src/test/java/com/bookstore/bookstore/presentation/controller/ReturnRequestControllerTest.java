@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookstore.bookstore.application.port.in.IReturnRequestService;
 import com.bookstore.bookstore.application.result.ReturnRequestResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentMethod;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
@@ -98,11 +100,11 @@ class ReturnRequestControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("APPROVED"));
 
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
-                eq("RETURN_APPROVED"),
-                eq("RETURN_REQUEST"),
+                eq(AuditAction.RETURN_APPROVED),
+                eq(AuditTargetType.RETURN_REQUEST),
                 eq(REQUEST_ID),
                 any(),
                 any(),
@@ -129,11 +131,11 @@ class ReturnRequestControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("REJECTED"));
 
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
-                eq("RETURN_REJECTED"),
-                eq("RETURN_REQUEST"),
+                eq(AuditAction.RETURN_REJECTED),
+                eq(AuditTargetType.RETURN_REQUEST),
                 eq(REQUEST_ID),
                 any(),
                 any(),

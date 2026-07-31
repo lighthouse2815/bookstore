@@ -1,6 +1,8 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IAdminReportService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
@@ -133,8 +135,8 @@ public class AdminReportController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "REPORT_EXPORTED",
-                "REPORT",
+                AuditAction.REPORT_EXPORTED,
+                AuditTargetType.REPORT,
                 reportKey,
                 description,
                 payload

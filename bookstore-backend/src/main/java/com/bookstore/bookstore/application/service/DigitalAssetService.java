@@ -8,6 +8,7 @@ import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IDigitalAssetService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.PublicDigitalAssetCatalogItemResult;
 import com.bookstore.bookstore.domain.model.Book;
@@ -48,16 +49,14 @@ public class DigitalAssetService implements IDigitalAssetService {
     public PageSliceResult<PublicDigitalAssetCatalogItemResult> getPublishedCatalog(
             String keyword,
             UUID categoryId,
-            int page,
-            int size
+            PageQuery pageQuery
     ) {
-        validatePageRequest(page, size);
         String normalizedKeyword = StringUtils.trimToNull(keyword);
         PageSliceResult<DigitalAsset> assetPage = digitalAssetRepository.searchPublishedCatalog(
                 normalizedKeyword,
                 categoryId,
-                page,
-                size
+                pageQuery.page(),
+                pageQuery.size()
         );
 
         List<UUID> bookIds = assetPage.items().stream()
@@ -196,13 +195,4 @@ public class DigitalAssetService implements IDigitalAssetService {
         );
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

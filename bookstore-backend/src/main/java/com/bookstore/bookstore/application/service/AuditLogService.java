@@ -6,8 +6,11 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.IAuditLogService;
 import com.bookstore.bookstore.application.port.out.IAuditLogRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.AuditLogResult;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,20 +32,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditLogService implements IAuditLogService {
 
     private static final String REDACTED_VALUE = "***REDACTED***";
-    private static final List<String> SENSITIVE_FIELD_MARKERS = List.of(
+    private static final Set<String> SENSITIVE_FIELD_NAMES = Set.of(
             "password",
+            "newpassword",
+            "passwordhash",
             "token",
-            "secret",
-            "authorization",
-            "api_key",
-            "apikey",
-            "accesskey",
-            "access_key",
-            "refreshkey",
-            "refresh_token",
             "accesstoken",
-            "refresh_token",
-            "refreshToken".toLowerCase(Locale.ROOT)
+            "refreshtoken",
+            "resettoken",
+            "idtoken",
+            "tokenhash",
+            "unsubscribetoken",
+            "apitoken",
+            "otpcode",
+            "otphash",
+            "secret",
+            "secretkey",
+            "authorizationheader",
+            "apikey",
+            "webhookapikey",
+            "accesskey",
+            "secretkeyheader"
     );
 
     private final IAuditLogRepository auditLogRepository;
@@ -58,40 +68,43 @@ public class AuditLogService implements IAuditLogService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordCreate(AuditLogCommand command) {
+        requirePayload(command, false, true);
         return persist(command);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordUpdate(AuditLogCommand command) {
+        requirePayload(command, true, true);
         return persist(command);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuditLogResult recordDelete(AuditLogCommand command) {
-        return persist(command);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public AuditLogResult recordStatusChange(AuditLogCommand command) {
+        requirePayload(command, true, false);
         return persist(command);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageSliceResult<AuditLogResult> getAll(
-            int page,
-            int size,
-            String action,
-            String targetType,
+            PageQuery pageQuery,
+            AuditAction action,
+            AuditTargetType targetType,
             UUID actorId,
             Instant from,
             Instant to
     ) {
-        validatePageRequest(page, size);
-        return auditLogRepository.findPage(page, size, action, targetType, actorId, from, to)
+        return auditLogRepository.findPage(
+                        pageQuery.page(),
+                        pageQuery.size(),
+                        action,
+                        targetType,
+                        actorId,
+                        from,
+                        to
+                )
                 .map(auditLogAssembler::toResult);
     }
 
@@ -118,8 +131,8 @@ public class AuditLogService implements IAuditLogService {
                 command.actorId(),
                 truncate(command.actorUsername(), 100),
                 truncate(command.actorRole(), 50),
-                requireValue(command.action(), "action", 100),
-                requireValue(command.targetType(), "targetType", 100),
+                requireValue(command.action(), "action"),
+                requireValue(command.targetType(), "targetType"),
                 truncate(command.targetId(), 100),
                 truncate(command.description(), 500),
                 toSanitizedJson(command.beforeValue()),
@@ -132,12 +145,31 @@ public class AuditLogService implements IAuditLogService {
         return auditLogAssembler.toResult(auditLogRepository.save(auditLog));
     }
 
+    private void requirePayload(AuditLogCommand command, boolean requireBeforeValue, boolean requireAfterValue) {
+        if (command == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "command");
+        }
+        if (requireBeforeValue && command.beforeValue() == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "beforeValue");
+        }
+        if (requireAfterValue && command.afterValue() == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "afterValue");
+        }
+    }
+
     private String requireValue(String value, String argumentName, int maxLength) {
         String normalized = truncate(value, maxLength);
         if (normalized == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
         }
         return normalized;
+    }
+
+    private <T> T requireValue(T value, String argumentName) {
+        if (value == null) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
+        }
+        return value;
     }
 
     private String truncate(String value, int maxLength) {
@@ -188,18 +220,8 @@ public class AuditLogService implements IAuditLogService {
     }
 
     private boolean isSensitiveField(String fieldName) {
-        String normalized = fieldName == null ? "" : fieldName.replace("-", "").replace(" ", "").toLowerCase(Locale.ROOT);
-        return SENSITIVE_FIELD_MARKERS.stream()
-                .map(marker -> marker.replace("-", "").replace(" ", "").toLowerCase(Locale.ROOT))
-                .anyMatch(normalized::contains);
+        return fieldName != null
+                && SENSITIVE_FIELD_NAMES.contains(fieldName.toLowerCase(Locale.ROOT));
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

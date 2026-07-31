@@ -11,6 +11,7 @@ public class StaffUserModel
     public IReadOnlyList<string> Roles { get; init; } = Array.Empty<string>();
 
     public string DisplayName => string.IsNullOrWhiteSpace(Username) ? Email ?? "Nhân viên" : Username;
+    public bool IsAdmin => Roles.Any(role => role.Equals("ADMIN", StringComparison.OrdinalIgnoreCase));
     public bool CanUsePos => Roles.Any(role => role.Equals("ADMIN", StringComparison.OrdinalIgnoreCase)
         || role.Equals("STAFF", StringComparison.OrdinalIgnoreCase));
 }

@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IImportReceiptService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ImportReceiptWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateImportReceiptRequest;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
@@ -41,7 +44,10 @@ public class ImportReceiptController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = importReceiptService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = importReceiptService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(importReceiptWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -69,8 +75,8 @@ public class ImportReceiptController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "STOCK_UPDATED",
-                "STOCK",
+                AuditAction.STOCK_UPDATED,
+                AuditTargetType.STOCK,
                 response.id(),
                 "Nhập kho qua phiếu nhập " + response.id(),
                 response

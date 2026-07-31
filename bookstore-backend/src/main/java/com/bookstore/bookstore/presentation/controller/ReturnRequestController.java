@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IReturnRequestService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
 import com.bookstore.bookstore.presentation.mapper.ReturnRequestWebMapper;
 import com.bookstore.bookstore.presentation.request.ApproveReturnRequestRequest;
@@ -62,8 +65,10 @@ public class ReturnRequestController {
         if (page != null || size != null) {
             var result = returnRequestService.getMyRequests(
                     userId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size,
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ),
                     status,
                     orderId
             ).map(returnRequestWebMapper::toResponse);
@@ -108,8 +113,10 @@ public class ReturnRequestController {
     ) {
         if (page != null || size != null) {
             var result = returnRequestService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size,
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ),
                     status,
                     userId,
                     orderId
@@ -143,11 +150,11 @@ public class ReturnRequestController {
         ReturnRequestResponse response = returnRequestWebMapper.toResponse(returnRequestService.approve(
                 returnRequestWebMapper.toApproveCommand(id, adminUserId, request)
         ));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "RETURN_APPROVED",
-                "RETURN_REQUEST",
+                AuditAction.RETURN_APPROVED,
+                AuditTargetType.RETURN_REQUEST,
                 response.id(),
                 "Duyệt yêu cầu trả hàng cho đơn " + response.orderCode(),
                 before,
@@ -169,11 +176,11 @@ public class ReturnRequestController {
         ReturnRequestResponse response = returnRequestWebMapper.toResponse(returnRequestService.reject(
                 returnRequestWebMapper.toRejectCommand(id, adminUserId, request)
         ));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "RETURN_REJECTED",
-                "RETURN_REQUEST",
+                AuditAction.RETURN_REJECTED,
+                AuditTargetType.RETURN_REQUEST,
                 response.id(),
                 "Từ chối yêu cầu trả hàng cho đơn " + response.orderCode(),
                 before,

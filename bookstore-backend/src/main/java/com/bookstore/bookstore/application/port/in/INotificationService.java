@@ -4,6 +4,7 @@ import com.bookstore.bookstore.application.command.BroadcastNotificationCommand;
 import com.bookstore.bookstore.application.command.CreateNotificationCommand;
 import com.bookstore.bookstore.application.command.DeleteNotificationCommand;
 import com.bookstore.bookstore.application.command.MarkNotificationReadCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.NotificationBroadcastResult;
 import com.bookstore.bookstore.application.result.NotificationResult;
 import com.bookstore.bookstore.application.result.NotificationSliceResult;
@@ -16,7 +17,7 @@ public interface INotificationService {
 
     List<NotificationResult> getMyNotifications(UUID userId, Boolean read);
 
-    NotificationSliceResult getMyNotifications(UUID userId, int page, int size, Boolean read);
+    NotificationSliceResult getMyNotifications(UUID userId, PageQuery pageQuery, Boolean read);
 
     long countMyUnreadNotifications(UUID userId);
 
@@ -30,7 +31,7 @@ public interface INotificationService {
 
     List<NotificationResult> getAll();
 
-    NotificationSliceResult getAll(int page, int size);
+    NotificationSliceResult getAll(PageQuery pageQuery);
 
     NotificationResult getById(UUID notificationId);
 

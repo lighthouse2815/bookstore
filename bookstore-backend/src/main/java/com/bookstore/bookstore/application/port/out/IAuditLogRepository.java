@@ -1,6 +1,8 @@
 package com.bookstore.bookstore.application.port.out;
 
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.model.AuditLog;
 import java.time.Instant;
 import java.util.Optional;
@@ -13,8 +15,8 @@ public interface IAuditLogRepository {
     PageSliceResult<AuditLog> findPage(
             int page,
             int size,
-            String action,
-            String targetType,
+            AuditAction action,
+            AuditTargetType targetType,
             UUID actorId,
             Instant from,
             Instant to

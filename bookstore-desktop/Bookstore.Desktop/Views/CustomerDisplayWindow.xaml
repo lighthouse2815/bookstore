@@ -1,0 +1,348 @@
+<Window x:Class="Bookstore.Desktop.Views.CustomerDisplayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bookstore - Màn hình khách hàng"
+        Width="1180"
+        Height="760"
+        MinWidth="900"
+        MinHeight="600"
+        ShowActivated="False"
+        Background="#07111F">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style x:Key="RightCellTextStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#E5EEF9" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+
+        <Style x:Key="CenterCellTextStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#E5EEF9" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#10223A" />
+            <Setter Property="Foreground" Value="#8EA6C3" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="BorderBrush" Value="#203650" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="MinHeight" Value="64" />
+            <Setter Property="Background" Value="#0C1A2E" />
+            <Setter Property="Foreground" Value="#F8FAFC" />
+            <Setter Property="BorderBrush" Value="#182D47" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#F8FAFC" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="34">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,26">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="58"
+                        Height="58"
+                        Background="#E8F4FF"
+                        CornerRadius="16">
+                    <TextBlock Text="&#xE736;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="30"
+                               Foreground="#1478D4"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="BOOKSTORE"
+                               Foreground="#F8FAFC"
+                               FontSize="24"
+                               FontWeight="Bold" />
+                    <TextBlock Text="Quầy thanh toán"
+                               Margin="0,3,0,0"
+                               Foreground="#8EA6C3"
+                               FontSize="14" />
+                </StackPanel>
+            </StackPanel>
+
+            <Border DockPanel.Dock="Right"
+                    Padding="18,10"
+                    CornerRadius="18"
+                    VerticalAlignment="Center">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#173B67" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDraft}" Value="True">
+                                <Setter Property="Background" Value="#5B3A0A" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                <Setter Property="Background" Value="#0B4C36" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="Bold" />
+            </Border>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.75*" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="0.95*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="#0C1A2E"
+                    BorderBrush="#1C3451"
+                    BorderThickness="1"
+                    CornerRadius="20"
+                    ClipToBounds="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Margin="24,22,24,18">
+                        <TextBlock Text="{Binding HeadlineText}"
+                                   Foreground="#F8FAFC"
+                                   FontSize="26"
+                                   FontWeight="Bold" />
+                        <TextBlock Text="{Binding GuidanceText}"
+                                   Margin="0,7,0,0"
+                                   Foreground="#8EA6C3"
+                                   FontSize="14"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Items}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              IsHitTestVisible="False"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="None"
+                              Background="#0C1A2E"
+                              BorderThickness="0"
+                              RowHeaderWidth="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SẢN PHẨM"
+                                                Binding="{Binding Title}"
+                                                Width="2.2*" />
+                            <DataGridTextColumn Header="SL"
+                                                Binding="{Binding Quantity}"
+                                                ElementStyle="{StaticResource CenterCellTextStyle}"
+                                                Width="0.45*" />
+                            <DataGridTextColumn Header="ĐƠN GIÁ"
+                                                Binding="{Binding UnitPriceText}"
+                                                ElementStyle="{StaticResource RightCellTextStyle}"
+                                                Width="0.9*" />
+                            <DataGridTextColumn Header="THÀNH TIỀN"
+                                                Binding="{Binding LineTotalText}"
+                                                ElementStyle="{StaticResource RightCellTextStyle}"
+                                                Width="1*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="1"
+                            Margin="24"
+                            Background="#0C1A2E"
+                            Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="&#xE8CB;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="58"
+                                       Foreground="#2B537B"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Chưa có sản phẩm"
+                                       Margin="0,18,0,0"
+                                       Foreground="#F8FAFC"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Hóa đơn sẽ cập nhật ngay khi nhân viên thêm sách."
+                                       Margin="0,8,0,0"
+                                       Foreground="#8EA6C3"
+                                       FontSize="14"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Padding="26"
+                    Background="#10223A"
+                    BorderBrush="#234263"
+                    BorderThickness="1"
+                    CornerRadius="20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="TỔNG THANH TOÁN"
+                               Foreground="#8EA6C3"
+                               FontSize="13"
+                               FontWeight="Bold" />
+
+                    <StackPanel Grid.Row="1" Margin="0,26,0,20">
+                        <DockPanel Margin="0,0,0,14">
+                            <TextBlock Text="Tạm tính"
+                                       Foreground="#A8BAD0"
+                                       FontSize="16" />
+                            <TextBlock Text="{Binding SubtotalText}"
+                                       DockPanel.Dock="Right"
+                                       Foreground="#E5EEF9"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                        </DockPanel>
+                        <DockPanel Margin="0,0,0,20">
+                            <TextBlock Text="Giảm giá"
+                                       Foreground="#A8BAD0"
+                                       FontSize="16" />
+                            <TextBlock Text="{Binding DiscountText}"
+                                       DockPanel.Dock="Right"
+                                       Foreground="#65D6A4"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                        </DockPanel>
+
+                        <Border Height="1" Background="#284563" Margin="0,0,0,22" />
+
+                        <TextBlock Text="Thành tiền"
+                                   Foreground="#8EA6C3"
+                                   FontSize="14" />
+                        <TextBlock Text="{Binding FinalAmountText}"
+                                   Margin="0,7,0,0"
+                                   Foreground="#5CC2FF"
+                                   FontSize="36"
+                                   FontWeight="Bold"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding FinalAmountInWordsText}"
+                                   Margin="0,9,0,0"
+                                   Foreground="#8EA6C3"
+                                   FontSize="13"
+                                   FontStyle="Italic"
+                                   TextWrapping="Wrap" />
+
+                        <Border Margin="0,28,0,0"
+                                Padding="16"
+                                Background="#112D4F"
+                                CornerRadius="12"
+                                Visibility="{Binding IsDraft, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel>
+                                <TextBlock Text="Đang chờ thanh toán"
+                                           Foreground="#FFD27A"
+                                           FontSize="16"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="Số tiền và danh sách sản phẩm vẫn có thể thay đổi."
+                                           Margin="0,5,0,0"
+                                           Foreground="#A8BAD0"
+                                           FontSize="13"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Margin="0,26,0,0"
+                                    Visibility="{Binding IsPaid, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Mã đơn"
+                                           Foreground="#A8BAD0"
+                                           FontSize="14" />
+                                <TextBlock Text="{Binding OrderCode}"
+                                           DockPanel.Dock="Right"
+                                           Foreground="#F8FAFC"
+                                           FontSize="14"
+                                           FontWeight="SemiBold" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Thanh toán"
+                                           Foreground="#A8BAD0"
+                                           FontSize="14" />
+                                <TextBlock Text="{Binding PaymentMethodText}"
+                                           DockPanel.Dock="Right"
+                                           Foreground="#F8FAFC"
+                                           FontSize="14"
+                                           FontWeight="SemiBold" />
+                            </DockPanel>
+                            <StackPanel Visibility="{Binding HasCashReceived, Converter={StaticResource BoolToVisibility}}">
+                                <DockPanel Margin="0,0,0,12">
+                                    <TextBlock Text="Tiền khách đưa"
+                                               Foreground="#A8BAD0"
+                                               FontSize="14" />
+                                    <TextBlock Text="{Binding CashReceivedText}"
+                                               DockPanel.Dock="Right"
+                                               Foreground="#F8FAFC"
+                                               FontSize="14"
+                                               FontWeight="SemiBold" />
+                                </DockPanel>
+                                <DockPanel>
+                                    <TextBlock Text="Tiền thừa"
+                                               Foreground="#A8BAD0"
+                                               FontSize="14" />
+                                    <TextBlock Text="{Binding ChangeAmountText}"
+                                               DockPanel.Dock="Right"
+                                               Foreground="#65D6A4"
+                                               FontSize="16"
+                                               FontWeight="Bold" />
+                                </DockPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border Grid.Row="2"
+                            Padding="16,13"
+                            Background="#0B4C36"
+                            CornerRadius="12"
+                            Visibility="{Binding IsPaid, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="✓  Cảm ơn quý khách!"
+                                   Foreground="White"
+                                   FontSize="17"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <DockPanel Grid.Row="2" Margin="2,20,2,0">
+            <TextBlock Text="{Binding GuidanceText}"
+                       Foreground="#7891AE"
+                       FontSize="13" />
+            <TextBlock Text="{Binding UpdatedAtText}"
+                       DockPanel.Dock="Right"
+                       Foreground="#7891AE"
+                       FontSize="13" />
+        </DockPanel>
+    </Grid>
+</Window>

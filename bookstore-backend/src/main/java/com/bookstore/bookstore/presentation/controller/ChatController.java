@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.IChatService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.port.in.IAiChatService;
 import com.bookstore.bookstore.application.result.ChatMessageResult;
 import com.bookstore.bookstore.application.result.ChatMessageSliceResult;
@@ -81,10 +82,14 @@ public class ChatController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID conversationId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        ChatMessageSliceResult result = chatService.getMessages(userId, conversationId, page, size);
+        ChatMessageSliceResult result = chatService.getMessages(
+                userId,
+                conversationId,
+                new PageQuery(page, size)
+        );
         return ResponseEntity.ok()
                 .headers(buildPaginationHeaders(result))
                 .body(ApiResponse.success(toMessageResponses(result.items())));
@@ -147,7 +152,12 @@ public class ChatController {
             @RequestParam(required = false) String keyword
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        ConversationSliceResult result = chatService.getAdminConversations(userId, status, keyword, page, size);
+        ConversationSliceResult result = chatService.getAdminConversations(
+                userId,
+                status,
+                keyword,
+                new PageQuery(page, size)
+        );
         return ResponseEntity.ok()
                 .headers(buildPaginationHeaders(result))
                 .body(ApiResponse.success(toConversationResponses(result.items())));
@@ -171,10 +181,14 @@ public class ChatController {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID conversationId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        ChatMessageSliceResult result = chatService.getAdminMessages(userId, conversationId, page, size);
+        ChatMessageSliceResult result = chatService.getAdminMessages(
+                userId,
+                conversationId,
+                new PageQuery(page, size)
+        );
         return ResponseEntity.ok()
                 .headers(buildPaginationHeaders(result))
                 .body(ApiResponse.success(toMessageResponses(result.items())));

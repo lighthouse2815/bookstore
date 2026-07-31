@@ -2,7 +2,7 @@ package com.bookstore.bookstore.domain.model;
 
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
 import com.bookstore.bookstore.domain.exception.DomainErrorCode;
-import com.bookstore.bookstore.domain.exception.DomainException;
+import com.bookstore.bookstore.domain.rule.ReturnRequestRule;
 import com.bookstore.bookstore.domain.validation.Guard;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -57,7 +57,7 @@ public class ReturnRequest {
     }
 
     public void approve(String adminNote, BigDecimal approvedRefundAmount, UUID processedBy, Instant processedAt) {
-        requirePending();
+        ReturnRequestRule.requirePending(status);
         setStatus(ReturnRequestStatus.APPROVED);
         setAdminNote(adminNote);
         setApprovedRefundAmount(approvedRefundAmount);
@@ -71,7 +71,7 @@ public class ReturnRequest {
     }
 
     public void reject(String adminNote, UUID processedBy, Instant processedAt) {
-        requirePending();
+        ReturnRequestRule.requirePending(status);
         this.adminNote = Guard.notBlank(
                 adminNote,
                 DomainErrorCode.INVALID_RETURN_REQUEST_ADMIN_NOTE,
@@ -89,15 +89,9 @@ public class ReturnRequest {
     }
 
     public void cancel() {
-        requirePending();
+        ReturnRequestRule.requirePending(status);
         setStatus(ReturnRequestStatus.CANCELLED);
         setUpdatedAt(Instant.now());
-    }
-
-    private void requirePending() {
-        if (status != ReturnRequestStatus.PENDING) {
-            throw new DomainException(DomainErrorCode.RETURN_REQUEST_NOT_PENDING);
-        }
     }
 
     private void setOrderId(UUID orderId) {
@@ -141,22 +135,12 @@ public class ReturnRequest {
     }
 
     private void setRequestedRefundAmount(BigDecimal requestedRefundAmount) {
-        if (requestedRefundAmount != null && requestedRefundAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DomainException(
-                    DomainErrorCode.INVALID_RETURN_REQUEST_REQUESTED_REFUND_AMOUNT,
-                    "requestedRefundAmount"
-            );
-        }
+        ReturnRequestRule.requireNonNegativeRequestedRefundAmount(requestedRefundAmount);
         this.requestedRefundAmount = requestedRefundAmount;
     }
 
     private void setApprovedRefundAmount(BigDecimal approvedRefundAmount) {
-        if (approvedRefundAmount != null && approvedRefundAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DomainException(
-                    DomainErrorCode.INVALID_RETURN_REQUEST_APPROVED_REFUND_AMOUNT,
-                    "approvedRefundAmount"
-            );
-        }
+        ReturnRequestRule.requireNonNegativeApprovedRefundAmount(approvedRefundAmount);
         this.approvedRefundAmount = approvedRefundAmount;
     }
 

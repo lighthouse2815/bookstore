@@ -4,7 +4,7 @@
 
 ## Công nghệ
 
-- C# .NET 8
+- C# .NET 10
 - WPF
 - MVVM
 - HttpClient gọi REST API của backend Spring Boot
@@ -28,7 +28,7 @@ http://localhost:8080
 
 ## Chạy ứng dụng desktop
 
-Cần máy Windows có .NET 8 SDK và workload WPF.
+Cần máy Windows có .NET 10 SDK và workload WPF.
 
 ```powershell
 cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
@@ -44,15 +44,24 @@ cd D:\bookstore\bookstore-desktop\Bookstore.Desktop
 .\run-publish.ps1
 ```
 
-## Cấu hình base URL của backend
+## Cấu hình bằng `.env`
 
-Ứng dụng desktop mặc định gọi backend tại:
+Desktop tự đọc cấu hình theo thứ tự ưu tiên: biến môi trường của tiến trình, file
+`.env` gần file chạy hoặc thư mục dự án, rồi `.env` của `bookstore-website` và
+`bookstore-backend` khi chạy trong monorepo này.
 
-```txt
-http://localhost:8080
+```env
+BOOKSTORE_API_BASE_URL=http://localhost:8080
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
 ```
 
-Sau khi đăng nhập, vào màn hình `Cài đặt` để đổi Backend Base URL. Chỉ nhập URL gốc, không cần thêm `/api`.
+`VITE_API_BASE_URL` và `VITE_GOOGLE_CLIENT_ID` hiện có của website cũng được hỗ
+trợ để chạy local mà không phải nhập lại trong màn Cài đặt. Nếu API URL kết thúc
+bằng `/api`, desktop sẽ tự chuyển về backend root trước khi ghép các route
+`/api/...`.
+
+Các ô trong màn hình `Cài đặt` chỉ dùng để ghi đè tạm thời cho phiên đang chạy.
+Muốn cấu hình được giữ sau khi mở lại app, hãy sửa `.env`.
 
 ## Tài khoản demo
 

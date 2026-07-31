@@ -23,6 +23,7 @@ import com.bookstore.bookstore.application.port.out.IPaymentExpirySettings;
 import com.bookstore.bookstore.application.port.out.ISepaySettings;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserAddressRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.CreateOrderResult;
 import com.bookstore.bookstore.application.result.CreatePosOrderResult;
 import com.bookstore.bookstore.application.result.OrderResult;
@@ -428,13 +429,13 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<OrderResult> getMyOrders(UUID userId, int page, int size) {
+    public PageSliceResult<OrderResult> getMyOrders(UUID userId, PageQuery pageQuery) {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
         }
 
-        validatePageRequest(page, size);
-        return orderRepository.findPageByUserId(userId, page, size).map(this::toOrderResultWithPaymentExpiry);
+        return orderRepository.findPageByUserId(userId, pageQuery.page(), pageQuery.size())
+                .map(this::toOrderResultWithPaymentExpiry);
     }
 
     @Override
@@ -456,9 +457,9 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<OrderResult> getAll(int page, int size) {
-        validatePageRequest(page, size);
-        return orderRepository.findPageAll(page, size).map(this::toOrderResultWithPaymentExpiry);
+    public PageSliceResult<OrderResult> getAll(PageQuery pageQuery) {
+        return orderRepository.findPageAll(pageQuery.page(), pageQuery.size())
+                .map(this::toOrderResultWithPaymentExpiry);
     }
 
     @Override
@@ -903,13 +904,4 @@ public class OrderService implements IOrderService {
         );
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

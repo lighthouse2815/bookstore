@@ -51,13 +51,7 @@ public interface BookJpaRepository extends JpaRepository<BookJpaEntity, UUID> {
     List<BookJpaEntity> findAllByIdIn(Collection<UUID> bookIds);
 
     @EntityGraph(attributePaths = {"images", "images.fileAsset", "detail"})
-    @Query("""
-            select distinct b
-            from BookJpaEntity b
-            where b.deletedAt is null
-              and b.id in :bookIds
-            """)
-    List<BookJpaEntity> findAllByDeletedAtIsNullAndIdIn(@Param("bookIds") Collection<UUID> bookIds);
+    List<BookJpaEntity> findDistinctByDeletedAtIsNullAndIdIn(Collection<UUID> bookIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

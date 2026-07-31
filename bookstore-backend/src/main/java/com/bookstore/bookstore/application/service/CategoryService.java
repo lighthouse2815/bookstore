@@ -7,7 +7,9 @@ import com.bookstore.bookstore.application.exception.ApplicationErrorCode;
 import com.bookstore.bookstore.application.exception.ApplicationException;
 import com.bookstore.bookstore.application.port.in.ICategoryService;
 import com.bookstore.bookstore.application.port.out.ICategoryRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
+import com.bookstore.bookstore.domain.enums.CategoryLocale;
 import com.bookstore.bookstore.domain.enums.FilePurpose;
 import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Category;
@@ -24,13 +26,12 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.bookstore.bookstore.application.command.CategoryTranslationCommand;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryService implements ICategoryService {
 
-    private static final String VI_LOCALE = "vi";
-    private static final String EN_LOCALE = "en";
     private static final String CATEGORY_CODE_PATTERN = "[A-Z0-9_]+";
 
     private final ICategoryRepository categoryRepository;
@@ -43,8 +44,9 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<Category> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<Category> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return categoryRepository.findPageActive(page, size);
     }
 
@@ -81,8 +83,8 @@ public class CategoryService implements ICategoryService {
         }
 
         String code = normalizeCode(command.code());
-        Map<String, CategoryTranslation> translations = normalizeTranslations(command.translations());
-        CategoryTranslation vietnamese = translations.get(VI_LOCALE);
+        Map<CategoryLocale, CategoryTranslation> translations = normalizeTranslations(command.translations());
+        CategoryTranslation vietnamese = translations.get(CategoryLocale.VI);
         String name = vietnamese.name();
         String description = vietnamese.description();
         UUID parentId = command.parentId();
@@ -126,8 +128,8 @@ public class CategoryService implements ICategoryService {
                 .orElseThrow(() -> new ApplicationException(ApplicationErrorCode.CATEGORY_NOT_FOUND));
 
         String code = normalizeCode(command.code());
-        Map<String, CategoryTranslation> translations = normalizeTranslations(command.translations());
-        CategoryTranslation vietnamese = translations.get(VI_LOCALE);
+        Map<CategoryLocale, CategoryTranslation> translations = normalizeTranslations(command.translations());
+        CategoryTranslation vietnamese = translations.get(CategoryLocale.VI);
         String name = vietnamese.name();
         String description = vietnamese.description();
         UUID parentId = command.parentId();
@@ -196,25 +198,24 @@ public class CategoryService implements ICategoryService {
         return code;
     }
 
-    private Map<String, CategoryTranslation> normalizeTranslations(
-            List<com.bookstore.bookstore.application.command.CategoryTranslationCommand> commands
+    private Map<CategoryLocale, CategoryTranslation> normalizeTranslations(
+            List<CategoryTranslationCommand> commands
     ) {
         if (commands == null || commands.isEmpty()) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations");
         }
 
-        Map<String, CategoryTranslation> translations = new LinkedHashMap<>();
+        Map<CategoryLocale, CategoryTranslation> translations = new LinkedHashMap<>();
         commands.forEach(command -> {
             if (command == null) {
                 throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations");
             }
-            String locale = StringUtils.trimToNull(command.locale());
-            locale = locale == null ? null : locale.toLowerCase(Locale.ROOT);
-            if (!VI_LOCALE.equals(locale) && !EN_LOCALE.equals(locale)) {
-                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "locale");
-            }
+            CategoryLocale locale = command.locale();
             if (translations.containsKey(locale)) {
-                throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations." + locale);
+                throw new ApplicationException(
+                        ApplicationErrorCode.INVALID_ARGUMENT,
+                        "translations." + locale.getCode()
+                );
             }
             String name = StringUtils.trimToNull(command.name());
             if (name == null) {
@@ -227,15 +228,11 @@ public class CategoryService implements ICategoryService {
             ));
         });
 
-        if (!translations.containsKey(VI_LOCALE) || !translations.containsKey(EN_LOCALE)) {
+        if (!translations.containsKey(CategoryLocale.VI)
+                || !translations.containsKey(CategoryLocale.EN)) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "translations.vi,en");
         }
         return Map.copyOf(translations);
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-    }
 }

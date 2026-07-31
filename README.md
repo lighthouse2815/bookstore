@@ -17,7 +17,7 @@ Hướng dẫn chạy các dự án trong `D:\bookstore` bằng terminal.
 - Node.js 22.13 trở lên
 - pnpm 11.11.0 thông qua Corepack
 - Android Studio và Android SDK
-- .NET 8 SDK trên Windows
+- .NET 10 SDK trên Windows
 
 ## 1. Chạy MySQL bằng Docker
 
@@ -165,7 +165,7 @@ dotnet run
 
 Lưu ý:
 
-- Cần Windows và .NET 8 SDK.
+- Cần Windows và .NET 10 SDK.
 - Ứng dụng desktop gọi backend qua `http://localhost:8080` theo mặc định.
 - Nếu cần đổi URL backend, hãy thay đổi trong màn hình cài đặt của ứng dụng sau khi đăng nhập.
 

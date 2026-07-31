@@ -16,6 +16,7 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReturnRequestRepository;
 import com.bookstore.bookstore.application.port.out.IStockMovementRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReturnRequestResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -119,14 +120,18 @@ public class ReturnRequestService implements IReturnRequestService {
     @Transactional(readOnly = true)
     public PageSliceResult<ReturnRequestResult> getMyRequests(
             UUID userId,
-            int page,
-            int size,
+            PageQuery pageQuery,
             ReturnRequestStatus status,
             UUID orderId
     ) {
         requireUserId(userId);
-        validatePageRequest(page, size);
-        return returnRequestRepository.findPageByUserId(userId, page, size, status, orderId)
+        return returnRequestRepository.findPageByUserId(
+                        userId,
+                        pageQuery.page(),
+                        pageQuery.size(),
+                        status,
+                        orderId
+                )
                 .map(this::toResult);
     }
 
@@ -174,14 +179,18 @@ public class ReturnRequestService implements IReturnRequestService {
     @Override
     @Transactional(readOnly = true)
     public PageSliceResult<ReturnRequestResult> getAll(
-            int page,
-            int size,
+            PageQuery pageQuery,
             ReturnRequestStatus status,
             UUID userId,
             UUID orderId
     ) {
-        validatePageRequest(page, size);
-        return returnRequestRepository.findPageAll(page, size, status, userId, orderId)
+        return returnRequestRepository.findPageAll(
+                        pageQuery.page(),
+                        pageQuery.size(),
+                        status,
+                        userId,
+                        orderId
+                )
                 .map(this::toResult);
     }
 
@@ -264,15 +273,6 @@ public class ReturnRequestService implements IReturnRequestService {
     private void requireUserId(UUID userId) {
         if (userId == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "userId");
-        }
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
         }
     }
 

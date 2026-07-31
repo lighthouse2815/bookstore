@@ -65,9 +65,9 @@ Dung checklist nay truoc buoi demo, nop bai, hoac deploy thu.
 
 ## Desktop
 
-- [ ] Project target `.NET 8`
+- [ ] Project target `.NET 10`
 - [ ] `dotnet build` PASS
-- [ ] .NET 8 runtime co san (system-wide hoac user-local voi `DOTNET_ROOT`/`DOTNET_ROOT_X64`) va `dotnet test` PASS
+- [ ] .NET 10 runtime co san (system-wide hoac user-local voi `DOTNET_ROOT`/`DOTNET_ROOT_X64`) va `dotnet test` PASS
 - [ ] Login/API call duoc
 - [ ] POS tao don duoc
 - [ ] Receipt export `.txt` duoc neu can demo

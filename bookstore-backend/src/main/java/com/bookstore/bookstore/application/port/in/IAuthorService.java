@@ -3,6 +3,7 @@ package com.bookstore.bookstore.application.port.in;
 import com.bookstore.bookstore.application.command.CreateAuthorCommand;
 import com.bookstore.bookstore.application.command.DeleteAuthorCommand;
 import com.bookstore.bookstore.application.command.UpdateAuthorCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.model.Author;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import java.util.List;
@@ -12,7 +13,7 @@ public interface IAuthorService {
 
     List<Author> getAll();
 
-    PageSliceResult<Author> getAll(int page, int size);
+    PageSliceResult<Author> getAll(PageQuery pageQuery);
 
     List<Author> getAllIncludingDeleted();
 

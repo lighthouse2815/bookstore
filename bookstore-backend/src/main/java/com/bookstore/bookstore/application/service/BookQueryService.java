@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.out.ICategoryRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPublisherRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.BookPageDetailResult;
 import com.bookstore.bookstore.application.result.BookQueryResult;
 import com.bookstore.bookstore.application.result.BookRatingSummaryResult;
@@ -56,8 +57,9 @@ public class BookQueryService implements IBookQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<BookQueryResult> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<BookQueryResult> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return enrichBookPage(bookRepository.findPageActive(page, size));
     }
 
@@ -73,26 +75,33 @@ public class BookQueryService implements IBookQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<BookQueryResult> search(String keyword, int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<BookQueryResult> search(String keyword, PageQuery pageQuery) {
         String normalizedKeyword = StringUtils.trimToNull(keyword);
         if (normalizedKeyword == null) {
-            return getAll(page, size);
+            return getAll(pageQuery);
         }
-        return enrichBookPage(bookRepository.searchPageByKeywordActive(normalizedKeyword, page, size));
+        return enrichBookPage(bookRepository.searchPageByKeywordActive(
+                normalizedKeyword,
+                pageQuery.page(),
+                pageQuery.size()
+        ));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<BookQueryResult> search(String keyword, UUID categoryId, int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<BookQueryResult> search(String keyword, UUID categoryId, PageQuery pageQuery) {
         String normalizedKeyword = StringUtils.trimToNull(keyword);
 
         if (normalizedKeyword == null && categoryId == null) {
-            return getAll(page, size);
+            return getAll(pageQuery);
         }
 
-        return enrichBookPage(bookRepository.searchPageActive(normalizedKeyword, categoryId, page, size));
+        return enrichBookPage(bookRepository.searchPageActive(
+                normalizedKeyword,
+                categoryId,
+                pageQuery.page(),
+                pageQuery.size()
+        ));
     }
 
     @Override
@@ -246,13 +255,4 @@ public class BookQueryService implements IBookQueryService {
         return Math.min(limit, MAX_RELATED_LIMIT);
     }
 
-    private void validatePageRequest(int page, int size) {
-        if (page < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
-
-        if (size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "size");
-        }
-    }
 }

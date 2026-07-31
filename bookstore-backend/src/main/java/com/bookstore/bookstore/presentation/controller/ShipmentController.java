@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.IShipmentService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.ShipmentWebMapper;
 import com.bookstore.bookstore.presentation.request.AssignShipmentRequest;
 import com.bookstore.bookstore.presentation.request.UpdateShipmentStatusRequest;
@@ -47,8 +50,8 @@ public class ShipmentController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "SHIPMENT_ASSIGNED",
-                "SHIPMENT",
+                AuditAction.SHIPMENT_ASSIGNED,
+                AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Phân công shipment cho đơn hàng " + response.orderCode(),
                 response
@@ -64,8 +67,10 @@ public class ShipmentController {
     ) {
         if (page != null || size != null) {
             var result = shipmentService.getAll(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(shipmentWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -92,11 +97,11 @@ public class ShipmentController {
     ) {
         ShipmentResponse before = shipmentWebMapper.toResponse(shipmentService.getById(id));
         ShipmentResponse response = shipmentWebMapper.toResponse(shipmentService.confirmDeliveredByAdmin(id));
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "SHIPMENT_STATUS_UPDATED",
-                "SHIPMENT",
+                AuditAction.SHIPMENT_STATUS_UPDATED,
+                AuditTargetType.SHIPMENT,
                 response.shipmentId(),
                 "Xác nhận shipment " + response.shipmentId() + " đã giao thành công",
                 before,
@@ -116,8 +121,10 @@ public class ShipmentController {
         if (page != null || size != null) {
             var result = shipmentService.getMyShipments(
                     shipperId,
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(shipmentWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

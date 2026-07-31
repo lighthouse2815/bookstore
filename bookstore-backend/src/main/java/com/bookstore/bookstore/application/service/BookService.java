@@ -17,7 +17,6 @@ import com.bookstore.bookstore.domain.enums.FileVisibility;
 import com.bookstore.bookstore.domain.model.Book;
 import com.bookstore.bookstore.domain.model.BookDetail;
 import com.bookstore.bookstore.domain.model.BookImage;
-import com.bookstore.bookstore.domain.model.FileAsset;
 import com.bookstore.bookstore.shared.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;

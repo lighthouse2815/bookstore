@@ -3,6 +3,7 @@ package com.bookstore.bookstore.presentation.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -13,8 +14,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookstore.bookstore.application.port.in.IReviewService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
@@ -98,7 +102,7 @@ class ReviewControllerTest {
 
     @Test
     void getAll_whenAdminFiltersReviews_returnsPagedResponse() throws Exception {
-        given(reviewService.getAll(0, 10, ReviewStatus.HIDDEN, BOOK_ID, USER_ID, 4)).willReturn(
+        given(reviewService.getAll(new PageQuery(0, 10), ReviewStatus.HIDDEN, BOOK_ID, USER_ID, 4)).willReturn(
                 new PageSliceResult<>(
                         List.of(reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))),
                         1,
@@ -123,6 +127,9 @@ class ReviewControllerTest {
 
     @Test
     void hide_whenAdminAuthenticated_recordsAuditLog() throws Exception {
+        given(reviewService.getById(REVIEW_ID)).willReturn(
+                reviewResult(ReviewStatus.APPROVED, null, null, null)
+        );
         given(reviewService.hide(any())).willReturn(
                 reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))
         );
@@ -145,20 +152,23 @@ class ReviewControllerTest {
                         && command.adminUserId().equals(ADMIN_ID)
                         && "Spam".equals(command.reason())
         ));
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
-                eq("REVIEW_HIDDEN"),
-                eq("REVIEW"),
+                eq(AuditAction.REVIEW_HIDDEN),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
-                any(),
-                any()
+                notNull(),
+                notNull()
         );
     }
 
     @Test
     void approve_whenAdminAuthenticated_recordsAuditLog() throws Exception {
+        given(reviewService.getById(REVIEW_ID)).willReturn(
+                reviewResult(ReviewStatus.HIDDEN, "Spam", ADMIN_ID, Instant.parse("2026-07-08T10:00:00Z"))
+        );
         given(reviewService.approve(any())).willReturn(
                 reviewResult(ReviewStatus.APPROVED, null, ADMIN_ID, Instant.parse("2026-07-08T11:00:00Z"))
         );
@@ -173,15 +183,15 @@ class ReviewControllerTest {
                 command.reviewId().equals(REVIEW_ID)
                         && command.adminUserId().equals(ADMIN_ID)
         ));
-        verify(adminAuditSupport).recordStatusChange(
+        verify(adminAuditSupport).recordUpdate(
                 any(),
                 any(),
-                eq("REVIEW_APPROVED"),
-                eq("REVIEW"),
+                eq(AuditAction.REVIEW_APPROVED),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
-                any(),
-                any()
+                notNull(),
+                notNull()
         );
     }
 
@@ -199,8 +209,8 @@ class ReviewControllerTest {
         verify(adminAuditSupport).recordDelete(
                 any(),
                 any(),
-                eq("REVIEW_DELETED"),
-                eq("REVIEW"),
+                eq(AuditAction.REVIEW_DELETED),
+                eq(AuditTargetType.REVIEW),
                 eq(REVIEW_ID),
                 any(),
                 any()

@@ -31,6 +31,55 @@ public class BookService
             .ToArray();
     }
 
+    public async Task<PagedResult<BookModel>> SearchPageAsync(
+        string? keyword,
+        int page,
+        int size)
+    {
+        var normalizedKeyword = keyword?.Trim();
+        var pagination = $"page={page}&size={size}";
+        var path = string.IsNullOrWhiteSpace(normalizedKeyword)
+            ? "/api/books?" + pagination
+            : "/api/books/search?keyword="
+                + Uri.EscapeDataString(normalizedKeyword)
+                + "&"
+                + pagination;
+        var response = await apiClient.GetWithHeadersAsync(path);
+        var books = response.Data.ValueKind == System.Text.Json.JsonValueKind.Array
+            ? response.Data.EnumerateArray()
+                .Select(MapBook)
+                .Where(book => !string.IsNullOrWhiteSpace(book.Id))
+                .ToArray()
+            : Array.Empty<BookModel>();
+
+        return new PagedResult<BookModel>(
+            books,
+            ReadIntHeader(response.Headers, "X-Total-Count", books.Length),
+            ReadIntHeader(response.Headers, "X-Page", page),
+            ReadIntHeader(response.Headers, "X-Size", size),
+            ReadBoolHeader(response.Headers, "X-Has-Next", books.Length == size));
+    }
+
+    private static int ReadIntHeader(
+        IReadOnlyDictionary<string, string> headers,
+        string name,
+        int fallback)
+    {
+        return headers.TryGetValue(name, out var value) && int.TryParse(value, out var parsed)
+            ? parsed
+            : fallback;
+    }
+
+    private static bool ReadBoolHeader(
+        IReadOnlyDictionary<string, string> headers,
+        string name,
+        bool fallback)
+    {
+        return headers.TryGetValue(name, out var value) && bool.TryParse(value, out var parsed)
+            ? parsed
+            : fallback;
+    }
+
     private static BookModel MapBook(System.Text.Json.JsonElement element)
     {
         var author = JsonHelper.GetString(element, "authorName");

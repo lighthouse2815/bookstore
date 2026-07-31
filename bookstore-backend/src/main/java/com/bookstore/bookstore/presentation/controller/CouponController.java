@@ -1,6 +1,9 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.port.in.ICouponService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.CouponWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateCouponRequest;
 import com.bookstore.bookstore.presentation.request.UpdateCouponRequest;
@@ -44,7 +47,10 @@ public class CouponController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = couponService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = couponService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(couponWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -71,8 +77,8 @@ public class CouponController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "COUPON_CREATED",
-                "COUPON",
+                AuditAction.COUPON_CREATED,
+                AuditTargetType.COUPON,
                 response.id(),
                 "Tạo coupon " + response.code(),
                 response
@@ -94,8 +100,8 @@ public class CouponController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "COUPON_UPDATED",
-                "COUPON",
+                AuditAction.COUPON_UPDATED,
+                AuditTargetType.COUPON,
                 response.id(),
                 "Cập nhật coupon " + response.code(),
                 before,
@@ -115,8 +121,8 @@ public class CouponController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "COUPON_DELETED",
-                "COUPON",
+                AuditAction.COUPON_DELETED,
+                AuditTargetType.COUPON,
                 id,
                 "Xóa coupon " + before.code(),
                 before

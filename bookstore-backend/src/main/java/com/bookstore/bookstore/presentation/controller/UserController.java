@@ -1,9 +1,12 @@
 package com.bookstore.bookstore.presentation.controller;
 
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.application.command.DeleteUserCommand;
 import com.bookstore.bookstore.application.command.UpdateUserLockCommand;
 import com.bookstore.bookstore.application.command.UpdateUserCommand;
 import com.bookstore.bookstore.application.port.in.IUserService;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.UserWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateUserRequest;
 import com.bookstore.bookstore.presentation.request.UpdateStaffUserRequest;
@@ -52,8 +55,8 @@ public class UserController {
         adminAuditSupport.recordCreate(
                 jwt,
                 httpServletRequest,
-                "USER_CREATED",
-                "USER",
+                AuditAction.USER_CREATED,
+                AuditTargetType.USER,
                 response.userId(),
                 "Tạo tài khoản " + response.username(),
                 response
@@ -70,8 +73,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getCustomers(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -91,8 +96,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getStaffs(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -118,8 +125,8 @@ public class UserController {
         adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_UPDATED",
-                "USER",
+                AuditAction.USER_UPDATED,
+                AuditTargetType.USER,
                 response.userId(),
                 "Cập nhật tài khoản " + response.username(),
                 before,
@@ -139,11 +146,11 @@ public class UserController {
         UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, true));
         UserResponse response = userWebMapper.toUserResponse(result);
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_LOCKED",
-                "USER",
+                AuditAction.USER_LOCKED,
+                AuditTargetType.USER,
                 response.userId(),
                 "Khóa tài khoản " + response.username(),
                 before,
@@ -163,11 +170,11 @@ public class UserController {
         UserResponse before = userWebMapper.toUserResponse(userService.getByIdIncludingDeleted(id));
         var result = userService.updateLockByAdmin(new UpdateUserLockCommand(id, adminId, false));
         UserResponse response = userWebMapper.toUserResponse(result);
-        adminAuditSupport.recordStatusChange(
+        adminAuditSupport.recordUpdate(
                 jwt,
                 httpServletRequest,
-                "USER_UNLOCKED",
-                "USER",
+                AuditAction.USER_UNLOCKED,
+                AuditTargetType.USER,
                 response.userId(),
                 "Mở khóa tài khoản " + response.username(),
                 before,
@@ -184,8 +191,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getAdmins(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -205,8 +214,10 @@ public class UserController {
     ) {
         if (page != null || size != null) {
             var result = userService.getShippers(
-                    page == null ? 0 : page,
-                    size == null ? 20 : size
+                    new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    )
             ).map(userWebMapper::toUserResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))
@@ -231,8 +242,8 @@ public class UserController {
         adminAuditSupport.recordDelete(
                 jwt,
                 httpServletRequest,
-                "USER_DELETED",
-                "USER",
+                AuditAction.USER_DELETED,
+                AuditTargetType.USER,
                 id,
                 "Xóa tài khoản " + before.username(),
                 before

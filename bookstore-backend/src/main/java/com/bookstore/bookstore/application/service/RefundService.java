@@ -17,11 +17,14 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IPaymentRepository;
 import com.bookstore.bookstore.application.port.out.IRefundRepository;
 import com.bookstore.bookstore.application.port.out.IReturnRequestRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.RefundResult;
+import com.bookstore.bookstore.domain.enums.AuditAction;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
 import com.bookstore.bookstore.domain.enums.RefundMethod;
 import com.bookstore.bookstore.domain.enums.RefundStatus;
+import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.domain.enums.ReturnRequestStatus;
 import com.bookstore.bookstore.domain.model.Order;
 import com.bookstore.bookstore.domain.model.Payment;
@@ -83,11 +86,12 @@ public class RefundService implements IRefundService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<RefundResult> getPage(int page, int size, RefundStatus status, RefundMethod method, Instant from, Instant to) {
-        if (page < 0 || size < 1 || size > 200 || (from != null && to != null && !from.isBefore(to))) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page/size/date");
+    public PageSliceResult<RefundResult> getPage(PageQuery pageQuery, RefundStatus status, RefundMethod method, Instant from, Instant to) {
+        if (from != null && to != null && !from.isBefore(to)) {
+            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "date");
         }
-        return refundRepository.findPage(page, size, status, method, from, to).map(this::toResult);
+        return refundRepository.findPage(pageQuery.page(), pageQuery.size(), status, method, from, to)
+                .map(this::toResult);
     }
 
     @Override
@@ -235,7 +239,7 @@ public class RefundService implements IRefundService {
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("status", refund.getStatus().name());
         after.put("amount", refund.getAmount());
-        auditLogService.recordStatusChange(new AuditLogCommand(actorId, null, "ADMIN", "REFUND_" + refund.getStatus(), "REFUND",
+        auditLogService.recordUpdate(new AuditLogCommand(actorId, null, "ADMIN", toAuditAction(refund.getStatus()), AuditTargetType.REFUND,
                 refund.getId().toString(), "Cập nhật hoàn tiền cho đơn " + order.getOrderCode(),
                 before, after, null, null, Instant.now()));
         transactionalOutboxService.enqueue(new EnqueueOutboxEventCommand("REFUND", refund.getId(), "REFUND_" + refund.getStatus(),
@@ -248,6 +252,18 @@ public class RefundService implements IRefundService {
         Payment payment = paymentRepository.findById(refund.getPaymentId()).orElseThrow(() -> new ApplicationException(ApplicationErrorCode.PAYMENT_NOT_FOUND));
         return toResult(refund, order, payment);
     }
+
+    private AuditAction toAuditAction(RefundStatus status) {
+        return switch (status) {
+            case REQUESTED -> AuditAction.REFUND_REQUESTED;
+            case APPROVED -> AuditAction.REFUND_APPROVED;
+            case PROCESSING -> AuditAction.REFUND_PROCESSING;
+            case SUCCEEDED -> AuditAction.REFUND_SUCCEEDED;
+            case FAILED -> AuditAction.REFUND_FAILED;
+            case CANCELLED -> AuditAction.REFUND_CANCELLED;
+        };
+    }
+
     private RefundResult toResult(Refund refund, Order order, Payment payment) {
         return new RefundResult(refund.getId(), order.getId(), order.getOrderCode(), payment.getId(), payment.getProvider(), payment.getStatus(), payment.getAmount(),
                 refund.getReturnRequestId(), refund.getAmount(), refund.getCurrency(), refund.getReason(), refund.getMethod(), refund.getStatus(), refund.getExternalReference(),

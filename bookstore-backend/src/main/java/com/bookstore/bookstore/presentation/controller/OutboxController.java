@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.ITransactionalOutboxService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.enums.OutboxStatus;
 import com.bookstore.bookstore.presentation.mapper.OutboxWebMapper;
 import com.bookstore.bookstore.presentation.response.ApiResponse;
@@ -28,7 +29,7 @@ public class OutboxController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<OutboxEventResponse>>> getPage(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size, @RequestParam(required = false) OutboxStatus status) {
-        var result = outboxService.getPage(page, size, status).map(mapper::toResponse);
+        var result = outboxService.getPage(new PageQuery(page, size), status).map(mapper::toResponse);
         return ResponseEntity.ok().headers(PaginationHeaderUtils.build(result)).body(ApiResponse.success(result.items()));
     }
     @GetMapping("/{id}")

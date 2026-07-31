@@ -50,7 +50,7 @@ export type RecentOrder = {
   createdAt: string
 }
 
-export type RevenueChartGroupBy = 'DAY' | 'WEEK' | 'MONTH'
+export type RevenueChartGroupBy = 'DAY' | 'MONTH'
 
 export type RevenueChartQuery = {
   from?: string
@@ -62,3 +62,4 @@ export type AdminDashboardRevenueFilter =
   | 'LAST_7_DAYS'
   | 'LAST_30_DAYS'
   | 'THIS_MONTH'
+  | 'CUSTOM'

@@ -1,6 +1,7 @@
 package com.bookstore.bookstore.presentation.controller;
 
 import com.bookstore.bookstore.application.port.in.ISupplierService;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.presentation.mapper.SupplierWebMapper;
 import com.bookstore.bookstore.presentation.request.CreateSupplierRequest;
 import com.bookstore.bookstore.presentation.request.UpdateSupplierRequest;
@@ -39,7 +40,10 @@ public class SupplierController {
             @RequestParam(required = false) Integer size
     ) {
         if (page != null || size != null) {
-            var result = supplierService.getAll(page == null ? 0 : page, size == null ? 20 : size)
+            var result = supplierService.getAll(new PageQuery(
+                            page == null ? PageQuery.DEFAULT_PAGE : page,
+                            size == null ? PageQuery.DEFAULT_SIZE : size
+                    ))
                     .map(supplierWebMapper::toResponse);
             return ResponseEntity.ok()
                     .headers(PaginationHeaderUtils.build(result))

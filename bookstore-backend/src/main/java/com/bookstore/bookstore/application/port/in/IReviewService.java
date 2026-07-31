@@ -5,6 +5,7 @@ import com.bookstore.bookstore.application.command.CreateReviewCommand;
 import com.bookstore.bookstore.application.command.DeleteReviewCommand;
 import com.bookstore.bookstore.application.command.HideReviewCommand;
 import com.bookstore.bookstore.application.command.UpdateReviewCommand;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.application.result.PageSliceResult;
 import com.bookstore.bookstore.application.result.ReviewResult;
@@ -15,7 +16,7 @@ public interface IReviewService {
 
     List<ReviewResult> getByBookId(UUID bookId);
 
-    PageSliceResult<ReviewResult> getByBookId(UUID bookId, int page, int size);
+    PageSliceResult<ReviewResult> getByBookId(UUID bookId, PageQuery pageQuery);
 
     ReviewResult create(CreateReviewCommand command);
 
@@ -25,16 +26,17 @@ public interface IReviewService {
 
     List<ReviewResult> getAll();
 
-    PageSliceResult<ReviewResult> getAll(int page, int size);
+    PageSliceResult<ReviewResult> getAll(PageQuery pageQuery);
 
     PageSliceResult<ReviewResult> getAll(
-            int page,
-            int size,
+            PageQuery pageQuery,
             ReviewStatus status,
             UUID bookId,
             UUID userId,
             Integer rating
     );
+
+    ReviewResult getById(UUID reviewId);
 
     ReviewResult hide(HideReviewCommand command);
 

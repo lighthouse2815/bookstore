@@ -10,6 +10,7 @@ import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.ICartRepository;
 import com.bookstore.bookstore.application.port.out.ICouponRepository;
 import com.bookstore.bookstore.application.port.out.IDigitalAssetRepository;
+import com.bookstore.bookstore.application.query.PageQuery;
 import com.bookstore.bookstore.application.result.BestCouponSuggestionResult;
 import com.bookstore.bookstore.domain.model.Coupon;
 import com.bookstore.bookstore.domain.enums.CouponType;
@@ -59,8 +60,9 @@ public class CouponService implements ICouponService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageSliceResult<Coupon> getAll(int page, int size) {
-        validatePageRequest(page, size);
+    public PageSliceResult<Coupon> getAll(PageQuery pageQuery) {
+        int page = pageQuery.page();
+        int size = pageQuery.size();
         return couponRepository.findPageActive(page, size);
     }
 
@@ -248,12 +250,6 @@ public class CouponService implements ICouponService {
     private String normalizeCode(String code) {
         String normalizedCode = StringUtils.trimToNull(code);
         return normalizedCode == null ? null : normalizedCode.toUpperCase(Locale.ROOT);
-    }
-
-    private void validatePageRequest(int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "page");
-        }
     }
 
     private List<CartItem> selectCartItems(List<CartItem> cartItems, List<UUID> cartItemIds) {
