@@ -167,8 +167,12 @@ function emptyToUndefined(value: string) {
 }
 
 function isValidDateRange(from: string, to: string) {
-  if (!from || !to) {
+  if (!from && !to) {
     return true
+  }
+
+  if (!from || !to) {
+    return false
   }
 
   return from <= to

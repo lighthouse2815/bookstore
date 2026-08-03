@@ -6,6 +6,7 @@ import com.bookstore.bookstore.domain.enums.AuditTargetType;
 import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
+import com.bookstore.bookstore.presentation.mapper.AdminReportMapper;
 import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
@@ -34,6 +35,7 @@ public class AdminReportController {
 
     private final IAdminReportService adminReportService;
     private final AdminAuditSupport adminAuditSupport;
+    private final AdminReportMapper adminReportMapper;
 
     @GetMapping("/orders.csv")
     public ResponseEntity<byte[]> exportOrders(
@@ -43,7 +45,9 @@ public class AdminReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) OrderStatus status
     ) {
-        ReportFileResult report = adminReportService.exportOrders(from, to, status);
+        ReportFileResult report = adminReportService.exportOrders(
+                adminReportMapper.toExportOrdersQuery(from, to, status)
+        );
         recordExport(
                 jwt,
                 httpServletRequest,

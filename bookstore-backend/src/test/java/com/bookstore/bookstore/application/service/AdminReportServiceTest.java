@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
+import com.bookstore.bookstore.application.query.ExportOrdersQuery;
 import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
@@ -68,7 +69,9 @@ class AdminReportServiceTest {
                 )
         ));
 
-        var report = adminReportService.exportOrders(from, to, OrderStatus.CONFIRMED);
+        var report = adminReportService.exportOrders(
+                new ExportOrdersQuery(from, to, OrderStatus.CONFIRMED)
+        );
         String csv = new String(report.content(), StandardCharsets.UTF_8);
 
         assertEquals("orders-report-2026-07-01_to_2026-07-02.csv", report.filename());

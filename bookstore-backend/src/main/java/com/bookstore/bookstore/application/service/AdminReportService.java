@@ -6,12 +6,12 @@ import com.bookstore.bookstore.application.port.in.IAdminReportService;
 import com.bookstore.bookstore.application.port.out.IBookRepository;
 import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
+import com.bookstore.bookstore.application.query.ExportOrdersQuery;
 import com.bookstore.bookstore.application.result.LowStockReportRowResult;
 import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.application.result.ReviewReportRowResult;
-import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -44,12 +44,12 @@ public class AdminReportService implements IAdminReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public ReportFileResult exportOrders(LocalDate from, LocalDate to, OrderStatus status) {
-        DateRange range = resolveDateRange(from, to);
+    public ReportFileResult exportOrders(ExportOrdersQuery query) {
+        DateRange range = resolveDateRange(query.from(), query.to());
         List<OrderReportRowResult> rows = orderRepository.findOrderReports(
                 toStartOfDay(range.from()),
                 toStartOfDay(range.to().plusDays(1L)),
-                status
+                query.status()
         );
         return new ReportFileResult(
                 "orders-report-" + range.toFilenameSegment() + ".csv",

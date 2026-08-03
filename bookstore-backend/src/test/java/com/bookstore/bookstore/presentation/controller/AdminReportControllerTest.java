@@ -9,11 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookstore.bookstore.application.port.in.IAdminReportService;
+import com.bookstore.bookstore.application.query.ExportOrdersQuery;
 import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.infrastructure.security.CurrentUserJwtAuthenticationConverter;
 import com.bookstore.bookstore.infrastructure.security.SecurityConfig;
+import com.bookstore.bookstore.presentation.mapper.AdminReportMapper;
 import com.bookstore.bookstore.presentation.support.AdminAuditSupport;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -27,7 +29,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AdminReportController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, AdminReportMapper.class})
 @TestPropertySource(properties = {
         "app.jwt.secret=01234567890123456789012345678901",
         "app.jwt.expiration-minutes=60",
@@ -50,11 +52,13 @@ class AdminReportControllerTest {
 
     @Test
     void exportOrders_whenStaffAuthenticated_returnsCsvWithHeadersAndFilters() throws Exception {
-        given(adminReportService.exportOrders(
+        ExportOrdersQuery query = new ExportOrdersQuery(
                 LocalDate.parse("2026-07-01"),
                 LocalDate.parse("2026-07-08"),
                 OrderStatus.CONFIRMED
-        )).willReturn(report("orders-report.csv", "Mã đơn hàng\r\nDH-0001\r\n"));
+        );
+        given(adminReportService.exportOrders(query))
+                .willReturn(report("orders-report.csv", "Mã đơn hàng\r\nDH-0001\r\n"));
 
         mockMvc.perform(get("/api/admin/reports/orders.csv")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_STAFF")))
@@ -66,11 +70,7 @@ class AdminReportControllerTest {
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"orders-report.csv\""))
                 .andExpect(content().bytes(report("orders-report.csv", "Mã đơn hàng\r\nDH-0001\r\n").content()));
 
-        verify(adminReportService).exportOrders(
-                LocalDate.parse("2026-07-01"),
-                LocalDate.parse("2026-07-08"),
-                OrderStatus.CONFIRMED
-        );
+        verify(adminReportService).exportOrders(query);
     }
 
     @Test
