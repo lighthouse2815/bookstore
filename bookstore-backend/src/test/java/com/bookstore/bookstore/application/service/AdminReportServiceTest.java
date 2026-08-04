@@ -16,8 +16,10 @@ import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.domain.enums.PaymentStatus;
+import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -32,6 +34,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AdminReportServiceTest {
 
+    private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final Clock TEST_CLOCK = Clock.fixed(
+            Instant.parse("2026-07-15T03:00:00Z"),
+            TEST_ZONE
+    );
+
     @Mock
     private IOrderRepository orderRepository;
 
@@ -45,11 +53,13 @@ class AdminReportServiceTest {
 
     @BeforeEach
     void setUp() {
+        BusinessTime businessTime = new BusinessTime(TEST_CLOCK);
         adminReportService = new AdminReportService(
                 orderRepository,
                 bookRepository,
                 reviewRepository,
-                new CsvExportService()
+                new CsvExportService(),
+                businessTime
         );
     }
 
@@ -80,12 +90,13 @@ class AdminReportServiceTest {
         assertTrue(csv.contains("Nguyễn Văn A"));
         assertTrue(csv.contains("CONFIRMED"));
         assertTrue(csv.contains("PAID"));
+        assertTrue(csv.contains("2026-07-01 10:30:00"));
         assertFalse(csv.contains("receiverPhone"));
         assertFalse(csv.contains("receiverAddress"));
 
         verify(orderRepository).findOrderReports(
-                from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                to.plusDays(1L).atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                from.atStartOfDay(TEST_ZONE).toInstant(),
+                to.plusDays(1L).atStartOfDay(TEST_ZONE).toInstant(),
                 OrderStatus.CONFIRMED
         );
     }

@@ -131,8 +131,8 @@ public class AuditLogService implements IAuditLogService {
                 command.actorId(),
                 truncate(command.actorUsername(), 100),
                 truncate(command.actorRole(), 50),
-                requireValue(command.action(), "action"),
-                requireValue(command.targetType(), "targetType"),
+                command.action(),
+                command.targetType(),
                 truncate(command.targetId(), 100),
                 truncate(command.description(), 500),
                 toSanitizedJson(command.beforeValue()),
@@ -155,21 +155,6 @@ public class AuditLogService implements IAuditLogService {
         if (requireAfterValue && command.afterValue() == null) {
             throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "afterValue");
         }
-    }
-
-    private String requireValue(String value, String argumentName, int maxLength) {
-        String normalized = truncate(value, maxLength);
-        if (normalized == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
-        }
-        return normalized;
-    }
-
-    private <T> T requireValue(T value, String argumentName) {
-        if (value == null) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, argumentName);
-        }
-        return value;
     }
 
     private String truncate(String value, int maxLength) {

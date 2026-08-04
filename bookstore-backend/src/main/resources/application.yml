@@ -123,6 +123,7 @@ app:
     max-digital-file-size-mb: ${STORAGE_MAX_DIGITAL_FILE_SIZE_MB:200}
     safety-max-total-bytes: ${STORAGE_SAFETY_MAX_TOTAL_BYTES:8589934592}
     safety-max-monthly-uploads: ${STORAGE_SAFETY_MAX_MONTHLY_UPLOADS:500000}
+  time-zone: ${APP_TIME_ZONE:Asia/Ho_Chi_Minh}
 
 springdoc:
   api-docs:

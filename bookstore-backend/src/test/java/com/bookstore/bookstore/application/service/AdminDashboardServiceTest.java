@@ -2,6 +2,7 @@ package com.bookstore.bookstore.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookstore.bookstore.application.port.out.IBookRepository;
@@ -10,15 +11,24 @@ import com.bookstore.bookstore.application.port.out.IOrderRepository;
 import com.bookstore.bookstore.application.port.out.IReviewRepository;
 import com.bookstore.bookstore.application.port.out.IUserRepository;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
+import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AdminDashboardServiceTest {
+
+    private static final ZoneId TEST_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final Instant FIXED_NOW = Instant.parse("2026-07-15T03:00:00Z");
+    private static final Clock TEST_CLOCK = Clock.fixed(FIXED_NOW, TEST_ZONE);
 
     @Mock
     private IOrderRepository orderRepository;
@@ -35,8 +45,20 @@ class AdminDashboardServiceTest {
     @Mock
     private ICouponRepository couponRepository;
 
-    @InjectMocks
     private AdminDashboardService adminDashboardService;
+
+    @BeforeEach
+    void setUp() {
+        BusinessTime businessTime = new BusinessTime(TEST_CLOCK);
+        adminDashboardService = new AdminDashboardService(
+                orderRepository,
+                bookRepository,
+                userRepository,
+                reviewRepository,
+                couponRepository,
+                businessTime
+        );
+    }
 
     @Test
     void getSummary_returnsExpandedDashboardMetrics() {
@@ -69,5 +91,19 @@ class AdminDashboardServiceTest {
         assertEquals(120L, result.totalUsers());
         assertEquals(380L, result.totalBooks());
         assertEquals(8L, result.lowStockBooks());
+
+        LocalDate today = LocalDate.of(2026, 7, 15);
+        Instant todayStart = today.atStartOfDay(TEST_ZONE).toInstant();
+        Instant tomorrowStart = today.plusDays(1L).atStartOfDay(TEST_ZONE).toInstant();
+        Instant monthStart = today.withDayOfMonth(1).atStartOfDay(TEST_ZONE).toInstant();
+
+        verify(orderRepository).sumDeliveredRevenueBetween(Instant.EPOCH, tomorrowStart);
+        verify(orderRepository).sumDeliveredRevenueBetween(todayStart, tomorrowStart);
+        verify(orderRepository).sumDeliveredRevenueBetween(monthStart, tomorrowStart);
+        verify(orderRepository).countCreatedBetween(Instant.EPOCH, tomorrowStart);
+        verify(orderRepository).countCreatedBetween(todayStart, tomorrowStart);
+        verify(userRepository).countNewCustomersBetween(todayStart, tomorrowStart);
+        verify(reviewRepository).countNewReviewsBetween(todayStart, tomorrowStart);
+        verify(couponRepository).countActiveCouponsAt(FIXED_NOW);
     }
 }

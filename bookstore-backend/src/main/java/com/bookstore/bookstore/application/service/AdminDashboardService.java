@@ -17,10 +17,10 @@ import com.bookstore.bookstore.application.result.RecentOrderResult;
 import com.bookstore.bookstore.application.result.RevenueChartResult;
 import com.bookstore.bookstore.application.result.TopBookStatsResult;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
+import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,15 +47,16 @@ public class AdminDashboardService implements IAdminDashboardService {
     private final IUserRepository userRepository;
     private final IReviewRepository reviewRepository;
     private final ICouponRepository couponRepository;
+    private final BusinessTime businessTime;
 
     @Override
     @Transactional(readOnly = true)
     public DashboardSummaryResult getSummary() {
-        LocalDate today = LocalDate.now();
-        Instant now = Instant.now();
-        Instant todayStart = toStartOfDay(today);
-        Instant tomorrowStart = toStartOfDay(today.plusDays(1));
-        Instant monthStart = toStartOfDay(today.withDayOfMonth(1));
+        LocalDate today = businessTime.todayLocalDate();
+        Instant now = businessTime.nowInstant();
+        Instant todayStart = businessTime.startOfDayInstant(today);
+        Instant tomorrowStart = businessTime.startOfDayInstant(today.plusDays(1));
+        Instant monthStart = businessTime.startOfDayInstant(today.withDayOfMonth(1));
         Instant epochStart = Instant.EPOCH;
 
         return new DashboardSummaryResult(
@@ -84,8 +85,8 @@ public class AdminDashboardService implements IAdminDashboardService {
         }
 
         DateRange range = resolveDateRange(query);
-        Instant fromInclusive = toStartOfDay(range.from());
-        Instant toExclusive = toStartOfDay(range.to().plusDays(1));
+        Instant fromInclusive = businessTime.startOfDayInstant(range.from());
+        Instant toExclusive = businessTime.startOfDayInstant(range.to().plusDays(1));
 
         List<RevenueChartResult> rawStats = query.groupBy() == RevenueGroupBy.MONTH
                 ? orderRepository.findRevenueStatsGroupByMonth(fromInclusive, toExclusive)
@@ -167,7 +168,7 @@ public class AdminDashboardService implements IAdminDashboardService {
             return new DateRange(query.from(), query.to());
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = businessTime.todayLocalDate();
         return new DateRange(today.minusDays(DEFAULT_REVENUE_DAYS - 1L), today);
     }
 
@@ -187,10 +188,5 @@ public class AdminDashboardService implements IAdminDashboardService {
         return threshold;
     }
 
-    private Instant toStartOfDay(LocalDate date) {
-        return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
-    }
-
-    private record DateRange(LocalDate from, LocalDate to) {
-    }
+    private record DateRange(LocalDate from, LocalDate to) {}
 }

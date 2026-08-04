@@ -13,10 +13,10 @@ import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.application.result.ReviewReportRowResult;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
+import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
@@ -33,7 +33,6 @@ public class AdminReportService implements IAdminReportService {
 
     private static final int DEFAULT_EXPORT_DAYS = 30;
     private static final int MAX_EXPORT_DAYS = 366;
-    private static final ZoneId EXPORT_ZONE_ID = ZoneId.systemDefault();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -42,13 +41,15 @@ public class AdminReportService implements IAdminReportService {
     private final IReviewRepository reviewRepository;
     private final CsvExportService csvExportService;
 
+    private final BusinessTime businessTime;
+
     @Override
     @Transactional(readOnly = true)
     public ReportFileResult exportOrders(ExportOrdersQuery query) {
         DateRange range = resolveDateRange(query.from(), query.to());
         List<OrderReportRowResult> rows = orderRepository.findOrderReports(
-                toStartOfDay(range.from()),
-                toStartOfDay(range.to().plusDays(1L)),
+                businessTime.startOfDayInstant(range.from()),
+                businessTime.startOfDayInstant(range.to().plusDays(1L)),
                 query.status()
         );
         return new ReportFileResult(
@@ -74,8 +75,8 @@ public class AdminReportService implements IAdminReportService {
         DateRange range = resolveDateRange(from, to);
         Map<LocalDate, RevenueReportRowResult> statsByDate = new LinkedHashMap<>();
         for (RevenueReportRowResult row : orderRepository.findDailyRevenueReports(
-                toStartOfDay(range.from()),
-                toStartOfDay(range.to().plusDays(1L))
+                businessTime.startOfDayInstant(range.from()),
+                businessTime.startOfDayInstant(range.to().plusDays(1L))
         )) {
             statsByDate.put(row.date(), row);
         }
@@ -193,7 +194,7 @@ public class AdminReportService implements IAdminReportService {
     }
 
     private DateRange resolveDateRange(LocalDate from, LocalDate to) {
-        LocalDate today = LocalDate.now(EXPORT_ZONE_ID);
+        LocalDate today = businessTime.todayLocalDate();
         LocalDate resolvedFrom = from;
         LocalDate resolvedTo = to;
 
@@ -225,15 +226,13 @@ public class AdminReportService implements IAdminReportService {
         return threshold;
     }
 
-    private Instant toStartOfDay(LocalDate date) {
-        return date.atStartOfDay(EXPORT_ZONE_ID).toInstant();
-    }
-
     private String formatInstant(Instant value) {
         if (value == null) {
             return "";
         }
-        return DATE_TIME_FORMATTER.format(value.atZone(EXPORT_ZONE_ID));
+         return DATE_TIME_FORMATTER.format(
+            businessTime.toZonedDateTime(value)
+        );
     }
 
     private String formatAmount(BigDecimal value) {
