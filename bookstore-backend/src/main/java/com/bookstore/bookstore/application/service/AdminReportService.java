@@ -12,6 +12,7 @@ import com.bookstore.bookstore.application.result.OrderReportRowResult;
 import com.bookstore.bookstore.application.result.ReportFileResult;
 import com.bookstore.bookstore.application.result.RevenueReportRowResult;
 import com.bookstore.bookstore.application.result.ReviewReportRowResult;
+import com.bookstore.bookstore.application.validation.ApplicationGuard;
 import com.bookstore.bookstore.domain.enums.ReviewStatus;
 import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,7 +101,7 @@ public class AdminReportService implements IAdminReportService {
     @Override
     @Transactional(readOnly = true)
     public ReportFileResult exportLowStock(int threshold) {
-        int resolvedThreshold = validateThreshold(threshold);
+        int resolvedThreshold = ApplicationGuard.requireNonNegative(threshold, "threshold");
         List<LowStockReportRowResult> rows = bookRepository.findLowStockReportRows(resolvedThreshold);
         return new ReportFileResult(
                 "low-stock-report-threshold-" + resolvedThreshold + ".csv",
@@ -141,7 +143,7 @@ public class AdminReportService implements IAdminReportService {
             DateRange range,
             Map<LocalDate, RevenueReportRowResult> statsByDate
     ) {
-        List<RevenueReportRowResult> rows = new java.util.ArrayList<>();
+        List<RevenueReportRowResult> rows = new ArrayList<>();
         for (LocalDate date = range.from(); !date.isAfter(range.to()); date = date.plusDays(1L)) {
             RevenueReportRowResult stat = statsByDate.get(date);
             rows.add(stat == null
@@ -151,7 +153,7 @@ public class AdminReportService implements IAdminReportService {
         return rows;
     }
 
-    private List<?> toOrderCsvRow(OrderReportRowResult row) {
+    private List<String> toOrderCsvRow(OrderReportRowResult row) {
         return List.of(
                 safeText(row.orderCode()),
                 safeText(row.orderId()),
@@ -217,13 +219,6 @@ public class AdminReportService implements IAdminReportService {
         }
 
         return new DateRange(resolvedFrom, resolvedTo);
-    }
-
-    private int validateThreshold(int threshold) {
-        if (threshold < 0) {
-            throw new ApplicationException(ApplicationErrorCode.INVALID_ARGUMENT, "threshold");
-        }
-        return threshold;
     }
 
     private String formatInstant(Instant value) {

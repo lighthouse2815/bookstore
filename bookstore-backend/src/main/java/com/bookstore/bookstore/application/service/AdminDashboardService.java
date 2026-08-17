@@ -16,6 +16,7 @@ import com.bookstore.bookstore.application.result.OrderStatusStatsResult;
 import com.bookstore.bookstore.application.result.RecentOrderResult;
 import com.bookstore.bookstore.application.result.RevenueChartResult;
 import com.bookstore.bookstore.application.result.TopBookStatsResult;
+import com.bookstore.bookstore.application.validation.ApplicationGuard;
 import com.bookstore.bookstore.domain.enums.OrderStatus;
 import com.bookstore.bookstore.shared.time.BusinessTime;
 import java.math.BigDecimal;
@@ -48,6 +49,7 @@ public class AdminDashboardService implements IAdminDashboardService {
     private final IReviewRepository reviewRepository;
     private final ICouponRepository couponRepository;
     private final BusinessTime businessTime;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -115,7 +117,7 @@ public class AdminDashboardService implements IAdminDashboardService {
     @Override
     @Transactional(readOnly = true)
     public List<LowStockBookResult> getLowStockBooks(int threshold) {
-        return bookRepository.findLowStockBooks(validateThreshold(threshold));
+        return bookRepository.findLowStockBooks(ApplicationGuard.requireNonNegative(threshold, "threshold"));
     }
 
     @Override
@@ -178,14 +180,6 @@ public class AdminDashboardService implements IAdminDashboardService {
         }
 
         return limit;
-    }
-
-    private int validateThreshold(int threshold) {
-        if (threshold < 0) {
-            throw new IllegalArgumentException("threshold must be greater than or equal to 0");
-        }
-
-        return threshold;
     }
 
     private record DateRange(LocalDate from, LocalDate to) {}
