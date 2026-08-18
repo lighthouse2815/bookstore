@@ -26,25 +26,7 @@
 
 Bookstore là một hệ thống bán sách đa client. **Backend Spring Boot là nguồn nghiệp vụ trung tâm**: mọi client đều gọi API của backend, backend mới là nơi kiểm tra quyền, quản lý tồn kho, tạo đơn, thanh toán, hoàn tiền và ghi dữ liệu MySQL.
 
-```mermaid
-flowchart LR
-    W[Website React/Vite\nKhách hàng + Admin]
-    M[Android Kotlin/Compose\nKhách hàng]
-    D[Desktop WPF\nPOS/nhân viên]
-    S[Expo Ship app\nShipper]
-
-    W -->|REST /api + WebSocket| B
-    M -->|REST /api| B
-    D -->|REST /api| B
-    S -->|REST /api| B
-
-    B[Spring Boot backend\nXác thực + nghiệp vụ]
-    B --> DB[(MySQL 8)]
-    B --> R2[R2/S3\nfile và tài sản số]
-    B --> PAY[SePay IPN]
-    B --> MAIL[Resend email]
-    B --> AI[Cloudflare Workers AI\ntùy chọn]
-```
+![Sơ đồ tổng quan kiến trúc Bookstore](assets/bookstore-system-overview.svg)
 
 Luồng cơ bản của một thao tác là:
 
@@ -313,18 +295,7 @@ Entrypoint là `bookstore-backend/src/main/java/com/bookstore/bookstore/Bookstor
 
 ### 5.2 Bốn lớp chính
 
-```mermaid
-flowchart TB
-    P[Presentation\nController, request/response DTO, web mapper, exception handler]
-    A[Application\nPort in/out, command/query/result, service, assembler]
-    D[Domain\nModel, enum, exception, validation, business state]
-    I[Infrastructure\nJPA adapter/entity/repository, security, email, payment, storage, websocket]
-
-    P --> A
-    A --> D
-    A --> I
-    I --> DB[(MySQL / external systems)]
-```
+![Sơ đồ bốn lớp backend Bookstore](assets/backend-clean-architecture.svg)
 
 | Lớp | Nằm ở | Trách nhiệm | Không nên làm |
 | --- | --- | --- | --- |
