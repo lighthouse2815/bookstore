@@ -2,13 +2,15 @@
 
 Hướng dẫn chạy các dự án trong `D:\bookstore` bằng terminal.
 
+Người mới nên đọc [Hướng dẫn đọc hiểu dự án](docs/HUONG_DAN_DOC_HIEU_DU_AN.md) trước: tài liệu này giải thích kiến trúc, thứ tự đọc code, các luồng nghiệp vụ và vai trò của toàn bộ client.
+
 ## Cấu trúc thư mục
 
 - `bookstore-backend`: backend Spring Boot và MySQL
 - `bookstore-website`: website React và Vite
 - `bookstore-mobile`: ứng dụng Android
 - `bookstore-desktop`: ứng dụng desktop WPF
-- `bookstore-shipapp`: ứng dụng giao hàng riêng, không thuộc phạm vi của README này
+- `bookstore-shipapp`: ứng dụng Expo riêng cho shipper
 
 ## Yêu cầu môi trường
 
