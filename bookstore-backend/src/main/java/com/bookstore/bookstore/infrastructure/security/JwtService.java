@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import java.util.UUID;
 
 @Service
 public class JwtService implements IJwtService {
@@ -30,7 +31,7 @@ public class JwtService implements IJwtService {
     }
 
     @Override
-    public String generateAccessToken(User user, java.util.UUID sessionId) {
+    public String generateAccessToken(User user, UUID sessionId) {
         Instant now = Instant.now();
 
         List<String> roles = user.getRoles()
